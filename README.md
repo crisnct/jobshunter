@@ -1,6 +1,6 @@
 # jobshunter
 
-Aplicatie Java 25 (Spring Boot) care iti citeste CV-ul dintr-un PDF, ruleaza zilnic cautari automate de joburi pe internet si iti trimite rezultatele pe WhatsApp.
+Aplicatie Java 21+ (Spring Boot) care iti citeste CV-ul dintr-un PDF, ruleaza zilnic cautari automate de joburi pe internet si iti trimite rezultatele pe WhatsApp.
 
 ## Functionalitati
 - **Parser de CV PDF** bazat pe Apache PDFBox; extrage textul si cuvintele cheie relevante.
@@ -11,7 +11,7 @@ Aplicatie Java 25 (Spring Boot) care iti citeste CV-ul dintr-un PDF, ruleaza zil
 - **REST API** pentru a porni manual o cautare si a verifica ultimul rezultat.
 
 ## Cerinte
-- Java 25 (OpenJDK 25)
+- Java 21 (minim, compilata cu `--release 21`; poate rula pe JDK-uri mai noi precum 25)
 - Maven 3.9+
 - Un fisier `cv.pdf` plasat in radacina proiectului (sau configurezi o alta cale).
 - Optional: cont Twilio cu canal WhatsApp (SID, Token, numar "from", numar "to").

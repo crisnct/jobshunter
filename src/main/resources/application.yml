@@ -1,9 +1,9 @@
 server:
-  port: 8080
+  port: 8081
 
 jobshunter:
-  prompt: "Senior Java developer remote"
-  cv-path: "cv.pdf"
+  prompt: "I'm Mid-level Java Developer (backend) with 5 years of experience in Java and Spring Boot; no frontend knowledge; looking for a Java-only role, any country, contractor/B2B, full remote from Romania, no travelling, job description must not contain 'Job expired', 'Hybrid', 'full-stack' or 'fullstack'; send me the best 20 matching jobs with full URLs, maximum 2 from each platform, skipping LinkedIn and WeWorkRemotely."
+  cv-path: "cristian-tone-java-dev.pdf"
   scheduler:
     cron: "0 0 9 * * *"
   whatsapp:

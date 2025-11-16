@@ -4,6 +4,7 @@ import com.jobshunter.model.JobHuntSummary;
 import com.jobshunter.model.JobSearchRequest;
 import com.jobshunter.service.JobHuntOrchestrator;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -16,13 +17,10 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/job")
+@RequiredArgsConstructor
 public class JobSearchController {
 
     private final JobHuntOrchestrator orchestrator;
-
-    public JobSearchController(JobHuntOrchestrator orchestrator) {
-        this.orchestrator = orchestrator;
-    }
 
     @PostMapping("/search")
     public JobHuntSummary search(@Valid @RequestBody JobSearchRequest request) {

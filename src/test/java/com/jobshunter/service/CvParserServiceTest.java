@@ -6,6 +6,7 @@ import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
+import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
 import org.junit.jupiter.api.Test;
 
 import java.nio.file.Files;
@@ -24,7 +25,7 @@ class CvParserServiceTest {
             PDPage page = new PDPage(PDRectangle.A4);
             document.addPage(page);
             try (PDPageContentStream contentStream = new PDPageContentStream(document, page)) {
-                contentStream.setFont(PDType1Font.HELVETICA, 12);
+                contentStream.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA), 12);
                 contentStream.beginText();
                 contentStream.newLineAtOffset(50, 750);
                 contentStream.showText("Java developer with Spring Boot, REST APIs and cloud experience.");

@@ -3,8 +3,7 @@ package com.jobshunter.service;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jobshunter.model.JobOpportunity;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -19,10 +18,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Component
 public class RemoteJobApiClient {
-
-    private static final Logger log = LoggerFactory.getLogger(RemoteJobApiClient.class);
     private static final URI BASE_URI = URI.create("https://remotive.com/api/remote-jobs");
 
     private final HttpClient httpClient = HttpClient.newHttpClient();

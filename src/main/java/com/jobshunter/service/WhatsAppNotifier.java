@@ -4,23 +4,20 @@ import com.jobshunter.config.ApplicationProperties;
 import com.jobshunter.model.JobOpportunity;
 import com.twilio.Twilio;
 import com.twilio.rest.api.v2010.account.Message;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+@Slf4j
 @Service
+@RequiredArgsConstructor
 public class WhatsAppNotifier {
 
-    private static final Logger log = LoggerFactory.getLogger(WhatsAppNotifier.class);
     private final ApplicationProperties properties;
     private final AtomicBoolean initialized = new AtomicBoolean(false);
-
-    public WhatsAppNotifier(ApplicationProperties properties) {
-        this.properties = properties;
-    }
 
     public void send(List<JobOpportunity> opportunities) {
         if (opportunities.isEmpty()) {
