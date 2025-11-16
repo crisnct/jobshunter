@@ -1,0 +1,18 @@
+server:
+  port: 8080
+
+jobshunter:
+  prompt: "Senior Java developer remote"
+  cv-path: "cv.pdf"
+  scheduler:
+    cron: "0 0 9 * * *"
+  whatsapp:
+    account-sid: ${TWILIO_ACCOUNT_SID:}
+    auth-token: ${TWILIO_AUTH_TOKEN:}
+    from-number: ${TWILIO_WHATSAPP_FROM:}
+    to-number: ${TWILIO_WHATSAPP_TO:}
+
+logging:
+  level:
+    root: INFO
+    com.jobshunter: DEBUG
