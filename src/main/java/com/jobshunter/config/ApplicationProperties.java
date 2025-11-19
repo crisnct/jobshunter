@@ -20,6 +20,7 @@ public class ApplicationProperties {
     private Scheduler scheduler = new Scheduler();
 
     private WhatsApp whatsapp = new WhatsApp();
+    private ChatGpt chatgpt = new ChatGpt();
 
     @Data
     public static class Scheduler {
@@ -32,5 +33,17 @@ public class ApplicationProperties {
         private String authToken = System.getenv("TWILIO_AUTH_TOKEN");
         private String fromNumber = System.getenv("TWILIO_WHATSAPP_FROM");
         private String toNumber = System.getenv("TWILIO_WHATSAPP_TO");
+    }
+
+    @Data
+    public static class ChatGpt {
+        private boolean enabled = true;
+        private String apiKey = System.getenv("CHATGPT5_API_KEY");
+        private String apiUrl = "https://api.openai.com/v1/responses";
+        private String model = "gpt-5.1";
+        private double temperature = 0.05d;
+        private int maxJobs = 10;
+        private int maxTokens = 2000;
+        private String toolsType = "web_search";
     }
 }

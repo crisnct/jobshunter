@@ -1,15 +1,13 @@
 package com.jobshunter.service;
 
 import com.jobshunter.config.ApplicationProperties;
-import com.jobshunter.model.JobOpportunity;
 import com.twilio.Twilio;
 import com.twilio.rest.api.v2010.account.Message;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 @Slf4j
 @Service
@@ -19,14 +17,14 @@ public class WhatsAppNotifier {
     private final ApplicationProperties properties;
     private final AtomicBoolean initialized = new AtomicBoolean(false);
 
-    public void send(List<JobOpportunity> opportunities) {
+    public void send(List<String> opportunities) {
         if (opportunities.isEmpty()) {
             log.info("No jobs found. Skipping WhatsApp notification.");
             return;
         }
         if (!hasCredentials()) {
             log.warn("Twilio credentials not configured. Printing jobs to the console instead.");
-            opportunities.forEach(job -> log.info("{} at {} - {}", job.title(), job.company(), job.url()));
+            opportunities.forEach(job -> log.info("{}", job));
             return;
         }
 
@@ -54,15 +52,11 @@ public class WhatsAppNotifier {
         }
     }
 
-    private String buildMessage(List<JobOpportunity> opportunities) {
+    private String buildMessage(List<String> opportunities) {
         StringBuilder builder = new StringBuilder("🧠 Jobshunter – rezultate zilnice:\n");
         opportunities.forEach(job -> builder
                 .append("• ")
-                .append(job.title())
-                .append(" @ ")
-                .append(job.company())
-                .append(" -> ")
-                .append(job.url())
+                .append(job)
                 .append('\n'));
         return builder.toString();
     }

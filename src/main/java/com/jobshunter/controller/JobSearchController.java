@@ -1,9 +1,10 @@
-package com.jobshunter.web;
+package com.jobshunter.controller;
 
 import com.jobshunter.model.JobHuntSummary;
 import com.jobshunter.model.JobSearchRequest;
 import com.jobshunter.service.JobHuntOrchestrator;
 import jakarta.validation.Valid;
+import java.io.IOException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,7 +24,7 @@ public class JobSearchController {
     private final JobHuntOrchestrator orchestrator;
 
     @PostMapping("/search")
-    public JobHuntSummary search(@Valid @RequestBody JobSearchRequest request) {
+    public JobHuntSummary search(@Valid @RequestBody JobSearchRequest request) throws IOException, InterruptedException {
         return orchestrator.runOnce(request.prompt(), request.cvPath());
     }
 

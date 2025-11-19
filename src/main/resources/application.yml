@@ -2,7 +2,7 @@ server:
   port: 8081
 
 jobshunter:
-  prompt: "I'm Mid-level Java Developer (backend) with 5 years of experience in Java and Spring Boot; no frontend knowledge; looking for a Java-only role, any country, contractor/B2B, full remote from Romania, no travelling, job description must not contain 'Job expired', 'Hybrid', 'full-stack' or 'fullstack'; send me the best 20 matching jobs with full URLs, maximum 2 from each platform, skipping LinkedIn and WeWorkRemotely."
+  prompt: "Search for job postings and return only URLs that satisfy all rules: 1) The job description must contain the keyword 'Java'. 2) The job description must contain at least two of the following keywords: contractor, B2B, remote, no travel, spring boot, rest api, postgresql, mysql, gcp, swt, rcp, microservices. 3) Consider only jobs posted in the last 24 hours. 4) Exclude pages that contain any of the following substrings (case-insensitive): 'job expired', 'hybrid', 'full-stack', 'fullstack'. 5) Exclude results from these hosts: linkedin.com, weworkremotely.com, dailyremote.com. 6) Allow a maximum of 3 URLs per host/domain. 7) Do not return URLs that give an HTTP status code in the range 400-599. 8) Sort all valid results in descending order by publication date. 9). Output should contains only URL's separated by empty space . No explanations. No extra text. Use my attached CV to match with job descriptions."
   cv-path: "cristian-tone-java-dev.pdf"
   scheduler:
     cron: "0 0 9 * * *"

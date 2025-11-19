@@ -5,6 +5,7 @@ Aplicatie Java 21+ (Spring Boot) care iti citeste CV-ul dintr-un PDF, ruleaza zi
 ## Functionalitati
 - **Parser de CV PDF** bazat pe Apache PDFBox; extrage textul si cuvintele cheie relevante.
 - **Cautator REST** care apeleaza API-ul public [Remotive](https://remotive.com/api/remote-jobs) in functie de promptul tau.
+- **Integrare ChatGPT 5** (optional) pentru a genera rapid sugestii de joburi atunci cand ai un API key valid.
 - **Motor de potrivire** ce prioritizeaza joburile compatibile cu tehnologiile din CV-ul tau.
 - **Programator zilnic** configurabil prin cron (`jobshunter.scheduler.cron`).
 - **Notificare WhatsApp** via Twilio (cu fallback la loguri atunci cand credidentialele lipsesc).
@@ -15,6 +16,7 @@ Aplicatie Java 21+ (Spring Boot) care iti citeste CV-ul dintr-un PDF, ruleaza zi
 - Maven 3.9+
 - Un fisier `cv.pdf` plasat in radacina proiectului (sau configurezi o alta cale).
 - Optional: cont Twilio cu canal WhatsApp (SID, Token, numar "from", numar "to").
+- Optional: cheie API pentru ChatGPT 5 (`CHATGPT5_API_KEY`) daca vrei sa combini joburile Remotive cu sugestii AI (ai si o proprietate `fallback-model` in cazul in care modelul implicit nu este disponibil in contul tau).
 
 ## Configurare
 Aplicatia foloseste `application.yml` si/sau variabile de mediu:
@@ -30,6 +32,12 @@ jobshunter:
     auth-token: ${TWILIO_AUTH_TOKEN:}
     from-number: ${TWILIO_WHATSAPP_FROM:}
     to-number: ${TWILIO_WHATSAPP_TO:}
+  chatgpt:
+    enabled: false
+    api-url: "https://api.openai.com/v1/chat/completions"
+    model: "gpt-5.0"
+    fallback-model: "gpt-4o-mini"
+    max-jobs: 10
 ```
 
 Variabile utile:
@@ -39,6 +47,7 @@ export TWILIO_ACCOUNT_SID="ACxxxxxxxx"
 export TWILIO_AUTH_TOKEN="secret"
 export TWILIO_WHATSAPP_FROM="whatsapp:+14155238886"
 export TWILIO_WHATSAPP_TO="whatsapp:+407xxxxxxxx"
+export CHATGPT5_API_KEY="sk-your-key"
 ```
 
 ## Rulare
