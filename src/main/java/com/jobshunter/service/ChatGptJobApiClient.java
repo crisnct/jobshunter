@@ -16,7 +16,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.HttpEntity;
@@ -52,7 +51,7 @@ public class ChatGptJobApiClient {
     mapper = JsonMapper.builder().findAndAddModules().build();
   }
 
-  public List<String> search(String prompt, Path cvPath) throws IOException {
+  public List<String> search(String prompt, String existingFileId) {
     ApplicationProperties.ChatGpt cfg = properties.getChatgpt();
     if (cfg == null) {
       return List.of();
@@ -62,8 +61,7 @@ public class ChatGptJobApiClient {
       return List.of();
     }
 
-    String fileId = this.uploadFile(cfg, cvPath);
-    return searchWithModel(prompt, cfg, fileId);
+    return searchWithModel(prompt, cfg, existingFileId);
   }
 
   public String uploadFile(Path cvPath) throws IOException {

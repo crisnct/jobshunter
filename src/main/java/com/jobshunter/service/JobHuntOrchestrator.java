@@ -18,7 +18,6 @@ public class JobHuntOrchestrator {
   private final WhatsAppNotifier whatsAppNotifier;
 
   private final AtomicReference<String> promptRef;
-  private final AtomicReference<Path> cvPathRef;
   private final AtomicReference<JobHuntSummary> lastRun = new AtomicReference<>();
 
   public JobHuntOrchestrator(ApplicationProperties properties,
@@ -27,32 +26,25 @@ public class JobHuntOrchestrator {
     this.chatGptJobApiClient = chatGptJobApiClient;
     this.whatsAppNotifier = whatsAppNotifier;
     this.promptRef = new AtomicReference<>(properties.getPrompt());
-    this.cvPathRef = new AtomicReference<>(Path.of(properties.getCvPath()));
   }
 
   @Scheduled(cron = "${jobshunter.scheduler.cron:0 0 9 * * *}")
   public void scheduledRun() throws IOException, InterruptedException {
     log.info("Running scheduled job hunt...");
-    runInternal(promptRef.get(), cvPathRef.get(), null);
+    runInternal(promptRef.get(), null, null);
   }
 
-  public JobHuntSummary runOnce(String prompt, String cvPath) throws IOException, InterruptedException {
-    return runOnce(prompt, cvPath, null);
-  }
-
-  public JobHuntSummary runOnce(String prompt, String cvPath, String username) throws IOException, InterruptedException {
+  public JobHuntSummary runOnce(String prompt, String username, String chatGptFileId) throws IOException {
     promptRef.set(prompt);
-    Path path = Path.of(cvPath);
-    cvPathRef.set(path);
-    return runInternal(prompt, path, username);
+    return runInternal(prompt, username, chatGptFileId);
   }
 
   public JobHuntSummary lastRun() {
     return lastRun.get();
   }
 
-  private JobHuntSummary runInternal(String prompt, Path cvPath, String username) throws IOException {
-    List<String> jobs = chatGptJobApiClient.search(prompt, cvPath);
+  private JobHuntSummary runInternal(String prompt, String username, String chatGptFileId) {
+    List<String> jobs = chatGptJobApiClient.search(prompt, chatGptFileId);
     whatsAppNotifier.send(jobs, username);
     JobHuntSummary summary = new JobHuntSummary(jobs);
     lastRun.set(summary);
