@@ -76,10 +76,6 @@ public class User implements UserDetails {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<UserJob> jobs = new ArrayList<>();
 
-    @JsonIgnore
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    private List<UserCv> cvs = new ArrayList<>();
-
     @PrePersist
     void prePersist() {
         if (createdAt == null) {
