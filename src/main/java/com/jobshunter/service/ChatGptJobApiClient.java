@@ -68,7 +68,7 @@ public class ChatGptJobApiClient {
       return List.of();
     }
 
-    String fileId = uploadFile(cfg, cvPath);
+    String fileId = this.uploadFile(cfg, cvPath);
     return searchWithModel(prompt, cfg, fileId);
   }
 
@@ -155,14 +155,14 @@ public class ChatGptJobApiClient {
         log.warn("ChatGPT job API returned {} - {}", response.getStatusCode(), response.getBody());
         return List.of();
       }
-      return extractJobs(response.getBody(), cfg.getMaxJobs());
+      return extractJobs(response.getBody());
     } catch (Exception e) {
       log.warn("ChatGPT job API call failed: {}", e.getMessage());
       return List.of();
     }
   }
 
-  private List<String> extractJobs(String body, int maxJobs) throws JsonProcessingException {
+  private List<String> extractJobs(String body) throws JsonProcessingException {
     ChatCompletionResponse response = mapper.readValue(body, ChatCompletionResponse.class);
     if (Collections.isEmpty(response.output())) {
       return List.of();
@@ -174,7 +174,9 @@ public class ChatGptJobApiClient {
       final List<String> jobs = new ArrayList<>();
       item.get().content.stream()
           .filter(c -> Objects.equals("output_text", c.type))
-          .forEach(o -> jobs.addAll(List.of(o.text.split(" "))));
+          .forEach(o -> {
+            jobs.addAll(List.of(o.text.split(" ")));
+          });
       return jobs;
     } else {
       return java.util.Collections.emptyList();

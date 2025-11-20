@@ -5,6 +5,8 @@ import com.jobshunter.database.repository.UserRepository;
 import com.twilio.Twilio;
 import com.twilio.exception.ApiException;
 import com.twilio.rest.api.v2010.account.Message;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.RequiredArgsConstructor;
@@ -21,8 +23,8 @@ public class WhatsAppNotifier {
   private final UserRepository userRepository;
   private final AtomicBoolean initialized = new AtomicBoolean(false);
 
-  public void send(List<String> opportunities, String username) {
-    if (opportunities.isEmpty()) {
+  public void send(List<String> jobsURLs, String username) {
+    if (jobsURLs.isEmpty()) {
       log.info("No jobs found. Skipping WhatsApp notification.");
       return;
     }
@@ -35,12 +37,12 @@ public class WhatsAppNotifier {
 
     if (!StringUtils.hasText(toNumber)) {
       log.warn("No WhatsApp destination number available. Printing jobs instead.");
-      opportunities.forEach(job -> log.info("{}", job));
+      jobsURLs.forEach(job -> log.info("{}", job));
       return;
     }
 
     String fromNumber = formatWhatsapp(properties.getWhatsapp().getFromNumber());
-    String body = buildMessage(opportunities);
+    String body = buildMessage(jobsURLs);
 
     if (!StringUtils.hasText(fromNumber)) {
       return;
@@ -59,7 +61,7 @@ public class WhatsAppNotifier {
     }
 
     log.warn("WhatsApp send skipped after attempting available senders. Printing jobs to the console instead.");
-    opportunities.forEach(job -> log.info("{}", job));
+    jobsURLs.forEach(job -> log.info("{}", job));
   }
 
   private boolean hasCredentials(String toNumber, String fromNumber) {
@@ -116,12 +118,16 @@ public class WhatsAppNotifier {
     }
   }
 
-  private String buildMessage(List<String> opportunities) {
-    StringBuilder builder = new StringBuilder("Jobshunter rezultate zilnice:\n");
-    opportunities.forEach(job -> builder
-        .append("- ")
-        .append(job)
-        .append('\n'));
+  private String buildMessage(List<String> jobs) {
+    String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MMMM-dd HH:mm"));
+    StringBuilder builder = new StringBuilder("Jobshunter ").append(timestamp).append(":");
+    for (int i = 0; i < jobs.size(); i++) {
+      builder
+          .append('\n')
+          .append((i+1))
+          .append(". ")
+          .append(jobs.get(i));
+    }
     return builder.toString();
   }
 }
