@@ -36,7 +36,7 @@ public class JobSearchController {
             promptForChatGpt = promptForChatGpt + ".  Exclude those url's: " + String.join(", ", existingUrls) + ".";
         }
 
-        JobHuntSummary summary = orchestrator.runOnce(promptForChatGpt, request.cvPath());
+        JobHuntSummary summary = orchestrator.runOnce(promptForChatGpt, request.cvPath(), username);
         userJobService.saveJobsForUser(username, summary.jobsFound());
         return summary;
     }

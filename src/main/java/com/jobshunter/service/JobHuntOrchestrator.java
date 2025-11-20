@@ -33,23 +33,27 @@ public class JobHuntOrchestrator {
   @Scheduled(cron = "${jobshunter.scheduler.cron:0 0 9 * * *}")
   public void scheduledRun() throws IOException, InterruptedException {
     log.info("Running scheduled job hunt...");
-    runInternal(promptRef.get(), cvPathRef.get());
+    runInternal(promptRef.get(), cvPathRef.get(), null);
   }
 
   public JobHuntSummary runOnce(String prompt, String cvPath) throws IOException, InterruptedException {
+    return runOnce(prompt, cvPath, null);
+  }
+
+  public JobHuntSummary runOnce(String prompt, String cvPath, String username) throws IOException, InterruptedException {
     promptRef.set(prompt);
     Path path = Path.of(cvPath);
     cvPathRef.set(path);
-    return runInternal(prompt, path);
+    return runInternal(prompt, path, username);
   }
 
   public JobHuntSummary lastRun() {
     return lastRun.get();
   }
 
-  private JobHuntSummary runInternal(String prompt, Path cvPath) throws IOException {
+  private JobHuntSummary runInternal(String prompt, Path cvPath, String username) throws IOException {
     List<String> jobs = chatGptJobApiClient.search(prompt, cvPath);
-    whatsAppNotifier.send(jobs);
+    whatsAppNotifier.send(jobs, username);
     JobHuntSummary summary = new JobHuntSummary(jobs);
     lastRun.set(summary);
     return summary;

@@ -12,7 +12,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableConfigurationProperties({ApplicationProperties.class, JwtProperties.class})
 public class JobshunterApplication {
 
-    public static void main(String[] args) {
-        SpringApplication.run(JobshunterApplication.class, args);
-    }
+  public static void main(String[] args) {
+    SpringApplication.run(JobshunterApplication.class, args);
+  }
 }
