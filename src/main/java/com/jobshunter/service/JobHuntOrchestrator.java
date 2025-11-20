@@ -47,7 +47,7 @@ public class JobHuntOrchestrator {
     return lastRun.get();
   }
 
-  private JobHuntSummary runInternal(String prompt, Path cvPath) throws IOException, InterruptedException {
+  private JobHuntSummary runInternal(String prompt, Path cvPath) throws IOException {
     List<String> jobs = chatGptJobApiClient.search(prompt, cvPath);
     whatsAppNotifier.send(jobs);
     JobHuntSummary summary = new JobHuntSummary(jobs);

@@ -58,9 +58,9 @@ public class ChatGptJobApiClient {
     mapper = JsonMapper.builder().findAndAddModules().build();
   }
 
-  public List<String> search(String prompt, Path cvPath) throws IOException, InterruptedException {
+  public List<String> search(String prompt, Path cvPath) throws IOException {
     ApplicationProperties.ChatGpt cfg = properties.getChatgpt();
-    if (cfg == null || !cfg.isEnabled()) {
+    if (cfg == null) {
       return List.of();
     }
     if (cfg.getApiKey() == null || cfg.getApiKey().isBlank()) {
@@ -102,18 +102,6 @@ public class ChatGptJobApiClient {
     }
   }
 
-  @PreDestroy
-  public void beforeShutdown() {
-    for (String fileId : fileIds.values()) {
-      try {
-        String fileIdDeleted = deleteFile(properties.getChatgpt(), fileId);
-        log.info("File {} deleted from chatgpt", fileIdDeleted);
-      } catch (InterruptedException | URISyntaxException | IOException e) {
-        log.error("File {} can not be deleted from chatgpt", fileId);
-      }
-    }
-  }
-
   private String deleteFile(ApplicationProperties.ChatGpt cfg, String fileId) throws IOException, InterruptedException, URISyntaxException {
     HttpHeaders headers = new HttpHeaders();
     headers.set("Authorization", "Bearer " + cfg.getApiKey());
@@ -134,26 +122,15 @@ public class ChatGptJobApiClient {
     return respoanse.id();
   }
 
-  private List<String> searchWithModel(String prompt,
-      ApplicationProperties.ChatGpt cfg,
-      String fileId
-  ) {
+  private List<String> searchWithModel(String prompt, ApplicationProperties.ChatGpt cfg, String fileId) {
     try {
-      URI uri = (cfg.getApiUrl() == null || cfg.getApiUrl().isBlank())
-          ? DEFAULT_URI
-          : URI.create(cfg.getApiUrl());
-
       ChatGptPayload payload = new ChatGptPayload(
           cfg.getModel(),
           cfg.getTemperature(),
           cfg.getMaxTokens(),
           List.of(new Tools(cfg.getToolsType())),
           List.of(
-              new Input("system", List.of(
-                  new InputMessage("input_text",
-                      "Follow the user's instructions carefully and prioritize delivering relevant job URLs; ensure URLs are valid and meet the filters from the user prompt; avoid explanations and extra text beyond the required output format; do not fabricate URLs, but feel free to return all real matches you find."
-                  )
-              )),
+              new Input("system", List.of(new InputMessage("input_text", cfg.getSystemPrompt()))),
               new Input("user", List.of(
                   new InputMessage("input_text", prompt),
                   new InputFile(fileId)
@@ -169,7 +146,7 @@ public class ChatGptJobApiClient {
       HttpEntity<String> entity = new HttpEntity<>(jsonBody, headers);
 
       ResponseEntity<String> response = restTemplate.postForEntity(
-          uri,
+          DEFAULT_URI,
           entity,
           String.class
       );
@@ -260,6 +237,18 @@ public class ChatGptJobApiClient {
   @JsonIgnoreProperties(ignoreUnknown = true)
   private record ContentItem(String type, String text) {
 
+  }
+
+  @PreDestroy
+  public void beforeShutdown() {
+    for (String fileId : fileIds.values()) {
+      try {
+        String fileIdDeleted = deleteFile(properties.getChatgpt(), fileId);
+        log.info("File {} deleted from chatgpt", fileIdDeleted);
+      } catch (InterruptedException | URISyntaxException | IOException e) {
+        log.error("File {} can not be deleted from chatgpt", fileId);
+      }
+    }
   }
 
 }
