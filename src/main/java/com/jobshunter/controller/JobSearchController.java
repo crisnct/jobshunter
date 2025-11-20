@@ -6,6 +6,7 @@ import com.jobshunter.service.JobHuntOrchestrator;
 import com.jobshunter.service.UserJobService;
 import jakarta.validation.Valid;
 import java.io.IOException;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -28,8 +29,15 @@ public class JobSearchController {
 
     @PostMapping("/search")
     public JobHuntSummary search(@Valid @RequestBody JobSearchRequest request, Authentication authentication) throws IOException, InterruptedException {
-        JobHuntSummary summary = orchestrator.runOnce(request.prompt(), request.cvPath());
-        userJobService.saveJobsForUser(authentication.getName(), summary.jobsFound());
+        String username = authentication != null ? authentication.getName() : null;
+        List<String> existingUrls = userJobService.getExistingJobUrlsForUser(username);
+        String promptForChatGpt = request.prompt();
+        if (!existingUrls.isEmpty()) {
+            promptForChatGpt = promptForChatGpt + ".  Exclude those url's: " + String.join(", ", existingUrls) + ".";
+        }
+
+        JobHuntSummary summary = orchestrator.runOnce(promptForChatGpt, request.cvPath());
+        userJobService.saveJobsForUser(username, summary.jobsFound());
         return summary;
     }
 
