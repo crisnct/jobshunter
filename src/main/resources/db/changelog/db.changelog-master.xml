@@ -102,4 +102,52 @@
         </insert>
     </changeSet>
 
+    <changeSet id="3-create-user-cv" author="codex">
+        <createTable tableName="user_cv">
+            <column name="user_id" type="BIGINT">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="pk_user_cv"/>
+            </column>
+            <column name="cv" type="BLOB">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addForeignKeyConstraint constraintName="fk_user_cv_user"
+                                 baseTableName="user_cv"
+                                 baseColumnNames="user_id"
+                                 referencedTableName="users"
+                                 referencedColumnNames="id"
+                                 onDelete="CASCADE"/>
+    </changeSet>
+
+    <changeSet id="4-add-filename-to-user-cv" author="codex">
+        <addColumn tableName="user_cv">
+            <column name="filename" type="VARCHAR(255)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="5-user-cv-allow-multiple" author="codex">
+        <dropForeignKeyConstraint baseTableName="user_cv" constraintName="fk_user_cv_user"/>
+        <dropPrimaryKey tableName="user_cv" constraintName="pk_user_cv"/>
+        <addColumn tableName="user_cv">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" primaryKeyName="pk_user_cv" nullable="false"/>
+            </column>
+        </addColumn>
+        <addNotNullConstraint tableName="user_cv" columnName="filename" columnDataType="VARCHAR(255)"/>
+        <addUniqueConstraint tableName="user_cv" columnNames="user_id, filename" constraintName="uc_user_cv_user_filename"/>
+        <createIndex tableName="user_cv" indexName="idx_user_cv_user">
+            <column name="user_id"/>
+        </createIndex>
+        <addForeignKeyConstraint constraintName="fk_user_cv_user"
+                                 baseTableName="user_cv"
+                                 baseColumnNames="user_id"
+                                 referencedTableName="users"
+                                 referencedColumnNames="id"
+                                 onDelete="CASCADE"/>
+    </changeSet>
+
+    <changeSet id="6-user-cv-lonblob" author="codex">
+        <modifyDataType tableName="user_cv" columnName="cv" newDataType="LONGBLOB"/>
+    </changeSet>
+
 </databaseChangeLog>
