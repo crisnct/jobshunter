@@ -6,7 +6,6 @@ import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.jobshunter.config.ApplicationProperties;
 import io.jsonwebtoken.lang.Collections;
 import jakarta.annotation.PostConstruct;
-import jakarta.annotation.PreDestroy;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -14,10 +13,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,9 +47,6 @@ public class ChatGptJobApiClient {
 
   private JsonMapper mapper;
 
-  //key=file hash, value=file id
-  private final Map<String, String> fileIds = new ConcurrentHashMap<>();
-
   @PostConstruct
   public void postInit() {
     mapper = JsonMapper.builder().findAndAddModules().build();
@@ -72,15 +66,34 @@ public class ChatGptJobApiClient {
     return searchWithModel(prompt, cfg, fileId);
   }
 
+  public String uploadFile(Path cvPath) throws IOException {
+    ApplicationProperties.ChatGpt cfg = properties.getChatgpt();
+    if (cfg == null || cfg.getApiKey() == null || cfg.getApiKey().isBlank()) {
+      log.warn("ChatGPT upload requested but configuration or apiKey missing.");
+      return null;
+    }
+    return uploadFile(cfg, cvPath);
+  }
+
+  public boolean deleteFile(String fileId) {
+    if (fileId == null || fileId.isBlank()) {
+      return false;
+    }
+    ApplicationProperties.ChatGpt cfg = properties.getChatgpt();
+    if (cfg == null || cfg.getApiKey() == null || cfg.getApiKey().isBlank()) {
+      log.warn("ChatGPT delete requested but configuration or apiKey missing.");
+      return false;
+    }
+    try {
+      return deleteFile(cfg, fileId) != null;
+    } catch (Exception e) {
+      log.warn("Failed to delete ChatGPT file {}: {}", fileId, e.getMessage());
+      return false;
+    }
+  }
+
   private String uploadFile(ApplicationProperties.ChatGpt cfg, Path cvPath) throws IOException {
-    try (var in = Files.newInputStream(cvPath)) {
-      String sha256 = DigestUtils.sha256Hex(in);
-
-      String existingFileId = fileIds.get(sha256);
-      if (existingFileId != null) {
-        return existingFileId;
-      }
-
+    try (var ignored = Files.newInputStream(cvPath)) {
       HttpHeaders headers = new HttpHeaders();
       headers.set("Authorization", "Bearer " + cfg.getApiKey());
       headers.setContentType(MediaType.MULTIPART_FORM_DATA);
@@ -97,7 +110,6 @@ public class ChatGptJobApiClient {
       }
 
       UploadFileResponse responseMapper = mapper.readValue(response.getBody(), UploadFileResponse.class);
-      fileIds.put(sha256, responseMapper.id());
       return responseMapper.id();
     }
   }
@@ -239,18 +251,6 @@ public class ChatGptJobApiClient {
   @JsonIgnoreProperties(ignoreUnknown = true)
   private record ContentItem(String type, String text) {
 
-  }
-
-  @PreDestroy
-  public void beforeShutdown() {
-    for (String fileId : fileIds.values()) {
-      try {
-        String fileIdDeleted = deleteFile(properties.getChatgpt(), fileId);
-        log.info("File {} deleted from chatgpt", fileIdDeleted);
-      } catch (InterruptedException | URISyntaxException | IOException e) {
-        log.error("File {} can not be deleted from chatgpt", fileId);
-      }
-    }
   }
 
 }

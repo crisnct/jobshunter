@@ -63,6 +63,9 @@ public class User implements UserDetails {
     @Column(name = "verification_token", length = 255)
     private String verificationToken;
 
+    @Column(name = "cv_file_id", length = 255)
+    private String cvFileId;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 

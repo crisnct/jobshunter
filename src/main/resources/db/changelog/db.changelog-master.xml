@@ -102,4 +102,13 @@
         </insert>
     </changeSet>
 
+    <changeSet id="3-add-user-cv-file-id" author="codex">
+        <addColumn tableName="users">
+            <column name="cv_file_id" type="VARCHAR(255)"/>
+        </addColumn>
+        <createIndex tableName="users" indexName="idx_users_cv_file_id">
+            <column name="cv_file_id"/>
+        </createIndex>
+    </changeSet>
+
 </databaseChangeLog>
