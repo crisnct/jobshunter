@@ -1,4 +1,4 @@
-package com.jobshunter.model;
+package com.jobshunter.dto;
 
 import java.util.List;
 

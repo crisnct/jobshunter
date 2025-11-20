@@ -2,7 +2,7 @@ server:
   port: 8081
 
 jobshunter:
-  prompt: "Search for job postings and return only URLs that satisfy all rules: 1) The job description must contain the keyword 'Java'. 2) The job description must contain at least two of the following keywords: contractor, B2B, remote, no travel, spring boot, rest api, postgresql, mysql, gcp, swt, rcp, microservices. 3) Consider only jobs posted in the last 24 hours. 4) Exclude pages that contain any of the following substrings (case-insensitive): 'job expired', 'hybrid', 'full-stack', 'fullstack'. 5) Exclude results from these hosts: linkedin.com, weworkremotely.com, dailyremote.com. 6) Allow a maximum of 3 URLs per host/domain. 7) Do not return URLs that give an HTTP status code in the range 400-599. 8) Sort all valid results in descending order by publication date. 9). Output should contains only URL's separated by empty space . No explanations. No extra text. Use my attached CV to match with job descriptions."
+  prompt: "Search for Java backend job postings that match the rules and attached CV and return the URLs."
   cv-path: "cristian-tone-java-dev.pdf"
   scheduler:
     cron: "0 0 9 * * *"
@@ -11,6 +11,32 @@ jobshunter:
     auth-token: ${TWILIO_AUTH_TOKEN:}
     from-number: ${TWILIO_WHATSAPP_FROM:}
     to-number: ${TWILIO_WHATSAPP_TO:}
+  chatGpt:
+    apiKey: ${CHATGPT5_API_KEY:}
+    model: "gpt-5.1"
+    temperature: 0
+    maxTokens: 24000
+    toolsType: "web_search"
+    systemPrompt: "Follow the user's instructions carefully and prioritize delivering relevant job URLs; ensure URLs are valid and meet the filters from the user prompt; avoid explanations and extra text beyond the required output format; do not fabricate URLs, but feel free to return all real matches you find.Exclude from response the URL's from following platforms: linkedin.com, weworkremotley.com, dailyremote.com, upwork.com."
+
+spring:
+  datasource:
+    url: ${MYSQL_URL:jdbc:mysql://localhost:3306/jobshunter?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&createDatabaseIfNotExist=true}
+    username: ${MYSQL_USER:root}
+    password: ${MYSQL_PASSWORD:root}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: none
+    open-in-view: false
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.xml
+    enabled: ${LIQUIBASE_ENABLED:true}
+
+security:
+  jwt:
+    secret: ${JWT_SECRET:change-me-dev-secret-please-keep-long}
+    expiration-ms: ${JWT_EXPIRATION_MS:86400000}
 
 logging:
   level:

@@ -1,12 +1,14 @@
 package com.jobshunter.controller;
 
-import com.jobshunter.model.JobHuntSummary;
-import com.jobshunter.model.JobSearchRequest;
+import com.jobshunter.dto.JobHuntSummary;
+import com.jobshunter.dto.JobSearchRequest;
 import com.jobshunter.service.JobHuntOrchestrator;
+import com.jobshunter.service.UserJobService;
 import jakarta.validation.Valid;
 import java.io.IOException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -22,10 +24,13 @@ import java.util.Optional;
 public class JobSearchController {
 
     private final JobHuntOrchestrator orchestrator;
+    private final UserJobService userJobService;
 
     @PostMapping("/search")
-    public JobHuntSummary search(@Valid @RequestBody JobSearchRequest request) throws IOException, InterruptedException {
-        return orchestrator.runOnce(request.prompt(), request.cvPath());
+    public JobHuntSummary search(@Valid @RequestBody JobSearchRequest request, Authentication authentication) throws IOException, InterruptedException {
+        JobHuntSummary summary = orchestrator.runOnce(request.prompt(), request.cvPath());
+        userJobService.saveJobsForUser(authentication.getName(), summary.jobsFound());
+        return summary;
     }
 
     @GetMapping("/status")

@@ -1,7 +1,7 @@
 package com.jobshunter.service;
 
 import com.jobshunter.config.ApplicationProperties;
-import com.jobshunter.model.JobHuntSummary;
+import com.jobshunter.dto.JobHuntSummary;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;

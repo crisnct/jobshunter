@@ -1,4 +1,4 @@
-package com.jobshunter.model;
+package com.jobshunter.dto;
 
 import jakarta.validation.constraints.NotBlank;
 
