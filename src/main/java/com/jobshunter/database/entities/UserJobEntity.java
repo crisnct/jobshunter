@@ -23,7 +23,7 @@ import lombok.Setter;
 @Entity
 @Table(name = "user_jobs",
     uniqueConstraints = @UniqueConstraint(name = "uc_user_jobs_user_url", columnNames = {"user_id", "job_url"}))
-public class UserJob {
+public class UserJobEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -32,7 +32,7 @@ public class UserJob {
     @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    private UserEntity user;
 
     @Column(name = "job_url", nullable = false, length = 500)
     private String jobUrl;
@@ -40,7 +40,7 @@ public class UserJob {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
-    public UserJob(User user, String jobUrl) {
+    public UserJobEntity(UserEntity user, String jobUrl) {
         this.user = user;
         this.jobUrl = jobUrl;
     }

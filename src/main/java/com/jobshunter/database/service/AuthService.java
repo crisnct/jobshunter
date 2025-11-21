@@ -1,7 +1,7 @@
 package com.jobshunter.database.service;
 
-import com.jobshunter.database.entities.Role;
-import com.jobshunter.database.entities.User;
+import com.jobshunter.database.entities.RoleEntity;
+import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.repository.RoleRepository;
 import com.jobshunter.database.repository.UserRepository;
 import com.jobshunter.dto.LoginRequest;
@@ -47,10 +47,10 @@ public class AuthService {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email already in use");
     }
 
-    Role userRole = roleRepository.findByName("USER")
+    RoleEntity userRole = roleRepository.findByName("USER")
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Default role USER not configured"));
 
-    User user = new User();
+    UserEntity user = new UserEntity();
     user.setUsername(request.username());
     user.setEmail(request.email());
     user.setPhoneNumber(request.phoneNumber());
@@ -66,7 +66,7 @@ public class AuthService {
   }
 
   public String login(LoginRequest request) {
-    User user = userRepository.findByUsername(request.username())
+    UserEntity user = userRepository.findByUsername(request.username())
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials"));
 
     if (!user.isEmailVerified()) {
@@ -85,7 +85,7 @@ public class AuthService {
 
   @Transactional
   public void verifyEmail(String token) {
-    User user = userRepository.findByVerificationToken(token)
+    UserEntity user = userRepository.findByVerificationToken(token)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid verification token"));
 
     user.setEmailVerified(true);

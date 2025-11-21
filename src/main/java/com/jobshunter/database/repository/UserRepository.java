@@ -1,14 +1,14 @@
 package com.jobshunter.database.repository;
 
-import com.jobshunter.database.entities.User;
+import com.jobshunter.database.entities.UserEntity;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface UserRepository extends JpaRepository<User, Long> {
+public interface UserRepository extends JpaRepository<UserEntity, Long> {
 
-    Optional<User> findByUsername(String username);
+    Optional<UserEntity> findByUsername(String username);
 
-    Optional<User> findByVerificationToken(String verificationToken);
+    Optional<UserEntity> findByVerificationToken(String verificationToken);
 
     boolean existsByUsernameIgnoreCase(String username);
 

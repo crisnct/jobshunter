@@ -38,7 +38,7 @@ import org.springframework.security.core.userdetails.UserDetails;
         @UniqueConstraint(name = "uc_user_email", columnNames = "email"),
         @UniqueConstraint(name = "uc_user_verification_token", columnNames = "verification_token")
     })
-public class User implements UserDetails {
+public class UserEntity implements UserDetails {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -82,11 +82,11 @@ public class User implements UserDetails {
     @JoinTable(name = "user_roles",
         joinColumns = @JoinColumn(name = "user_id"),
         inverseJoinColumns = @JoinColumn(name = "role_id"))
-    private Set<Role> roles = new HashSet<>();
+    private Set<RoleEntity> roles = new HashSet<>();
 
     @JsonIgnore
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<UserJob> jobs = new ArrayList<>();
+    private List<UserJobEntity> jobs = new ArrayList<>();
 
     @PrePersist
     void prePersist() {

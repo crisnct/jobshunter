@@ -1,10 +1,10 @@
 package com.jobshunter.database.repository;
 
-import com.jobshunter.database.entities.Role;
+import com.jobshunter.database.entities.RoleEntity;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface RoleRepository extends JpaRepository<Role, Long> {
+public interface RoleRepository extends JpaRepository<RoleEntity, Long> {
 
-    Optional<Role> findByName(String name);
+    Optional<RoleEntity> findByName(String name);
 }

@@ -110,12 +110,7 @@ public class WhatsAppNotifier {
 
   private boolean trySend(String body, String toNumber, String fromNumber) {
     try {
-      Message.creator(
-              new com.twilio.type.PhoneNumber(toNumber),
-              new com.twilio.type.PhoneNumber(fromNumber),
-              body
-          )
-          .create();
+      Message.creator(new com.twilio.type.PhoneNumber(toNumber), new com.twilio.type.PhoneNumber(fromNumber), body).create();
       log.info("Sent WhatsApp notification (from={}, to={})", fromNumber, toNumber);
       return true;
     } catch (ApiException ex) {

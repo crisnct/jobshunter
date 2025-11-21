@@ -3,7 +3,7 @@ package com.jobshunter.service.application;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.jobshunter.config.ApplicationProperties;
-import com.jobshunter.database.entities.User;
+import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.service.UserDataService;
 import com.jobshunter.dto.JobHuntResponse;
 import com.jobshunter.service.clients.ChatGptApiClient;
@@ -89,7 +89,7 @@ public class JobHuntService {
     log.info("Stop scheduled job hunt.");
   }
 
-  public Optional<JobHuntResponse> searchJobsForUser(boolean considerLastTime, User user, int iterations) {
+  public Optional<JobHuntResponse> searchJobsForUser(boolean considerLastTime, UserEntity user, int iterations) {
     if (considerLastTime
         && user.getTimeInterval() != null
         && user.getTimeInterval() > 0
@@ -110,7 +110,7 @@ public class JobHuntService {
     return Optional.of(response);
   }
 
-  private JobHuntResponse searchJobsForUser(User user, int iterations) {
+  private JobHuntResponse searchJobsForUser(UserEntity user, int iterations) {
     Set<String> jobs = new HashSet<>();
     for (int i = 0; i < iterations; i++) {
       List<String> existingUrls = userDataService.getExistingJobUrlsForUser(user.getUsername());

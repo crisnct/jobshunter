@@ -1,8 +1,7 @@
 package com.jobshunter.controller;
 
-import com.jobshunter.database.entities.Role;
-import com.jobshunter.database.entities.User;
-import com.jobshunter.database.repository.UserRepository;
+import com.jobshunter.database.entities.RoleEntity;
+import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.service.UserDataService;
 import com.jobshunter.dto.JobHuntResponse;
 import com.jobshunter.dto.JobSearchRequest;
@@ -58,7 +57,7 @@ public class UserController {
     if (username == null) {
       return ResponseEntity.badRequest().build();
     } else {
-      Optional<User> userOp = userDataService.getUser(username);
+      Optional<UserEntity> userOp = userDataService.getUser(username);
       if (userOp.isPresent()){
         //noinspection OptionalGetWithoutIsPresent
         JobHuntResponse jobs = jobHuntService.searchJobsForUser(false, userOp.get(), 1).get();
@@ -104,9 +103,9 @@ public class UserController {
     return ResponseEntity.ok(Map.of("message", "Prompt updated"));
   }
 
-  private UserInfoResponse toResponse(User user) {
+  private UserInfoResponse toResponse(UserEntity user) {
     List<String> roles = user.getRoles().stream()
-        .map(Role::getName)
+        .map(RoleEntity::getName)
         .toList();
     return new UserInfoResponse(
         user.getUsername(),
