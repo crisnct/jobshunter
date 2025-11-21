@@ -1,5 +1,7 @@
 package com.jobshunter.service.application;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.jobshunter.config.ApplicationProperties;
 import com.jobshunter.database.entities.User;
 import com.jobshunter.database.service.UserDataService;
@@ -9,6 +11,7 @@ import com.jobshunter.service.clients.WhatsAppNotifier;
 import jakarta.annotation.PostConstruct;
 import java.net.InetAddress;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -51,6 +54,11 @@ public class JobHuntService {
   @Autowired
   private RestTemplate restTemplate;
 
+  @Autowired
+  private JsonMapper mapper;
+
+  private String systemPrompt;
+
   @PostConstruct
   public void init() {
     expiredKeywordsPatterns = new ArrayList<>();
@@ -59,20 +67,29 @@ public class JobHuntService {
           Pattern.CASE_INSENSITIVE));
     }
     expiredKeywordsPatterns = Collections.unmodifiableList(expiredKeywordsPatterns);
+
+    try (var inputStream = getClass().getClassLoader().getResourceAsStream("systemPrompt.txt")) {
+      if (inputStream == null) {
+        throw new IllegalStateException("systemPrompt.txt not found in resources");
+      }
+      systemPrompt = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+    } catch (Exception e) {
+      throw new IllegalStateException("Cannot load system prompt file", e);
+    }
   }
 
   @Scheduled(fixedRateString = "${jobshunter.scheduler.frequency:3600000}")
   public void scheduledRun() throws InterruptedException {
     log.info("Starts scheduled job hunt...");
     for (var user : userDataService.getAllUsers()) {
-      this.searchJobsForUser(true, user)
+      this.searchJobsForUser(true, user, properties.getIterationPerUser())
           .ifPresent(jobs -> this.notifyWhatsupp(user.getUsername(), jobs));
       Thread.sleep(properties.getIterationDelay());
     }
     log.info("Stop scheduled job hunt.");
   }
 
-  public Optional<JobHuntResponse> searchJobsForUser(boolean considerLastTime, User user) {
+  public Optional<JobHuntResponse> searchJobsForUser(boolean considerLastTime, User user, int iterations) {
     if (considerLastTime
         && user.getTimeInterval() != null
         && user.getTimeInterval() > 0
@@ -81,7 +98,7 @@ public class JobHuntService {
       return Optional.empty();
     }
 
-    JobHuntResponse response = this.searchJobsForUser(user.getPrompt(), user.getUsername(), user.getCvFileId());
+    JobHuntResponse response = this.searchJobsForUser(user, iterations);
     user.setLastJobs(LocalDateTime.now());
     userDataService.updateUser(user);
 
@@ -93,21 +110,25 @@ public class JobHuntService {
     return Optional.of(response);
   }
 
-  private JobHuntResponse searchJobsForUser(String prompt, String username, String chatGptFileId) {
+  private JobHuntResponse searchJobsForUser(User user, int iterations) {
     Set<String> jobs = new HashSet<>();
-    for (int i = 0; i < properties.getIterationPerUser(); i++) {
-      List<String> existingUrls = userDataService.getExistingJobUrlsForUser(username);
-      String promptForChatGpt = prompt;
-      if (!existingUrls.isEmpty()) {
-        promptForChatGpt = promptForChatGpt + ".  Do not send me those url's: " + String.join(", ", existingUrls) + ".";
-      }
-      log.info("Searching jobs for user {} iteration {}", username, i);
-      jobs.addAll(chatGptApiClient.search(promptForChatGpt, chatGptFileId));
+    for (int i = 0; i < iterations; i++) {
+      List<String> existingUrls = userDataService.getExistingJobUrlsForUser(user.getUsername());
+      String systemPromptUsed = systemPrompt;
       try {
-        //noinspection BusyWait
-        Thread.sleep(properties.getIterationDelay());
-      } catch (InterruptedException e) {
-        throw new RuntimeException(e);
+        systemPromptUsed += "\n" + mapper.writeValueAsString(existingUrls);
+      } catch (JsonProcessingException e) {
+        log.error("Can not serialize " + existingUrls, e);
+      }
+
+      log.info("Searching jobs for user {} iteration {}", user.getUsername(), i);
+      jobs.addAll(chatGptApiClient.search(systemPromptUsed, user.getPrompt(), user.getCvFileId()));
+      if (iterations > 1) {
+        try {
+          Thread.sleep(properties.getIterationDelay());
+        } catch (InterruptedException e) {
+          throw new RuntimeException(e);
+        }
       }
     }
     return new JobHuntResponse(jobs.stream().filter(this::isValidJob).toList());

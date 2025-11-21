@@ -61,8 +61,8 @@ public class UserController {
       Optional<User> userOp = userDataService.getUser(username);
       if (userOp.isPresent()){
         //noinspection OptionalGetWithoutIsPresent
-        JobHuntResponse jobs = jobHuntService.searchJobsForUser(false, userOp.get()).get();
-        if (!jobs.jobsFound().isEmpty()) {
+        JobHuntResponse jobs = jobHuntService.searchJobsForUser(false, userOp.get(), 1).get();
+        if (notifyOnWhatsupp && !jobs.jobsFound().isEmpty()) {
           whatsAppNotifier.send(jobs.jobsFound(), username);
         }
         return ResponseEntity.ok(jobs);

@@ -42,9 +42,6 @@ public class UserDataService {
   }
 
   public List<String> getExistingJobUrlsForUser(String username) {
-    if (!StringUtils.hasText(username)) {
-      return List.of();
-    }
     return userJobRepository.findJobUrlsByUsernameIgnoreCase(username).stream()
         .filter(StringUtils::hasText)
         .map(String::trim)

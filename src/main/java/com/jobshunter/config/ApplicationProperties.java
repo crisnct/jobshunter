@@ -46,6 +46,5 @@ public class ApplicationProperties {
     private double temperature;
     private int maxTokens;
     private String toolsType;
-    private String systemPrompt;
   }
 }

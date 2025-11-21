@@ -21,7 +21,6 @@ jobshunter:
     temperature: 0
     maxTokens: 2000
     toolsType: "web_search"
-    systemPrompt: "Follow the user's instructions carefully and prioritize delivering relevant job URLs; ensure URLs are valid and meet the filters from the user prompt; avoid explanations and extra text beyond the required output format; do not fabricate URLs, but feel free to return all real matches you find.Exclude from response the URL's from following platforms: weworkremotley.com, dailyremote.com, upwork.com, lucrezi.ro. It's a must to provide omly URL's separated by empty space and not on different lines."
 
 spring:
   datasource:

@@ -4,12 +4,15 @@ import com.jobshunter.database.entities.User;
 import com.jobshunter.database.repository.UserRepository;
 import com.jobshunter.service.clients.ChatGptApiClient;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import lombok.RequiredArgsConstructor;
+import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -19,6 +22,15 @@ import org.springframework.web.server.ResponseStatusException;
 @Slf4j
 @Service
 public class UserCvService {
+
+  private static final long MAX_CV_BYTES = 10 * 1024 * 1024;
+
+  private static final Set<String> ALLOWED_CONTENT_TYPES = Set.of(
+      MediaType.APPLICATION_PDF_VALUE,
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      MediaType.TEXT_PLAIN_VALUE
+  );
 
   @Autowired
   private UserRepository userRepository;
@@ -34,14 +46,14 @@ public class UserCvService {
     if (file == null || file.isEmpty()) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "CV file is required");
     }
+    validateFile(file);
 
     User user = userRepository.findByUsername(username)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
-    //noinspection DataFlowIssue
-    Path tempFile = Path.of(file.getOriginalFilename());
+    Path tempFile = Files.createTempFile("cv-" + username + "-", resolveSafeSuffix(file.getOriginalFilename()));
     try {
-      Files.write(tempFile, file.getBytes());
+      copyWithLimit(file.getInputStream(), tempFile, MAX_CV_BYTES);
 
       if (StringUtils.hasText(user.getCvFileId())) {
         chatGptApiClient.deleteFile(user.getCvFileId());
@@ -77,5 +89,46 @@ public class UserCvService {
       user.setCvFileId(null);
       userRepository.save(user);
     }
+  }
+
+  private void validateFile(MultipartFile file) {
+    String contentType = file.getContentType();
+    if (StringUtils.hasText(contentType) && !ALLOWED_CONTENT_TYPES.contains(contentType.toLowerCase())) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unsupported CV content type");
+    }
+    long size = file.getSize();
+    if (size > MAX_CV_BYTES) {
+      throw new ResponseStatusException(HttpStatus.PAYLOAD_TOO_LARGE, "CV file exceeds 5MB limit");
+    }
+  }
+
+  private void copyWithLimit(InputStream source, Path target, long maxBytes) throws IOException {
+    long copied = 0;
+    byte[] buffer = new byte[8192];
+    try (InputStream in = source; OutputStream out = Files.newOutputStream(target)) {
+      int read;
+      while ((read = in.read(buffer)) != -1) {
+        copied += read;
+        if (copied > maxBytes) {
+          throw new ResponseStatusException(HttpStatus.PAYLOAD_TOO_LARGE, "CV file exceeds 5MB limit");
+        }
+        out.write(buffer, 0, read);
+      }
+    }
+  }
+
+  private String resolveSafeSuffix(String originalFilename) {
+    if (!StringUtils.hasText(originalFilename)) {
+      return ".tmp";
+    }
+    String clean = originalFilename.replace("\\", "/");
+    int lastSlash = clean.lastIndexOf('/');
+    if (lastSlash != -1) {
+      clean = clean.substring(lastSlash + 1);
+    }
+    if (!clean.contains(".")) {
+      clean = clean + ".tmp";
+    }
+    return "-" + clean;
   }
 }

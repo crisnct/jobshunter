@@ -44,14 +44,10 @@ public class ChatGptApiClient {
   @Autowired
   private ApplicationProperties properties;
 
+  @Autowired
   private JsonMapper mapper;
 
-  @PostConstruct
-  public void postInit() {
-    mapper = JsonMapper.builder().findAndAddModules().build();
-  }
-
-  public List<String> search(String prompt, String existingFileId) {
+  public List<String> search(String systemPrompt, String userPrompt, String fileId) {
     ApplicationProperties.ChatGpt cfg = properties.getChatgpt();
     if (cfg == null) {
       return List.of();
@@ -61,7 +57,7 @@ public class ChatGptApiClient {
       return List.of();
     }
 
-    return searchWithModel(prompt, cfg, existingFileId);
+    return searchWithModel(systemPrompt, userPrompt, cfg, fileId);
   }
 
   public String uploadFile(Path cvPath) throws IOException {
@@ -132,7 +128,7 @@ public class ChatGptApiClient {
     return respoanse.id();
   }
 
-  private List<String> searchWithModel(String prompt, ApplicationProperties.ChatGpt cfg, String fileId) {
+  private List<String> searchWithModel(String systemPrompt, String userPrompt, ApplicationProperties.ChatGpt cfg, String fileId) {
     try {
       ChatGptPayload payload = new ChatGptPayload(
           cfg.getModel(),
@@ -140,9 +136,9 @@ public class ChatGptApiClient {
           cfg.getMaxTokens(),
           List.of(new Tools(cfg.getToolsType())),
           List.of(
-              new Input("system", List.of(new InputMessage("input_text", cfg.getSystemPrompt()))),
+              new Input("system", List.of(new InputMessage("input_text", systemPrompt))),
               new Input("user", List.of(
-                  new InputMessage("input_text", prompt),
+                  new InputMessage("input_text", userPrompt),
                   new InputFile(fileId)
               ))
           )
