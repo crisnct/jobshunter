@@ -7,6 +7,7 @@ import com.jobshunter.dto.JobHuntResponse;
 import com.jobshunter.service.clients.ChatGptApiClient;
 import com.jobshunter.service.clients.WhatsAppNotifier;
 import jakarta.annotation.PostConstruct;
+import java.net.InetAddress;
 import java.net.URI;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -119,14 +120,19 @@ public class JobHuntService {
   }
 
   private boolean isValidJob(String jobURL) {
-    log.info("Testing URL {} ", jobURL);
+    URI uri = toSafeHttpUri(jobURL);
+    if (uri == null) {
+      log.warn("Skipping URL {} because it is not a permitted HTTP/HTTPS target", jobURL);
+      return false;
+    }
+    log.info("Testing URL {} ", uri);
     HttpHeaders headers = new HttpHeaders();
     headers.set("User-Agent", "Mozilla/5.0");
     headers.setAccept(List.of(MediaType.TEXT_HTML));
     HttpEntity<Void> entity = new HttpEntity<>(headers);
     try {
       ResponseEntity<String> response = restTemplate.exchange(
-          URI.create(jobURL),
+          uri,
           HttpMethod.GET,
           entity,
           String.class
@@ -142,6 +148,34 @@ public class JobHuntService {
       }
     } catch (Exception e) {
       return false;
+    }
+  }
+
+  private URI toSafeHttpUri(String jobURL) {
+    if (jobURL == null || jobURL.isBlank()) {
+      return null;
+    }
+    try {
+      URI uri = URI.create(jobURL.trim());
+      String scheme = uri.getScheme();
+      if (scheme == null || !(scheme.equalsIgnoreCase("http") || scheme.equalsIgnoreCase("https"))) {
+        return null;
+      }
+      String host = uri.getHost();
+      if (host == null || host.isBlank()) {
+        return null;
+      }
+      InetAddress address = InetAddress.getByName(host);
+      if (address.isAnyLocalAddress()
+          || address.isLoopbackAddress()
+          || address.isLinkLocalAddress()
+          || address.isSiteLocalAddress()
+          || address.isMulticastAddress()) {
+        return null;
+      }
+      return uri;
+    } catch (Exception ex) {
+      return null;
     }
   }
 
