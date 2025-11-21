@@ -1,7 +1,9 @@
-package com.jobshunter.service;
+package com.jobshunter.service.application;
 
 import com.jobshunter.config.ApplicationProperties;
-import com.jobshunter.dto.JobHuntSummary;
+import com.jobshunter.dto.JobHuntResponse;
+import com.jobshunter.service.clients.ChatGptApiClient;
+import com.jobshunter.service.clients.WhatsAppNotifier;
 import jakarta.annotation.PostConstruct;
 import java.net.URI;
 import java.time.LocalDateTime;
@@ -20,7 +22,6 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -32,7 +33,7 @@ public class JobHuntOrchestrator {
   private ApplicationProperties properties;
 
   @Autowired
-  private ChatGptJobApiClient chatGptJobApiClient;
+  private ChatGptApiClient chatGptApiClient;
 
   @Autowired
   private WhatsAppNotifier whatsAppNotifier;
@@ -43,7 +44,7 @@ public class JobHuntOrchestrator {
   @Autowired
   private com.jobshunter.database.repository.UserRepository userRepository;
 
-  private final AtomicReference<JobHuntSummary> lastRun = new AtomicReference<>();
+  private final AtomicReference<JobHuntResponse> lastRun = new AtomicReference<>();
 
   private List<Pattern> expiredKeywordsPatterns;
 
@@ -60,13 +61,6 @@ public class JobHuntOrchestrator {
     expiredKeywordsPatterns = Collections.unmodifiableList(expiredKeywordsPatterns);
   }
 
-  @Scheduled(fixedRateString = "${jobshunter.scheduler.frequency:3600000}")
-  public void scheduledRun() throws InterruptedException {
-    log.info("Starts scheduled job hunt...");
-    searchJobsForAll(true, true);
-    log.info("Stop scheduled job hunt.");
-  }
-
   public void searchJobsForAll(boolean considerLastTime, boolean whatsupNotification) throws InterruptedException {
     LocalDateTime now = LocalDateTime.now();
     for (var user : userRepository.findAll()) {
@@ -78,22 +72,22 @@ public class JobHuntOrchestrator {
         continue;
       }
 
-      JobHuntSummary jobs = this.runInternal(user.getPrompt(), user.getUsername(), user.getCvFileId());
+      JobHuntResponse response = this.runInternal(user.getPrompt(), user.getUsername(), user.getCvFileId());
       user.setLastJobs(LocalDateTime.now());
       userRepository.save(user);
-      userJobService.saveJobsForUser(user.getUsername(), jobs.jobsFound());
+      userJobService.saveJobsForUser(user.getUsername(), response.jobsFound());
       if (whatsupNotification) {
-        this.notifyWhatsupp(user.getUsername(), jobs);
+        this.notifyWhatsupp(user.getUsername(), response);
       }
       Thread.sleep(properties.getIterationDelay());
     }
   }
 
-  public JobHuntSummary lastRun() {
+  public JobHuntResponse lastRun() {
     return lastRun.get();
   }
 
-  private JobHuntSummary runInternal(String prompt, String username, String chatGptFileId) {
+  private JobHuntResponse runInternal(String prompt, String username, String chatGptFileId) {
     Set<String> jobs = new HashSet<>();
     for (int i = 0; i < properties.getIterationPerUser(); i++) {
       List<String> existingUrls = userJobService.getExistingJobUrlsForUser(username);
@@ -102,19 +96,19 @@ public class JobHuntOrchestrator {
         promptForChatGpt = promptForChatGpt + ".  Exclude those url's: " + String.join(", ", existingUrls) + ".";
       }
       log.info("Searching jobs for user {} iteration {}", username, i);
-      jobs.addAll(chatGptJobApiClient.search(promptForChatGpt, chatGptFileId));
+      jobs.addAll(chatGptApiClient.search(promptForChatGpt, chatGptFileId));
       try {
         Thread.sleep(properties.getIterationDelay());
       } catch (InterruptedException e) {
         throw new RuntimeException(e);
       }
     }
-    JobHuntSummary summary = new JobHuntSummary(jobs.stream().filter(this::isValidJob).toList());
+    JobHuntResponse summary = new JobHuntResponse(jobs.stream().filter(this::isValidJob).toList());
     lastRun.set(summary);
     return summary;
   }
 
-  private void notifyWhatsupp(String username, JobHuntSummary summary) {
+  private void notifyWhatsupp(String username, JobHuntResponse summary) {
     if (!summary.jobsFound().isEmpty()) {
       whatsAppNotifier.send(summary.jobsFound(), username);
     }

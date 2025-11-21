@@ -1,4 +1,4 @@
-package com.jobshunter.service;
+package com.jobshunter.service.clients;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -30,7 +30,7 @@ import org.springframework.web.client.RestTemplate;
 
 @Slf4j
 @Component
-public class ChatGptJobApiClient {
+public class ChatGptApiClient {
 
   private static final URI DEFAULT_URI = URI.create("https://api.openai.com/v1/responses");
 

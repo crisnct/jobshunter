@@ -1,4 +1,4 @@
-package com.jobshunter.service.authentication;
+package com.jobshunter.service.application.authentication;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;

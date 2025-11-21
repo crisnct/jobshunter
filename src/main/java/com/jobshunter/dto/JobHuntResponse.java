@@ -2,6 +2,6 @@ package com.jobshunter.dto;
 
 import java.util.List;
 
-public record JobHuntSummary(List<String> jobsFound) {
+public record JobHuntResponse(List<String> jobsFound) {
 
 }

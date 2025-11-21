@@ -10,8 +10,6 @@ public interface UserJobRepository extends JpaRepository<UserJob, Long> {
 
     boolean existsByUserIdAndJobUrl(Long userId, String jobUrl);
 
-    List<UserJob> findByUserId(Long userId);
-
     @Query("select uj.jobUrl from UserJob uj where lower(uj.user.username) = lower(:username)")
     List<String> findJobUrlsByUsernameIgnoreCase(@Param("username") String username);
 }

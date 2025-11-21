@@ -1,4 +1,4 @@
-package com.jobshunter.service;
+package com.jobshunter.service.clients;
 
 import com.jobshunter.config.ApplicationProperties;
 import com.jobshunter.database.repository.UserRepository;
@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -19,8 +20,12 @@ import org.springframework.util.StringUtils;
 @RequiredArgsConstructor
 public class WhatsAppNotifier {
 
-  private final ApplicationProperties properties;
-  private final UserRepository userRepository;
+  @Autowired
+  private ApplicationProperties properties;
+
+  @Autowired
+  private UserRepository userRepository;
+
   private final AtomicBoolean initialized = new AtomicBoolean(false);
 
   public void send(List<String> jobsURLs, String username) {
@@ -85,7 +90,7 @@ public class WhatsAppNotifier {
       return null;
     }
     return userRepository.findByUsername(username)
-        .map(user -> StringUtils.trimWhitespace(user.getPhoneNumber()))
+        .map(user -> StringUtils.trimAllWhitespace(user.getPhoneNumber()))
         .filter(StringUtils::hasText)
         .orElse(null);
   }
@@ -94,7 +99,7 @@ public class WhatsAppNotifier {
     if (!StringUtils.hasText(raw)) {
       return null;
     }
-    String trimmed = StringUtils.trimWhitespace(raw);
+    String trimmed = StringUtils.trimAllWhitespace(raw);
     // Twilio requires the whatsapp: prefix to send WhatsApp instead of SMS
     if (trimmed.toLowerCase().startsWith("whatsapp:")) {
       return trimmed;
@@ -124,7 +129,7 @@ public class WhatsAppNotifier {
     for (int i = 0; i < jobs.size(); i++) {
       builder
           .append('\n')
-          .append((i+1))
+          .append((i + 1))
           .append(". ")
           .append(jobs.get(i));
     }

@@ -1,13 +1,14 @@
-package com.jobshunter.service;
+package com.jobshunter.service.application;
 
 import com.jobshunter.database.entities.User;
 import com.jobshunter.database.repository.UserRepository;
-import java.io.File;
+import com.jobshunter.service.clients.ChatGptApiClient;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,8 +21,11 @@ import org.springframework.web.server.ResponseStatusException;
 @RequiredArgsConstructor
 public class UserCvUploadService {
 
-  private final UserRepository userRepository;
-  private final ChatGptJobApiClient chatGptJobApiClient;
+  @Autowired
+  private UserRepository userRepository;
+
+  @Autowired
+  private ChatGptApiClient chatGptApiClient;
 
   @Transactional
   public String uploadUserCv(String username, MultipartFile file) throws IOException {
@@ -35,15 +39,16 @@ public class UserCvUploadService {
     User user = userRepository.findByUsername(username)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
+    //noinspection DataFlowIssue
     Path tempFile = Path.of(file.getOriginalFilename());
     try {
       Files.write(tempFile, file.getBytes());
 
       if (StringUtils.hasText(user.getCvFileId())) {
-        chatGptJobApiClient.deleteFile(user.getCvFileId());
+        chatGptApiClient.deleteFile(user.getCvFileId());
       }
 
-      String uploadedFileId = chatGptJobApiClient.uploadFile(tempFile);
+      String uploadedFileId = chatGptApiClient.uploadFile(tempFile);
       if (!StringUtils.hasText(uploadedFileId)) {
         throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Failed to upload CV to ChatGPT");
       }
@@ -69,7 +74,7 @@ public class UserCvUploadService {
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
     if (StringUtils.hasText(user.getCvFileId())) {
-      chatGptJobApiClient.deleteFile(user.getCvFileId());
+      chatGptApiClient.deleteFile(user.getCvFileId());
       user.setCvFileId(null);
       userRepository.save(user);
     }
