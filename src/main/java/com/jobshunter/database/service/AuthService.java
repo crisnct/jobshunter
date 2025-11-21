@@ -1,4 +1,4 @@
-package com.jobshunter.service.application.authentication;
+package com.jobshunter.database.service;
 
 import com.jobshunter.database.entities.Role;
 import com.jobshunter.database.entities.User;
@@ -6,8 +6,8 @@ import com.jobshunter.database.repository.RoleRepository;
 import com.jobshunter.database.repository.UserRepository;
 import com.jobshunter.dto.LoginRequest;
 import com.jobshunter.dto.RegisterRequest;
+import com.jobshunter.service.application.authentication.JwtService;
 import java.util.UUID;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -21,7 +21,6 @@ import org.springframework.web.server.ResponseStatusException;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class AuthService {
 
   @Autowired

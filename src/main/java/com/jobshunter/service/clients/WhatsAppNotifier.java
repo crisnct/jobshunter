@@ -2,6 +2,7 @@ package com.jobshunter.service.clients;
 
 import com.jobshunter.config.ApplicationProperties;
 import com.jobshunter.database.repository.UserRepository;
+import com.jobshunter.database.service.UserDataService;
 import com.twilio.Twilio;
 import com.twilio.exception.ApiException;
 import com.twilio.rest.api.v2010.account.Message;
@@ -24,7 +25,7 @@ public class WhatsAppNotifier {
   private ApplicationProperties properties;
 
   @Autowired
-  private UserRepository userRepository;
+  private UserDataService userDataService;
 
   private final AtomicBoolean initialized = new AtomicBoolean(false);
 
@@ -89,7 +90,7 @@ public class WhatsAppNotifier {
     if (!StringUtils.hasText(username)) {
       return null;
     }
-    return userRepository.findByUsername(username)
+    return userDataService.getUser(username)
         .map(user -> StringUtils.trimAllWhitespace(user.getPhoneNumber()))
         .filter(StringUtils::hasText)
         .orElse(null);
@@ -133,6 +134,8 @@ public class WhatsAppNotifier {
           .append(". ")
           .append(jobs.get(i));
     }
+    builder.append("\n------------------\n");
+    builder.append("Daca vrei sa nu mai primesti notificari trimite un email cu numarul tau de telefon la adresa hello@cristiantone.me");
     return builder.toString();
   }
 }

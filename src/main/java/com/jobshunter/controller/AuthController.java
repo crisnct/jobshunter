@@ -4,7 +4,7 @@ import com.jobshunter.dto.AuthResponse;
 import com.jobshunter.dto.LoginRequest;
 import com.jobshunter.dto.RegisterRequest;
 import com.jobshunter.dto.RegistrationResponse;
-import com.jobshunter.service.application.authentication.AuthService;
+import com.jobshunter.database.service.AuthService;
 import jakarta.validation.Valid;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;

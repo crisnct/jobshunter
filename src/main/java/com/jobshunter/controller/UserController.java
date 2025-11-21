@@ -3,11 +3,16 @@ package com.jobshunter.controller;
 import com.jobshunter.database.entities.Role;
 import com.jobshunter.database.entities.User;
 import com.jobshunter.database.repository.UserRepository;
+import com.jobshunter.database.service.UserDataService;
+import com.jobshunter.dto.JobHuntResponse;
 import com.jobshunter.dto.JobSearchRequest;
 import com.jobshunter.dto.UserInfoResponse;
+import com.jobshunter.service.application.JobHuntService;
+import com.jobshunter.service.clients.WhatsAppNotifier;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -26,16 +31,45 @@ import org.springframework.web.bind.annotation.RestController;
 public class UserController {
 
   @Autowired
-  private UserRepository userRepository;
+  private UserDataService userDataService;
+
+  @Autowired
+  private JobHuntService jobHuntService;
+
+  @Autowired
+  private WhatsAppNotifier whatsAppNotifier;
 
   @GetMapping("/me")
   public ResponseEntity<?> me(Authentication authentication) {
     if (authentication == null || authentication.getName() == null) {
       return ResponseEntity.status(401).body(Map.of("error", "Unauthorized"));
     }
-    return userRepository.findByUsername(authentication.getName())
+    return userDataService.getUser(authentication.getName())
         .<ResponseEntity<?>>map(user -> ResponseEntity.ok(toResponse(user)))
         .orElseGet(() -> ResponseEntity.status(404).body(Map.of("error", "User not found")));
+  }
+
+  @PostMapping("/search")
+  public ResponseEntity<JobHuntResponse> search(
+      @RequestParam(name = "notifyOnWhatsupp", required = false, defaultValue = "false") Boolean notifyOnWhatsupp,
+      Authentication authentication
+  ) {
+    String username = authentication != null ? authentication.getName() : null;
+    if (username == null) {
+      return ResponseEntity.badRequest().build();
+    } else {
+      Optional<User> userOp = userDataService.getUser(username);
+      if (userOp.isPresent()){
+        //noinspection OptionalGetWithoutIsPresent
+        JobHuntResponse jobs = jobHuntService.searchJobsForUser(false, userOp.get()).get();
+        if (!jobs.jobsFound().isEmpty()) {
+          whatsAppNotifier.send(jobs.jobsFound(), username);
+        }
+        return ResponseEntity.ok(jobs);
+      } else {
+        return ResponseEntity.badRequest().build();
+      }
+    }
   }
 
   @PatchMapping("/time-interval")
@@ -47,9 +81,9 @@ public class UserController {
     if (username == null) {
       return ResponseEntity.status(401).body(Map.of("error", "Unauthorized"));
     }
-    userRepository.findByUsername(username).ifPresent(user -> {
+    userDataService.getUser(username).ifPresent(user -> {
       user.setTimeInterval(minutes);
-      userRepository.save(user);
+      userDataService.updateUser(user);
     });
     return ResponseEntity.ok(Map.of("message", "Time interval updated"));
   }
@@ -63,9 +97,9 @@ public class UserController {
     if (request == null || request.prompt().isBlank()) {
       return ResponseEntity.badRequest().body(Map.of("error", "prompt must not be blank"));
     }
-    userRepository.findByUsername(username).ifPresent(user -> {
+    userDataService.getUser(username).ifPresent(user -> {
       user.setPrompt(request.prompt().trim());
-      userRepository.save(user);
+      userDataService.updateUser(user);
     });
     return ResponseEntity.ok(Map.of("message", "Prompt updated"));
   }

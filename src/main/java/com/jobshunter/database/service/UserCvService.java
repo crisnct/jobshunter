@@ -1,4 +1,4 @@
-package com.jobshunter.service.application;
+package com.jobshunter.database.service;
 
 import com.jobshunter.database.entities.User;
 import com.jobshunter.database.repository.UserRepository;
@@ -18,8 +18,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
-public class UserCvUploadService {
+public class UserCvService {
 
   @Autowired
   private UserRepository userRepository;

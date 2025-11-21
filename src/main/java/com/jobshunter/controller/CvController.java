@@ -1,6 +1,6 @@
 package com.jobshunter.controller;
 
-import com.jobshunter.service.application.UserCvUploadService;
+import com.jobshunter.database.service.UserCvService;
 import java.io.IOException;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
@@ -20,19 +20,19 @@ import org.springframework.web.multipart.MultipartFile;
 public class CvController {
 
   @Autowired
-  private UserCvUploadService userCvUploadService;
+  private UserCvService userCvService;
 
   @PostMapping(value = "/upload", consumes = "multipart/form-data")
   public ResponseEntity<?> uploadCvToChatGpt(@RequestParam("file") MultipartFile file, Authentication authentication) throws IOException {
     String username = authentication != null ? authentication.getName() : null;
-    String fileId = userCvUploadService.uploadUserCv(username, file);
+    String fileId = userCvService.uploadUserCv(username, file);
     return ResponseEntity.ok(Map.of("message", "CV uploaded to ChatGPT successfully", "fileId", fileId));
   }
 
   @DeleteMapping
   public ResponseEntity<?> deleteCv(Authentication authentication) {
     String username = authentication != null ? authentication.getName() : null;
-    userCvUploadService.deleteUserCv(username);
+    userCvService.deleteUserCv(username);
     return ResponseEntity.ok(Map.of("message", "CV deleted successfully"));
   }
 }
