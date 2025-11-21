@@ -66,6 +66,15 @@ public class User implements UserDetails {
     @Column(name = "cv_file_id", length = 255)
     private String cvFileId;
 
+    @Column(name = "last_jobs")
+    private LocalDateTime lastJobs;
+
+    @Column(name = "time_interval")
+    private Integer timeInterval;
+
+    @Column(name = "prompt", length = 500)
+    private String prompt;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 

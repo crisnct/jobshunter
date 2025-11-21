@@ -2,41 +2,91 @@ package com.jobshunter.service;
 
 import com.jobshunter.config.ApplicationProperties;
 import com.jobshunter.dto.JobHuntSummary;
-import java.io.IOException;
-import java.nio.file.Path;
+import jakarta.annotation.PostConstruct;
+import java.net.URI;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 @Slf4j
 @Service
 public class JobHuntOrchestrator {
 
-  private final ChatGptJobApiClient chatGptJobApiClient;
-  private final WhatsAppNotifier whatsAppNotifier;
+  @Autowired
+  private ApplicationProperties properties;
 
-  private final AtomicReference<String> promptRef;
+  @Autowired
+  private ChatGptJobApiClient chatGptJobApiClient;
+
+  @Autowired
+  private WhatsAppNotifier whatsAppNotifier;
+
+  @Autowired
+  private UserJobService userJobService;
+
+  @Autowired
+  private com.jobshunter.database.repository.UserRepository userRepository;
+
   private final AtomicReference<JobHuntSummary> lastRun = new AtomicReference<>();
 
-  public JobHuntOrchestrator(ApplicationProperties properties,
-      ChatGptJobApiClient chatGptJobApiClient,
-      WhatsAppNotifier whatsAppNotifier) {
-    this.chatGptJobApiClient = chatGptJobApiClient;
-    this.whatsAppNotifier = whatsAppNotifier;
-    this.promptRef = new AtomicReference<>(properties.getPrompt());
+  private List<Pattern> expiredKeywordsPatterns;
+
+  @Autowired
+  private RestTemplate restTemplate;
+
+  @PostConstruct
+  public void init() {
+    expiredKeywordsPatterns = new ArrayList<>();
+    for (String keyword : properties.getExpiredKeywords().split(",")) {
+      expiredKeywordsPatterns.add(Pattern.compile(">[A-Za-z0-9 .,!?\\-()]*" + Pattern.quote(keyword) + "[A-Za-z0-9 .,!?\\-()]*<",
+          Pattern.CASE_INSENSITIVE));
+    }
+    expiredKeywordsPatterns = Collections.unmodifiableList(expiredKeywordsPatterns);
   }
 
-  @Scheduled(cron = "${jobshunter.scheduler.cron:0 0 9 * * *}")
-  public void scheduledRun() throws IOException, InterruptedException {
-    log.info("Running scheduled job hunt...");
-    runInternal(promptRef.get(), null, null);
+  @Scheduled(fixedRateString = "${jobshunter.scheduler.frequency:3600000}")
+  public void scheduledRun() throws InterruptedException {
+    log.info("Starts scheduled job hunt...");
+    searchJobsForAll(true, true);
+    log.info("Stop scheduled job hunt.");
   }
 
-  public JobHuntSummary runOnce(String prompt, String username, String chatGptFileId) throws IOException {
-    promptRef.set(prompt);
-    return runInternal(prompt, username, chatGptFileId);
+  public void searchJobsForAll(boolean considerLastTime, boolean whatsupNotification) throws InterruptedException {
+    LocalDateTime now = LocalDateTime.now();
+    for (var user : userRepository.findAll()) {
+      if (considerLastTime
+          && user.getTimeInterval() != null
+          && user.getTimeInterval() > 0
+          && user.getLastJobs() != null
+          && user.getLastJobs().plusMinutes(user.getTimeInterval()).isAfter(now)) {
+        continue;
+      }
+
+      JobHuntSummary jobs = this.runInternal(user.getPrompt(), user.getUsername(), user.getCvFileId());
+      user.setLastJobs(LocalDateTime.now());
+      userRepository.save(user);
+      userJobService.saveJobsForUser(user.getUsername(), jobs.jobsFound());
+      if (whatsupNotification) {
+        this.notifyWhatsupp(user.getUsername(), jobs);
+      }
+      Thread.sleep(properties.getIterationDelay());
+    }
   }
 
   public JobHuntSummary lastRun() {
@@ -44,10 +94,57 @@ public class JobHuntOrchestrator {
   }
 
   private JobHuntSummary runInternal(String prompt, String username, String chatGptFileId) {
-    List<String> jobs = chatGptJobApiClient.search(prompt, chatGptFileId);
-    whatsAppNotifier.send(jobs, username);
-    JobHuntSummary summary = new JobHuntSummary(jobs);
+    Set<String> jobs = new HashSet<>();
+    for (int i = 0; i < properties.getIterationPerUser(); i++) {
+      List<String> existingUrls = userJobService.getExistingJobUrlsForUser(username);
+      String promptForChatGpt = prompt;
+      if (!existingUrls.isEmpty()) {
+        promptForChatGpt = promptForChatGpt + ".  Exclude those url's: " + String.join(", ", existingUrls) + ".";
+      }
+      log.info("Searching jobs for user {} iteration {}", username, i);
+      jobs.addAll(chatGptJobApiClient.search(promptForChatGpt, chatGptFileId));
+      try {
+        Thread.sleep(properties.getIterationDelay());
+      } catch (InterruptedException e) {
+        throw new RuntimeException(e);
+      }
+    }
+    JobHuntSummary summary = new JobHuntSummary(jobs.stream().filter(this::isValidJob).toList());
     lastRun.set(summary);
     return summary;
   }
+
+  private void notifyWhatsupp(String username, JobHuntSummary summary) {
+    if (!summary.jobsFound().isEmpty()) {
+      whatsAppNotifier.send(summary.jobsFound(), username);
+    }
+  }
+
+  private boolean isValidJob(String jobURL) {
+    log.info("Testing URL {} ", jobURL);
+    HttpHeaders headers = new HttpHeaders();
+    headers.set("User-Agent", "Mozilla/5.0");
+    headers.setAccept(List.of(MediaType.TEXT_HTML));
+    HttpEntity<Void> entity = new HttpEntity<>(headers);
+    try {
+      ResponseEntity<String> response = restTemplate.exchange(
+          URI.create(jobURL),
+          HttpMethod.GET,
+          entity,
+          String.class
+      );
+
+      if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
+        String html = response.getBody();
+        boolean isExpired = expiredKeywordsPatterns.stream().anyMatch(pattern -> pattern.matcher(html).find());
+        System.out.println("Expired: " + isExpired + " " + jobURL);
+        return !isExpired;
+      } else {
+        return false;
+      }
+    } catch (Exception e) {
+      return false;
+    }
+  }
+
 }

@@ -2,22 +2,26 @@ server:
   port: 8081
 
 jobshunter:
-  prompt: "Search for Java backend job postings that match the rules and attached CV and return the URLs."
-  cv-path: "cristian-tone-java-dev.pdf"
+  expiredKeywords: expired,no longer exists
+  iterationPerUser: 5
+  iterationDelay: 30000
+
   scheduler:
-    cron: "0 0 9 * * *"
+    frequency: 3600000
+
   whatsapp:
     account-sid: ${TWILIO_ACCOUNT_SID:}
     auth-token: ${TWILIO_AUTH_TOKEN:}
     from-number: ${TWILIO_WHATSAPP_FROM:}
     to-number: ${TWILIO_WHATSAPP_TO:}
+
   chatGpt:
     apiKey: ${CHATGPT5_API_KEY:}
     model: "gpt-5.1"
     temperature: 0
-    maxTokens: 24000
+    maxTokens: 2000
     toolsType: "web_search"
-    systemPrompt: "Follow the user's instructions carefully and prioritize delivering relevant job URLs; ensure URLs are valid and meet the filters from the user prompt; avoid explanations and extra text beyond the required output format; do not fabricate URLs, but feel free to return all real matches you find.Exclude from response the URL's from following platforms: linkedin.com, weworkremotley.com, dailyremote.com, upwork.com. It's a must to provide omly URL's separated by empty space and not on different lines."
+    systemPrompt: "Follow the user's instructions carefully and prioritize delivering relevant job URLs; ensure URLs are valid and meet the filters from the user prompt; avoid explanations and extra text beyond the required output format; do not fabricate URLs, but feel free to return all real matches you find.Exclude from response the URL's from following platforms: weworkremotley.com, dailyremote.com, upwork.com, lucrezi.ro. It's a must to provide omly URL's separated by empty space and not on different lines."
 
 spring:
   datasource:
