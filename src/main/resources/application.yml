@@ -13,6 +13,7 @@ jobshunter:
     account-sid: ${TWILIO_ACCOUNT_SID:}
     auth-token: ${TWILIO_AUTH_TOKEN:}
     from-number: ${TWILIO_WHATSAPP_FROM:}
+    jobsNotifyMessageSID: ${TWILIO_JOBS_NOTIFY_MESSAGE_SID:}
 
   chatGpt:
     apiKey: ${CHATGPT5_API_KEY:}

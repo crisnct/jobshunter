@@ -1,5 +1,7 @@
 package com.jobshunter.service.clients;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.jobshunter.config.ApplicationProperties;
 import com.jobshunter.database.service.UserDataService;
 import com.jobshunter.service.application.UserMessagesFactory;
@@ -30,6 +32,9 @@ public class WhatsAppNotifier {
 
   @Autowired
   private UserMessagesFactory userMessagesFactory;
+
+  @Autowired
+  private JsonMapper mapper;
 
   private static final DateTimeFormatter JOB_TIMESTAMP_FORMAT = DateTimeFormatter.ofPattern("dd-MMMM-yyyy | HH:mm");
 
@@ -70,7 +75,6 @@ public class WhatsAppNotifier {
       log.warn("Skipping WhatsApp sender {} -> {} because credentials or number format are invalid.", fromNumber, toNumber);
       return;
     }
-    initializeTwilio();
     if (trySend(toNumber, fromNumber, formatJobs(jobsURLs))) {
       return;
     }
@@ -114,19 +118,16 @@ public class WhatsAppNotifier {
 
   private boolean trySend(String toNumber, String fromNumber, String jobs) {
     try {
-      //Message.creator(new com.twilio.type.PhoneNumber(toNumber), new com.twilio.type.PhoneNumber(fromNumber), body).create();
-
       String timestamp = LocalDateTime.now().format(JOB_TIMESTAMP_FORMAT);
-      Message message = Message.creator(
-              new com.twilio.type.PhoneNumber(toNumber),
-              new com.twilio.type.PhoneNumber(fromNumber), (String)null)
-          .setContentSid("HX6cb8f48ccb191d85060986770ef7e9aa")
-          .setContentVariables("{\"timestamp\": \"" + timestamp + "\", \"jobs_links1\": \""+jobs+"\"}")
+      String contentVars = mapper.writeValueAsString(Map.of("timestamp", timestamp, "jobs_links1", jobs));
+      Message message = Message
+          .creator(new com.twilio.type.PhoneNumber(toNumber), new com.twilio.type.PhoneNumber(fromNumber), (String)null)
+          .setContentSid(properties.getWhatsapp().getJobsNotifyMessageSID())
+          .setContentVariables(contentVars)
           .create();
-
-      log.info("Sent WhatsApp notification (from={}, to={})", fromNumber, toNumber);
+      log.info("Sent WhatsApp notification (from={}, to={}, SID={})", fromNumber, toNumber, message.getSid());
       return true;
-    } catch (ApiException ex) {
+    } catch (ApiException | JsonProcessingException ex) {
       log.error("Failed to send WhatsApp message via Twilio from {} to {}: {}", fromNumber, toNumber, ex.getMessage());
       return false;
     }
