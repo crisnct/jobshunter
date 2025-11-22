@@ -71,7 +71,7 @@ public class WhatsAppNotifier {
       return;
     }
     initializeTwilio();
-    if (trySend(body, toNumber, fromNumber)) {
+    if (trySend(toNumber, fromNumber, formatJobs(jobsURLs))) {
       return;
     }
 
@@ -112,9 +112,18 @@ public class WhatsAppNotifier {
     return "whatsapp:" + trimmed;
   }
 
-  private boolean trySend(String body, String toNumber, String fromNumber) {
+  private boolean trySend(String toNumber, String fromNumber, String jobs) {
     try {
-      Message.creator(new com.twilio.type.PhoneNumber(toNumber), new com.twilio.type.PhoneNumber(fromNumber), body).create();
+      //Message.creator(new com.twilio.type.PhoneNumber(toNumber), new com.twilio.type.PhoneNumber(fromNumber), body).create();
+
+      String timestamp = LocalDateTime.now().format(JOB_TIMESTAMP_FORMAT);
+      Message message = Message.creator(
+              new com.twilio.type.PhoneNumber(toNumber),
+              new com.twilio.type.PhoneNumber(fromNumber), (String)null)
+          .setContentSid("HX6cb8f48ccb191d85060986770ef7e9aa")
+          .setContentVariables("{\"timestamp\": \"" + timestamp + "\", \"jobs_links1\": \""+jobs+"\"}")
+          .create();
+
       log.info("Sent WhatsApp notification (from={}, to={})", fromNumber, toNumber);
       return true;
     } catch (ApiException ex) {

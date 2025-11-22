@@ -162,12 +162,14 @@ public class JobHuntService {
       if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
         String html = response.getBody();
         boolean isExpired = expiredKeywordsPatterns.stream().anyMatch(pattern -> pattern.matcher(html).find());
-        System.out.println("Expired: " + isExpired + " " + jobURL);
+        log.info("Expired: {} {}", isExpired, jobURL);
         return !isExpired;
       } else {
+        log.info("Expired: true {}", jobURL);
         return false;
       }
     } catch (Exception e) {
+      log.info("Expired: true {} {}", jobURL, e.getMessage());
       return false;
     }
   }
