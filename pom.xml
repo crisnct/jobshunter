@@ -144,6 +144,7 @@
                 <includes>
                     <include>**/*</include>
                     <include>systemPrompt.txt</include>
+                    <include>messageTemplates/**</include>
                 </includes>
             </resource>
         </resources>

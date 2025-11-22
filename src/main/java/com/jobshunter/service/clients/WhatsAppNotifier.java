@@ -1,15 +1,16 @@
 package com.jobshunter.service.clients;
 
 import com.jobshunter.config.ApplicationProperties;
-import com.jobshunter.database.repository.UserRepository;
 import com.jobshunter.database.service.UserDataService;
+import com.jobshunter.service.application.UserMessagesFactory;
 import com.twilio.Twilio;
 import com.twilio.exception.ApiException;
 import com.twilio.rest.api.v2010.account.Message;
+import jakarta.annotation.PostConstruct;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,7 +28,15 @@ public class WhatsAppNotifier {
   @Autowired
   private UserDataService userDataService;
 
-  private final AtomicBoolean initialized = new AtomicBoolean(false);
+  @Autowired
+  private UserMessagesFactory userMessagesFactory;
+
+  private static final DateTimeFormatter JOB_TIMESTAMP_FORMAT = DateTimeFormatter.ofPattern("dd-MMMM-yyyy | HH:mm");
+
+  @PostConstruct
+  private void initializeTwilio() {
+    Twilio.init(properties.getWhatsapp().getAccountSid(), properties.getWhatsapp().getAuthToken());
+  }
 
   public void send(List<String> jobsURLs, String username) {
     if (jobsURLs.isEmpty()) {
@@ -48,7 +57,7 @@ public class WhatsAppNotifier {
     }
 
     String fromNumber = formatWhatsapp(properties.getWhatsapp().getFromNumber());
-    String body = buildMessage(jobsURLs);
+    String body = this.buildMessage(jobsURLs);
 
     if (!StringUtils.hasText(fromNumber)) {
       return;
@@ -80,11 +89,6 @@ public class WhatsAppNotifier {
         && toNumber.toLowerCase().startsWith("whatsapp:");
   }
 
-  private void initializeTwilio() {
-    if (initialized.compareAndSet(false, true)) {
-      Twilio.init(properties.getWhatsapp().getAccountSid(), properties.getWhatsapp().getAuthToken());
-    }
-  }
 
   private String resolveUserPhone(String username) {
     if (!StringUtils.hasText(username)) {
@@ -120,17 +124,25 @@ public class WhatsAppNotifier {
   }
 
   private String buildMessage(List<String> jobs) {
-    String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MMMM-dd HH:mm"));
-    StringBuilder builder = new StringBuilder("Jobshunter ").append(timestamp).append(":");
+    return userMessagesFactory.build(
+        UserMessagesFactory.MessageTemplate.JOBS_NOTIFY,
+        Map.of(
+            "timestamp", LocalDateTime.now().format(JOB_TIMESTAMP_FORMAT),
+            "jobs_links", formatJobs(jobs)
+        )
+    );
+  }
+
+  private String formatJobs(List<String> jobs) {
+    StringBuilder builder = new StringBuilder();
     for (int i = 0; i < jobs.size(); i++) {
-      builder
-          .append('\n')
-          .append((i + 1))
+      if (i > 0) {
+        builder.append('\n');
+      }
+      builder.append(i + 1)
           .append(". ")
           .append(jobs.get(i));
     }
-    builder.append("\n------------------\n");
-    builder.append("Daca vrei sa nu mai primesti notificari trimite un email cu numarul tau de telefon la adresa hello@cristiantone.me");
     return builder.toString();
   }
 }

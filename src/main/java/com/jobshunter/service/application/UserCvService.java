@@ -1,4 +1,4 @@
-package com.jobshunter.database.service;
+package com.jobshunter.service.application;
 
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.repository.UserRepository;

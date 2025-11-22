@@ -1,0 +1,4 @@
+Jobshunter {{timestamp}}:
+{{jobs_links}}
+------------------
+Daca vrei sa nu mai primesti notificari, trimite-mi un email cu numarul tau de telefon la adresa hello@cristiantone.me

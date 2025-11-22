@@ -1,6 +1,6 @@
 package com.jobshunter.controller;
 
-import com.jobshunter.database.service.UserCvService;
+import com.jobshunter.service.application.UserCvService;
 import java.io.IOException;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
