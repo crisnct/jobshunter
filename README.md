@@ -1,84 +1,143 @@
 # jobshunter
 
-Aplicatie Java 21+ (Spring Boot) care iti citeste CV-ul dintr-un PDF, ruleaza zilnic cautari automate de joburi pe internet si iti trimite rezultatele pe WhatsApp.
+Java 21 + Spring Boot service that keeps a user profile (prompt, CV, phone, time interval), searches for new jobs with ChatGPT, and can push results to WhatsApp via Twilio.
 
-## Functionalitati
-- **Parser de CV PDF** bazat pe Apache PDFBox; extrage textul si cuvintele cheie relevante.
-- **Cautator REST** care apeleaza API-ul public [Remotive](https://remotive.com/api/remote-jobs) in functie de promptul tau.
-- **Integrare ChatGPT 5** (optional) pentru a genera rapid sugestii de joburi atunci cand ai un API key valid.
-- **Motor de potrivire** ce prioritizeaza joburile compatibile cu tehnologiile din CV-ul tau.
-- **Programator zilnic** configurabil prin cron (`jobshunter.scheduler.cron`).
-- **Notificare WhatsApp** via Twilio (cu fallback la loguri atunci cand credidentialele lipsesc).
-- **REST API** pentru a porni manual o cautare si a verifica ultimul rezultat.
+## What it does
+- JWT auth flow: `/api/auth/register`, `/api/auth/login`, `/api/auth/verify`.
+- Per-user prompt, phone number, time interval, and CV file uploaded to OpenAI file storage for context.
+- Scheduled job hunting (`jobshunter.scheduler.frequency`, `jobshunter.iterationPerUser`, `jobshunter.iterationDelay`) with URL validation, duplicate filtering, and HTML checks for `jobshunter.expiredKeywords`.
+- Job search via OpenAI Responses API (model `gpt-5.1`, `toolsType=web_search`).
+- WhatsApp notifications via Twilio Content API; falls back to plain-text WhatsApp when Twilio template is missing for the locale (error 63027) or content variables cannot be serialized.
+- MySQL persistence managed by Liquibase.
 
-## Cerinte
-- Java 21 (minim, compilata cu `--release 21`; poate rula pe JDK-uri mai noi precum 25)
-- Maven 3.9+
-- Un fisier `cv.pdf` plasat in radacina proiectului (sau configurezi o alta cale).
-- Optional: cont Twilio cu canal WhatsApp (SID, Token, numar "from", numar "to").
-- Optional: cheie API pentru ChatGPT 5 (`CHATGPT5_API_KEY`) daca vrei sa combini joburile Remotive cu sugestii AI (ai si o proprietate `fallback-model` in cazul in care modelul implicit nu este disponibil in contul tau).
+## Requirements
+- JDK 21 (matches `maven.compiler.release=21`).
+- Maven 3.9+.
+- MySQL 8.x reachable with the configured credentials.
+- Optional: Twilio account with WhatsApp-enabled sender.
+- Optional: OpenAI API key with access to Responses API + file uploads.
 
-## Configurare
-Aplicatia foloseste `application.yml` si/sau variabile de mediu:
+## Configuration (env vars / `application.yml`)
+Server listens on port `8081`.
 
 ```yaml
 jobshunter:
-  prompt: "Senior Java developer remote"
-  cv-path: "cv.pdf"
+  expiredKeywords: expired,no longer exists,This job was available,is no longer active,job is no longer available
+  iterationPerUser: 5
+  iterationDelay: 30000
   scheduler:
-    cron: "0 0 9 * * *"   # ora 09:00 zilnic
+    frequency: 3600000   # ms between scheduled runs
   whatsapp:
     account-sid: ${TWILIO_ACCOUNT_SID:}
     auth-token: ${TWILIO_AUTH_TOKEN:}
     from-number: ${TWILIO_WHATSAPP_FROM:}
-    to-number: ${TWILIO_WHATSAPP_TO:}
-  chatgpt:
-    enabled: false
-    api-url: "https://api.openai.com/v1/chat/completions"
-    model: "gpt-5.0"
-    fallback-model: "gpt-4o-mini"
-    max-jobs: 10
+    # to-number: ${JOBSHUNTER_WHATSAPP_TO_NUMBER:}   # optional fallback if user phone is missing
+    jobsNotifyMessageSID: ${TWILIO_JOBS_NOTIFY_MESSAGE_SID:}
+  chatGpt:
+    apiKey: ${CHATGPT5_API_KEY:}
+    model: gpt-5.1
+    temperature: 0
+    maxTokens: 2000
+    toolsType: web_search
+spring:
+  datasource:
+    url: ${MYSQL_URL:jdbc:mysql://localhost:3306/jobshunter?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&createDatabaseIfNotExist=true}
+    username: ${MYSQL_USER:root}
+    password: ${MYSQL_PASSWORD:root}
+  liquibase:
+    enabled: ${LIQUIBASE_ENABLED:true}
+security:
+  jwt:
+    secret: ${JWT_SECRET:change-me-dev-secret-please-keep-long}
+    expiration-ms: ${JWT_EXPIRATION_MS:86400000}
 ```
 
-Variabile utile:
-
+Minimum env for local dev:
 ```bash
-export TWILIO_ACCOUNT_SID="ACxxxxxxxx"
+export MYSQL_URL="jdbc:mysql://localhost:3306/jobshunter?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&createDatabaseIfNotExist=true"
+export MYSQL_USER="root"
+export MYSQL_PASSWORD="root"
+export JWT_SECRET="change-me-dev-secret-please-keep-long"
+```
+
+Twilio (optional):
+```bash
+export TWILIO_ACCOUNT_SID="ACxxxx"
 export TWILIO_AUTH_TOKEN="secret"
 export TWILIO_WHATSAPP_FROM="whatsapp:+14155238886"
-export TWILIO_WHATSAPP_TO="whatsapp:+407xxxxxxxx"
-export CHATGPT5_API_KEY="sk-your-key"
+export TWILIO_JOBS_NOTIFY_MESSAGE_SID="HXxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+# Optional fallback destination:
+# export JOBSHUNTER_WHATSAPP_TO_NUMBER="whatsapp:+4xxxxxxxxxx"
 ```
 
-## Rulare
+OpenAI (optional, required for job search + CV upload):
 ```bash
-mvn spring-boot:run
+export CHATGPT5_API_KEY="sk-..."
 ```
-Aplicatia expune REST API pe `http://localhost:8080`:
 
-- `POST /api/job/search` – ruleaza imediat o cautare personalizata.
-  ```bash
-  curl -X POST http://localhost:8080/api/job/search \
-    -H 'Content-Type: application/json' \
-    -d '{"prompt": "Java 25 remote", "cvPath": "cv.pdf"}'
-  ```
-- `GET /api/job/status` – afiseaza ultimul rezultat salvat.
+## Twilio WhatsApp template (Content SID) setup
+The notifier sends WhatsApp messages using Twilio Content API with variables `jobs_links1` and `timestamp`, then falls back to plain text if Twilio returns 63027 (“Template does not exist for a language and locale”).
 
-Scheduler-ul zilnic foloseste promptul + calea salvate la ultima rulare manuala sau valorile din configuratie.
+1. In Twilio Console, create a Content Template for WhatsApp (https://console.twilio.com/us1/develop/content/create).
+2. Add template variables named `jobs_links1` and `timestamp` in the WhatsApp body.
+3. Approve/publish a variation for the recipient locale. If you see 63027, add a variation for that language/locale.
+4. Copy the Content SID (starts with `HX`) into `TWILIO_JOBS_NOTIFY_MESSAGE_SID`.
+5. Ensure `TWILIO_WHATSAPP_FROM` is WhatsApp-enabled and recipients are approved/sandboxed as required by your account.
+6. If the template is unavailable, the code automatically sends a plain-text fallback built from `src/main/resources/messageTemplates/jobsNotify.txt` (WhatsApp rules still apply: 24h session, approved recipient).
 
-## Dezvoltare si Testare
+## How to run locally
+1. Start MySQL (example): `docker run --name jobshunter-mysql -e MYSQL_ROOT_PASSWORD=root -p 3306:3306 -d mysql:8`
+2. Export env vars (see above).
+3. Build & run:
+   ```bash
+   mvn clean package
+   java -jar target/jobshunter-1.0.0.jar
+   # or, for dev:
+   mvn spring-boot:run
+   ```
+   App runs at `http://localhost:8081`.
+
+## API quick start
+1) Register and log in to obtain JWT:
+```bash
+curl -X POST http://localhost:8081/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"username":"demo","email":"demo@example.com","password":"secret","phoneNumber":"+40123456789"}'
+curl -X POST http://localhost:8081/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"demo","password":"secret"}'
+# Use Authorization: Bearer <token>
+```
+2) Upload CV to OpenAI file storage:
+```bash
+curl -X POST http://localhost:8081/api/cv/upload \
+  -H "Authorization: Bearer <token>" \
+  -F "file=@cv.pdf"
+```
+3) Update prompt / time interval:
+```bash
+curl -X POST "http://localhost:8081/api/user/prompt" \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{"prompt":"Remote Java backend roles"}'
+curl -X PATCH "http://localhost:8081/api/user/time-interval?minutes=60" \
+  -H "Authorization: Bearer <token>"
+```
+4) Trigger a search (optional WhatsApp push):
+```bash
+curl -X POST "http://localhost:8081/api/user/search?notifyOnWhatsupp=true" \
+  -H "Authorization: Bearer <token>"
+```
+`notifyOnWhatsupp=true` sends WhatsApp if credentials and numbers are valid; otherwise results are returned in the response.
+
+## Scheduling
+- Background search runs every `jobshunter.scheduler.frequency` ms (default 1h) per user.
+- `jobshunter.iterationPerUser` controls repeated calls per user; `jobshunter.iterationDelay` is the pause between iterations.
+- Per-user cooldown uses the stored `timeInterval` (minutes); scheduled runs skip users whose cooldown has not expired.
+
+## Testing
 ```bash
 mvn verify
 ```
-Testele includ crearea dinamica a unui PDF temporar pentru a verifica parserul si algoritmul de matching.
 
-## Flux WhatsApp
-1. Parserul citeste `cv.pdf` si extrage pana la 25 de cuvinte cheie.
-2. API-ul Remotive intoarce joburi relevante pentru prompt.
-3. Motorul de potrivire sorteaza joburile pe baza cuvintelor cheie.
-4. `WhatsAppNotifier` trimite lista pe WhatsApp (sau in loguri daca lipsesc cheile Twilio).
-
-## Extensii posibile
-- Persistenta in baza de date pentru istoricul joburilor.
-- Integrare cu mai multe API-uri (LinkedIn, Indeed etc.).
-- UI web pentru editarea promptului si vizualizarea rezultatelor.
+Liquibase migrations run automatically on startup when `LIQUIBASE_ENABLED=true` (default).

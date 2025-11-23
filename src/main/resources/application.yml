@@ -3,7 +3,7 @@ server:
 
 jobshunter:
   expiredKeywords: expired,no longer exists,This job was available,is no longer active,job is no longer available
-  iterationPerUser: 5
+  iterationPerUser: 10
   iterationDelay: 30000
 
   scheduler:

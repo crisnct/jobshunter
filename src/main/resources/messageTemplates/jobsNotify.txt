@@ -1,4 +1,6 @@
-Jobshunter {{timestamp}}:
-{{jobs_links}}
+Language: en
+Content: JobsHunter {{1}}
+Jobs for you:
+{{2}}
 ------------------
-Daca vrei sa nu mai primesti notificari, trimite-mi un email cu numarul tau de telefon la adresa hello@cristiantone.me
+If you no longer want to receive notifications, please send me an email with your phone number at hello@cristiantone.me

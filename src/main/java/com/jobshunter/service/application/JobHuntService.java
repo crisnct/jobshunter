@@ -78,12 +78,16 @@ public class JobHuntService {
     }
   }
 
-  @Scheduled(fixedRateString = "${jobshunter.scheduler.frequency:3600000}")
+  @Scheduled(fixedDelayString = "${jobshunter.scheduler.frequency:3600000}")
   public void scheduledRun() throws InterruptedException {
     log.info("Starts scheduled job hunt...");
     for (var user : userDataService.getAllUsers()) {
+      log.info("Start search jobs for {} ", user.getEmail());
       this.searchJobsForUser(true, user, properties.getIterationPerUser())
-          .ifPresent(jobs -> this.notifyWhatsupp(user.getUsername(), jobs));
+          .ifPresent(jobs -> {
+            this.notifyWhatsupp(user.getUsername(), jobs);
+            log.info("Found {} jobs for {} ", jobs.jobsFound().size(), user.getEmail());
+          });
       Thread.sleep(properties.getIterationDelay());
     }
     log.info("Stop scheduled job hunt.");

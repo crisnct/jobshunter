@@ -12,6 +12,7 @@ import jakarta.annotation.PostConstruct;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,7 +37,8 @@ public class WhatsAppNotifier {
   @Autowired
   private JsonMapper mapper;
 
-  private static final DateTimeFormatter JOB_TIMESTAMP_FORMAT = DateTimeFormatter.ofPattern("dd-MMMM-yyyy | HH:mm");
+  private static final DateTimeFormatter JOB_TIMESTAMP_FORMAT
+      = DateTimeFormatter.ofPattern("dd-MMMM-yyyy | HH:mm", Locale.ENGLISH);
 
   @PostConstruct
   private void initializeTwilio() {
@@ -62,7 +64,6 @@ public class WhatsAppNotifier {
     }
 
     String fromNumber = formatWhatsapp(properties.getWhatsapp().getFromNumber());
-    String body = this.buildMessage(jobsURLs);
 
     if (!StringUtils.hasText(fromNumber)) {
       return;
@@ -75,7 +76,8 @@ public class WhatsAppNotifier {
       log.warn("Skipping WhatsApp sender {} -> {} because credentials or number format are invalid.", fromNumber, toNumber);
       return;
     }
-    if (trySend(toNumber, fromNumber, formatJobs(jobsURLs))) {
+    String formattedJobs = formatJobs(jobsURLs);
+    if (trySend(toNumber, fromNumber, formattedJobs)) {
       return;
     }
 
@@ -92,7 +94,6 @@ public class WhatsAppNotifier {
         && fromNumber.toLowerCase().startsWith("whatsapp:")
         && toNumber.toLowerCase().startsWith("whatsapp:");
   }
-
 
   private String resolveUserPhone(String username) {
     if (!StringUtils.hasText(username)) {
@@ -131,16 +132,6 @@ public class WhatsAppNotifier {
       log.error("Failed to send WhatsApp message via Twilio from {} to {}: {}", fromNumber, toNumber, ex.getMessage());
       return false;
     }
-  }
-
-  private String buildMessage(List<String> jobs) {
-    return userMessagesFactory.build(
-        UserMessagesFactory.MessageTemplate.JOBS_NOTIFY,
-        Map.of(
-            "timestamp", LocalDateTime.now().format(JOB_TIMESTAMP_FORMAT),
-            "jobs_links", formatJobs(jobs)
-        )
-    );
   }
 
   private String formatJobs(List<String> jobs) {
