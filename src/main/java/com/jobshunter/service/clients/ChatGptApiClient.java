@@ -5,7 +5,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.jobshunter.config.ApplicationProperties;
 import io.jsonwebtoken.lang.Collections;
-import jakarta.annotation.PostConstruct;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -199,7 +198,7 @@ public class ChatGptApiClient {
 
   }
 
-  private interface InputObj {
+  private sealed interface InputObj permits InputMessage, InputFile {
 
   }
 

@@ -11,7 +11,6 @@ import com.jobshunter.service.clients.WhatsAppNotifier;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -56,19 +55,17 @@ public class UserController {
     String username = authentication != null ? authentication.getName() : null;
     if (username == null) {
       return ResponseEntity.badRequest().build();
-    } else {
-      Optional<UserEntity> userOp = userDataService.getUser(username);
-      if (userOp.isPresent()){
-        //noinspection OptionalGetWithoutIsPresent
-        JobHuntResponse jobs = jobHuntService.searchJobsForUser(false, userOp.get(), 1).get();
-        if (notifyOnWhatsupp && !jobs.jobsFound().isEmpty()) {
-          whatsAppNotifier.send(jobs.jobsFound(), username);
-        }
-        return ResponseEntity.ok(jobs);
-      } else {
-        return ResponseEntity.badRequest().build();
-      }
     }
+
+    return userDataService.getUser(username)
+        .map(user -> {
+          JobHuntResponse jobs = jobHuntService.searchJobsForUser(false, user, 1).orElseGet(() -> new JobHuntResponse(List.of()));
+          if (notifyOnWhatsupp && !jobs.jobsFound().isEmpty()) {
+            whatsAppNotifier.send(jobs.jobsFound(), username);
+          }
+          return ResponseEntity.ok(jobs);
+        })
+        .orElseGet(() -> ResponseEntity.badRequest().build());
   }
 
   @PatchMapping("/time-interval")

@@ -19,7 +19,7 @@ jobshunter:
     apiKey: ${CHATGPT5_API_KEY:}
     model: "gpt-5.1"
     temperature: 0
-    maxTokens: 2000
+    maxTokens: 5000
     toolsType: "web_search"
 
 spring:
