@@ -14,7 +14,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.HttpEntity;
@@ -180,7 +182,9 @@ public class ChatGptApiClient {
       item.get().content.stream()
           .filter(c -> Objects.equals("output_text", c.type))
           .forEach(o -> {
-            jobs.addAll(List.of(o.text.split(" ")));
+            if (Strings.isNotEmpty(o.text)) {
+              jobs.addAll(Stream.of(o.text.split(" ")).filter(Strings::isNotEmpty).toList());
+            }
           });
       return jobs;
     } else {

@@ -30,6 +30,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 
@@ -103,21 +104,25 @@ public class JobHuntService {
     }
 
     JobHuntResponse response = this.searchJobsForUser(user, iterations);
+    this.updateUser(user,
+        response.jobsFound().stream()
+            .filter(StringUtils::hasText)
+            .map(String::trim).toList());
+    return Optional.of(response);
+  }
+
+  @Transactional
+  private void updateUser(UserEntity user, List<String> jobs) {
     user.setLastJobs(LocalDateTime.now());
     userDataService.updateUser(user);
-
-    response.jobsFound().stream()
-        .filter(StringUtils::hasText)
-        .map(String::trim)
-        .forEach(url -> userDataService.addJobUrl(user, url));
-
-    return Optional.of(response);
+    jobs.forEach(url -> userDataService.addJobUrl(user, url));
   }
 
   private JobHuntResponse searchJobsForUser(UserEntity user, int iterations) {
     Set<String> jobs = new HashSet<>();
+    List<String> existingUrls = new ArrayList<>(userDataService.getExistingJobUrlsForUser(user.getUsername()));
+
     for (int i = 0; i < iterations; i++) {
-      List<String> existingUrls = userDataService.getExistingJobUrlsForUser(user.getUsername());
       String systemPromptUsed = systemPrompt;
       try {
         systemPromptUsed += "\n" + mapper.writeValueAsString(existingUrls);
@@ -126,7 +131,14 @@ public class JobHuntService {
       }
 
       log.info("Searching jobs for user {} iteration {}", user.getUsername(), i);
-      jobs.addAll(chatGptApiClient.search(systemPromptUsed, user.getPrompt(), user.getCvFileId()));
+      List<String> jobsFound = chatGptApiClient.search(systemPromptUsed, user.getPrompt(), user.getCvFileId());
+      jobsFound.forEach(newJob -> {
+        if (!existingUrls.contains(newJob)) {
+          existingUrls.add(newJob);
+        }
+      });
+
+      jobs.addAll(jobsFound);
       if (iterations > 1) {
         try {
           Thread.sleep(properties.getIterationDelay());
