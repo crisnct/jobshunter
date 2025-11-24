@@ -21,6 +21,10 @@ public class UserDataService {
   @Autowired
   private UserJobRepository userJobRepository;
 
+  public List<UserJobEntity> getUserJobs(String username) {
+    return userJobRepository.findAllByUsernameWithUser(username);
+  }
+
   public List<UserEntity> getAllUsers() {
     return userRepository.findAll();
   }

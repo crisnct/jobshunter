@@ -2,10 +2,12 @@ package com.jobshunter.controller;
 
 import com.jobshunter.database.entities.RoleEntity;
 import com.jobshunter.database.entities.UserEntity;
+import com.jobshunter.database.entities.UserJobEntity;
 import com.jobshunter.database.service.UserDataService;
 import com.jobshunter.dto.JobHuntResponse;
 import com.jobshunter.dto.JobSearchRequest;
 import com.jobshunter.dto.UserInfoResponse;
+import com.jobshunter.dto.UserJobResponse;
 import com.jobshunter.service.application.JobHuntService;
 import com.jobshunter.service.clients.WhatsAppNotifier;
 import jakarta.validation.Valid;
@@ -77,6 +79,17 @@ public class UserController {
     return ResponseEntity.ok(users);
   }
 
+  @GetMapping("/jobs")
+  public ResponseEntity<?> getUserJobs(@RequestParam("username") String username) {
+    if (username == null || username.isBlank()) {
+      return ResponseEntity.badRequest().body(Map.of("error", "username must not be blank"));
+    }
+    List<UserJobResponse> jobs = userDataService.getUserJobs(username).stream()
+        .map(this::toUserJobResponse)
+        .toList();
+    return ResponseEntity.ok(jobs);
+  }
+
   @PatchMapping("/time-interval")
   public ResponseEntity<?> setTimeInterval(@RequestParam("minutes") Integer minutes, Authentication authentication) {
     if (minutes == null || minutes <= 0) {
@@ -125,6 +138,13 @@ public class UserController {
         user.getPrompt(),
         formatDateTime(user.getCreatedAt()),
         roles
+    );
+  }
+
+  private UserJobResponse toUserJobResponse(UserJobEntity userJob) {
+    return new UserJobResponse(
+        userJob.getJobUrl(),
+        formatDateTime(userJob.getCreatedAt())
     );
   }
 

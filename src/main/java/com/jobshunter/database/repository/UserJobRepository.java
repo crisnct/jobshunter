@@ -12,4 +12,7 @@ public interface UserJobRepository extends JpaRepository<UserJobEntity, Long> {
 
     @Query("select uj.jobUrl from UserJobEntity uj where lower(uj.user.username) = lower(:username)")
     List<String> findJobUrlsByUsernameIgnoreCase(@Param("username") String username);
+
+    @Query("select uj from UserJobEntity uj join fetch uj.user u where lower(u.username) = lower(:username)")
+    List<UserJobEntity> findAllByUsernameWithUser(@Param("username") String username);
 }
