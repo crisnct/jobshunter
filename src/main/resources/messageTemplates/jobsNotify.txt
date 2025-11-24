@@ -1,5 +1,4 @@
-Language: en
-Content: JobsHunter {{1}}
+JobsHunter {{1}}
 Jobs for you:
 {{2}}
 ------------------

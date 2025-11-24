@@ -36,7 +36,6 @@ public class ApplicationProperties {
     private String authToken;
     private String fromNumber;
     private String toNumber;
-    private String jobsNotifyMessageSID;
   }
 
   @Data

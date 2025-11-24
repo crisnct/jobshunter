@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.jobshunter.config.ApplicationProperties;
 import com.jobshunter.database.service.UserDataService;
 import com.jobshunter.service.application.UserMessagesFactory;
+import com.jobshunter.service.application.UserMessagesFactory.MessageTemplate;
 import com.twilio.Twilio;
 import com.twilio.exception.ApiException;
 import com.twilio.rest.api.v2010.account.Message;
@@ -77,7 +78,7 @@ public class WhatsAppNotifier {
       return;
     }
     String formattedJobs = formatJobs(jobsURLs);
-    if (trySend(toNumber, fromNumber, formattedJobs)) {
+    if (this.trySend(toNumber, fromNumber, formattedJobs)) {
       return;
     }
 
@@ -120,15 +121,15 @@ public class WhatsAppNotifier {
   private boolean trySend(String toNumber, String fromNumber, String jobs) {
     try {
       String timestamp = LocalDateTime.now().format(JOB_TIMESTAMP_FORMAT);
-      String contentVars = mapper.writeValueAsString(Map.of("timestamp", timestamp, "jobs_links1", jobs));
       Message message = Message
-          .creator(new com.twilio.type.PhoneNumber(toNumber), new com.twilio.type.PhoneNumber(fromNumber), (String)null)
-          .setContentSid(properties.getWhatsapp().getJobsNotifyMessageSID())
-          .setContentVariables(contentVars)
+          .creator(
+              new com.twilio.type.PhoneNumber(toNumber),
+              new com.twilio.type.PhoneNumber(fromNumber),
+              userMessagesFactory.build(MessageTemplate.JOBS_NOTIFY, Map.of("1", timestamp, "2", jobs)))
           .create();
       log.info("Sent WhatsApp notification (from={}, to={}, SID={})", fromNumber, toNumber, message.getSid());
       return true;
-    } catch (ApiException | JsonProcessingException ex) {
+    } catch (ApiException ex) {
       log.error("Failed to send WhatsApp message via Twilio from {} to {}: {}", fromNumber, toNumber, ex.getMessage());
       return false;
     }
