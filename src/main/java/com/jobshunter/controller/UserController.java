@@ -9,9 +9,9 @@ import com.jobshunter.dto.UserInfoResponse;
 import com.jobshunter.service.application.JobHuntService;
 import com.jobshunter.service.clients.WhatsAppNotifier;
 import jakarta.validation.Valid;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -69,6 +69,14 @@ public class UserController {
         .orElseGet(() -> ResponseEntity.badRequest().build());
   }
 
+  @GetMapping("/all")
+  public ResponseEntity<List<UserInfoResponse>> getAllUsers() {
+    List<UserInfoResponse> users = userDataService.getAllUsers().stream()
+        .map(this::toResponse)
+        .toList();
+    return ResponseEntity.ok(users);
+  }
+
   @PatchMapping("/time-interval")
   public ResponseEntity<?> setTimeInterval(@RequestParam("minutes") Integer minutes, Authentication authentication) {
     if (minutes == null || minutes <= 0) {
@@ -112,11 +120,15 @@ public class UserController {
         user.isEmailVerified(),
         user.getVerificationToken(),
         user.getCvFileId(),
-        user.getLastJobs().toString(),
+        formatDateTime(user.getLastJobs()),
         user.getTimeInterval(),
         user.getPrompt(),
-        user.getCreatedAt().toString(),
+        formatDateTime(user.getCreatedAt()),
         roles
     );
+  }
+
+  private String formatDateTime(LocalDateTime dateTime) {
+    return dateTime != null ? dateTime.toString() : null;
   }
 }
