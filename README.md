@@ -64,10 +64,7 @@ Twilio (optional):
 ```bash
 export TWILIO_ACCOUNT_SID="ACxxxx"
 export TWILIO_AUTH_TOKEN="secret"
-export TWILIO_WHATSAPP_FROM="whatsapp:+14155238886"
-export TWILIO_JOBS_NOTIFY_MESSAGE_SID="HXxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-# Optional fallback destination:
-# export JOBSHUNTER_WHATSAPP_TO_NUMBER="whatsapp:+4xxxxxxxxxx"
+export TWILIO_WHATSAPP_FROM="whatsapp:+000000000000"
 ```
 
 OpenAI (optional, required for job search + CV upload):
