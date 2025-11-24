@@ -11,6 +11,7 @@ import com.jobshunter.service.clients.WhatsAppNotifier;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -111,10 +112,10 @@ public class UserController {
         user.isEmailVerified(),
         user.getVerificationToken(),
         user.getCvFileId(),
-        user.getLastJobs(),
+        user.getLastJobs().toString(),
         user.getTimeInterval(),
         user.getPrompt(),
-        user.getCreatedAt(),
+        user.getCreatedAt().toString(),
         roles
     );
   }

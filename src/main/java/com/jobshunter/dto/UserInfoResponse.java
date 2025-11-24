@@ -10,10 +10,10 @@ public record UserInfoResponse(
     boolean emailVerified,
     String verificationToken,
     String cvFileId,
-    LocalDateTime lastJobs,
+    String lastJobs,
     Integer timeInterval,
     String prompt,
-    LocalDateTime createdAt,
+    String createdAt,
     List<String> roles
 ) {
 }
