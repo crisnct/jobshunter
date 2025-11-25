@@ -2,7 +2,7 @@ server:
   port: 8081
 
 jobshunter:
-  expiredKeywords: expired,no longer exists,This job was available,is no longer active,job is no longer available,this job was removed,Job not found,Applications from candidates outside of our global target markets are currently not accepted,No longer accepting applications
+  expiredKeywords: expired,no longer exists,This job was available,is no longer active,job is no longer available,this job was removed,Job not found,Applications from candidates outside of our global target markets are currently not accepted,No longer accepting applications,The job ad is no longer active,Application not possible
   iterationPerUser: 30
   iterationDelay: 30000
 
