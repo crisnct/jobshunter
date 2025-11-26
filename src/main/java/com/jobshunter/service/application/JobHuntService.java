@@ -50,7 +50,7 @@ public class JobHuntService {
   @Autowired
   private UserDataService userDataService;
 
-  private List<Pattern> expiredKeywordsPatterns;
+  private List<Pattern> expiredJobsPatterns;
 
   @Autowired
   private RestTemplate restTemplate;
@@ -62,12 +62,12 @@ public class JobHuntService {
 
   @PostConstruct
   public void init() {
-    expiredKeywordsPatterns = new ArrayList<>();
-    for (String keyword : properties.getExpiredKeywords().split(",")) {
-      expiredKeywordsPatterns.add(Pattern.compile(">[A-Za-z0-9 .,!?\\-()]*" + Pattern.quote(keyword) + "[A-Za-z0-9 .,!?\\-()]*<",
-          Pattern.CASE_INSENSITIVE));
+    expiredJobsPatterns = new ArrayList<>();
+    for (String keyword : properties.getExpiredExpressions().split(",")) {
+      expiredJobsPatterns.add(Pattern.compile(">[^<]{0,500}" + Pattern.quote(keyword) + "[^<]{0,500}<",
+          Pattern.CASE_INSENSITIVE | Pattern.DOTALL));
     }
-    expiredKeywordsPatterns = Collections.unmodifiableList(expiredKeywordsPatterns);
+    expiredJobsPatterns = Collections.unmodifiableList(expiredJobsPatterns);
 
     try (var inputStream = getClass().getClassLoader().getResourceAsStream("systemPrompt.txt")) {
       if (inputStream == null) {
@@ -121,15 +121,14 @@ public class JobHuntService {
   private JobHuntResponse searchJobsForUser(UserEntity user, int iterations) {
     Set<String> jobs = new HashSet<>();
     List<String> existingUrls = new ArrayList<>(userDataService.getExistingJobUrlsForUser(user.getUsername()));
+    String systemPromptUsed = systemPrompt;
+    try {
+      systemPromptUsed += "\n" + mapper.writeValueAsString(existingUrls);
+    } catch (JsonProcessingException e) {
+      log.error("Can not serialize " + existingUrls, e);
+    }
 
     for (int i = 0; i < iterations; i++) {
-      String systemPromptUsed = systemPrompt;
-      try {
-        systemPromptUsed += "\n" + mapper.writeValueAsString(existingUrls);
-      } catch (JsonProcessingException e) {
-        log.error("Can not serialize " + existingUrls, e);
-      }
-
       log.info("Searching jobs for user {} iteration {}", user.getUsername(), i);
       List<String> jobsFound = chatGptApiClient.search(systemPromptUsed, user.getPrompt(), user.getCvFileId());
       jobsFound.forEach(newJob -> {
@@ -177,7 +176,7 @@ public class JobHuntService {
 
       if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
         String html = response.getBody();
-        boolean isExpired = expiredKeywordsPatterns.stream().anyMatch(pattern -> pattern.matcher(html).find());
+        boolean isExpired = expiredJobsPatterns.stream().anyMatch(pattern -> pattern.matcher(html).find());
         log.info("Expired: {} {}", isExpired, jobURL);
         return !isExpired;
       } else {

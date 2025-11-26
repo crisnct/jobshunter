@@ -8,8 +8,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "jobshunter")
 public class ApplicationProperties {
 
-  @Value("${jobshunter.expiredKeywords}")
-  private String expiredKeywords;
+  @Value("${jobshunter.expiredExpressions}")
+  private String expiredExpressions;
 
   @Value("${jobshunter.iterationPerUser}")
   private int iterationPerUser;
@@ -31,7 +31,6 @@ public class ApplicationProperties {
 
   @Data
   public static class WhatsApp {
-
     private String accountSid;
     private String authToken;
     private String fromNumber;
@@ -40,7 +39,6 @@ public class ApplicationProperties {
 
   @Data
   public static class ChatGpt {
-
     private String apiKey;
     private String model;
     private double temperature;
