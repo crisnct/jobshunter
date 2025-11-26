@@ -22,6 +22,8 @@ jobshunter:
     toolsType: "web_search"
 
 spring:
+  profiles:
+    default: ${PROFILE:local}
   datasource:
     url: ${MYSQL_URL:jdbc:mysql://localhost:3306/jobshunter?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&createDatabaseIfNotExist=true}
     username: ${MYSQL_USER:root}

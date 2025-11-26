@@ -79,7 +79,6 @@ public class JobHuntService {
     }
   }
 
-  @Scheduled(fixedDelayString = "${jobshunter.scheduler.frequency:3600000}")
   public void scheduledRun() throws InterruptedException {
     log.info("Starts scheduled job hunt...");
     for (var user : userDataService.getAllUsers()) {
