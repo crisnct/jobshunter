@@ -7,6 +7,7 @@ import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.service.UserDataService;
 import com.jobshunter.dto.JobHuntResponse;
 import com.jobshunter.service.clients.ChatGptApiClient;
+import com.jobshunter.service.clients.ShortenURLClient;
 import com.jobshunter.service.clients.WhatsAppNotifier;
 import jakarta.annotation.PostConstruct;
 import java.net.InetAddress;
@@ -28,7 +29,6 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -49,6 +49,9 @@ public class JobHuntService {
 
   @Autowired
   private UserDataService userDataService;
+
+  @Autowired
+  private ShortenURLClient shortenURLClient;
 
   private List<Pattern> expiredJobsPatterns;
 
@@ -85,7 +88,7 @@ public class JobHuntService {
       log.info("Start search jobs for {} ", user.getEmail());
       this.searchJobsForUser(true, user, properties.getIterationPerUser())
           .ifPresent(jobs -> {
-            this.notifyWhatsupp(user.getUsername(), jobs);
+            this.notifyWhatsApp(user.getUsername(), jobs);
             log.info("Found {} jobs for {} ", jobs.jobsFound().size(), user.getEmail());
           });
       Thread.sleep(properties.getIterationDelay());
@@ -120,16 +123,17 @@ public class JobHuntService {
   private JobHuntResponse searchJobsForUser(UserEntity user, int iterations) {
     Set<String> jobs = new HashSet<>();
     List<String> existingUrls = new ArrayList<>(userDataService.getExistingJobUrlsForUser(user.getUsername()));
-    String systemPromptUsed = systemPrompt;
-    try {
-      systemPromptUsed += "\n" + mapper.writeValueAsString(existingUrls);
-    } catch (JsonProcessingException e) {
-      log.error("Can not serialize " + existingUrls, e);
-    }
 
     for (int i = 0; i < iterations; i++) {
       log.info("Searching jobs for user {} iteration {}", user.getUsername(), i);
+      String systemPromptUsed = systemPrompt;
+      try {
+        systemPromptUsed += "\n" + mapper.writeValueAsString(existingUrls);
+      } catch (JsonProcessingException e) {
+        log.error("Can not serialize " + existingUrls, e);
+      }
       List<String> jobsFound = chatGptApiClient.search(systemPromptUsed, user.getPrompt(), user.getCvFileId());
+
       jobsFound.forEach(newJob -> {
         if (!existingUrls.contains(newJob)) {
           existingUrls.add(newJob);
@@ -145,10 +149,17 @@ public class JobHuntService {
         }
       }
     }
-    return new JobHuntResponse(jobs.stream().filter(this::isValidJob).toList());
+    return new JobHuntResponse(jobs.stream().filter(this::isValidJob).map(url-> {
+      try {
+        return shortenURLClient.shorten(url);
+      } catch (Exception e) {
+        log.error("Can not shorten url " + url);
+        return url;
+      }
+    }).toList());
   }
 
-  public void notifyWhatsupp(String username, JobHuntResponse summary) {
+  public void notifyWhatsApp(String username, JobHuntResponse summary) {
     if (!summary.jobsFound().isEmpty()) {
       whatsAppNotifier.send(summary.jobsFound(), username);
     }

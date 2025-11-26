@@ -121,11 +121,13 @@ public class WhatsAppNotifier {
   private boolean trySend(String toNumber, String fromNumber, String jobs) {
     try {
       String timestamp = LocalDateTime.now().format(JOB_TIMESTAMP_FORMAT);
+      String body = userMessagesFactory.build(MessageTemplate.JOBS_NOTIFY, Map.of("1", timestamp, "2", jobs));
+      if (body.length() > 1600){
+        log.error("Message for whatsapp is too long and will be shorten");
+        body = body.substring(0, 1600);
+      }
       Message message = Message
-          .creator(
-              new com.twilio.type.PhoneNumber(toNumber),
-              new com.twilio.type.PhoneNumber(fromNumber),
-              userMessagesFactory.build(MessageTemplate.JOBS_NOTIFY, Map.of("1", timestamp, "2", jobs)))
+          .creator(new com.twilio.type.PhoneNumber(toNumber), new com.twilio.type.PhoneNumber(fromNumber), body)
           .create();
       log.info("Sent WhatsApp notification (from={}, to={}, SID={})", fromNumber, toNumber, message.getSid());
       return true;

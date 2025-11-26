@@ -52,7 +52,7 @@ public class UserController {
 
   @PostMapping("/search")
   public ResponseEntity<JobHuntResponse> search(
-      @RequestParam(name = "notifyOnWhatsupp", required = false, defaultValue = "false") Boolean notifyOnWhatsupp,
+      @RequestParam(name = "notifyOnWhatsApp", required = false, defaultValue = "false") Boolean notifyOnWhatsApp,
       Authentication authentication
   ) {
     String username = authentication != null ? authentication.getName() : null;
@@ -63,7 +63,7 @@ public class UserController {
     return userDataService.getUser(username)
         .map(user -> {
           JobHuntResponse jobs = jobHuntService.searchJobsForUser(false, user, 1).orElseGet(() -> new JobHuntResponse(List.of()));
-          if (notifyOnWhatsupp && !jobs.jobsFound().isEmpty()) {
+          if (notifyOnWhatsApp && !jobs.jobsFound().isEmpty()) {
             whatsAppNotifier.send(jobs.jobsFound(), username);
           }
           return ResponseEntity.ok(jobs);
