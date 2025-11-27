@@ -12,16 +12,20 @@ Java 21 + Spring Boot service that keeps a user profile (prompt, CV, phone, time
 - MySQL persistence managed by Liquibase.
 
 ## Contributors
-| Name | Commits | Contribution | Sponsorship |
-| --- |---------| --- | --- |
-| Cristian Tone | 42      | Project Owner | 52eur |
-| TBD | 0       | - | - |
-| TBD | 0       | - | - |
+| Name | Commits | Contribution                                                        | Sponsorship |
+| --- |---------|---------------------------------------------------------------------| --- |
+| Cristian Tone | 42      | • Product Owner<br/>• Main developer of the project on backend side | 52eur |
+| TBD | 0       | -                                                                   | - |
+| TBD | 0       | -                                                                   | - |
 
 Display total commits per user:
 ```
 git shortlog -s -n
 ```
+
+## License
+- Licensed under Apache License 2.0 (see `LICENSE`).
+- The project is completely free and can be used by anyone.
 
 ## Requirements
 - JDK 21 (matches `maven.compiler.release=21`).
