@@ -29,6 +29,7 @@ Blocked Sources
   upwork.com
   lucrezi.ro
   hitprace.cz
+  hirify.me
 
 Tool Use (if web/search tools are available)
 - Use web search with varied queries combining the extracted filters and synonyms.

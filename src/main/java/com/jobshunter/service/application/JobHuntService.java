@@ -149,14 +149,8 @@ public class JobHuntService {
         }
       }
     }
-    return new JobHuntResponse(jobs.stream().filter(this::isValidJob).map(url-> {
-      try {
-        return shortenURLClient.shorten(url);
-      } catch (Exception e) {
-        log.error("Can not shorten url " + url);
-        return url;
-      }
-    }).toList());
+
+    return new JobHuntResponse(jobs.stream().filter(this::isValidJob).toList());
   }
 
   public void notifyWhatsApp(String username, JobHuntResponse summary) {

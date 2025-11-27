@@ -1,6 +1,5 @@
 package com.jobshunter.service.clients;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.jobshunter.config.ApplicationProperties;
 import com.jobshunter.database.service.UserDataService;
@@ -26,6 +25,8 @@ import org.springframework.util.StringUtils;
 @RequiredArgsConstructor
 public class WhatsAppNotifier {
 
+  private static final int TWILLIO_MAX_LIMIT_CHARS = 1600;
+
   @Autowired
   private ApplicationProperties properties;
 
@@ -37,6 +38,9 @@ public class WhatsAppNotifier {
 
   @Autowired
   private JsonMapper mapper;
+
+  @Autowired
+  private ShortenURLClient shortenURLClient;
 
   private static final DateTimeFormatter JOB_TIMESTAMP_FORMAT
       = DateTimeFormatter.ofPattern("dd-MMMM-yyyy | HH:mm", Locale.ENGLISH);
@@ -77,13 +81,25 @@ public class WhatsAppNotifier {
       log.warn("Skipping WhatsApp sender {} -> {} because credentials or number format are invalid.", fromNumber, toNumber);
       return;
     }
-    String formattedJobs = formatJobs(jobsURLs);
-    if (this.trySend(toNumber, fromNumber, formattedJobs)) {
-      return;
+
+    List<String> jobsToSend = jobsURLs;
+    String formattedJobs = formatJobs(jobsToSend);
+    if (formattedJobs.length() > TWILLIO_MAX_LIMIT_CHARS) {
+      jobsToSend = jobsURLs.stream().map(url -> {
+        try {
+          return shortenURLClient.shorten(url);
+        } catch (Exception e) {
+          log.error("Can not shorten url " + url);
+          return url;
+        }
+      }).toList();
+      formattedJobs = formatJobs(jobsToSend);
     }
 
-    log.warn("WhatsApp send skipped after attempting available senders. Printing jobs to the console instead.");
-    jobsURLs.forEach(job -> log.info("{}", job));
+    if (!this.trySend(toNumber, fromNumber, formattedJobs)) {
+      log.warn("WhatsApp send skipped after attempting available senders. Printing jobs to the console instead.");
+      jobsURLs.forEach(job -> log.info("{}", job));
+    }
   }
 
   private boolean hasCredentials(String toNumber, String fromNumber) {
@@ -122,9 +138,9 @@ public class WhatsAppNotifier {
     try {
       String timestamp = LocalDateTime.now().format(JOB_TIMESTAMP_FORMAT);
       String body = userMessagesFactory.build(MessageTemplate.JOBS_NOTIFY, Map.of("1", timestamp, "2", jobs));
-      if (body.length() > 1600){
+      if (body.length() > TWILLIO_MAX_LIMIT_CHARS) {
         log.error("Message for whatsapp is too long and will be shorten");
-        body = body.substring(0, 1600);
+        body = body.substring(0, TWILLIO_MAX_LIMIT_CHARS);
       }
       Message message = Message
           .creator(new com.twilio.type.PhoneNumber(toNumber), new com.twilio.type.PhoneNumber(fromNumber), body)
