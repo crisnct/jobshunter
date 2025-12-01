@@ -12,11 +12,11 @@ Java 21 + Spring Boot service that keeps a user profile (prompt, CV, phone, time
 - MySQL persistence managed by Liquibase.
 
 ## Contributors
-| Name | Commits | Contribution                                                        | Sponsorship |
-| --- |---------|---------------------------------------------------------------------| --- |
-| Cristian Tone | 42      | • Product Owner<br/>• Main developer of the project on backend side | 52eur |
-| TBD | 0       | -                                                                   | - |
-| TBD | 0       | -                                                                   | - |
+| Name          | Commits | Contribution                                                        | Sponsorship |
+|---------------|---------|---------------------------------------------------------------------| --- |
+| Cristian Țone | 42      | • Product Owner<br/>• Main developer of the project on backend side | 52eur |
+| Andrei Lazăr  | 0       | • Backend Developer                                                 | - |
+| TBD           | 0       | -                                                                   | - |
 
 Display total commits per user:
 ```
