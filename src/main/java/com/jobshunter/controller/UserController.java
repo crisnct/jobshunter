@@ -9,7 +9,6 @@ import com.jobshunter.dto.JobSearchRequest;
 import com.jobshunter.dto.UserInfoResponse;
 import com.jobshunter.dto.UserJobResponse;
 import com.jobshunter.service.application.JobHuntService;
-import com.jobshunter.service.clients.WhatsAppNotifier;
 import jakarta.validation.Valid;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -37,9 +36,6 @@ public class UserController {
   @Autowired
   private JobHuntService jobHuntService;
 
-  @Autowired
-  private WhatsAppNotifier whatsAppNotifier;
-
   @GetMapping("/me")
   public ResponseEntity<?> me(Authentication authentication) {
     if (authentication == null || authentication.getName() == null) {
@@ -64,7 +60,7 @@ public class UserController {
         .map(user -> {
           JobHuntResponse jobs = jobHuntService.searchJobsForUser(false, user, 1).orElseGet(() -> new JobHuntResponse(List.of()));
           if (notifyOnWhatsApp && !jobs.jobsFound().isEmpty()) {
-            whatsAppNotifier.send(jobs.jobsFound(), username);
+            jobHuntService.notifyWhatsApp(user, jobs);
           }
           return ResponseEntity.ok(jobs);
         })

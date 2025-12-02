@@ -88,7 +88,7 @@ public class JobHuntService {
       log.info("Start search jobs for {} ", user.getEmail());
       this.searchJobsForUser(true, user, properties.getIterationPerUser())
           .ifPresent(jobs -> {
-            this.notifyWhatsApp(user.getUsername(), jobs);
+            this.notifyWhatsApp(user, jobs);
             log.info("Found {} jobs for {} ", jobs.jobsFound().size(), user.getEmail());
           });
       Thread.sleep(properties.getIterationDelay());
@@ -153,10 +153,15 @@ public class JobHuntService {
     return new JobHuntResponse(jobs.stream().filter(this::isValidJob).toList());
   }
 
-  public void notifyWhatsApp(String username, JobHuntResponse summary) {
-    if (!summary.jobsFound().isEmpty()) {
-      whatsAppNotifier.send(summary.jobsFound(), username);
+  public void notifyWhatsApp(UserEntity user, JobHuntResponse summary) {
+    if (user == null || summary.jobsFound().isEmpty()) {
+      return;
     }
+    if (!user.isNotifyWhatsapp()) {
+      log.info("Skipping WhatsApp notification for {} because notify_whatsapp is disabled.", user.getUsername());
+      return;
+    }
+    whatsAppNotifier.send(summary.jobsFound(), user);
   }
 
   private boolean isValidJob(String jobURL) {

@@ -2,7 +2,7 @@ package com.jobshunter.service.clients;
 
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.jobshunter.config.ApplicationProperties;
-import com.jobshunter.database.service.UserDataService;
+import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.service.application.UserMessagesFactory;
 import com.jobshunter.service.application.UserMessagesFactory.MessageTemplate;
 import com.twilio.Twilio;
@@ -31,9 +31,6 @@ public class WhatsAppNotifier {
   private ApplicationProperties properties;
 
   @Autowired
-  private UserDataService userDataService;
-
-  @Autowired
   private UserMessagesFactory userMessagesFactory;
 
   @Autowired
@@ -50,15 +47,24 @@ public class WhatsAppNotifier {
     Twilio.init(properties.getWhatsapp().getAccountSid(), properties.getWhatsapp().getAuthToken());
   }
 
-  public void send(List<String> jobsURLs, String username) {
+  public void send(List<String> jobsURLs, UserEntity user) {
     if (jobsURLs.isEmpty()) {
       log.info("No jobs found. Skipping WhatsApp notification.");
       return;
     }
 
-    String toNumber = formatWhatsapp(resolveUserPhone(username));
+    if (user == null) {
+      log.warn("User not provided. Skipping WhatsApp notification.");
+      return;
+    }
+    if (!user.isNotifyWhatsapp()) {
+      log.info("Skipping WhatsApp notification for {} because notify_whatsapp is disabled.", user.getUsername());
+      return;
+    }
+
+    String toNumber = formatWhatsapp(sanitizePhone(user.getPhoneNumber()));
     if (!StringUtils.hasText(toNumber)) {
-      log.warn("User phone not found. Falling back to configured TWILIO_WHATSAPP_TO (if set).");
+      log.warn("User phone not found for {}. Falling back to configured TWILIO_WHATSAPP_TO (if set).", user.getUsername());
       toNumber = formatWhatsapp(properties.getWhatsapp().getToNumber());
     }
 
@@ -112,16 +118,6 @@ public class WhatsAppNotifier {
         && toNumber.toLowerCase().startsWith("whatsapp:");
   }
 
-  private String resolveUserPhone(String username) {
-    if (!StringUtils.hasText(username)) {
-      return null;
-    }
-    return userDataService.getUser(username)
-        .map(user -> StringUtils.trimAllWhitespace(user.getPhoneNumber()))
-        .filter(StringUtils::hasText)
-        .orElse(null);
-  }
-
   private String formatWhatsapp(String raw) {
     if (!StringUtils.hasText(raw)) {
       return null;
@@ -151,6 +147,10 @@ public class WhatsAppNotifier {
       log.error("Failed to send WhatsApp message via Twilio from {} to {}: {}", fromNumber, toNumber, ex.getMessage());
       return false;
     }
+  }
+
+  private String sanitizePhone(String phone) {
+    return StringUtils.hasText(phone) ? StringUtils.trimAllWhitespace(phone) : null;
   }
 
   private String formatJobs(List<String> jobs) {
