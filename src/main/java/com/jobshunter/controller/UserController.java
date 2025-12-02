@@ -130,6 +130,8 @@ public class UserController {
         user.getUsername(),
         user.getEmail(),
         user.getPhoneNumber(),
+        user.isNotifyWhatsapp(),
+        user.isNotifyEmail(),
         user.isEmailVerified(),
         user.getVerificationToken(),
         user.getCvFileId(),

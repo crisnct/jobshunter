@@ -119,4 +119,22 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="5-add-user-notifications" author="codex">
+        <addColumn tableName="users">
+            <column name="notify_whatsapp" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="notify_email" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="6-backfill-user-notifications" author="codex">
+        <update tableName="users">
+            <column name="notify_whatsapp" valueBoolean="false"/>
+            <column name="notify_email" valueBoolean="false"/>
+        </update>
+    </changeSet>
+
 </databaseChangeLog>

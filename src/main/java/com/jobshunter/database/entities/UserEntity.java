@@ -57,6 +57,12 @@ public class UserEntity implements UserDetails {
     @Column(name = "phone_number", nullable = false, length = 30)
     private String phoneNumber;
 
+    @Column(name = "notify_whatsapp", nullable = false)
+    private boolean notifyWhatsapp = false;
+
+    @Column(name = "notify_email", nullable = false)
+    private boolean notifyEmail = false;
+
     @Column(name = "email_verified", nullable = false)
     private boolean emailVerified = false;
 
