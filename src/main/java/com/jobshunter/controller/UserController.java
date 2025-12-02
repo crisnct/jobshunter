@@ -59,7 +59,8 @@ public class UserController {
     return userDataService.getUser(username)
         .map(user -> {
           JobHuntResponse jobs = jobHuntService.searchJobsForUser(false, user, 1).orElseGet(() -> new JobHuntResponse(List.of()));
-          if (notifyOnWhatsApp && !jobs.jobsFound().isEmpty()) {
+          if (notifyOnWhatsApp && user.isNotifyWhatsapp()
+              && !jobs.jobsFound().isEmpty()) {
             jobHuntService.notifyWhatsApp(user, jobs);
           }
           return ResponseEntity.ok(jobs);

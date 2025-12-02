@@ -85,13 +85,19 @@ public class JobHuntService {
   public void scheduledRun() throws InterruptedException {
     log.info("Starts scheduled job hunt...");
     for (var user : userDataService.getAllUsers()) {
-      log.info("Start search jobs for {} ", user.getEmail());
-      this.searchJobsForUser(true, user, properties.getIterationPerUser())
-          .ifPresent(jobs -> {
-            this.notifyWhatsApp(user, jobs);
-            log.info("Found {} jobs for {} ", jobs.jobsFound().size(), user.getEmail());
-          });
-      Thread.sleep(properties.getIterationDelay());
+      if (user.isNotifyWhatsapp() || user.isNotifyEmail()) {
+        log.info("Start searching jobs for {} ", user.getUsername());
+        Optional<JobHuntResponse> jobsOp = this.searchJobsForUser(true, user, properties.getIterationPerUser());
+        if (jobsOp.isPresent()) {
+          List<String> jobsFound = jobsOp.get().jobsFound();
+          log.info("Found {} jobs for {} ", jobsFound.size(), user.getEmail());
+          jobsFound.forEach(System.out::println);
+          if (user.isNotifyWhatsapp()) {
+            this.notifyWhatsApp(user, jobsOp.get());
+          }
+        }
+        Thread.sleep(properties.getIterationDelay());
+      }
     }
     log.info("Stop scheduled job hunt.");
   }
@@ -154,13 +160,6 @@ public class JobHuntService {
   }
 
   public void notifyWhatsApp(UserEntity user, JobHuntResponse summary) {
-    if (user == null || summary.jobsFound().isEmpty()) {
-      return;
-    }
-    if (!user.isNotifyWhatsapp()) {
-      log.info("Skipping WhatsApp notification for {} because notify_whatsapp is disabled.", user.getUsername());
-      return;
-    }
     whatsAppNotifier.send(summary.jobsFound(), user);
   }
 
