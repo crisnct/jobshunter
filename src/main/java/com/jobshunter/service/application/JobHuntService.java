@@ -18,7 +18,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
@@ -31,7 +30,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 
 @Slf4j
@@ -86,37 +84,25 @@ public class JobHuntService {
     log.info("Starts scheduled job hunt...");
     for (var user : userDataService.getAllUsers()) {
       if (user.isNotifyWhatsapp() || user.isNotifyEmail()) {
-        log.info("Start searching jobs for {} ", user.getUsername());
-        Optional<JobHuntResponse> jobsOp = this.searchJobsForUser(true, user, properties.getIterationPerUser());
-        if (jobsOp.isPresent()) {
-          List<String> jobsFound = jobsOp.get().jobsFound();
-          log.info("Found {} jobs for {} ", jobsFound.size(), user.getEmail());
-          jobsFound.forEach(System.out::println);
-          if (user.isNotifyWhatsapp()) {
-            this.notifyWhatsApp(user, jobsOp.get());
+        if (user.getTimeInterval() != null
+            && user.getTimeInterval() > 0
+            && user.getLastJobs() != null
+            && user.getLastJobs().plusMinutes(user.getTimeInterval()).isBefore(LocalDateTime.now())) {
+          log.info("Start searching jobs for {} ", user.getUsername());
+          JobHuntResponse jobs = this.searchJobsForUser(user, properties.getIterationPerUser());
+          log.info("Found {} jobs for {} ", jobs.jobsFound().size(), user.getEmail());
+          jobs.jobsFound().forEach(System.out::println);
+          if (!jobs.jobsFound().isEmpty()) {
+            this.updateUser(user, jobs.jobsFound());
+            if (user.isNotifyWhatsapp()) {
+              this.notifyWhatsApp(user, jobs);
+            }
           }
+          Thread.sleep(properties.getIterationDelay());
         }
-        Thread.sleep(properties.getIterationDelay());
       }
     }
     log.info("Stop scheduled job hunt.");
-  }
-
-  public Optional<JobHuntResponse> searchJobsForUser(boolean considerLastTime, UserEntity user, int iterations) {
-    if (considerLastTime
-        && user.getTimeInterval() != null
-        && user.getTimeInterval() > 0
-        && user.getLastJobs() != null
-        && user.getLastJobs().plusMinutes(user.getTimeInterval()).isAfter(LocalDateTime.now())) {
-      return Optional.empty();
-    }
-
-    JobHuntResponse response = this.searchJobsForUser(user, iterations);
-    this.updateUser(user,
-        response.jobsFound().stream()
-            .filter(StringUtils::hasText)
-            .map(String::trim).toList());
-    return Optional.of(response);
   }
 
   @Transactional
@@ -126,7 +112,7 @@ public class JobHuntService {
     jobs.forEach(url -> userDataService.addJobUrl(user, url));
   }
 
-  private JobHuntResponse searchJobsForUser(UserEntity user, int iterations) {
+  public JobHuntResponse searchJobsForUser(UserEntity user, int iterations) {
     Set<String> jobs = new HashSet<>();
     List<String> existingUrls = new ArrayList<>(userDataService.getExistingJobUrlsForUser(user.getUsername()));
 
@@ -156,7 +142,7 @@ public class JobHuntService {
       }
     }
 
-    return new JobHuntResponse(jobs.stream().filter(this::isValidJob).toList());
+    return new JobHuntResponse(jobs.stream().toList());
   }
 
   public void notifyWhatsApp(UserEntity user, JobHuntResponse summary) {
