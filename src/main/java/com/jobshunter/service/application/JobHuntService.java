@@ -145,7 +145,7 @@ public class JobHuntService {
 
     return new JobHuntResponse(jobs.values().stream()
         .filter(job -> isValidJob(job.url()))
-        .sorted(Comparator.comparing(Job::url))
+        .sorted(Comparator.comparing(Job::score).reversed())
         .toList());
   }
 

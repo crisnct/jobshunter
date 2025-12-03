@@ -7,6 +7,7 @@ Rules:
 - Prefer roles that match the user's tech stack, seniority and remote/relocation constraints.
 - Exclude internships and unpaid roles.
 - Use web_search extensively with different queries combining role titles, tech stack, remote/relocation, country/region.
+- Do not provide broken links
 
 Output JSON:
 {
@@ -17,4 +18,4 @@ The score from output should be computed based on the match between attached res
 The data in the output should be sorted in descending order by score.
 You should not put in the output invalid url's, url's for which is returned http code different than 200
 
-- NEVER return any URL present in this Blocked URLs JSON array (exact match or after stripping tracking parameters):
+NEVER return any URL present in this Blocked URLs JSON array (exact match or after stripping tracking parameters):
