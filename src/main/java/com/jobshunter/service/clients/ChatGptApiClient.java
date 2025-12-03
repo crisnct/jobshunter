@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.jobshunter.config.ApplicationProperties;
+import com.jobshunter.dto.Job;
 import io.jsonwebtoken.lang.Collections;
 import java.io.IOException;
 import java.net.URI;
@@ -48,7 +49,7 @@ public class ChatGptApiClient {
   @Autowired
   private JsonMapper mapper;
 
-  public List<String> search(String systemPrompt, String userPrompt, String fileId) {
+  public List<Job> search(String systemPrompt, String userPrompt, String fileId) {
     ApplicationProperties.ChatGpt cfg = properties.getChatgpt();
     if (cfg == null) {
       return List.of();
@@ -129,7 +130,7 @@ public class ChatGptApiClient {
     return respoanse.id();
   }
 
-  private List<String> searchWithModel(String systemPrompt, String userPrompt, ApplicationProperties.ChatGpt cfg, String fileId) {
+  private List<Job> searchWithModel(String systemPrompt, String userPrompt, ApplicationProperties.ChatGpt cfg, String fileId) {
     try {
       ChatGptPayload payload = new ChatGptPayload(
           cfg.getModel(),
@@ -169,7 +170,7 @@ public class ChatGptApiClient {
     }
   }
 
-  private List<String> extractJobs(String body) throws JsonProcessingException {
+  private List<Job> extractJobs(String body) throws JsonProcessingException {
     ChatCompletionResponse response = mapper.readValue(body, ChatCompletionResponse.class);
     if (Collections.isEmpty(response.output())) {
       return List.of();
@@ -178,17 +179,26 @@ public class ChatGptApiClient {
         .filter(p -> Objects.equals(p.type, "message") && !p.content().isEmpty())
         .findAny();
     if (item.isPresent()) {
-      final List<String> jobs = new ArrayList<>();
+      final List<Job> jobs = new ArrayList<>();
       item.get().content.stream()
           .filter(c -> Objects.equals("output_text", c.type))
-          .forEach(o -> {
-            if (Strings.isNotEmpty(o.text)) {
-              jobs.addAll(Stream.of(o.text.split(" ")).filter(Strings::isNotEmpty).toList());
-            }
-          });
+          .forEach(o -> jobs.addAll(parseJobs(o.text)));
       return jobs;
     } else {
       return java.util.Collections.emptyList();
+    }
+  }
+
+  private List<Job> parseJobs(String text) {
+    if (Strings.isBlank(text)) {
+      return List.of();
+    }
+    try {
+      Job[] parsed = mapper.readValue(text, Job[].class);
+      return List.of(parsed);
+    } catch (JsonProcessingException e) {
+      log.warn("Failed to parse jobs from ChatGPT response: {}", e.getMessage());
+      return List.of();
     }
   }
 

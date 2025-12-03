@@ -3,6 +3,7 @@ package com.jobshunter.service.clients;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.jobshunter.config.ApplicationProperties;
 import com.jobshunter.database.entities.UserEntity;
+import com.jobshunter.dto.Job;
 import com.jobshunter.service.application.UserMessagesFactory;
 import com.jobshunter.service.application.UserMessagesFactory.MessageTemplate;
 import com.twilio.Twilio;
@@ -47,7 +48,7 @@ public class WhatsAppNotifier {
     Twilio.init(properties.getWhatsapp().getAccountSid(), properties.getWhatsapp().getAuthToken());
   }
 
-  public void send(List<String> jobsURLs, UserEntity user) {
+  public void send(List<Job> jobsURLs, UserEntity user) {
     if (jobsURLs.isEmpty()) {
       log.info("No jobs found. Skipping WhatsApp notification.");
       return;
@@ -88,12 +89,12 @@ public class WhatsAppNotifier {
       return;
     }
 
-    List<String> jobsToSend = jobsURLs;
+    List<Job> jobsToSend = jobsURLs;
     String formattedJobs = formatJobs(jobsToSend);
     if (formattedJobs.length() > TWILLIO_MAX_LIMIT_CHARS) {
       jobsToSend = jobsURLs.stream().map(url -> {
         try {
-          return shortenURLClient.shorten(url);
+          return new Job(url.score(), shortenURLClient.shorten(url.url()));
         } catch (Exception e) {
           log.error("Can not shorten url " + url);
           return url;
@@ -153,15 +154,19 @@ public class WhatsAppNotifier {
     return StringUtils.hasText(phone) ? StringUtils.trimAllWhitespace(phone) : null;
   }
 
-  private String formatJobs(List<String> jobs) {
+  private String formatJobs(List<Job> jobs) {
     StringBuilder builder = new StringBuilder();
     for (int i = 0; i < jobs.size(); i++) {
       if (i > 0) {
         builder.append('\n');
       }
+      Job job = jobs.get(i);
       builder.append(i + 1)
-          .append(". ")
-          .append(jobs.get(i));
+          .append("  ")
+          .append(job.score())
+          .append("% ")
+          .append(" match, ")
+          .append(job.url());
     }
     return builder.toString();
   }

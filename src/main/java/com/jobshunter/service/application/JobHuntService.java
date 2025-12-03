@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.jobshunter.config.ApplicationProperties;
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.service.UserDataService;
+import com.jobshunter.dto.Job;
 import com.jobshunter.dto.JobHuntResponse;
 import com.jobshunter.service.clients.ChatGptApiClient;
 import com.jobshunter.service.clients.ShortenURLClient;
@@ -16,9 +17,10 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -106,14 +108,14 @@ public class JobHuntService {
   }
 
   @Transactional
-  private void updateUser(UserEntity user, List<String> jobs) {
+  private void updateUser(UserEntity user, List<Job> jobs) {
     user.setLastJobs(LocalDateTime.now());
     userDataService.updateUser(user);
-    jobs.forEach(url -> userDataService.addJobUrl(user, url));
+    jobs.forEach(job -> userDataService.addJobUrl(user, job.url()));
   }
 
   public JobHuntResponse searchJobsForUser(UserEntity user, int iterations) {
-    Set<String> jobs = new HashSet<>();
+    Map<String, Job> jobs = new HashMap<>();
     List<String> existingUrls = new ArrayList<>(userDataService.getExistingJobUrlsForUser(user.getUsername()));
 
     for (int i = 0; i < iterations; i++) {
@@ -124,15 +126,14 @@ public class JobHuntService {
       } catch (JsonProcessingException e) {
         log.error("Can not serialize " + existingUrls, e);
       }
-      List<String> jobsFound = chatGptApiClient.search(systemPromptUsed, user.getPrompt(), user.getCvFileId());
-
+      List<Job> jobsFound = chatGptApiClient.search(systemPromptUsed, user.getPrompt(), user.getCvFileId());
       jobsFound.forEach(newJob -> {
-        if (!existingUrls.contains(newJob)) {
-          existingUrls.add(newJob);
+        if (!existingUrls.contains(newJob.url())) {
+          existingUrls.add(newJob.url());
         }
+        jobs.put(newJob.url(), newJob);
       });
 
-      jobs.addAll(jobsFound);
       if (iterations > 1) {
         try {
           Thread.sleep(properties.getIterationDelay());
@@ -142,7 +143,10 @@ public class JobHuntService {
       }
     }
 
-    return new JobHuntResponse(jobs.stream().toList());
+    return new JobHuntResponse(jobs.values().stream()
+        .filter(job -> isValidJob(job.url()))
+        .sorted(Comparator.comparing(Job::url))
+        .toList());
   }
 
   public void notifyWhatsApp(UserEntity user, JobHuntResponse summary) {
