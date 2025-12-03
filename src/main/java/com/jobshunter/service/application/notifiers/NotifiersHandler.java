@@ -1,4 +1,4 @@
-package com.jobshunter.service.notifiers;
+package com.jobshunter.service.application.notifiers;
 
 import java.util.ArrayList;
 import java.util.List;
