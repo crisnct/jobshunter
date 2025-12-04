@@ -6,9 +6,11 @@ import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import com.jobshunter.config.ApplicationProperties;
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.service.UserDataService;
+import com.jobshunter.dto.Job;
 import com.jobshunter.service.clients.WhatsAppNotifier;
 import java.lang.reflect.Method;
 import java.time.Duration;
+import java.util.List;
 import java.util.Properties;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
@@ -163,7 +165,7 @@ class JobHuntServiceTest {
   private static class NoOpNotifier extends WhatsAppNotifier {
 
     @Override
-    public void send(java.util.List<String> jobsURLs, UserEntity user) {
+    public void send(List<Job> jobsURLs, UserEntity user) {
       // no-op for test
     }
   }
