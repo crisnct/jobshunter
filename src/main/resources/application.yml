@@ -41,6 +41,20 @@ spring:
   liquibase:
     change-log: classpath:db/changelog/db.changelog-master.xml
     enabled: ${LIQUIBASE_ENABLED:true}
+  mail:
+    host: sandbox.smtp.mailtrap.io
+    port: 587
+    username: ${EMAIL_USER:root}
+    password: ${EMAIL_PASSWORD:root}
+    debug: false
+    smtp:
+      auth: true
+      connectiontimeout: 5000
+      writetimeout: 5000
+      timeout: 5000
+      starttls:
+        enable: true
+
 security:
   jwt:
     secret: ${JWT_SECRET:change-me-dev-secret-please-keep-long}
