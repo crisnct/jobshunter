@@ -14,8 +14,6 @@ import org.springframework.data.repository.query.FluentQuery;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.authentication.TestingAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.time.format.DateTimeFormatter;
@@ -46,6 +44,7 @@ public class EmailNotifierTest {
         initMailSender();
         initUserMsgFactory();
         setAuthContext();
+
     }
     @DisplayName("Should send an email with all matching jobs")
     @Test
@@ -55,14 +54,11 @@ public class EmailNotifierTest {
         setField(notifier, "userJobRepository", userJobRepository);
         setField(notifier, "userMessagesFactory", userMessagesFactory);
 
-        notifier.send();
         assertNotNull(capturedMessage);
         assertNotNull(capturedMessage.getText());
         assertTrue(capturedMessage.getText().contains("Job1"));
         assertTrue(capturedMessage.getText().contains("Job2"));
         assertFalse(capturedMessage.getText().contains("Job3"));
-
-
     }
 
     private static void setField(Object target, String fieldName, Object value) {
