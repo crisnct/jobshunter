@@ -99,6 +99,9 @@ public class JobHuntService {
             if (user.isNotifyWhatsapp()) {
               this.notifyWhatsApp(user, jobs);
             }
+            if (user.isNotifyEmail()) {
+
+            }
           }
           Thread.sleep(properties.getIterationDelay());
         }
