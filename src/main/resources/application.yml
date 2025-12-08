@@ -26,6 +26,9 @@ jobshunter:
 spring:
   profiles:
     default: ${PROFILE:local}
+  threads:
+    virtual:
+      enabled: true
   datasource:
     url: ${MYSQL_URL:jdbc:mysql://localhost:3306/jobshunter?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&createDatabaseIfNotExist=true}
     username: ${MYSQL_USER:root}
@@ -38,7 +41,6 @@ spring:
   liquibase:
     change-log: classpath:db/changelog/db.changelog-master.xml
     enabled: ${LIQUIBASE_ENABLED:true}
-
 security:
   jwt:
     secret: ${JWT_SECRET:change-me-dev-secret-please-keep-long}
