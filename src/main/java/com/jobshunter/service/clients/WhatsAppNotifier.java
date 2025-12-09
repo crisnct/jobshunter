@@ -6,6 +6,7 @@ import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.dto.Job;
 import com.jobshunter.service.application.UserMessagesFactory;
 import com.jobshunter.service.application.UserMessagesFactory.MessageTemplate;
+import com.jobshunter.service.application.notifiers.Notifier;
 import com.twilio.Twilio;
 import com.twilio.exception.ApiException;
 import com.twilio.rest.api.v2010.account.Message;
@@ -90,7 +91,7 @@ public class WhatsAppNotifier {
     }
 
     List<Job> jobsToSend = jobsURLs;
-    String formattedJobs = formatJobs(jobsToSend);
+    String formattedJobs = Notifier.formatJobs(jobsToSend);
     if (formattedJobs.length() > TWILLIO_MAX_LIMIT_CHARS) {
       jobsToSend = jobsURLs.stream().map(url -> {
         try {
@@ -100,7 +101,7 @@ public class WhatsAppNotifier {
           return url;
         }
       }).toList();
-      formattedJobs = formatJobs(jobsToSend);
+      formattedJobs = Notifier.formatJobs(jobsToSend);
     }
 
     if (!this.trySend(toNumber, fromNumber, formattedJobs)) {
@@ -154,20 +155,4 @@ public class WhatsAppNotifier {
     return StringUtils.hasText(phone) ? StringUtils.trimAllWhitespace(phone) : null;
   }
 
-  private String formatJobs(List<Job> jobs) {
-    StringBuilder builder = new StringBuilder();
-    for (int i = 0; i < jobs.size(); i++) {
-      if (i > 0) {
-        builder.append('\n');
-      }
-      Job job = jobs.get(i);
-      builder.append(i + 1)
-          .append("  ")
-          .append(job.score())
-          .append("% ")
-          .append(" match, ")
-          .append(job.url());
-    }
-    return builder.toString();
-  }
 }

@@ -10,6 +10,6 @@ import org.springframework.web.multipart.MultipartFile;
 public class EmailRequest {
     @NotBlank private String email;
     @Nullable private String subject;
-    @Nullable private String message;
+    @NotBlank private String message;
     @Nullable private MultipartFile file;
 }

@@ -4,7 +4,7 @@ server:
     enabled: true
 
 jobshunter:
-  expiredExpressions: was expired,is expired,no longer exists,This job was available,is no longer active,job is no longer available,this job was removed,Job not found,Applications from candidates outside of our global target markets are currently not accepted,No longer accepting applications,The job ad is no longer active,Application not possible,This job opening is no longer available,The vacancy has expired,this position has been filled,ONLY on W2,The job you are looking for is no longer open,Oferta no disponible,This job posting is no longer available,this job has expired,this position has been filled
+  expiredExpressions: was expired,is expired,no longer exists,This job was available,is no longer active,job is no longer available,this job was removed,Job not found,Applications from candidates outside of our global target markets are currently not accepted,No longer accepting applications,The job ad is no longer active,Application not possible,This job opening is no longer available,The vacancy has expired,this position has been filled,ONLY on W2,The job you are looking for is no longer open,Oferta no disponible,This job posting is no longer available,this job has expired,this position has been filled,This job offer is not active
   iterationPerUser: 10
   iterationDelay: 30000
 
@@ -31,8 +31,8 @@ spring:
       enabled: true
   datasource:
     url: ${MYSQL_URL:jdbc:mysql://localhost:3306/jobshunter?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&createDatabaseIfNotExist=true}
-    username: root
-    password:
+    username: ${MYSQL_USER:root}
+    password: ${MYSQL_PASSWORD:root}
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:
@@ -42,18 +42,18 @@ spring:
     change-log: classpath:db/changelog/db.changelog-master.xml
     enabled: ${LIQUIBASE_ENABLED:true}
   mail:
-    host: sandbox.smtp.mailtrap.io
+    host: send.smtp.mailtrap.io
     port: 587
-    username: ${EMAIL_USER:root}
-    password: ${EMAIL_PASSWORD:root}
-    debug: false
-    smtp:
-      auth: true
-      connectiontimeout: 5000
-      writetimeout: 5000
-      timeout: 5000
-      starttls:
-        enable: true
+    username: ${MAILTRAP_USERNAME:}
+    password: ${MAILTRAP_PASSWORD:}
+    from: ${MAIL_FROM:no-reply@mailtrap.io}
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
+      mail.smtp.connectiontimeout: 5000
+      mail.smtp.writetimeout: 5000
+      mail.smtp.timeout: 5000
+      mail.smtp.from: ${MAIL_FROM:no-reply@mailtrap.io}
 
 security:
   jwt:
