@@ -1,6 +1,6 @@
 package com.jobshunter.service.clients.jobSearch;
 
-import com.jobshunter.config.PackageExpected;
+import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.dto.Job;
 import java.util.List;
 

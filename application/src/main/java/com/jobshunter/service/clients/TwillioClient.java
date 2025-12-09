@@ -2,7 +2,7 @@ package com.jobshunter.service.clients;
 
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.jobshunter.config.ApplicationProperties;
-import com.jobshunter.config.PackageExpected;
+import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.application.UserMessagesFactory;
 import com.twilio.Twilio;
 import com.twilio.exception.ApiException;

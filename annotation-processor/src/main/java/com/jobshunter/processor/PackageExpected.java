@@ -1,4 +1,4 @@
-package com.jobshunter.config;
+package com.jobshunter.processor;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

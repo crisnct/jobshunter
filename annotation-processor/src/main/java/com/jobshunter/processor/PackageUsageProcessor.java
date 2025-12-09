@@ -1,4 +1,4 @@
-package com.jobshunter.config;
+package com.jobshunter.processor;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -24,7 +24,7 @@ import javax.tools.Diagnostic;
  * referenced from the expected package. It scans all fields whose type is the annotated class and
  * raises a compilation error if the enclosing class belongs to a different package.
  */
-@SupportedAnnotationTypes("com.jobshunter.config.PackageExpected")
+@SupportedAnnotationTypes("com.jobshunter.processor.PackageExpected")
 @SupportedSourceVersion(SourceVersion.RELEASE_21)
 public class PackageUsageProcessor extends AbstractProcessor {
 

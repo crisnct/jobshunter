@@ -1,6 +1,6 @@
 package com.jobshunter.service.clients;
 
-import com.jobshunter.config.PackageExpected;
+import com.jobshunter.processor.PackageExpected;
 import jakarta.annotation.Nullable;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;

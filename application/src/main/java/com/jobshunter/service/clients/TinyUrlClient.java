@@ -1,6 +1,6 @@
 package com.jobshunter.service.clients;
 
-import com.jobshunter.config.PackageExpected;
+import com.jobshunter.processor.PackageExpected;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;

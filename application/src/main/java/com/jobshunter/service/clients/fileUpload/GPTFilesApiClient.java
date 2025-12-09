@@ -1,6 +1,6 @@
 package com.jobshunter.service.clients.fileUpload;
 
-import com.jobshunter.config.PackageExpected;
+import com.jobshunter.processor.PackageExpected;
 import java.io.IOException;
 import java.nio.file.Path;
 
