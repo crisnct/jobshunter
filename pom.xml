@@ -12,9 +12,10 @@
     <description>Parent POM for jobshunter modules</description>
 
     <properties>
-        <java.version>25</java.version>
         <maven.compiler.release>25</maven.compiler.release>
         <spring.boot.version>4.0.0</spring.boot.version>
+        <spring.web>7.0.1</spring.web>
+        <joackson.databind>2.20.1</joackson.databind>
         <lombok.version>1.18.42</lombok.version>
         <slf4j.version>2.0.13</slf4j.version>
         <liquibase.version>4.25.1</liquibase.version>
