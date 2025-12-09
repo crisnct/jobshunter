@@ -56,16 +56,24 @@ public class UserController {
     if (username == null) {
       return ResponseEntity.badRequest().build();
     }
-
     return userDataService.getUser(username)
-        .map(user -> {
-          JobHuntResponse jobs = jobHuntService.searchJobsForUser(user, 1);
-          if (notifyOnWhatsApp && user.isNotifyWhatsapp() && !jobs.jobsFound().isEmpty()) {
-            jobHuntService.notifyWhatsApp(user, jobs);
-          }
-          return ResponseEntity.ok(jobs);
-        })
+        .map(user -> searchJobs(user, notifyOnWhatsApp))
         .orElseGet(() -> ResponseEntity.badRequest().build());
+  }
+
+  private ResponseEntity<JobHuntResponse> searchJobs(UserEntity user, boolean notifyOnWhatsApp) {
+    JobHuntResponse jobs = jobHuntService.searchJobsForUser(user, 1);
+    if (jobs.jobsFound().isEmpty()) {
+      return ResponseEntity.ofNullable(null);
+    } else {
+      if (notifyOnWhatsApp && user.isNotifyWhatsapp()) {
+        jobHuntService.notifyWhatsApp(user, jobs);
+      }
+      if (user.isNotifyEmail()) {
+        jobHuntService.notifyEmail(user, jobs);
+      }
+      return ResponseEntity.ok(jobs);
+    }
   }
 
   @GetMapping("/all")

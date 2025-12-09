@@ -156,7 +156,7 @@ public class JobHuntService {
     whatsappNotifierService.send(summary.jobsFound(), user);
   }
 
-  private void notifyEmail(UserEntity user, JobHuntResponse summary) {
+  public void notifyEmail(UserEntity user, JobHuntResponse summary) {
     emailNotifierService.send(summary.jobsFound(), user);
   }
 
