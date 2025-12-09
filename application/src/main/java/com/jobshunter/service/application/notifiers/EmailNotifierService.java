@@ -16,7 +16,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 @Slf4j
 @Service
-public final class EmailNotifierService implements Notifier {
+public final class EmailNotifierService implements ServiceNotifier {
 
   @Autowired
   private SmtpMailtrapClient emailClient;
@@ -34,7 +34,7 @@ public final class EmailNotifierService implements Notifier {
   @Override
   public void send(List<Job> jobs, UserEntity user) {
     String timestamp = LocalDateTime.now().format(JOB_TIMESTAMP_FORMAT);
-    String body = userMessagesFactory.build(MessageTemplate.JOBS_NOTIFY, Map.of("1", timestamp, "2", Notifier.formatJobs(jobs)));
+    String body = userMessagesFactory.build(MessageTemplate.JOBS_NOTIFY, Map.of("1", timestamp, "2", ServiceNotifier.formatJobs(jobs)));
     emailClient.sendEmail(user.getEmail(), "JobsHunter - new jobs for you", body, null);
   }
 

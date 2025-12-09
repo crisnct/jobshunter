@@ -14,8 +14,8 @@ Java 21 + Spring Boot service that keeps a user profile (prompt, CV, phone, time
 ## Contributors
 | Name          | Role                                                                | Commits | Contribution                  | Sponsorship |
 |---------------|---------------------------------------------------------------------|---------|-------------------------------|-------------|
-| Cristian Țone | • Product Owner<br/>• Main developer of the project on backend side | 43      | • Implemented core of the app | 52eur       |
-| Andrei Lazăr  | • Backend Developer                                                 | 0       | -                             | -           |
+| Cristian Țone | • Product Owner<br/>• Main developer of the project on backend side | 59      | • Implemented core of the app | 52eur       |
+| Andrei Lazăr  | • Backend Developer                                                 | 1       | -                             | -           |
 | TBD           |  TBD                                                                | 0       | -                             | -           |
 
 Display total commits per user:

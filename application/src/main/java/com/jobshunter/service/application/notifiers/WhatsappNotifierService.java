@@ -16,7 +16,7 @@ import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
-public final class WhatsappNotifierService implements Notifier {
+public final class WhatsappNotifierService implements ServiceNotifier {
 
   @Autowired
   private ApplicationProperties properties;
@@ -46,7 +46,7 @@ public final class WhatsappNotifierService implements Notifier {
     }
 
     List<Job> jobsToSend = jobsURLs;
-    String formattedJobs = Notifier.formatJobs(jobsToSend);
+    String formattedJobs = ServiceNotifier.formatJobs(jobsToSend);
     if (formattedJobs.length() > TwillioClient.TWILLIO_MAX_LIMIT_CHARS) {
       jobsToSend = jobsURLs.stream().map(url -> {
         try {
@@ -56,7 +56,7 @@ public final class WhatsappNotifierService implements Notifier {
           return url;
         }
       }).toList();
-      formattedJobs = Notifier.formatJobs(jobsToSend);
+      formattedJobs = ServiceNotifier.formatJobs(jobsToSend);
     }
 
     String timestamp = LocalDateTime.now().format(JOB_TIMESTAMP_FORMAT);

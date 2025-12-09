@@ -137,4 +137,11 @@
         </update>
     </changeSet>
 
+    <changeSet id="7-seed-role-admin" author="codex">
+        <insert tableName="roles">
+            <column name="id" valueNumeric="2"/>
+            <column name="name" value="ADMIN"/>
+        </insert>
+    </changeSet>
+
 </databaseChangeLog>

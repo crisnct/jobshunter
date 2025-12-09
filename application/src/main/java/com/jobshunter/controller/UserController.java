@@ -16,6 +16,7 @@ import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -68,6 +69,7 @@ public class UserController {
   }
 
   @GetMapping("/all")
+  @PreAuthorize("hasRole('ADMIN')")
   public ResponseEntity<List<UserInfoResponse>> getAllUsers() {
     List<UserInfoResponse> users = userDataService.getAllUsers().stream()
         .map(this::toResponse)
@@ -76,6 +78,7 @@ public class UserController {
   }
 
   @GetMapping("/jobs")
+  @PreAuthorize("hasRole('ADMIN')")
   public ResponseEntity<?> getUserJobs(@RequestParam("username") String username) {
     if (username == null || username.isBlank()) {
       return ResponseEntity.badRequest().body(Map.of("error", "username must not be blank"));

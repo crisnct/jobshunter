@@ -6,7 +6,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Locale;
 
-public sealed interface Notifier permits EmailNotifierService, WhatsappNotifierService {
+public sealed interface ServiceNotifier permits EmailNotifierService, WhatsappNotifierService {
 
   DateTimeFormatter JOB_TIMESTAMP_FORMAT = DateTimeFormatter.ofPattern("dd-MMMM-yyyy | HH:mm", Locale.ENGLISH);
 
