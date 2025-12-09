@@ -1,6 +1,6 @@
 # JobsHunter
 
-Java 21 + Spring Boot service that keeps a user profile (prompt, CV, phone, time interval), searches for new jobs with ChatGPT, and can push results to WhatsApp via Twilio.
+Java 25 + Spring Boot 4.0.0 service that keeps a user profile (prompt, CV, phone, time interval), searches for new jobs with ChatGPT, and can push results to WhatsApp via Twilio.
 ![Jobshunter logo](application/src/main/resources/static/images/JobsHunterLogo.svg)
 
 ## What it does
@@ -28,7 +28,8 @@ git shortlog -s -n
 - The project is completely free and can be used by anyone.
 
 ## Requirements
-- JDK 21 (matches `maven.compiler.release=21`).
+- Java 25
+- Spring Boot 4.0.0
 - Maven 3.9+.
 - MySQL 8.x reachable with the configured credentials.
 - Optional: Twilio account with WhatsApp-enabled sender.
