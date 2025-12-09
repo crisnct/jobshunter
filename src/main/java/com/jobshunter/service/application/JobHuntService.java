@@ -7,6 +7,7 @@ import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.service.UserDataService;
 import com.jobshunter.dto.Job;
 import com.jobshunter.dto.JobHuntResponse;
+import com.jobshunter.service.application.notifiers.EmailService;
 import com.jobshunter.service.clients.ChatGptApiClient;
 import com.jobshunter.service.clients.ShortenURLClient;
 import com.jobshunter.service.clients.WhatsAppNotifier;
@@ -46,6 +47,9 @@ public class JobHuntService {
 
   @Autowired
   private WhatsAppNotifier whatsAppNotifier;
+
+  @Autowired
+  private EmailService emailService;
 
   @Autowired
   private UserDataService userDataService;
@@ -99,6 +103,9 @@ public class JobHuntService {
             if (user.isNotifyWhatsapp()) {
               this.notifyWhatsApp(user, jobs);
             }
+            if (user.isNotifyEmail()) {
+              this.notifyEmail(user, jobs);
+            }
           }
           Thread.sleep(properties.getIterationDelay());
         }
@@ -151,6 +158,10 @@ public class JobHuntService {
 
   public void notifyWhatsApp(UserEntity user, JobHuntResponse summary) {
     whatsAppNotifier.send(summary.jobsFound(), user);
+  }
+
+  private void notifyEmail(UserEntity user, JobHuntResponse summary) {
+    emailService.send(summary.jobsFound(), user);
   }
 
   private boolean isValidJob(String jobURL) {
