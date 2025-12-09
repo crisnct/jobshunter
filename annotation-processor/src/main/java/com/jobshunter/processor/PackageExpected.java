@@ -10,7 +10,7 @@ import java.lang.annotation.Target;
  * Used by {@code PackageUsageProcessor} (compile time) and {@link PackageExpectedValidator} (runtime).
  */
 @Target(ElementType.TYPE)
-@Retention(RetentionPolicy.CLASS)
+@Retention(RetentionPolicy.RUNTIME)
 public @interface PackageExpected {
   /**
    * Fully qualified package name the annotated class must belong to.
