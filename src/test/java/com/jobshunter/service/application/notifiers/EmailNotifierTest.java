@@ -49,11 +49,11 @@ class EmailNotifierTest {
     @Captor
     private ArgumentCaptor<Map<String, String>> placeholdersCaptor;
 
-    private EmailService notifier;
+    private EmailNotifierService notifier;
 
     @BeforeEach
     void setUp() {
-        notifier = new EmailService();
+        notifier = new EmailNotifierService();
         ReflectionTestUtils.setField(notifier, "mailSender", mailSender);
         ReflectionTestUtils.setField(notifier, "userJobRepository", userJobRepository);
         ReflectionTestUtils.setField(notifier, "userMessagesFactory", userMessagesFactory);

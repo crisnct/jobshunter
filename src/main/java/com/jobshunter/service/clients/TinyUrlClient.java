@@ -6,7 +6,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 @Component
-public class ShortenURLClient {
+public class TinyUrlClient {
 
   @Autowired
   private RestTemplate restTemplate;

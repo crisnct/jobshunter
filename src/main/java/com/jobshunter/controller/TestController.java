@@ -2,8 +2,7 @@ package com.jobshunter.controller;
 
 import com.jobshunter.database.service.UserDataService;
 import com.jobshunter.dto.EmailRequest;
-import com.jobshunter.service.application.notifiers.EmailService;
-import com.jobshunter.service.clients.SmtpEmailClient;
+import com.jobshunter.service.clients.SmtpMailtrapClient;
 import jakarta.validation.Valid;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
@@ -25,10 +24,7 @@ import org.springframework.web.server.ResponseStatusException;
 public class TestController {
 
   @Autowired
-  private EmailService emailService;
-
-  @Autowired
-  private SmtpEmailClient emailClient;
+  private SmtpMailtrapClient emailClient;
 
   @Autowired
   private UserDataService userDataService;

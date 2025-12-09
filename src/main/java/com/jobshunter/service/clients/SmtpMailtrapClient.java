@@ -17,7 +17,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 @Slf4j
 @Component
-public class SmtpEmailClient {
+public class SmtpMailtrapClient {
 
   private static final String DEFAULT_SUBJECT = "JobsHunter notification";
 

@@ -2,12 +2,11 @@ package com.jobshunter.service.application.notifiers;
 
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.dto.Job;
-import com.jobshunter.service.clients.WhatsAppNotifier;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Locale;
 
-public sealed interface Notifier permits EmailService{
+public sealed interface Notifier permits EmailNotifierService, WhatsappNotifierService {
 
   DateTimeFormatter JOB_TIMESTAMP_FORMAT = DateTimeFormatter.ofPattern("dd-MMMM-yyyy | HH:mm", Locale.ENGLISH);
 

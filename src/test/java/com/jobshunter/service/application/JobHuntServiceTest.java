@@ -7,7 +7,7 @@ import com.jobshunter.config.ApplicationProperties;
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.service.UserDataService;
 import com.jobshunter.dto.Job;
-import com.jobshunter.service.clients.WhatsAppNotifier;
+import com.jobshunter.service.clients.TwillioClient;
 import java.lang.reflect.Method;
 import java.time.Duration;
 import java.util.List;
@@ -162,7 +162,7 @@ class JobHuntServiceTest {
     }
   }
 
-  private static class NoOpNotifier extends WhatsAppNotifier {
+  private static class NoOpNotifier extends TwillioClient {
 
     @Override
     public void send(List<Job> jobsURLs, UserEntity user) {

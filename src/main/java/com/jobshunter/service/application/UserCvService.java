@@ -2,7 +2,8 @@ package com.jobshunter.service.application;
 
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.repository.UserRepository;
-import com.jobshunter.service.clients.ChatGptApiClient;
+import com.jobshunter.service.clients.fileUpload.GPTFilesApiClient;
+import com.jobshunter.service.clients.jobSearch.ChatGptApi5Client;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -36,7 +37,10 @@ public class UserCvService {
   private UserRepository userRepository;
 
   @Autowired
-  private ChatGptApiClient chatGptApiClient;
+  private ChatGptApi5Client chatGptApiClient;
+
+  @Autowired
+  private GPTFilesApiClient filesClient;
 
   @Transactional
   public String uploadUserCv(String username, MultipartFile file) throws IOException {
@@ -56,10 +60,10 @@ public class UserCvService {
       copyWithLimit(file.getInputStream(), tempFile, MAX_CV_BYTES);
 
       if (StringUtils.hasText(user.getCvFileId())) {
-        chatGptApiClient.deleteFile(user.getCvFileId());
+        filesClient.deleteFile(user.getCvFileId());
       }
 
-      String uploadedFileId = chatGptApiClient.uploadFile(tempFile);
+      String uploadedFileId = filesClient.uploadFile(tempFile);
       if (!StringUtils.hasText(uploadedFileId)) {
         throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Failed to upload CV to ChatGPT");
       }
@@ -85,7 +89,7 @@ public class UserCvService {
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
     if (StringUtils.hasText(user.getCvFileId())) {
-      chatGptApiClient.deleteFile(user.getCvFileId());
+      filesClient.deleteFile(user.getCvFileId());
       user.setCvFileId(null);
       userRepository.save(user);
     }

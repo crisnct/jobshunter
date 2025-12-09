@@ -7,10 +7,9 @@ import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.service.UserDataService;
 import com.jobshunter.dto.Job;
 import com.jobshunter.dto.JobHuntResponse;
-import com.jobshunter.service.application.notifiers.EmailService;
-import com.jobshunter.service.clients.ChatGptApiClient;
-import com.jobshunter.service.clients.ShortenURLClient;
-import com.jobshunter.service.clients.WhatsAppNotifier;
+import com.jobshunter.service.application.notifiers.EmailNotifierService;
+import com.jobshunter.service.application.notifiers.WhatsappNotifierService;
+import com.jobshunter.service.clients.jobSearch.ChatGptApi5Client;
 import jakarta.annotation.PostConstruct;
 import java.net.InetAddress;
 import java.net.URI;
@@ -43,19 +42,16 @@ public class JobHuntService {
   private ApplicationProperties properties;
 
   @Autowired
-  private ChatGptApiClient chatGptApiClient;
+  private ChatGptApi5Client chatGptApiClient;
 
   @Autowired
-  private WhatsAppNotifier whatsAppNotifier;
+  private WhatsappNotifierService whatsappNotifierService;
 
   @Autowired
-  private EmailService emailService;
+  private EmailNotifierService emailNotifierService;
 
   @Autowired
   private UserDataService userDataService;
-
-  @Autowired
-  private ShortenURLClient shortenURLClient;
 
   private List<Pattern> expiredJobsPatterns;
 
@@ -157,11 +153,11 @@ public class JobHuntService {
   }
 
   public void notifyWhatsApp(UserEntity user, JobHuntResponse summary) {
-    whatsAppNotifier.send(summary.jobsFound(), user);
+    whatsappNotifierService.send(summary.jobsFound(), user);
   }
 
   private void notifyEmail(UserEntity user, JobHuntResponse summary) {
-    emailService.send(summary.jobsFound(), user);
+    emailNotifierService.send(summary.jobsFound(), user);
   }
 
   private boolean isValidJob(String jobURL) {

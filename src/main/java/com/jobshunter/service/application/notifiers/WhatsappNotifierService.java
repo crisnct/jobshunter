@@ -1,0 +1,71 @@
+package com.jobshunter.service.application.notifiers;
+
+import com.jobshunter.config.ApplicationProperties;
+import com.jobshunter.database.entities.UserEntity;
+import com.jobshunter.dto.Job;
+import com.jobshunter.service.application.UserMessagesFactory;
+import com.jobshunter.service.application.UserMessagesFactory.MessageTemplate;
+import com.jobshunter.service.clients.TinyUrlClient;
+import com.jobshunter.service.clients.TwillioClient;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+@Slf4j
+@Service
+public final class WhatsappNotifierService implements Notifier {
+
+  @Autowired
+  private ApplicationProperties properties;
+
+  @Autowired
+  private UserMessagesFactory userMessagesFactory;
+
+  @Autowired
+  private TwillioClient twillioClient;
+
+  @Autowired
+  private TinyUrlClient tinyUrlClient;
+
+  @Override
+  public void send(List<Job> jobsURLs, UserEntity user) {
+    if (jobsURLs.isEmpty()) {
+      log.info("No jobs found. Skipping WhatsApp notification.");
+      return;
+    }
+    if (user == null) {
+      log.warn("User not provided. Skipping WhatsApp notification.");
+      return;
+    }
+    if (!user.isNotifyWhatsapp()) {
+      log.info("Skipping WhatsApp notification for {} because notify_whatsapp is disabled.", user.getUsername());
+      return;
+    }
+
+    List<Job> jobsToSend = jobsURLs;
+    String formattedJobs = Notifier.formatJobs(jobsToSend);
+    if (formattedJobs.length() > TwillioClient.TWILLIO_MAX_LIMIT_CHARS) {
+      jobsToSend = jobsURLs.stream().map(url -> {
+        try {
+          return new Job(url.score(), tinyUrlClient.shorten(url.url()));
+        } catch (Exception e) {
+          log.error("Can not shorten url " + url);
+          return url;
+        }
+      }).toList();
+      formattedJobs = Notifier.formatJobs(jobsToSend);
+    }
+
+    String timestamp = LocalDateTime.now().format(JOB_TIMESTAMP_FORMAT);
+    String body = userMessagesFactory.build(MessageTemplate.JOBS_NOTIFY, Map.of("1", timestamp, "2", formattedJobs));
+
+    if (!twillioClient.trySend(user.getPhoneNumber(), properties.getWhatsapp().getFromNumber(), body)) {
+      log.warn("WhatsApp send skipped after attempting available senders. Printing jobs to the console instead.");
+      jobsURLs.forEach(job -> log.info("{}", job));
+    }
+  }
+
+}
