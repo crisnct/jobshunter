@@ -8,11 +8,11 @@ import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.Date;
 import java.util.Map;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 @Service
 public class JwtService {
@@ -61,6 +61,12 @@ public class JwtService {
   }
 
   private Key getSigningKey() {
+    if (!StringUtils.hasText(jwtProperties.getSecret())) {
+      throw new IllegalStateException("JWT secret (security.jwt.secret) must be configured");
+    }
+    if (jwtProperties.getExpirationMs() <= 0) {
+      throw new IllegalStateException("JWT expiration (security.jwt.expiration-ms) must be positive");
+    }
     return Keys.hmacShaKeyFor(jwtProperties.getSecret().getBytes(StandardCharsets.UTF_8));
   }
 }

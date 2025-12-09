@@ -1,7 +1,7 @@
 # JobsHunter
 
 Java 21 + Spring Boot service that keeps a user profile (prompt, CV, phone, time interval), searches for new jobs with ChatGPT, and can push results to WhatsApp via Twilio.
-![Jobshunter logo](src/main/resources/static/images/JobsHunterLogo.svg)
+![Jobshunter logo](application/src/main/resources/static/images/JobsHunterLogo.svg)
 
 ## What it does
 - JWT auth flow: `/api/auth/register`, `/api/auth/login`, `/api/auth/verify`.

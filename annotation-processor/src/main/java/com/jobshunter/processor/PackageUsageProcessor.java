@@ -25,7 +25,7 @@ import javax.tools.Diagnostic;
  * raises a compilation error if the enclosing class belongs to a different package.
  */
 @SupportedAnnotationTypes("com.jobshunter.processor.PackageExpected")
-@SupportedSourceVersion(SourceVersion.RELEASE_21)
+@SupportedSourceVersion(SourceVersion.RELEASE_25)
 public class PackageUsageProcessor extends AbstractProcessor {
 
   private final Map<TypeMirror, String> expectedPackages = new HashMap<>();

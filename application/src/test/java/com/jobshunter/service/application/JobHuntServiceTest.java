@@ -7,7 +7,6 @@ import com.jobshunter.config.ApplicationProperties;
 import com.jobshunter.database.service.UserDataService;
 import com.jobshunter.service.clients.TwillioClient;
 import java.lang.reflect.Method;
-import java.time.Duration;
 import java.util.Properties;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
@@ -15,8 +14,8 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.config.YamlPropertiesFactoryBean;
-import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
@@ -40,18 +39,23 @@ class JobHuntServiceTest {
     ApplicationProperties properties = loadApplicationProperties();
     ReflectionTestUtils.setField(jobHuntService, "properties", properties);
 
-    RestTemplate restTemplate = new RestTemplateBuilder()
-        .setConnectTimeout(Duration.ofSeconds(5))
-        .setReadTimeout(Duration.ofSeconds(15))
-        .additionalInterceptors((request, body, execution) -> {
-          request.getHeaders().set("User-Agent", "Mozilla/5.0");
-          request.getHeaders().set("Accept-Language", "en-US,en;q=0.9");
-          request.getHeaders().set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
-          // Set a referer if you have a meaningful source URL:
-          request.getHeaders().set("Referer", "https://www.jobs-hunter.com");
-          return execution.execute(request, body);
-        })
-        .build();
+    // request factory cu timeout-uri
+    var factory = new SimpleClientHttpRequestFactory();
+    factory.setConnectTimeout(5000);
+    factory.setReadTimeout(15000);
+
+    var restTemplate = new RestTemplate(factory);
+    // interceptor exact ca în Spring Boot 3
+    restTemplate.getInterceptors().add((request, body, execution) -> {
+      var headers = request.getHeaders();
+      headers.set("User-Agent", "Mozilla/5.0");
+      headers.set("Accept-Language", "en-US,en;q=0.9");
+      headers.set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
+      headers.set("Referer", "https://www.jobs-hunter.com");
+
+      return execution.execute(request, body);
+    });
+
     ReflectionTestUtils.setField(jobHuntService, "restTemplate", restTemplate);
     ReflectionTestUtils.setField(jobHuntService, "mapper", new JsonMapper());
     ReflectionTestUtils.setField(jobHuntService, "whatsAppNotifier", new NoOpNotifier());
@@ -76,7 +80,8 @@ class JobHuntServiceTest {
   @Test
   void isValidJobUsesWireMockResponses() throws Exception {
     boolean builtinResult = invokeIsValidJob("https://builtin.com/job/senior-java-developer/7297380");
-    boolean jobgetherResult = invokeIsValidJob("https://jobgether.com/offer/687836fc57fb149ae379f3ce-senior-java-developer-for-timisoara-sibiu-m-f-d");
+    boolean jobgetherResult = invokeIsValidJob(
+        "https://jobgether.com/offer/687836fc57fb149ae379f3ce-senior-java-developer-for-timisoara-sibiu-m-f-d");
 
     Assertions.assertFalse(builtinResult, "Expected BuiltIn job to be considered valid");
     Assertions.assertFalse(jobgetherResult, "Expected Jobgether job to be marked as expired");
@@ -85,7 +90,7 @@ class JobHuntServiceTest {
   @Test
   void isValidRemoteRocketShip() throws Exception {
     Assertions.assertTrue(invokeIsValidJob(
-        "https://www.remoterocketship.com/company/infotreeglobal/jobs/senior-java-developer-endur-murex-romania-remote/"),
+            "https://www.remoterocketship.com/company/infotreeglobal/jobs/senior-java-developer-endur-murex-romania-remote/"),
         "Expected URL to be considered valid"
     );
   }
@@ -164,6 +169,7 @@ class JobHuntServiceTest {
   }
 
   private static class NoOpUserDataService extends UserDataService {
+
   }
 
 

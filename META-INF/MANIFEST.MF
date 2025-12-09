@@ -1,0 +1,16 @@
+Manifest-Version: 1.0
+Bundle-Description: An artifact of well-specified annotations to power
+  static analysis checks and JVM language interop.
+Bundle-DocURL: https://jspecify.dev/docs/start-here
+Bundle-License: https://www.apache.org/licenses/LICENSE-2.0
+Bundle-ManifestVersion: 2
+Bundle-Name: JSpecify annotations
+Bundle-SymbolicName: org.jspecify.jspecify
+Bundle-Vendor: The JSpecify Authors
+Bundle-Version: 1.0.0
+Export-Package: org.jspecify.annotations;version="1.0.0"
+Implementation-Version: 1.0.0
+Import-Package: java.lang,java.lang.annotation
+Multi-Release: true
+Require-Capability: osgi.ee;filter:="(&(osgi.ee=JavaSE)(version=1.8))"
+

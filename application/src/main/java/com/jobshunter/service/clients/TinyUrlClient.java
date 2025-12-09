@@ -1,6 +1,7 @@
 package com.jobshunter.service.clients;
 
 import com.jobshunter.processor.PackageExpected;
+import java.net.URI;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
@@ -15,7 +16,7 @@ public class TinyUrlClient {
 
   public String shorten(String longUrl) {
     String apiUrl = UriComponentsBuilder
-        .fromHttpUrl("https://tinyurl.com/api-create.php")
+        .fromUri(URI.create("https://tinyurl.com/api-create.php"))
         .queryParam("url", longUrl)
         .toUriString();
 

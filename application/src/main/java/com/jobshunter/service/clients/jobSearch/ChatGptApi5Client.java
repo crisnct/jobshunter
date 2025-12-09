@@ -5,6 +5,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.jobshunter.config.ApplicationProperties;
 import com.jobshunter.dto.Job;
+import com.jobshunter.processor.PackageExpected;
 import io.jsonwebtoken.lang.Collections;
 import java.net.URI;
 import java.util.ArrayList;
@@ -25,6 +26,7 @@ import org.springframework.web.client.RestTemplate;
 @Slf4j
 @Component
 @ConditionalOnProperty(value = "jobshunter.chatGpt.model", havingValue = "gpt-5.1", matchIfMissing = false)
+@PackageExpected("com.jobshunter.service.application")
 public final class ChatGptApi5Client implements GPTSearchApiClient {
 
   private static final URI DEFAULT_URI = URI.create("https://api.openai.com/v1/responses");
