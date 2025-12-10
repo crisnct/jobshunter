@@ -30,7 +30,7 @@ spring:
     virtual:
       enabled: true
   datasource:
-    url: ${MYSQL_URL:jdbc:mysql://localhost:3306/jobshunter?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&createDatabaseIfNotExist=true}
+    url: ${MYSQL_URL2:jdbc:mysql://localhost:3306/jobshunter?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&createDatabaseIfNotExist=true}
     username: ${MYSQL_USER:root}
     password: ${MYSQL_PASSWORD:root}
     driver-class-name: com.mysql.cj.jdbc.Driver
