@@ -52,7 +52,7 @@ jobshunter:
     # to-number: ${JOBSHUNTER_WHATSAPP_TO_NUMBER:}   # optional fallback if user phone is missing
     jobsNotifyMessageSID: ${TWILIO_JOBS_NOTIFY_MESSAGE_SID:}
   chatGpt:
-    apiKey: ${CHATGPT5_API_KEY:}
+    apiKey: ${CHATGPT_API_KEY:}
     model: gpt-5.1
     temperature: 0
     maxTokens: 2000
@@ -87,7 +87,7 @@ export TWILIO_WHATSAPP_FROM="whatsapp:+000000000000"
 
 OpenAI (optional, required for job search + CV upload):
 ```bash
-export CHATGPT5_API_KEY="sk-..."
+export CHATGPT_API_KEY="sk-..."
 ```
 
 ## Twilio WhatsApp template (Content SID) setup

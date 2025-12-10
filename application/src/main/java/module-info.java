@@ -42,6 +42,7 @@ open module com.jobshunter.application {
 
   requires org.jspecify;
   requires org.slf4j;
+  requires liquibase.core;
   requires twilio;
   requires com.auth0.jwt;
   requires jjwt.api;

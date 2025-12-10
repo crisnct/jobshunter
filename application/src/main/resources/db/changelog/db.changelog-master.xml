@@ -144,16 +144,6 @@
         </insert>
     </changeSet>
 
-    <changeSet id="8-default-last-jobs" author="codex">
-        <update tableName="users">
-            <column name="last_jobs" valueNumeric="0"/>
-            <where>last_jobs IS NULL</where>
-        </update>
-        <addDefaultValue tableName="users"
-                         columnName="last_jobs"
-                         defaultValueNumeric="0"/>
-    </changeSet>
-
     <changeSet id="9-default-last-jobs-timestamp" author="codex">
         <dropDefaultValue tableName="users" columnName="last_jobs"/>
         <update tableName="users">

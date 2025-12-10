@@ -46,7 +46,7 @@ public final class ChatGptApi5Client implements GPTSearchApiClient {
       return List.of();
     }
     if (cfg.getApiKey() == null || cfg.getApiKey().isBlank()) {
-      log.warn("ChatGPT job search enabled but CHATGPT5_API_KEY missing.");
+      log.warn("ChatGPT job search enabled but CHATGPT_API_KEY missing.");
       return List.of();
     }
 

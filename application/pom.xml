@@ -197,11 +197,7 @@
         <resources>
             <resource>
                 <directory>src/main/resources</directory>
-                <includes>
-                    <include>**/*</include>
-                    <include>systemPrompt.txt</include>
-                    <include>messageTemplates/**</include>
-                </includes>
+                <filtering>false</filtering>
             </resource>
         </resources>
         <plugins>
@@ -228,6 +224,13 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <version>${spring.boot.version}</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>repackage</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>

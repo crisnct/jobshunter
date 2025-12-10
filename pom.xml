@@ -18,7 +18,7 @@
         <joackson.databind>2.20.1</joackson.databind>
         <lombok.version>1.18.42</lombok.version>
         <slf4j.version>2.0.13</slf4j.version>
-        <liquibase.version>4.25.1</liquibase.version>
+        <liquibase.version>4.33.0</liquibase.version>
         <mysql.version>8.3.0</mysql.version>
         <jjwt.version>0.11.5</jjwt.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
