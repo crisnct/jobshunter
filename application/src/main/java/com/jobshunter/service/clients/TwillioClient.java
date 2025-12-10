@@ -33,7 +33,8 @@ public class TwillioClient {
 
   @PostConstruct
   private void initializeTwilio() {
-    Twilio.init(properties.getWhatsapp().getAccountSid(), properties.getWhatsapp().getAuthToken());
+    var whatsapp = properties.getTwilio();
+    Twilio.init(whatsapp.getAccountSid(), whatsapp.getAuthToken());
   }
 
   @SuppressWarnings("BooleanMethodIsAlwaysInverted")

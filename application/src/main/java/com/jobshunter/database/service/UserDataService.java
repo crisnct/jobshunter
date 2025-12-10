@@ -52,4 +52,8 @@ public class UserDataService {
         .toList();
   }
 
+  public void save(UserEntity user) {
+    userRepository.save(user);
+  }
+
 }

@@ -19,18 +19,17 @@ public class ApplicationProperties {
 
   private Scheduler scheduler = new Scheduler();
 
-  private WhatsApp whatsapp = new WhatsApp();
+  private Twilio twilio = new Twilio();
 
   private ChatGpt chatgpt = new ChatGpt();
 
   @Data
   public static class Scheduler {
-
     private String frequency;
   }
 
   @Data
-  public static class WhatsApp {
+  public static class Twilio {
     private String accountSid;
     private String authToken;
     private String fromNumber;

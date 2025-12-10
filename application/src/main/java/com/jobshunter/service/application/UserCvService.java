@@ -1,7 +1,7 @@
 package com.jobshunter.service.application;
 
 import com.jobshunter.database.entities.UserEntity;
-import com.jobshunter.database.repository.UserRepository;
+import com.jobshunter.database.service.UserDataService;
 import com.jobshunter.service.clients.fileUpload.GPTFilesApiClient;
 import com.jobshunter.service.clients.jobSearch.ChatGptApi5Client;
 import java.io.IOException;
@@ -34,7 +34,7 @@ public class UserCvService {
   );
 
   @Autowired
-  private UserRepository userRepository;
+  private UserDataService userDataService;
 
   @Autowired
   private ChatGptApi5Client chatGptApiClient;
@@ -52,7 +52,7 @@ public class UserCvService {
     }
     validateFile(file);
 
-    UserEntity user = userRepository.findByUsername(username)
+    UserEntity user = userDataService.getUser(username)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
     Path tempFile = Files.createTempFile("cv-" + username + "-", resolveSafeSuffix(file.getOriginalFilename()));
@@ -69,7 +69,7 @@ public class UserCvService {
       }
 
       user.setCvFileId(uploadedFileId);
-      userRepository.save(user);
+      userDataService.save(user);
       return uploadedFileId;
     } finally {
       try {
@@ -85,13 +85,13 @@ public class UserCvService {
     if (!StringUtils.hasText(username)) {
       throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not authenticated");
     }
-    UserEntity user = userRepository.findByUsername(username)
+    UserEntity user = userDataService.getUser(username)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
     if (StringUtils.hasText(user.getCvFileId())) {
       filesClient.deleteFile(user.getCvFileId());
       user.setCvFileId(null);
-      userRepository.save(user);
+      userDataService.save(user);
     }
   }
 

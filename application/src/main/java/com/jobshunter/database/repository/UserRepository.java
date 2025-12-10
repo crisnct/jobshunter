@@ -1,9 +1,11 @@
 package com.jobshunter.database.repository;
 
 import com.jobshunter.database.entities.UserEntity;
+import com.jobshunter.processor.PackageExpected;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+@PackageExpected("com.jobshunter.database.service")
 public interface UserRepository extends JpaRepository<UserEntity, Long> {
 
     Optional<UserEntity> findByUsername(String username);

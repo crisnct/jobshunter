@@ -36,15 +36,18 @@ open module com.jobshunter.application {
   requires com.fasterxml.jackson.annotation;
   requires com.fasterxml.jackson.datatype.jsr310;
   requires com.fasterxml.jackson.dataformat.xml;
+
+  requires org.apache.logging.log4j;
+  requires org.apache.commons.lang3;
+
   requires org.jspecify;
   requires org.slf4j;
-  requires org.apache.logging.log4j;
   requires twilio;
   requires com.auth0.jwt;
   requires jjwt.api;
-
   requires java.sql;
 
   requires static lombok;
   requires static com.jobshunter.processor;
+
 }

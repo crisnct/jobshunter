@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import com.jobshunter.config.ApplicationProperties;
+import com.jobshunter.config.ApplicationProperties.Twilio;
 import com.jobshunter.database.service.UserDataService;
 import com.jobshunter.service.clients.TwillioClient;
 import java.lang.reflect.Method;
@@ -129,7 +130,7 @@ class JobHuntServiceTest {
     }
 
     // nested WhatsApp
-    ApplicationProperties.WhatsApp whatsapp = result.getWhatsapp();
+    Twilio whatsapp = result.getTwilio();
     if (whatsapp != null) {
       setIfPresent(props, "jobshunter.whatsapp.account-sid", whatsapp, "accountSid");
       setIfPresent(props, "jobshunter.whatsapp.auth-token", whatsapp, "authToken");

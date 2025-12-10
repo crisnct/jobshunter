@@ -1,6 +1,6 @@
 package com.jobshunter.service.application.authentication;
 
-import com.jobshunter.database.repository.UserRepository;
+import com.jobshunter.database.service.UserDataService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -28,7 +28,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
   @Autowired
-  private UserRepository userRepository;
+  private UserDataService userDataService;
 
   @Autowired
   private JwtService jwtService;
@@ -50,7 +50,7 @@ public class SecurityConfig {
 
   @Bean
   public UserDetailsService userDetailsService() {
-    return username -> userRepository.findByUsername(username)
+    return username -> userDataService.getUser(username)
         .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
   }
 

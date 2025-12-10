@@ -12,11 +12,11 @@ Java 25 + Spring Boot 4.0.0 service that keeps a user profile (prompt, CV, phone
 - MySQL persistence managed by Liquibase.
 
 ## Contributors
-| Name          | Role                                                                | Commits | Contribution                  | Sponsorship |
-|---------------|---------------------------------------------------------------------|---------|-------------------------------|-------------|
-| Cristian Țone | • Product Owner<br/>• Main developer of the project on backend side | 59      | • Implemented core of the app | 52eur       |
-| Andrei Lazăr  | • Backend Developer                                                 | 1       | -                             | -           |
-| TBD           |  TBD                                                                | 0       | -                             | -           |
+| Name                                           | Role                                                                | Commits | Contribution                  | Sponsorship |
+|------------------------------------------------|---------------------------------------------------------------------|---------|-------------------------------|-------------|
+| [Cristian Țone](https://github.com/crisnct)    | • Product Owner<br/>• Main developer of the project on backend side | 64      | • Implemented core of the app | 52eur       |
+| [Andrei Lazăr](https://github.com/AyanoCode13) | • Backend Developer                                                 | 1       | -                             | -           |
+| TBD                                            |  TBD                                                                | 0       | -                             | -           |
 
 Display total commits per user:
 ```

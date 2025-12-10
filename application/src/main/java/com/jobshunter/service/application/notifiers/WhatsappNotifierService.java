@@ -62,7 +62,7 @@ public final class WhatsappNotifierService implements ServiceNotifier {
     String timestamp = LocalDateTime.now().format(JOB_TIMESTAMP_FORMAT);
     String body = userMessagesFactory.build(MessageTemplate.JOBS_NOTIFY, Map.of("1", timestamp, "2", formattedJobs));
 
-    if (!twillioClient.trySend(user.getPhoneNumber(), properties.getWhatsapp().getFromNumber(), body)) {
+    if (!twillioClient.trySend(user.getPhoneNumber(), properties.getTwilio().getFromNumber(), body)) {
       log.warn("WhatsApp send skipped after attempting available senders. Printing jobs to the console instead.");
       jobsURLs.forEach(job -> log.info("{}", job));
     }

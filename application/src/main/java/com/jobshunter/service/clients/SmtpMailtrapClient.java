@@ -49,12 +49,15 @@ public class SmtpMailtrapClient {
       @NonNull String body,
       @Nullable String subject) {
     try {
+      subject = StringUtils.hasText(subject) ? subject : DEFAULT_SUBJECT;
+      log.info("Sending email to {} with subject {}", to, subject);
       SimpleMailMessage msg = new SimpleMailMessage();
       msg.setFrom(from);
       msg.setTo(to);
-      msg.setSubject(StringUtils.hasText(subject) ? subject : DEFAULT_SUBJECT);
+      msg.setSubject(subject);
       msg.setText(body);
       mailSender.send(msg);
+      log.info("Email sent successfully");
     } catch (MailException e) {
       log.error(e.getMessage());
     }
@@ -62,6 +65,7 @@ public class SmtpMailtrapClient {
 
   private void trySendMime(String to, String subject, String body, MultipartFile attachment) {
     try {
+      log.info("Sending email with attachement to {} with subject {}", to, subject);
       MimeMessage mimeMessage = mailSender.createMimeMessage();
       MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true);
       helper.setFrom(configuredFrom);
@@ -72,6 +76,7 @@ public class SmtpMailtrapClient {
           StringUtils.hasText(attachment.getOriginalFilename()) ? attachment.getOriginalFilename() : attachment.getName(),
           attachment);
       mailSender.send(mimeMessage);
+      log.info("Email sent successfully");
     } catch (MessagingException | MailException e) {
       log.error("Failed to send email with attachment to {}: {}", to, e.getMessage());
       throw new IllegalStateException("Failed to send email", e);

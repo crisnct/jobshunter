@@ -1,7 +1,6 @@
 package com.jobshunter.service.application.notifiers;
 
 import com.jobshunter.database.entities.UserEntity;
-import com.jobshunter.database.repository.UserJobRepository;
 import com.jobshunter.dto.Job;
 import com.jobshunter.service.application.UserMessagesFactory;
 import com.jobshunter.service.application.UserMessagesFactory.MessageTemplate;
@@ -20,9 +19,6 @@ public final class EmailNotifierService implements ServiceNotifier {
 
   @Autowired
   private SmtpMailtrapClient emailClient;
-
-  @Autowired
-  private UserJobRepository userJobRepository;
 
   @Autowired
   private UserMessagesFactory userMessagesFactory;

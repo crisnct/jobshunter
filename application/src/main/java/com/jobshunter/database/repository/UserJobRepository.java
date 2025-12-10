@@ -1,11 +1,13 @@
 package com.jobshunter.database.repository;
 
 import com.jobshunter.database.entities.UserJobEntity;
+import com.jobshunter.processor.PackageExpected;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+@PackageExpected("com.jobshunter.database.service")
 public interface UserJobRepository extends JpaRepository<UserJobEntity, Long> {
 
     boolean existsByUserIdAndJobUrl(Long userId, String jobUrl);
