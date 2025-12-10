@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>JobsHunter UI</title>
+  <link rel="stylesheet" href="./styles.css"/>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="module">
+  import React, {useMemo, useState} from 'https://esm.sh/react@18.3.1';
+  import {createRoot} from 'https://esm.sh/react-dom@18.3.1/client';
+
+  const h = React.createElement;
+
+  const Section = ({title, children}) =>
+      h('section', {className: 'card'},
+          h('h2', null, title),
+          children
+      );
+
+  function useApi(baseUrl, token, logMessage) {
+    return useMemo(() => ({
+      async call(path, {method = 'GET', body, headers = {}} = {}) {
+        const resp = await fetch(`${baseUrl}${path}`, {
+          method,
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? {'Authorization': `Bearer ${token}`} : {}),
+            ...headers
+          },
+          body: body ? JSON.stringify(body) : undefined
+        });
+        const text = await resp.text();
+        let parsed;
+        try {
+          parsed = text ? JSON.parse(text) : null;
+        } catch (_) {
+          parsed = text;
+        }
+        if (!resp.ok) {
+          throw new Error((parsed && parsed.message) || parsed || `Request failed with ${resp.status}`);
+        }
+        logMessage(`OK ${method} ${path}`);
+        return parsed;
+      }
+    }), [baseUrl, token, logMessage]);
+  }
+
+  const App = () => {
+    const [baseUrl, setBaseUrl] = useState('http://localhost:8081');
+    const [token, setToken] = useState('');
+    const [status, setStatus] = useState('Ready');
+    const [registerForm, setRegisterForm] = useState({username: '', email: '', password: '', phoneNumber: ''});
+    const [loginForm, setLoginForm] = useState({username: '', password: ''});
+    const [me, setMe] = useState(null);
+    const [jobs, setJobs] = useState([]);
+    const [notifyWhatsApp, setNotifyWhatsApp] = useState(false);
+
+    const logMessage = (msg) => setStatus(msg);
+    const api = useApi(baseUrl.trim().replace(/\/$/, ''), token, logMessage);
+
+    const handleRegister = async (e) => {
+      e.preventDefault();
+      try {
+        const res = await api.call('/api/auth/register', {method: 'POST', body: registerForm});
+        logMessage(`Registered. Verification token: ${res.verificationToken || 'check logs'}`);
+      } catch (err) {
+        logMessage(err.message);
+      }
+    };
+
+    const handleLogin = async (e) => {
+      e.preventDefault();
+      try {
+        const res = await api.call('/api/auth/login', {method: 'POST', body: loginForm});
+        setToken(res.token);
+        logMessage('Logged in. Token stored in memory.');
+      } catch (err) {
+        logMessage(err.message);
+      }
+    };
+
+    const handleMe = async () => {
+      try {
+        const res = await api.call('/api/user/me');
+        setMe(res);
+      } catch (err) {
+        logMessage(err.message);
+      }
+    };
+
+    const handleSearch = async () => {
+      try {
+        const res = await api.call(`/api/user/search?notifyOnWhatsApp=${notifyWhatsApp}`, {method: 'POST'});
+        setJobs((res && res.jobsFound) || []);
+        logMessage(`Found ${(res && res.jobsFound && res.jobsFound.length) || 0} jobs`);
+      } catch (err) {
+        logMessage(err.message);
+      }
+    };
+
+    return h('div', {className: 'page'},
+        h('header', null,
+            h('h1', null, 'JobsHunter'),
+            h('p', null, 'Lightweight UI to hit your backend API (deployable to Vercel as static React).')
+        ),
+        h(Section, {title: 'Backend settings'},
+            h('label', {className: 'field'},
+                h('span', null, 'API base URL'),
+                h('input', {
+                  value: baseUrl,
+                  onChange: (ev) => setBaseUrl(ev.target.value),
+                  placeholder: 'https://api.example.com'
+                })
+            ),
+            h('label', {className: 'field'},
+                h('span', null, 'JWT token'),
+                h('input', {
+                  value: token,
+                  onChange: (ev) => setToken(ev.target.value),
+                  placeholder: 'Paste token from login'
+                })
+            ),
+            h('div', {className: 'status'}, `Status: ${status}`)
+        ),
+        h('div', {className: 'grid'},
+            h(Section, {title: 'Register'},
+                h('form', {className: 'form', onSubmit: handleRegister},
+                    h('label', {className: 'field'},
+                        h('span', null, 'Username'),
+                        h('input', {
+                          required: true,
+                          value: registerForm.username,
+                          onChange: (ev) => setRegisterForm({...registerForm, username: ev.target.value})
+                        })
+                    ),
+                    h('label', {className: 'field'},
+                        h('span', null, 'Email'),
+                        h('input', {
+                          type: 'email',
+                          required: true,
+                          value: registerForm.email,
+                          onChange: (ev) => setRegisterForm({...registerForm, email: ev.target.value})
+                        })
+                    ),
+                    h('label', {className: 'field'},
+                        h('span', null, 'Password'),
+                        h('input', {
+                          type: 'password',
+                          required: true,
+                          value: registerForm.password,
+                          onChange: (ev) => setRegisterForm({...registerForm, password: ev.target.value})
+                        })
+                    ),
+                    h('label', {className: 'field'},
+                        h('span', null, 'Phone'),
+                        h('input', {
+                          required: true,
+                          value: registerForm.phoneNumber,
+                          onChange: (ev) => setRegisterForm({...registerForm, phoneNumber: ev.target.value})
+                        })
+                    ),
+                    h('button', {type: 'submit'}, 'Register')
+                )
+            ),
+            h(Section, {title: 'Login'},
+                h('form', {className: 'form', onSubmit: handleLogin},
+                    h('label', {className: 'field'},
+                        h('span', null, 'Username'),
+                        h('input', {
+                          required: true,
+                          value: loginForm.username,
+                          onChange: (ev) => setLoginForm({...loginForm, username: ev.target.value})
+                        })
+                    ),
+                    h('label', {className: 'field'},
+                        h('span', null, 'Password'),
+                        h('input', {
+                          type: 'password',
+                          required: true,
+                          value: loginForm.password,
+                          onChange: (ev) => setLoginForm({...loginForm, password: ev.target.value})
+                        })
+                    ),
+                    h('button', {type: 'submit'}, 'Login')
+                )
+            )
+        ),
+        h('div', {className: 'grid'},
+            h(Section, {title: 'Profile'},
+                h('button', {onClick: handleMe, disabled: !token}, 'Load /me'),
+                h('pre', {className: 'response'}, me ? JSON.stringify(me, null, 2) : '-')
+            ),
+            h(Section, {title: 'Search jobs now'},
+                h('label', {className: 'checkbox'},
+                    h('input', {
+                      type: 'checkbox',
+                      checked: notifyWhatsApp,
+                      onChange: (ev) => setNotifyWhatsApp(ev.target.checked)
+                    }),
+                    'Notify on WhatsApp (if enabled for user)'
+                ),
+                h('button', {onClick: handleSearch, disabled: !token}, 'Search'),
+                h('pre', {className: 'response'}, jobs.length ? JSON.stringify(jobs, null, 2) : '-')
+            )
+        )
+    );
+  };
+
+  const root = createRoot(document.getElementById('root'));
+  root.render(h(App));
+</script>
+</body>
+</html>
