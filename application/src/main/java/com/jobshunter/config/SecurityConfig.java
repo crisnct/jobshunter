@@ -1,6 +1,8 @@
-package com.jobshunter.service.application.authentication;
+package com.jobshunter.config;
 
 import com.jobshunter.database.service.UserDataService;
+import com.jobshunter.service.application.authentication.JwtAuthenticationFilter;
+import com.jobshunter.service.application.authentication.JwtService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -40,12 +42,18 @@ public class SecurityConfig {
         .cors(Customizer.withDefaults())
         .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .authorizeHttpRequests(auth -> auth
+            .requestMatchers("/", "/index.html", "/css/**", "/js/**", "/images/**").permitAll()
             .requestMatchers("/api/auth/**").permitAll()
             .requestMatchers("/api/test/**").hasRole("ADMIN")
             .requestMatchers("/actuator/health", "/actuator/info").permitAll()
             .anyRequest().authenticated()
         )
         .authenticationProvider(authenticationProvider())
+        .formLogin(form -> form
+            .loginPage("/login")
+            .permitAll()
+            .defaultSuccessUrl("/", true)
+        )
         .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
     return http.build();
   }
