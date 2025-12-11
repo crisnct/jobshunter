@@ -21,7 +21,7 @@ WORKDIR /app
 # Copiem doar jar-ul final din stage-ul de build
 COPY --from=build /app/application/target/jobshunter-1.0.0.jar app.jar
 
-ENV JAVA_TOOL_OPTIONS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75"
+ENV JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=75"
 ENV SPRING_PROFILES_ACTIVE=prod
 
 EXPOSE 8081
