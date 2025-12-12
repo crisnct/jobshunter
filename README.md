@@ -32,7 +32,7 @@ Java 25 + Spring Boot 4.0.0 service that keeps a user profile (prompt, CV, phone
 • Integration with Mailtrap and created the service layer for sending emails to user <br>
 
 ---
-## [Ionel Vochin](https://github.com/blockedJ)
+## [Ionel Vochin](https://github.com/ionel-vochin)
 #### Senior Full-Stack Developer
 • 
 
