@@ -25,6 +25,7 @@ Java 25 + Spring Boot 4.0.0 service that keeps a user profile (prompt, CV, phone
 • Implemented connection to database and db services <br>
 • Implemented authentication and authorization <br>
 • Started the project <br>
+
 ---
 ### [Andrei Lazăr](https://github.com/AyanoCode13) 
 #### Junior Full-Stack Developer <br>
@@ -35,6 +36,7 @@ Java 25 + Spring Boot 4.0.0 service that keeps a user profile (prompt, CV, phone
 #### Senior Full-Stack Developer
 • 
 
+---
 ## License
 - Licensed under Apache License 2.0 (see `LICENSE`).
 - The project is completely free and can be used by anyone.
