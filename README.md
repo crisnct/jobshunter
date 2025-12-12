@@ -3,7 +3,7 @@
 Java 25 + Spring Boot 4.0.0 service that keeps a user profile (prompt, CV, phone, time interval), searches for new jobs with ChatGPT, and can push results to WhatsApp via Twilio.
 ![Jobshunter logo](application/src/main/resources/static/images/JobsHunterLogo.svg)
 
-## What it does
+# What it does
 - JWT auth flow: `/api/auth/register`, `/api/auth/login`, `/api/auth/verify`.
 - Per-user prompt, phone number, time interval, and CV file uploaded to OpenAI file storage for context.
 - Scheduled job hunting (`jobshunter.scheduler.frequency`, `jobshunter.iterationPerUser`, `jobshunter.iterationDelay`) with URL validation, duplicate filtering, and HTML checks for `jobshunter.expiredKeywords`.
@@ -11,17 +11,29 @@ Java 25 + Spring Boot 4.0.0 service that keeps a user profile (prompt, CV, phone
 - WhatsApp notifications via Twilio Content API; falls back to plain-text WhatsApp when Twilio template is missing for the locale (error 63027) or content variables cannot be serialized.
 - MySQL persistence managed by Liquibase.
 
-## Contributors
-| Name                                           | Role                                                                | Commits | Contribution                  | Sponsorship |
-|------------------------------------------------|---------------------------------------------------------------------|---------|-------------------------------|-------------|
-| [Cristian Țone](https://github.com/crisnct)    | • Product Owner<br/>• Main developer of the project on backend side | 64      | • Implemented core of the app | 52eur       |
-| [Andrei Lazăr](https://github.com/AyanoCode13) | • Backend Developer                                                 | 1       | -                             | -           |
-| TBD                                            |  TBD                                                                | 0       | -                             | -           |
+# Contributors
 
-Display total commits per user:
-```
-git shortlog -s -n
-```
+---
+## [Cristian Țone](https://github.com/crisnct)
+#### Product Owner and Lead Developer, sponsorship: 52eur
+• Implemented dockerfile and docker-compose <br>
+• Implemented annotation processor <br>
+• Implemented second role for the users(ADMIN) and use it to restrict access to some endpoints <br> 
+• Integration with Twillio, Mailtrap, GPT 5.1 <br>
+• Migration from Java 21 to 25 <br>
+• Migration from String Boot 3 to 4 <br>
+• Implemented connection to database and db services <br>
+• Implemented authentication and authorization <br>
+• Started the project <br>
+---
+### [Andrei Lazăr](https://github.com/AyanoCode13) 
+#### Junior Full-Stack Developer <br>
+• Integration with Mailtrap and created the service layer for sending emails to user <br>
+
+---
+### [Ionel Vochin](https://github.com/blockedJ)
+#### Senior Full-Stack Developer
+• 
 
 ## License
 - Licensed under Apache License 2.0 (see `LICENSE`).
