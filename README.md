@@ -13,7 +13,6 @@ Java 25 + Spring Boot 4.0.0 service that keeps a user profile (prompt, CV, phone
 
 # Contributors
 
----
 ## [Cristian Țone](https://github.com/crisnct)
 #### Product Owner and Lead Developer, sponsorship: 52eur <br>
 • Implemented dockerfile and docker-compose <br>
