@@ -15,7 +15,7 @@ Java 25 + Spring Boot 4.0.0 service that keeps a user profile (prompt, CV, phone
 
 ---
 ## [Cristian Țone](https://github.com/crisnct)
-### Product Owner and Lead Developer, sponsorship: 52eur <br>
+#### Product Owner and Lead Developer, sponsorship: 52eur <br>
 • Implemented dockerfile and docker-compose <br>
 • Implemented annotation processor <br>
 • Implemented second role for the users(ADMIN) and use it to restrict access to some endpoints <br> 
@@ -28,12 +28,12 @@ Java 25 + Spring Boot 4.0.0 service that keeps a user profile (prompt, CV, phone
 
 ---
 ## [Andrei Lazăr](https://github.com/AyanoCode13) 
-### Junior Full-Stack Developer <br>
+#### Junior Full-Stack Developer <br>
 • Integration with Mailtrap and created the service layer for sending emails to user <br>
 
 ---
 ## [Ionel Vochin](https://github.com/blockedJ)
-### Senior Full-Stack Developer <br>
+#### Senior Full-Stack Developer
 • 
 
 ---
