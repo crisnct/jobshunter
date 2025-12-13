@@ -21,6 +21,9 @@ open module com.jobshunter.application {
   requires spring.jdbc;
   requires spring.context.support;
 
+  requires org.hibernate.orm.core;
+  requires org.hibernate.validator;
+
   requires jakarta.validation;
   requires jakarta.annotation;
   requires jakarta.persistence;
