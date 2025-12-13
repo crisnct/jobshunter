@@ -14,7 +14,8 @@ public class JobHuntScheduler {
     this.jobHuntService = jobHuntService;
   }
 
-  @Scheduled(fixedDelayString = "${jobshunter.scheduler.frequency:3600000}")
+  // TODO to be enable after we have at least 5 real users in the database
+  //@Scheduled(fixedDelayString = "${jobshunter.scheduler.frequency:3600000}")
   public void scheduledRun() throws InterruptedException {
     jobHuntService.scheduledRun();
   }
