@@ -180,6 +180,12 @@
 
         <!-- TEST -->
         <dependency>
+            <groupId>com.icegreen</groupId>
+            <artifactId>greenmail</artifactId>
+            <version>2.1.7</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>com.github.tomakehurst</groupId>
             <artifactId>wiremock-jre8-standalone</artifactId>
             <version>2.35.2</version>
@@ -191,6 +197,7 @@
             <version>4.0.1</version>
             <scope>test</scope>
         </dependency>
+
     </dependencies>
 
     <build>
@@ -201,6 +208,7 @@
             </resource>
         </resources>
         <plugins>
+
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.13.0</version>
@@ -231,11 +239,15 @@
                         </goals>
                     </execution>
                 </executions>
+                <configuration>
+                    <mainClass>com.jobshunter.application.JobShunterApplication</mainClass>
+                </configuration>
             </plugin>
             <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.2.5</version>
             </plugin>
+
         </plugins>
     </build>
 

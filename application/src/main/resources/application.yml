@@ -1,5 +1,5 @@
 server:
-  port: 8081
+  port: 8082
   http2:
     enabled: true
 
@@ -30,9 +30,9 @@ spring:
     virtual:
       enabled: true
   datasource:
-    url: jdbc:${MYSQL_URL:mysql://localhost:3306/jobshunter?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&createDatabaseIfNotExist=true}
-    username: ${MYSQL_USER:root}
-    password: ${MYSQL_PASSWORD:root}
+    url: jdbc:mysql://localhost:3306/jobshunter?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&createDatabaseIfNotExist=true
+    username: root
+    password: root
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:
