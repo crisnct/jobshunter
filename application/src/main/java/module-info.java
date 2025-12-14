@@ -42,6 +42,8 @@ open module com.jobshunter.application {
 
   requires org.apache.logging.log4j;
   requires org.apache.commons.lang3;
+  requires org.apache.httpcomponents.client5.httpclient5;
+  requires org.apache.httpcomponents.core5.httpcore5;
 
   requires org.jspecify;
   requires org.slf4j;
