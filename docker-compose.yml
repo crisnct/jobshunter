@@ -1,22 +1,22 @@
 services:
-  mysql:
-    image: mysql:8.4
-    restart: always
-    container_name: scm-mysql
-    environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: jobshunter_db
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
-    ports:
-      - "3306"
-    volumes:
-      - mysql_data:/var/lib/mysql
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p${MYSQL_ROOT_PASSWORD}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+#  mysql:
+#    image: mysql:8.4
+#    restart: always
+#    container_name: scm-mysql
+#    environment:
+#      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+#      MYSQL_DATABASE: jobshunter_db
+#      MYSQL_USER: ${MYSQL_USER}
+#      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+#    ports:
+#      - "3306"
+#    volumes:
+#      - mysql_data:/var/lib/mysql
+#    healthcheck:
+#      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p${MYSQL_ROOT_PASSWORD}"]
+#      interval: 10s
+#      timeout: 5s
+#      retries: 5
 
   application-service:
     build:
@@ -24,11 +24,13 @@ services:
       dockerfile: Dockerfile
     container_name: scm-application
     restart: always
-    depends_on:
-      mysql:
-        condition: service_healthy
+#    depends_on:
+#      mysql:
+#        condition: service_healthy
     environment:
-      MYSQL_URL: mysql://mysql:3306/jobshunter_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&createDatabaseIfNotExist=true
+#      MYSQL_URL: mysql://mysql:3306/jobshunter_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&createDatabaseIfNotExist=true
+      #Connection to database from local machine
+      MYSQL_URL: mysql://host.docker.internal:3306/jobshunter?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&createDatabaseIfNotExist=true
       MYSQL_USER: ${MYSQL_USER}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
       TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID}

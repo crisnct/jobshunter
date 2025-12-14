@@ -126,6 +126,12 @@ The notifier sends WhatsApp messages using Twilio Content API with variables `jo
    ```
    App runs at `http://localhost:8081`.
 
+## How to run from docker
+   ```bash
+   mvn clean install
+   docker compose up --build
+   ```
+
 ## API quick start
 1) Register and log in to obtain JWT:
 ```bash
