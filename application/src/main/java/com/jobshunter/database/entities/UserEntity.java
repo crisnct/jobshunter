@@ -83,6 +83,9 @@ public class UserEntity implements UserDetails {
   @Column(name = "created_at")
   private LocalDateTime createdAt;
 
+  @Column(name = "approved", nullable = false)
+  private boolean approved = false;
+
   @ManyToMany(fetch = FetchType.EAGER)
   @JoinTable(name = "user_roles",
       joinColumns = @JoinColumn(name = "user_id"),
