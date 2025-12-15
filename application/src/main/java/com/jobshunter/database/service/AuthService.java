@@ -51,6 +51,9 @@ public class AuthService {
     if (userRepository.existsByEmailIgnoreCase(request.email())) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email already in use");
     }
+    if (userRepository.existsByPhoneIgnoreCase(request.phoneNumber())) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Phone number already in use");
+    }
 
     RoleEntity userRole = roleRepository.findByName("USER")
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Default role USER not configured"));
