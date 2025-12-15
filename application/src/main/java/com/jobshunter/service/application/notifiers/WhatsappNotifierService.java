@@ -68,4 +68,9 @@ public final class WhatsappNotifierService implements ServiceNotifier {
     }
   }
 
+  @Override
+  public void sendUsingTemplate(List<Job> jobs, UserEntity user) {
+    log.error("Method sendUsingTemplate not implemented!");
+  }
+
 }

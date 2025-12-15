@@ -96,7 +96,7 @@ public class JobHuntService {
           log.info("Found {} jobs for {} ", jobs.jobsFound().size(), user.getEmail());
           jobs.jobsFound().forEach(System.out::println);
           if (!jobs.jobsFound().isEmpty()) {
-            this.updateUser(user, jobs.jobsFound());
+            userDataService.updateUser(user, jobs.jobsFound());
             if (user.isNotifyWhatsapp()) {
               this.notifyWhatsApp(user, jobs);
             }
@@ -111,12 +111,6 @@ public class JobHuntService {
     log.info("Stop scheduled job hunt.");
   }
 
-  @Transactional
-  private void updateUser(UserEntity user, List<Job> jobs) {
-    user.setLastJobs(LocalDateTime.now());
-    userDataService.updateUser(user);
-    jobs.forEach(job -> userDataService.addJobUrl(user, job.url()));
-  }
 
   public JobHuntResponse searchJobsForUser(UserEntity user, int iterations) {
     if (Strings.isEmpty(user.getPrompt()) || Strings.isEmpty(user.getCvFileId())){
@@ -163,7 +157,7 @@ public class JobHuntService {
   }
 
   public void notifyEmail(UserEntity user, JobHuntResponse summary) {
-    emailNotifierService.send(summary.jobsFound(), user);
+    emailNotifierService.sendUsingTemplate(summary.jobsFound(), user);
   }
 
   private boolean isValidJob(String jobURL) {

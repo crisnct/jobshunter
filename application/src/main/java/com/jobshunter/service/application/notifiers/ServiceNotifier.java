@@ -29,4 +29,6 @@ public sealed interface ServiceNotifier permits EmailNotifierService, WhatsappNo
 
   void send(List<Job> jobs, UserEntity user);
 
+  void sendUsingTemplate(List<Job> jobs, UserEntity user);
+
 }

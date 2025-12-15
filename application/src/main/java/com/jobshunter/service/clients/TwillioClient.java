@@ -1,9 +1,7 @@
 package com.jobshunter.service.clients;
 
-import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.jobshunter.config.ApplicationProperties;
 import com.jobshunter.processor.PackageExpected;
-import com.jobshunter.service.application.UserMessagesFactory;
 import com.twilio.Twilio;
 import com.twilio.exception.ApiException;
 import com.twilio.rest.api.v2010.account.Message;
@@ -24,12 +22,6 @@ public class TwillioClient {
 
   @Autowired
   private ApplicationProperties properties;
-
-  @Autowired
-  private UserMessagesFactory userMessagesFactory;
-
-  @Autowired
-  private JsonMapper mapper;
 
   @PostConstruct
   private void initializeTwilio() {

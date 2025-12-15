@@ -4,6 +4,7 @@ server:
     enabled: true
 
 jobshunter:
+  name: JobsHunter
   expiredExpressions: was expired,is expired,no longer exists,This job was available,is no longer active,job is no longer available,this job was removed,Job not found,Applications from candidates outside of our global target markets are currently not accepted,No longer accepting applications,The job ad is no longer active,Application not possible,This job opening is no longer available,The vacancy has expired,this position has been filled,ONLY on W2,The job you are looking for is no longer open,Oferta no disponible,This job posting is no longer available,this job has expired,this position has been filled,This job offer is not active,Applications are closed
   iterationPerUser: 10
   iterationDelay: 30000
@@ -12,12 +13,12 @@ jobshunter:
     frequency: 3600000
 
   twilio:
-    account-sid: ${TWILIO_ACCOUNT_SID:}
-    auth-token: ${TWILIO_AUTH_TOKEN:}
-    from-number: ${TWILIO_WHATSAPP_FROM:}
+    account-sid: ${TWILIO_ACCOUNT_SID:notset}
+    auth-token: ${TWILIO_AUTH_TOKEN:notset}
+    from-number: ${TWILIO_WHATSAPP_FROM:notset}
 
   chatGpt:
-    apiKey: ${CHATGPT_API_KEY:}
+    apiKey: ${CHATGPT_API_KEY:notset}
     model: "gpt-5.1"
     temperature: 0
     maxTokens: 2000
@@ -31,8 +32,8 @@ spring:
       enabled: true
   datasource:
     url: jdbc:${MYSQL_URL:mysql://localhost:3306/jobshunter?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&createDatabaseIfNotExist=true}
-    username: ${MYSQL_USER:root}
-    password: ${MYSQL_PASSWORD:root}
+    username: ${MYSQL_USER:notset}
+    password: ${MYSQL_PASSWORD:notset}
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:
@@ -46,9 +47,11 @@ spring:
   mail:
     host: send.smtp.mailtrap.io
     port: 587
-    username: ${MAILTRAP_USERNAME:}
-    password: ${MAILTRAP_PASSWORD:}
+    username: ${MAILTRAP_USERNAME:notset}
+    password: ${MAILTRAP_PASSWORD:notset}
     from: ${MAIL_FROM:no-reply@mailtrap.io}
+    apiKey: ${MAILTRAP_API_KEY:notset}
+    templateUUID: ${MAILTRAP_TEMPLATE_NEWJOBS:notset}
     properties:
       mail.smtp.auth: true
       mail.smtp.starttls.enable: true

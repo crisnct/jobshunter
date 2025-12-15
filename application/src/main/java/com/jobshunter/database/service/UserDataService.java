@@ -4,11 +4,14 @@ import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.entities.UserJobEntity;
 import com.jobshunter.database.repository.UserJobRepository;
 import com.jobshunter.database.repository.UserRepository;
+import com.jobshunter.dto.Job;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 @Service
@@ -42,6 +45,13 @@ public class UserDataService {
     if (!userJobRepository.existsByUserIdAndJobUrl(user.getId(), url)) {
       userJobRepository.save(new UserJobEntity(user, url));
     }
+  }
+
+  @Transactional
+  public void updateUser(UserEntity user, List<Job> jobs) {
+    user.setLastJobs(LocalDateTime.now());
+    updateUser(user);
+    jobs.forEach(job -> addJobUrl(user, job.url()));
   }
 
   public List<String> getExistingJobUrlsForUser(String username) {
