@@ -105,8 +105,7 @@ public class AuthService {
     user.setEmailVerified(true);
     user.setVerificationToken(null);
     userRepository.save(user);
-
-    List<String> adminEmails = new ArrayList<>();
+    List<String> adminEmails = userRepository.findEmailsByRole("ADMIN");
     emailService.sendMailToApproveAccount(user, adminEmails);
   }
 
