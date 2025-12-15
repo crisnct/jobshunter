@@ -1,0 +1,19 @@
+package com.jobshunter.config;
+
+import java.nio.charset.StandardCharsets;
+import org.springframework.context.MessageSource;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.support.ResourceBundleMessageSource;
+
+@Configuration
+public class MessageSourceConfig {
+
+  @Bean(name = "springSecurityMessageSource")
+  public MessageSource springSecurityMessageSource() {
+    ResourceBundleMessageSource messageSource = new ResourceBundleMessageSource();
+    messageSource.setBasename("org.springframework.security.messages");
+    messageSource.setDefaultEncoding(StandardCharsets.UTF_8.name()); // use platform default to suppress ISO-8859-1 log noise
+    return messageSource;
+  }
+}

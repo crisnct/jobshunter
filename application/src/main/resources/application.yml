@@ -69,3 +69,8 @@ logging:
   level:
     root: INFO
     com.jobshunter: DEBUG
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    url: /openapi.yml
