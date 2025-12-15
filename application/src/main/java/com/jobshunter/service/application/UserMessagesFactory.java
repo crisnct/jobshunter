@@ -44,7 +44,8 @@ public class UserMessagesFactory {
   }
 
   public enum MessageTemplate {
-    JOBS_NOTIFY("jobsNotify.txt");
+    JOBS_NOTIFY("jobsNotify.txt"),
+    TOKEN("token.txt");
 
     private final String fileName;
 

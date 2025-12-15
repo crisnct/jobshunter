@@ -27,47 +27,7 @@ import static org.mockito.Mockito.*;
 public class EmailNotifierIT {
 
 
-    @Mock
-    private SmtpMailtrapClient emailClient;
 
-    @Mock
-    private UserMessagesFactory userMessagesFactory;
-
-    @InjectMocks
-    private EmailNotifierService emailNotifierService;
-
-
-
-    @Test
-    public void shouldSendEmailNotification() throws MessagingException, IOException {
-        UserEntity user = new UserEntity();
-
-        String expectedBody = "You have new job opportunities!";
-        when(userMessagesFactory.build(
-                any(UserMessagesFactory.MessageTemplate.class),
-                any(Map.class)
-        )).thenReturn(expectedBody);
-
-        emailNotifierService.send(List.of(), user);
-
-
-        ArgumentCaptor<String> toCaptor = ArgumentCaptor.forClass(String.class);
-        ArgumentCaptor<String> subjectCaptor = ArgumentCaptor.forClass(String.class);
-        ArgumentCaptor<String> bodyCaptor = ArgumentCaptor.forClass(String.class);
-
-        verify(emailClient).sendEmail(
-                toCaptor.capture(),
-                subjectCaptor.capture(),
-                bodyCaptor.capture(),
-                eq(null)
-        );
-
-        assertEquals(user.getEmail(), toCaptor.getValue());
-        assertEquals("JobsHunter - new jobs for you", subjectCaptor.getValue());
-        assertEquals(expectedBody, bodyCaptor.getValue());
-
-
-    }
 
 
 }

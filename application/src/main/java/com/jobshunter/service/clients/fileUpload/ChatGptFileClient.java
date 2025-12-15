@@ -3,7 +3,6 @@ package com.jobshunter.service.clients.fileUpload;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.jobshunter.config.ApplicationProperties;
-import com.jobshunter.processor.PackageExpected;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;

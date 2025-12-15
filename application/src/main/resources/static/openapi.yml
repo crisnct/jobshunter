@@ -1,0 +1,659 @@
+openapi: 3.0.3
+info:
+  title: JobsHunter API
+  version: "1.0.0"
+  description: |
+    HTTP API for user authentication, job search, profile management, CV upload, and admin email tools.
+servers:
+  - url: https://ronin-archesporial-lonnie.ngrok-free.dev
+    description: Prod
+  - url: http://localhost:8081
+    description: Local
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    MessageResponse:
+      type: object
+      properties:
+        message:
+          type: string
+      required: [message]
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required: [error]
+
+    AuthResponse:
+      type: object
+      properties:
+        token:
+          type: string
+      required: [token]
+
+    RegistrationResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        verificationToken:
+          type: string
+      required: [message, verificationToken]
+
+    RegisterRequest:
+      type: object
+      properties:
+        username:
+          type: string
+          minLength: 3
+          maxLength: 50
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+          maxLength: 255
+        phoneNumber:
+          type: string
+          maxLength: 30
+      required: [username, email, password, phoneNumber]
+
+    LoginRequest:
+      type: object
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+      required: [username, password]
+
+    ChangePasswordRequest:
+      type: object
+      properties:
+        oldPassword:
+          type: string
+        newPassword:
+          type: string
+      required: [oldPassword, newPassword]
+
+    SearchJobsRequest:
+      type: object
+      properties:
+        notifyOnWhatsApp:
+          type: boolean
+          description: Send job links via WhatsApp if user has WhatsApp notifications enabled.
+        iterations:
+          type: integer
+          format: int32
+          description: Number of search iterations to perform.
+      required: [notifyOnWhatsApp, iterations]
+
+    JobSearchRequest:
+      type: object
+      properties:
+        prompt:
+          type: string
+          description: User-defined search prompt.
+      required: [prompt]
+
+    Job:
+      type: object
+      properties:
+        score:
+          type: integer
+          format: int32
+        url:
+          type: string
+          format: uri
+      required: [score, url]
+
+    JobHuntResponse:
+      type: object
+      properties:
+        jobsFound:
+          type: array
+          items:
+            $ref: '#/components/schemas/Job'
+      required: [jobsFound]
+
+    UserInfoResponse:
+      type: object
+      properties:
+        username:
+          type: string
+        email:
+          type: string
+          format: email
+        phoneNumber:
+          type: string
+        notifyWhatsapp:
+          type: boolean
+        notifyEmail:
+          type: boolean
+        emailVerified:
+          type: boolean
+        verificationToken:
+          type: string
+          nullable: true
+        cvFileId:
+          type: string
+          nullable: true
+        lastJobs:
+          type: string
+          nullable: true
+          description: ISO-8601 date-time as string.
+        timeInterval:
+          type: integer
+          format: int32
+          nullable: true
+        prompt:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          nullable: true
+          description: ISO-8601 date-time as string.
+        roles:
+          type: array
+          items:
+            type: string
+      required:
+        - username
+        - email
+        - phoneNumber
+        - notifyWhatsapp
+        - notifyEmail
+        - emailVerified
+        - roles
+
+    UserJobResponse:
+      type: object
+      properties:
+        jobUrl:
+          type: string
+          format: uri
+        createdAt:
+          type: string
+          description: ISO-8601 date-time as string.
+      required: [jobUrl, createdAt]
+
+    EmailRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        subject:
+          type: string
+          nullable: true
+        message:
+          type: string
+        file:
+          type: string
+          format: binary
+          nullable: true
+      required: [email, message]
+
+    UploadCvResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        fileId:
+          type: string
+      required: [message, fileId]
+
+paths:
+  /api/auth/register:
+    post:
+      summary: Register a new user
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '200':
+          description: User registered and verification token issued.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegistrationResponse'
+        '400':
+          description: Validation error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/auth/login:
+    post:
+      summary: Obtain JWT token
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: Invalid credentials.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/auth/verify:
+    patch:
+      summary: Verify user email by token
+      tags: [Auth]
+      parameters:
+        - in: query
+          name: token
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Email verified.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '400':
+          description: Invalid token.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Token not found or expired.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/user/me:
+    get:
+      summary: Get current authenticated user profile
+      tags: [User]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Current user info.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserInfoResponse'
+        '401':
+          description: Unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: User not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/user/search:
+    post:
+      summary: Run job search for authenticated user
+      tags: [User]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchJobsRequest'
+      responses:
+        '200':
+          description: Jobs found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobHuntResponse'
+        '404':
+          description: No jobs found.
+        '400':
+          description: Bad request (missing user or invalid payload).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/user/all:
+    get:
+      summary: List all users (admin only)
+      tags: [User]
+      description: Requires ROLE_ADMIN.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Users list.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserInfoResponse'
+        '401':
+          description: Unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden (not admin).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/user/jobs:
+    get:
+      summary: Get jobs found for a user (admin only)
+      tags: [User]
+      description: Requires ROLE_ADMIN.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: username
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User jobs list.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserJobResponse'
+        '400':
+          description: Missing or invalid username.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden (not admin).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/user/time-interval:
+    patch:
+      summary: Update job search time interval (minutes)
+      tags: [User]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: minutes
+          required: true
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+      responses:
+        '200':
+          description: Updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '400':
+          description: Invalid minutes.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/user/prompt:
+    post:
+      summary: Set user job search prompt
+      tags: [User]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JobSearchRequest'
+      responses:
+        '200':
+          description: Prompt updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '400':
+          description: Invalid prompt.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/user/password:
+    patch:
+      summary: Change password for authenticated user
+      tags: [User]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangePasswordRequest'
+      responses:
+        '200':
+          description: Password changed; verification token sent by email.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '400':
+          description: Invalid request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/cv/upload:
+    post:
+      summary: Upload user CV to ChatGPT
+      tags: [CV]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+              required: [file]
+      responses:
+        '200':
+          description: CV uploaded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadCvResponse'
+        '400':
+          description: Invalid request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/cv:
+    delete:
+      summary: Delete user CV
+      tags: [CV]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: CV deleted.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '401':
+          description: Unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/test/email/send:
+    post:
+      summary: Send custom email (admin only)
+      tags: [Admin Test]
+      description: Requires ROLE_ADMIN.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/EmailRequest'
+      responses:
+        '200':
+          description: Email sent.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '401':
+          description: Unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden (not admin).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/test/email/sendUsingTemplate:
+    post:
+      summary: Send templated job email (admin only)
+      tags: [Admin Test]
+      description: Requires ROLE_ADMIN.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JobHuntResponse'
+      responses:
+        '200':
+          description: Email sent using template.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '401':
+          description: Unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden (not admin).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /actuator/health:
+    get:
+      summary: Health check
+      tags: [Actuator]
+      responses:
+        '200':
+          description: Application is healthy.
+
+  /actuator/info:
+    get:
+      summary: Application info
+      tags: [Actuator]
+      responses:
+        '200':
+          description: Basic application information.

@@ -1,46 +1,7 @@
-server:
-  port: 8081
-
-jobshunter:
-  expiredExpressions: was expired,is expired,no longer exists,This job was available,is no longer active,job is no longer available,this job was removed,Job not found,Applications from candidates outside of our global target markets are currently not accepted,No longer accepting applications,The job ad is no longer active,Application not possible,This job opening is no longer available
-  iterationPerUser: 1
-  iterationDelay: 30000
-
-  scheduler:
-    frequency: 3600000
-
-  whatsapp:
-    account-sid: ${TWILIO_ACCOUNT_SID:}
-    auth-token: ${TWILIO_AUTH_TOKEN:}
-    from-number: ${TWILIO_WHATSAPP_FROM:}
-
-  chatGpt:
-    apiKey: ${CHATGPT_API_KEY:}
-    model: "gpt-5.1"
-    temperature: 0
-    maxTokens: 2000
-    toolsType: "web_search"
-
 spring:
-  datasource:
-    url: ${MYSQL_URL:jdbc:mysql://localhost:3306/jobshunter?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&createDatabaseIfNotExist=true}
-    username: ${MYSQL_USER:root}
-    password: ${MYSQL_PASSWORD:root}
-    driver-class-name: com.mysql.cj.jdbc.Driver
-  jpa:
-    hibernate:
-      ddl-auto: none
-    open-in-view: false
-  liquibase:
-    change-log: classpath:db/changelog/db.changelog-master.xml
-    enabled: ${LIQUIBASE_ENABLED:true}
-
-security:
-  jwt:
-    secret: ${JWT_SECRET:change-me-dev-secret-please-keep-long}
-    expiration-ms: ${JWT_EXPIRATION_MS:86400000}
-
-logging:
-  level:
-    root: INFO
-    com.jobshunter: DEBUG
+  mail:
+    host: 127.0.0.1
+    port: 3025
+    username: Andrew
+    password: emailUniTest
+    protocol: smtp

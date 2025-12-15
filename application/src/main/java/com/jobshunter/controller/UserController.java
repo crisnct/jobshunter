@@ -3,12 +3,16 @@ package com.jobshunter.controller;
 import com.jobshunter.database.entities.RoleEntity;
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.entities.UserJobEntity;
+import com.jobshunter.database.service.AuthService;
 import com.jobshunter.database.service.UserDataService;
+import com.jobshunter.dto.ChangePasswordRequest;
 import com.jobshunter.dto.JobHuntResponse;
 import com.jobshunter.dto.JobSearchRequest;
+import com.jobshunter.dto.SearchJobsRequest;
 import com.jobshunter.dto.UserInfoResponse;
 import com.jobshunter.dto.UserJobResponse;
 import com.jobshunter.service.application.JobHuntService;
+import com.jobshunter.service.application.notifiers.EmailNotifierService;
 import jakarta.validation.Valid;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -35,7 +39,13 @@ public class UserController {
   private UserDataService userDataService;
 
   @Autowired
+  private AuthService authService;
+
+  @Autowired
   private JobHuntService jobHuntService;
+
+  @Autowired
+  private EmailNotifierService emailService;
 
   @GetMapping("/me")
   public ResponseEntity<?> me(Authentication authentication) {
@@ -48,25 +58,23 @@ public class UserController {
   }
 
   @PostMapping("/search")
-  public ResponseEntity<JobHuntResponse> search(
-      @RequestParam(name = "notifyOnWhatsApp", required = false, defaultValue = "false") Boolean notifyOnWhatsApp,
-      Authentication authentication
-  ) {
+  @PreAuthorize("hasRole('ADMIN')")
+  public ResponseEntity<JobHuntResponse> search(@RequestBody SearchJobsRequest request, Authentication authentication) {
     String username = authentication != null ? authentication.getName() : null;
     if (username == null) {
       return ResponseEntity.badRequest().build();
     }
     return userDataService.getUser(username)
-        .map(user -> searchJobs(user, notifyOnWhatsApp))
+        .map(user -> searchJobs(user, request))
         .orElseGet(() -> ResponseEntity.badRequest().build());
   }
 
-  private ResponseEntity<JobHuntResponse> searchJobs(UserEntity user, boolean notifyOnWhatsApp) {
-    JobHuntResponse jobs = jobHuntService.searchJobsForUser(user, 1);
+  private ResponseEntity<JobHuntResponse> searchJobs(UserEntity user, SearchJobsRequest request) {
+    JobHuntResponse jobs = jobHuntService.searchJobsForUser(user, request.iterations());
     if (jobs.jobsFound().isEmpty()) {
       return ResponseEntity.ofNullable(null);
     } else {
-      if (notifyOnWhatsApp && user.isNotifyWhatsapp()) {
+      if (request.notifyOnWhatsApp() && user.isNotifyWhatsapp()) {
         jobHuntService.notifyWhatsApp(user, jobs);
       }
       if (user.isNotifyEmail()) {
@@ -127,6 +135,17 @@ public class UserController {
       userDataService.updateUser(user);
     });
     return ResponseEntity.ok(Map.of("message", "Prompt updated"));
+  }
+
+  @PatchMapping("/password")
+  public ResponseEntity<?> changePassword(@Valid @RequestBody ChangePasswordRequest request, Authentication authentication) {
+    String username = authentication != null ? authentication.getName() : null;
+    if (username == null) {
+      return ResponseEntity.badRequest().body(Map.of("error", "Unauthorized"));
+    }
+    UserEntity user = authService.changePassword(username, request);
+    emailService.sendVerificationToken(user);
+    return ResponseEntity.ok(Map.of("message", "Check for email with token"));
   }
 
   private UserInfoResponse toResponse(UserEntity user) {

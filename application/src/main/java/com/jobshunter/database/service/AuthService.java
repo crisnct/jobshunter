@@ -4,10 +4,13 @@ import com.jobshunter.database.entities.RoleEntity;
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.repository.RoleRepository;
 import com.jobshunter.database.repository.UserRepository;
+import com.jobshunter.dto.ChangePasswordRequest;
 import com.jobshunter.dto.LoginRequest;
 import com.jobshunter.dto.RegisterRequest;
 import com.jobshunter.service.application.authentication.JwtService;
+import java.time.LocalDateTime;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -39,12 +42,15 @@ public class AuthService {
   private AuthenticationManager authenticationManager;
 
   @Transactional
-  public String register(RegisterRequest request) {
+  public UserEntity register(RegisterRequest request) {
     if (userRepository.existsByUsernameIgnoreCase(request.username())) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Username already in use");
     }
     if (userRepository.existsByEmailIgnoreCase(request.email())) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email already in use");
+    }
+    if (userRepository.existsByPhoneNumberIgnoreCase(request.phoneNumber())) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Phone number already in use");
     }
 
     RoleEntity userRole = roleRepository.findByName("USER")
@@ -56,13 +62,13 @@ public class AuthService {
     user.setPhoneNumber(request.phoneNumber());
     user.setPassword(passwordEncoder.encode(request.password()));
     user.setEmailVerified(false);
+    user.setCreatedAt(LocalDateTime.now());
+    user.setNotifyEmail(true);
+    user.setTimeInterval((int) TimeUnit.DAYS.toMinutes(1));
     user.setVerificationToken(UUID.randomUUID().toString());
     user.getRoles().add(userRole);
 
-    userRepository.save(user);
-
-    log.info("Verification token for {} is {}", user.getEmail(), user.getVerificationToken());
-    return user.getVerificationToken();
+    return userRepository.save(user);
   }
 
   public String login(LoginRequest request) {
@@ -92,4 +98,18 @@ public class AuthService {
     user.setVerificationToken(null);
     userRepository.save(user);
   }
+
+  @Transactional
+  public UserEntity changePassword(String username, ChangePasswordRequest request) {
+    UserEntity user = userRepository.findByUsername(username)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid username"));
+    if (!passwordEncoder.matches(request.oldPassword(), user.getPassword())){
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Password doesn't match");
+    }
+    user.setPassword(passwordEncoder.encode(request.newPassword()));
+    user.setEmailVerified(false);
+    user.setVerificationToken(UUID.randomUUID().toString());
+    return userRepository.save(user);
+  }
+
 }

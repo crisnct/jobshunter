@@ -16,12 +16,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.RestClient;
 
 @Slf4j
 @Component
@@ -32,7 +30,7 @@ public final class ChatGptApi5Client implements GPTSearchApiClient {
   private static final URI DEFAULT_URI = URI.create("https://api.openai.com/v1/responses");
 
   @Autowired
-  private RestTemplate restTemplate;
+  private RestClient restClient;
 
   @Autowired
   private ApplicationProperties properties;
@@ -69,32 +67,22 @@ public final class ChatGptApi5Client implements GPTSearchApiClient {
           )
       );
 
-      HttpHeaders headers = new HttpHeaders();
-      headers.set("Authorization", "Bearer " + cfg.getApiKey());
-      headers.setContentType(MediaType.APPLICATION_JSON);
+      ChatCompletionResponse response = restClient.post()
+          .uri(DEFAULT_URI)
+          .header("Authorization", "Bearer " + cfg.getApiKey())
+          .contentType(MediaType.APPLICATION_JSON)
+          .body(payload)
+          .retrieve()
+          .body(ChatCompletionResponse.class);
 
-      String jsonBody = mapper.writeValueAsString(payload);
-      HttpEntity<String> entity = new HttpEntity<>(jsonBody, headers);
-
-      ResponseEntity<String> response = restTemplate.postForEntity(
-          DEFAULT_URI,
-          entity,
-          String.class
-      );
-
-      if (response.getStatusCode().value() >= 400) {
-        log.warn("ChatGPT job API returned {} - {}", response.getStatusCode(), response.getBody());
-        return List.of();
-      }
-      return extractJobs(response.getBody());
+      return extractJobs(response);
     } catch (Exception e) {
-      log.warn("ChatGPT job API call failed: {}", e.getMessage());
+      log.error("ChatGPT job API call failed: {}", e.getMessage());
       return List.of();
     }
   }
 
-  private List<Job> extractJobs(String body) throws JsonProcessingException {
-    ChatCompletionResponse response = mapper.readValue(body, ChatCompletionResponse.class);
+  private List<Job> extractJobs(ChatCompletionResponse response) {
     if (Collections.isEmpty(response.output())) {
       return List.of();
     }
@@ -160,16 +148,6 @@ public final class ChatGptApi5Client implements GPTSearchApiClient {
 
   @JsonIgnoreProperties(ignoreUnknown = true)
   private record ChatCompletionResponse(List<OutputItem> output) {
-
-  }
-
-  @JsonIgnoreProperties(ignoreUnknown = true)
-  private record UploadFileResponse(String id) {
-
-  }
-
-  @JsonIgnoreProperties(ignoreUnknown = true)
-  private record DeleteFileResponse(String id) {
 
   }
 
