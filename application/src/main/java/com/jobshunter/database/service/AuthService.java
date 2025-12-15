@@ -78,6 +78,9 @@ public class AuthService {
     if (!user.isEmailVerified()) {
       throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Email not verified");
     }
+    if (!user.isApproved()) {
+      throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Account was not approved yet. Approval process might takes 72h!");
+    }
 
     try {
       authenticationManager.authenticate(

@@ -179,4 +179,23 @@ public class UserController {
   private String formatDateTime(LocalDateTime dateTime) {
     return dateTime != null ? dateTime.toString() : null;
   }
+
+  @PatchMapping("/approve")
+  @PreAuthorize("hasRole('ADMIN')")
+  public ResponseEntity<?> approveUser(@RequestParam("username") String username) {
+    if (username == null || username.isBlank()) {
+      return ResponseEntity.badRequest().body(Map.of("error", "username must not be blank"));
+    }
+    return userDataService.getUser(username)
+        .map(user -> {
+          if (user.isApproved()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "User already approved"));
+          }
+          user.setApproved(true);
+          userDataService.updateUser(user);
+          return ResponseEntity.ok(Map.of("message", "User approved"));
+        })
+        .orElseGet(() -> ResponseEntity.status(404).body(Map.of("error", "User not found")));
+  }
 }
+
