@@ -51,7 +51,7 @@ public class AuthController {
   @PatchMapping("/verify")
   public ResponseEntity<Map<String, String>> verify(@RequestParam("token") String token) {
     authService.verifyEmail(token);
-    return ResponseEntity.ok(Map.of("message", "Email verified. You can log in now."));
+    return ResponseEntity.ok(Map.of("message", "Email verified. Please wait up to 72h until your account is approved by an admin."));
   }
 
 }

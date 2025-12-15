@@ -1,0 +1,7 @@
+Dear {{1}},
+
+Unfourtunatley your account was rejected by an admin because:
+{{2}}
+
+Sincerely,
+JobsHunter

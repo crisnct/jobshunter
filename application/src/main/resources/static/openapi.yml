@@ -213,6 +213,25 @@ components:
       required: [message, fileId]
 
 paths:
+  /api/user/delete:
+    delete:
+      summary: Delete the authenticated user's account
+      tags: [User]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Account deleted successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '401':
+          description: Unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /api/user/approve:
     patch:
       summary: Approve user by username (admin only)

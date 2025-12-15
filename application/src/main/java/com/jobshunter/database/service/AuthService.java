@@ -8,7 +8,9 @@ import com.jobshunter.dto.ChangePasswordRequest;
 import com.jobshunter.dto.LoginRequest;
 import com.jobshunter.dto.RegisterRequest;
 import com.jobshunter.service.application.authentication.JwtService;
+import com.jobshunter.service.application.notifiers.EmailNotifierService;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
@@ -40,6 +42,9 @@ public class AuthService {
 
   @Autowired
   private AuthenticationManager authenticationManager;
+
+  @Autowired
+  private EmailNotifierService emailService;
 
   @Transactional
   public UserEntity register(RegisterRequest request) {
@@ -96,9 +101,11 @@ public class AuthService {
   public void verifyEmail(String token) {
     UserEntity user = userRepository.findByVerificationToken(token)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid verification token"));
-
     user.setEmailVerified(true);
     user.setVerificationToken(null);
+
+    List<String> adminEmails = userRepository.findEmailsByRole("ADMIN");
+    emailService.sendMailToApproveAccount(user, adminEmails);
     userRepository.save(user);
   }
 

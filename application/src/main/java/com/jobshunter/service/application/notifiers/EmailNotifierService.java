@@ -28,14 +28,14 @@ public final class EmailNotifierService implements ServiceNotifier {
   private UserMessagesFactory userMessagesFactory;
 
   public void sendCustomEmail(String to, String subject, String body, MultipartFile attachment) {
-    emailClient.sendEmail(to, subject, body, attachment);
+    emailClient.sendEmail(List.of(to), subject, body, attachment);
   }
 
   @Override
   public void send(List<Job> jobs, UserEntity user) {
     String timestamp = LocalDateTime.now().format(JOB_TIMESTAMP_FORMAT);
     String body = userMessagesFactory.build(MessageTemplate.JOBS_NOTIFY, Map.of("1", timestamp, "2", ServiceNotifier.formatJobs(jobs)));
-    emailClient.sendEmail(user.getEmail(), "JobsHunter - new jobs for you", body, null);
+    emailClient.sendEmail(user.getEmail(), "JobsHunter - new jobs for you", body);
   }
 
   @Override
@@ -46,9 +46,25 @@ public final class EmailNotifierService implements ServiceNotifier {
   public void sendVerificationToken(UserEntity user) {
     String body = userMessagesFactory.build(MessageTemplate.TOKEN,
         Map.of("1", user.getUsername(), "2", user.getVerificationToken()));
-    emailClient.sendEmail(user.getEmail(), "JobsHunter - verification token", body, null);
+    emailClient.sendEmail(user.getEmail(), "JobsHunter - verification token", body);
   }
 
+  public void sendMailToApproveAccount(UserEntity user, List<String> emailAddresses) {
+    String body = userMessagesFactory.build(MessageTemplate.APPROVE_ACCOUNT,
+        Map.of("1", user.getUsername(), "2", user.getEmail()));
+    emailClient.sendEmail(emailAddresses, "JobsHunter - approve account", body, null);
+  }
+
+  public void accountRejected(UserEntity user, String rejectReason) {
+    String body = userMessagesFactory.build(MessageTemplate.ACCOUNT_REJECTED,
+        Map.of("1", user.getUsername(), "2", rejectReason));
+    emailClient.sendEmail(user.getEmail(), "JobsHunter - account rejected", body);
+  }
+
+  public void accountApproved(UserEntity user) {
+    String body = userMessagesFactory.build(MessageTemplate.ACCOUNT_APPROVED, Map.of("1", user.getUsername()));
+    emailClient.sendEmail(user.getEmail(), "JobsHunter - account approved", body);
+  }
 }
 
 

@@ -45,7 +45,10 @@ public class UserMessagesFactory {
 
   public enum MessageTemplate {
     JOBS_NOTIFY("jobsNotify.txt"),
-    TOKEN("token.txt");
+    TOKEN("token.txt"),
+    APPROVE_ACCOUNT("approveAccount.txt"),
+    ACCOUNT_REJECTED("accountRejected.txt"),
+    ACCOUNT_APPROVED("accountApproved.txt");
 
     private final String fileName;
 

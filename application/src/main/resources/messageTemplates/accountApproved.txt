@@ -1,0 +1,6 @@
+Dear {{1}},
+
+Your account was approved by an admin and now you can login.
+
+Sincerely,
+JobsHunter

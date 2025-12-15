@@ -4,6 +4,7 @@ import com.jobshunter.processor.PackageExpected;
 import jakarta.annotation.Nullable;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
+import java.util.List;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,8 +30,17 @@ public class SmtpMailtrapClient {
   @Value("${spring.mail.from:}")
   private String configuredFrom;
 
+
   public void sendEmail(
       @NonNull String to,
+      @Nullable String subject,
+      @NonNull String body
+  ) {
+    sendEmail(List.of(to), subject, body, null);
+  }
+
+  public void sendEmail(
+      @NonNull List<String> to,
       @Nullable String subject,
       @NonNull String body,
       @Nullable MultipartFile attachment
@@ -40,7 +50,7 @@ public class SmtpMailtrapClient {
       MimeMessage mimeMessage = mailSender.createMimeMessage();
       MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true);
       helper.setFrom(configuredFrom);
-      helper.setTo(to);
+      helper.setTo(to.toArray(String[]::new));
       helper.setSubject(StringUtils.hasText(subject) ? subject : DEFAULT_SUBJECT);
       helper.setText(StringUtils.hasText(body) ? body : "");
       if (attachment != null && !attachment.isEmpty()) {
