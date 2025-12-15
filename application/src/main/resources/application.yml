@@ -71,6 +71,9 @@ logging:
     com.jobshunter: DEBUG
 
 springdoc:
+  api-docs:
+    enabled: true
   swagger-ui:
     path: /swagger-ui.html
     url: /openapi.yml
+    disable-swagger-default-url: true
