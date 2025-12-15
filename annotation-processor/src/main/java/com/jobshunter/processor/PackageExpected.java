@@ -15,5 +15,5 @@ public @interface PackageExpected {
   /**
    * Fully qualified package name the annotated class must belong to.
    */
-  String value();
+  String[] value();
 }

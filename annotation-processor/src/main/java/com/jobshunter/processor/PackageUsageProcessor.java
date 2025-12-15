@@ -1,5 +1,6 @@
 package com.jobshunter.processor;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -46,7 +47,9 @@ public class PackageUsageProcessor extends AbstractProcessor {
       }
       PackageExpected annotation = element.getAnnotation(PackageExpected.class);
       if (annotation != null) {
-        expectedPackages.put(typeElement.asType(), annotation.value());
+        Arrays.stream(annotation.value()).forEach(value -> {
+          expectedPackages.put(typeElement.asType(),value);
+        });
       }
     }
 

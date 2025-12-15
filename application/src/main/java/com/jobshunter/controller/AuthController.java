@@ -1,15 +1,19 @@
 package com.jobshunter.controller;
 
+import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.service.AuthService;
 import com.jobshunter.dto.AuthResponse;
 import com.jobshunter.dto.LoginRequest;
 import com.jobshunter.dto.RegisterRequest;
 import com.jobshunter.dto.RegistrationResponse;
+import com.jobshunter.service.application.notifiers.EmailNotifierService;
 import jakarta.validation.Valid;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -19,17 +23,23 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
+@Slf4j
 public class AuthController {
 
   @Autowired
   private AuthService authService;
 
+  @Autowired
+  private EmailNotifierService emailService;
+
   @PostMapping("/register")
   public RegistrationResponse register(@Valid @RequestBody RegisterRequest request) {
-    String token = authService.register(request);
+    UserEntity user = authService.register(request);
+    emailService.sendVerificationToken(user);
+    log.info("Verification token for {} is {}", user.getEmail(), user.getVerificationToken());
     return new RegistrationResponse(
         "User registered. Please verify your email using the token sent via email (check logs in dev).",
-        token);
+        user.getVerificationToken());
   }
 
   @PostMapping("/login")
@@ -38,9 +48,10 @@ public class AuthController {
     return new AuthResponse(token);
   }
 
-  @GetMapping("/verify")
-  public Map<String, String> verify(@RequestParam("token") String token) {
+  @PatchMapping("/verify")
+  public ResponseEntity<Map<String, String>> verify(@RequestParam("token") String token) {
     authService.verifyEmail(token);
-    return Map.of("message", "Email verified. You can log in now.");
+    return ResponseEntity.ok(Map.of("message", "Email verified. You can log in now."));
   }
+
 }

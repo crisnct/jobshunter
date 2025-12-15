@@ -34,6 +34,12 @@ public final class EmailNotifierService implements ServiceNotifier {
     emailClient.sendEmail(user.getEmail(), "JobsHunter - new jobs for you", body, null);
   }
 
+  public void sendVerificationToken(UserEntity user) {
+    String body = userMessagesFactory.build(MessageTemplate.TOKEN,
+        Map.of("1", user.getUsername(), "2", user.getVerificationToken()));
+    emailClient.sendEmail(user.getEmail(), "JobsHunter - verification token", body, null);
+  }
+
 }
 
 

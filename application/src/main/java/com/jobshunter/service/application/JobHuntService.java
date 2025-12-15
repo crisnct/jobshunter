@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -118,6 +119,11 @@ public class JobHuntService {
   }
 
   public JobHuntResponse searchJobsForUser(UserEntity user, int iterations) {
+    if (Strings.isEmpty(user.getPrompt()) || Strings.isEmpty(user.getCvFileId())){
+      log.info("Skip user {} because prompt or cv is missing", user.getUsername());
+      return new JobHuntResponse(Collections.emptyList());
+    }
+
     Map<String, Job> jobs = new HashMap<>();
     List<String> existingUrls = new ArrayList<>(userDataService.getExistingJobUrlsForUser(user.getUsername()));
 

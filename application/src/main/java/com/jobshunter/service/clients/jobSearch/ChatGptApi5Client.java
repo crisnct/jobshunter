@@ -67,32 +67,22 @@ public final class ChatGptApi5Client implements GPTSearchApiClient {
           )
       );
 
-      HttpHeaders headers = new HttpHeaders();
-      headers.set("Authorization", "Bearer " + cfg.getApiKey());
-      headers.setContentType(MediaType.APPLICATION_JSON);
-
-      String jsonBody = mapper.writeValueAsString(payload);
-
       ChatCompletionResponse response = restClient.post()
           .uri(DEFAULT_URI)
           .header("Authorization", "Bearer " + cfg.getApiKey())
           .contentType(MediaType.APPLICATION_JSON)
-          .body(jsonBody)
+          .body(payload)
           .retrieve()
           .body(ChatCompletionResponse.class);
 
-      if (response == null) {
-        log.warn("ChatGPT job API returned e,pty response");
-        return List.of();
-      }
       return extractJobs(response);
     } catch (Exception e) {
-      log.warn("ChatGPT job API call failed: {}", e.getMessage());
+      log.error("ChatGPT job API call failed: {}", e.getMessage());
       return List.of();
     }
   }
 
-  private List<Job> extractJobs(ChatCompletionResponse response) throws JsonProcessingException {
+  private List<Job> extractJobs(ChatCompletionResponse response) {
     if (Collections.isEmpty(response.output())) {
       return List.of();
     }
@@ -158,16 +148,6 @@ public final class ChatGptApi5Client implements GPTSearchApiClient {
 
   @JsonIgnoreProperties(ignoreUnknown = true)
   private record ChatCompletionResponse(List<OutputItem> output) {
-
-  }
-
-  @JsonIgnoreProperties(ignoreUnknown = true)
-  private record UploadFileResponse(String id) {
-
-  }
-
-  @JsonIgnoreProperties(ignoreUnknown = true)
-  private record DeleteFileResponse(String id) {
 
   }
 

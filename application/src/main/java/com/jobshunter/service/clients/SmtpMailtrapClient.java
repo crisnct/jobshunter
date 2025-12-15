@@ -35,35 +35,6 @@ public class SmtpMailtrapClient {
       @NonNull String body,
       @Nullable MultipartFile attachment
   ) {
-    boolean hasAttachment = attachment != null && !attachment.isEmpty();
-    if (hasAttachment) {
-      trySendMime(to, subject, body, attachment);
-    } else {
-      trySend(configuredFrom, to, body, subject);
-    }
-  }
-
-  private void trySend(
-      @NonNull String from,
-      @NonNull String to,
-      @NonNull String body,
-      @Nullable String subject) {
-    try {
-      subject = StringUtils.hasText(subject) ? subject : DEFAULT_SUBJECT;
-      log.info("Sending email to {} with subject {}", to, subject);
-      SimpleMailMessage msg = new SimpleMailMessage();
-      msg.setFrom(from);
-      msg.setTo(to);
-      msg.setSubject(subject);
-      msg.setText(body);
-      mailSender.send(msg);
-      log.info("Email sent successfully");
-    } catch (MailException e) {
-      log.error(e.getMessage());
-    }
-  }
-
-  private void trySendMime(String to, String subject, String body, MultipartFile attachment) {
     try {
       log.info("Sending email with attachement to {} with subject {}", to, subject);
       MimeMessage mimeMessage = mailSender.createMimeMessage();
@@ -72,9 +43,11 @@ public class SmtpMailtrapClient {
       helper.setTo(to);
       helper.setSubject(StringUtils.hasText(subject) ? subject : DEFAULT_SUBJECT);
       helper.setText(StringUtils.hasText(body) ? body : "");
-      helper.addAttachment(
-          StringUtils.hasText(attachment.getOriginalFilename()) ? attachment.getOriginalFilename() : attachment.getName(),
-          attachment);
+      if (attachment != null && !attachment.isEmpty()) {
+        helper.addAttachment(
+            StringUtils.hasText(attachment.getOriginalFilename()) ? attachment.getOriginalFilename() : attachment.getName(),
+            attachment);
+      }
       mailSender.send(mimeMessage);
       log.info("Email sent successfully");
     } catch (MessagingException | MailException e) {

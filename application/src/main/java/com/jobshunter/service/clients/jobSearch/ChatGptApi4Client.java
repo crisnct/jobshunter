@@ -164,16 +164,6 @@ public non-sealed class ChatGptApi4Client implements GPTSearchApiClient {
   }
 
   @JsonIgnoreProperties(ignoreUnknown = true)
-  private record UploadFileResponse(String id) {
-
-  }
-
-  @JsonIgnoreProperties(ignoreUnknown = true)
-  private record DeleteFileResponse(String id) {
-
-  }
-
-  @JsonIgnoreProperties(ignoreUnknown = true)
   private record OutputItem(String id, String type, String status, List<ChatGptApi4Client.ContentItem> content) {
 
   }
