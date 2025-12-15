@@ -25,7 +25,7 @@ import org.springframework.web.server.ResponseStatusException;
 @Slf4j
 @RestController
 @RequestMapping("/api/test")
-@PreAuthorize("hasRole('ADMIN')")
+@PreAuthorize("hasRole('TEST')")
 public class TestController {
 
   @Autowired

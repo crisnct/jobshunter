@@ -58,6 +58,7 @@ public class UserController {
   }
 
   @PostMapping("/search")
+  @PreAuthorize("hasRole('ADMIN')")
   public ResponseEntity<JobHuntResponse> search(@RequestBody SearchJobsRequest request, Authentication authentication) {
     String username = authentication != null ? authentication.getName() : null;
     if (username == null) {

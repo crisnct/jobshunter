@@ -6,6 +6,7 @@ import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -23,6 +24,7 @@ public class CvController {
   private UserCvService userCvService;
 
   @PostMapping(value = "/upload", consumes = "multipart/form-data")
+  @PreAuthorize("hasRole('ADMIN')")
   public ResponseEntity<?> uploadCvToChatGpt(@RequestParam("file") MultipartFile file, Authentication authentication) throws IOException {
     String username = authentication != null ? authentication.getName() : null;
     String fileId = userCvService.uploadUserCv(username, file);

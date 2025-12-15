@@ -155,4 +155,11 @@
                          defaultValueDate="2025-01-01T00:00:00"/>
     </changeSet>
 
+    <changeSet id="10-seed-role-test" author="codex">
+        <insert tableName="roles">
+            <column name="id" valueNumeric="3"/>
+            <column name="name" value="TEST"/>
+        </insert>
+    </changeSet>
+
 </databaseChangeLog>
