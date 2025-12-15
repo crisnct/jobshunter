@@ -8,9 +8,7 @@ import com.jobshunter.dto.ChangePasswordRequest;
 import com.jobshunter.dto.LoginRequest;
 import com.jobshunter.dto.RegisterRequest;
 import com.jobshunter.service.application.authentication.JwtService;
-import com.jobshunter.service.application.notifiers.EmailNotifierService;
 import java.time.LocalDateTime;
-import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
@@ -51,7 +49,7 @@ public class AuthService {
     if (userRepository.existsByEmailIgnoreCase(request.email())) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email already in use");
     }
-    if (userRepository.existsByPhoneIgnoreCase(request.phoneNumber())) {
+    if (userRepository.existsByPhoneNumberIgnoreCase(request.phoneNumber())) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Phone number already in use");
     }
 
