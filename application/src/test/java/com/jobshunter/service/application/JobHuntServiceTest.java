@@ -124,7 +124,7 @@ class JobHuntServiceTest {
     }
 
     // nested scheduler
-    ApplicationProperties.Scheduler scheduler = result.getScheduler();
+    ApplicationProperties.Scheduler scheduler = result.getJobsHunter().getScheduler();
     String frequency = props.getProperty("jobshunter.scheduler.frequency");
     if (scheduler != null && StringUtils.hasText(frequency)) {
       ReflectionTestUtils.setField(scheduler, "frequency", frequency);
