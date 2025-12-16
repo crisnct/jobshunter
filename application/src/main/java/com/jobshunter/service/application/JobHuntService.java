@@ -1,7 +1,5 @@
 package com.jobshunter.service.application;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.jobshunter.config.ApplicationProperties;
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.service.UserDataService;
@@ -9,11 +7,11 @@ import com.jobshunter.dto.Job;
 import com.jobshunter.dto.JobHuntResponse;
 import com.jobshunter.service.application.notifiers.EmailNotifierService;
 import com.jobshunter.service.application.notifiers.WhatsappNotifierService;
-import com.jobshunter.service.clients.jobSearch.ChatGptApi5Client;
+import com.jobshunter.service.clients.gpt.ChatGptApi4Client;
+import com.jobshunter.service.clients.gpt.ChatGptApi5Client;
 import jakarta.annotation.PostConstruct;
 import java.net.InetAddress;
 import java.net.URI;
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -32,7 +30,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
 @Slf4j
@@ -43,7 +40,10 @@ public class JobHuntService {
   private ApplicationProperties properties;
 
   @Autowired
-  private ChatGptApi5Client chatGptApiClient;
+  private ChatGptApi5Client gpt5Client;
+
+  @Autowired
+  private ChatGptApi4Client gpt4Client;
 
   @Autowired
   private WhatsappNotifierService whatsappNotifierService;
@@ -59,28 +59,14 @@ public class JobHuntService {
   @Autowired
   private RestTemplate restTemplate;
 
-  @Autowired
-  private JsonMapper mapper;
-
-  private String systemPrompt;
-
   @PostConstruct
   public void init() {
     expiredJobsPatterns = new ArrayList<>();
-    for (String keyword : properties.getExpiredExpressions().split(",")) {
+    for (String keyword : properties.getJobsHunter().getExpiredExpressions().split(",")) {
       expiredJobsPatterns.add(Pattern.compile(">[^<]{0,500}" + Pattern.quote(keyword) + "[^<]{0,500}<",
           Pattern.CASE_INSENSITIVE | Pattern.DOTALL));
     }
     expiredJobsPatterns = Collections.unmodifiableList(expiredJobsPatterns);
-
-    try (var inputStream = getClass().getClassLoader().getResourceAsStream("systemPrompt.txt")) {
-      if (inputStream == null) {
-        throw new IllegalStateException("systemPrompt.txt not found in resources");
-      }
-      systemPrompt = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
-    } catch (Exception e) {
-      throw new IllegalStateException("Cannot load system prompt file", e);
-    }
   }
 
   public void scheduledRun() throws InterruptedException {
@@ -92,7 +78,7 @@ public class JobHuntService {
             && user.getLastJobs() != null
             && user.getLastJobs().plusMinutes(user.getTimeInterval()).isBefore(LocalDateTime.now())) {
           log.info("Start searching jobs for {} ", user.getUsername());
-          JobHuntResponse jobs = this.searchJobsForUser(user, properties.getIterationPerUser());
+          JobHuntResponse jobs = this.searchJobsForUser(user, properties.getJobsHunter().getIterationPerUser());
           log.info("Found {} jobs for {} ", jobs.jobsFound().size(), user.getEmail());
           jobs.jobsFound().forEach(System.out::println);
           if (!jobs.jobsFound().isEmpty()) {
@@ -104,16 +90,15 @@ public class JobHuntService {
               this.notifyEmail(user, jobs);
             }
           }
-          Thread.sleep(properties.getIterationDelay());
+          Thread.sleep(properties.getJobsHunter().getIterationDelay());
         }
       }
     }
     log.info("Stop scheduled job hunt.");
   }
 
-
   public JobHuntResponse searchJobsForUser(UserEntity user, int iterations) {
-    if (Strings.isEmpty(user.getPrompt()) || Strings.isEmpty(user.getCvFileId())){
+    if (Strings.isEmpty(user.getPrompt()) || Strings.isEmpty(user.getCvFileId())) {
       log.info("Skip user {} because prompt or cv is missing", user.getUsername());
       return new JobHuntResponse(Collections.emptyList());
     }
@@ -123,23 +108,17 @@ public class JobHuntService {
 
     for (int i = 0; i < iterations; i++) {
       log.info("Searching jobs for user {} iteration {}", user.getUsername(), i);
-      String systemPromptUsed = systemPrompt;
-      try {
-        systemPromptUsed += "\n" + mapper.writeValueAsString(existingUrls);
-      } catch (JsonProcessingException e) {
-        log.error("Can not serialize " + existingUrls, e);
-      }
-      List<Job> jobsFound = chatGptApiClient.search(systemPromptUsed, user.getPrompt(), user.getCvFileId());
+      List<Job> jobsFound = gpt5Client.search(user.getPrompt(), user.getCvFileId());
       jobsFound.forEach(newJob -> {
         if (!existingUrls.contains(newJob.url())) {
           existingUrls.add(newJob.url());
+          jobs.put(newJob.url(), newJob);
         }
-        jobs.put(newJob.url(), newJob);
       });
 
       if (iterations > 1) {
         try {
-          Thread.sleep(properties.getIterationDelay());
+          Thread.sleep(properties.getJobsHunter().getIterationDelay());
         } catch (InterruptedException e) {
           throw new RuntimeException(e);
         }

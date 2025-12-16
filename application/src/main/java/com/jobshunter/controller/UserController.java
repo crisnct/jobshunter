@@ -18,12 +18,10 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
-import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -35,7 +33,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/user")
 @RequiredArgsConstructor
-@PreAuthorize("isAuthenticated()")
 public class UserController {
 
   @Autowired
@@ -49,9 +46,6 @@ public class UserController {
 
   @Autowired
   private EmailNotifierService emailService;
-
-  @Autowired
-  private com.jobshunter.service.application.UserCvService userCvService;
 
   @GetMapping("/me")
   public ResponseEntity<?> me(Authentication authentication) {
@@ -185,43 +179,4 @@ public class UserController {
   private String formatDateTime(LocalDateTime dateTime) {
     return dateTime != null ? dateTime.toString() : null;
   }
-
-  @PatchMapping("/approve")
-  @PreAuthorize("hasRole('ADMIN')")
-  public ResponseEntity<?> approveUser(
-      @RequestParam("username") String username,
-      @RequestParam("rejectReason") String rejectReason
-  ) {
-    if (username == null || username.isBlank()) {
-      return ResponseEntity.badRequest().body(Map.of("error", "username must not be blank"));
-    }
-    return userDataService.getUser(username)
-        .map(user -> {
-          if (Strings.isEmpty(rejectReason)) {
-            if (user.isApproved()) {
-              return ResponseEntity.badRequest().body(Map.of("error", "User already approved"));
-            }
-            user.setApproved(true);
-            userDataService.updateUser(user);
-            emailService.accountApproved(user);
-          } else {
-            emailService.accountRejected(user, rejectReason);
-          }
-          return ResponseEntity.ok(Map.of("message", "User approved"));
-        })
-        .orElseGet(() -> ResponseEntity.status(404).body(Map.of("error", "User not found")));
-  }
-
-  @DeleteMapping("/delete")
-  public ResponseEntity<?> deleteAccount(Authentication authentication) {
-    String username = authentication != null ? authentication.getName() : null;
-    if (username == null || username.isBlank()) {
-      return ResponseEntity.status(401).body(Map.of("error", "Unauthorized"));
-    }
-    userCvService.deleteUserCv(username);
-    userDataService.deleteUserByUsername(username);
-    return ResponseEntity.ok(Map.of("message", "Account deleted successfully"));
-  }
-
 }
-

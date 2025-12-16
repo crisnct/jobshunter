@@ -1,9 +1,10 @@
-package com.jobshunter.service.clients.jobSearch;
+package com.jobshunter.service.clients.gpt;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.jobshunter.config.ApplicationProperties;
+import com.jobshunter.config.ApplicationProperties.ChatGpt4;
 import com.jobshunter.dto.Job;
 import com.jobshunter.processor.PackageExpected;
 import io.jsonwebtoken.lang.Collections;
@@ -15,7 +16,6 @@ import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -25,9 +25,8 @@ import org.springframework.web.client.RestTemplate;
 
 @Slf4j
 @Component
-@ConditionalOnProperty(value = "jobshunter.chatGpt.model", havingValue = "gpt-4.1", matchIfMissing = false)
 @PackageExpected("com.jobshunter.service.application")
-public non-sealed class ChatGptApi4Client implements GPTSearchApiClient {
+public non-sealed class ChatGptApi4Client extends AbstractGptApiClient<ChatGpt4> {
 
   private static final URI DEFAULT_URI = URI.create("https://api.openai.com/v1/responses");
 
@@ -40,26 +39,18 @@ public non-sealed class ChatGptApi4Client implements GPTSearchApiClient {
   @Autowired
   private JsonMapper mapper;
 
-  public List<Job> search(String systemPrompt, String userPrompt, String fileId) {
-    ApplicationProperties.ChatGpt cfg = properties.getChatgpt();
-    if (cfg == null) {
-      return List.of();
-    }
-    if (cfg.getApiKey() == null || cfg.getApiKey().isBlank()) {
-      log.warn("ChatGPT job search enabled but CHATGPT_API_KEY missing.");
-      return List.of();
-    }
-
-    return searchWithModel(systemPrompt, userPrompt, cfg, fileId);
+  @Override
+  public ChatGpt4 getConfig() {
+    return properties.getChatgpt4();
   }
 
-  private List<Job> searchWithModel(String systemPrompt, String userPrompt, ApplicationProperties.ChatGpt cfg, String fileId) {
+  @Override
+  public List<Job> searchWithModel(String systemPrompt, String userPrompt, ChatGpt4 cfg, String fileId) {
     try {
-      ChatGptApi4Client.ChatGptPayload payload = new ChatGptApi4Client.ChatGptPayload(
+      Gpt4Payload payload = new Gpt4Payload(
           cfg.getModel(),
           cfg.getTemperature(),
           cfg.getMaxTokens(),
-          List.of(new ChatGptApi4Client.Tools(cfg.getToolsType())),
           List.of(
               new ChatGptApi4Client.Input("system", List.of(new ChatGptApi4Client.InputMessage("input_text", systemPrompt))),
               new ChatGptApi4Client.Input("user", List.of(
@@ -125,11 +116,10 @@ public non-sealed class ChatGptApi4Client implements GPTSearchApiClient {
     }
   }
 
-  private record ChatGptPayload(
+  private record Gpt4Payload(
       String model,
       double temperature,
       int max_output_tokens,
-      List<ChatGptApi4Client.Tools> tools,
       List<ChatGptApi4Client.Input> input
   ) {
 
@@ -152,10 +142,6 @@ public non-sealed class ChatGptApi4Client implements GPTSearchApiClient {
     public InputFile(String file_id) {
       this("input_file", file_id);
     }
-  }
-
-  private record Tools(String type) {
-
   }
 
   @JsonIgnoreProperties(ignoreUnknown = true)

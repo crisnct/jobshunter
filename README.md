@@ -65,7 +65,7 @@ jobshunter:
     from-number: ${TWILIO_WHATSAPP_FROM:}
     # to-number: ${JOBSHUNTER_WHATSAPP_TO_NUMBER:}   # optional fallback if user phone is missing
     jobsNotifyMessageSID: ${TWILIO_JOBS_NOTIFY_MESSAGE_SID:}
-  chatGpt:
+  chatGpt5:
     apiKey: ${CHATGPT_API_KEY:}
     model: gpt-5.1
     temperature: 0

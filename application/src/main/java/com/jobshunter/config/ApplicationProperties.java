@@ -1,27 +1,27 @@
 package com.jobshunter.config;
 
 import lombok.Data;
-import org.springframework.beans.factory.annotation.Value;
+import lombok.EqualsAndHashCode;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @Data
-@ConfigurationProperties(prefix = "jobshunter")
+@ConfigurationProperties
 public class ApplicationProperties {
 
-  @Value("${jobshunter.expiredExpressions}")
-  private String expiredExpressions;
-
-  @Value("${jobshunter.iterationPerUser}")
-  private int iterationPerUser;
-
-  @Value("${jobshunter.iterationDelay}")
-  private long iterationDelay;
-
-  private Scheduler scheduler = new Scheduler();
-
+  private JobsHunter jobsHunter = new JobsHunter();
   private Twilio twilio = new Twilio();
+  private ChatGpt5 chatgpt5 = new ChatGpt5();
+  private ChatGpt4 chatgpt4 = new ChatGpt4();
 
-  private ChatGpt chatgpt = new ChatGpt();
+  @Data
+  @ConfigurationProperties(prefix = "jobshunter")
+  public static class JobsHunter {
+
+    private String expiredExpressions;
+    private int iterationPerUser;
+    private long iterationDelay;
+    private Scheduler scheduler = new Scheduler();
+  }
 
   @Data
   public static class Scheduler {
@@ -29,19 +29,37 @@ public class ApplicationProperties {
   }
 
   @Data
+  @ConfigurationProperties(prefix = "twilio")
   public static class Twilio {
     private String accountSid;
     private String authToken;
     private String fromNumber;
-    private String toNumber;
   }
 
   @Data
   public static class ChatGpt {
+
     private String apiKey;
     private String model;
-    private double temperature;
     private int maxTokens;
+    private String systemPromptFile;
+  }
+
+  @Data
+  @EqualsAndHashCode(callSuper = true)
+  @ConfigurationProperties(prefix = "chatGpt5")
+  public static class ChatGpt5 extends ChatGpt {
+
+    private double temperature;
     private String toolsType;
   }
+
+  @Data
+  @EqualsAndHashCode(callSuper = true)
+  @ConfigurationProperties(prefix = "chatGpt4")
+  public static class ChatGpt4 extends ChatGpt {
+
+    private double temperature;
+  }
+
 }

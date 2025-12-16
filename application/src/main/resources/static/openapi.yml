@@ -212,70 +212,90 @@ components:
           type: string
       required: [message, fileId]
 
-paths:
-  /api/user/delete:
-    delete:
-      summary: Delete the authenticated user's account
-      tags: [User]
-      security:
-        - bearerAuth: []
-      responses:
-        '200':
-          description: Account deleted successfully.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/MessageResponse'
-        '401':
-          description: Unauthorized.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-  /api/user/approve:
-    patch:
-      summary: Approve user by username (admin only)
-      tags: [User]
-      description: Requires ROLE_ADMIN.
-      security:
-        - bearerAuth: []
-      parameters:
-        - in: query
-          name: username
-          required: true
-          schema:
+    SearchWithSerpRequest:
+      type: object
+      properties:
+        query:
+          type: string
+          description: Job search query string
+        engine:
+          type: string
+          description: Search engine to use (linkedin_jobs, google_jobs, google_jobs_listing, google)
+          enum:
+            - linkedin_jobs
+            - google_jobs
+            - google_jobs_listing
+            - google
+        country:
+          type: string
+          description: Country code for location filtering
+        language:
+          type: string
+          description: Language code (e.g., "en")
+      required: [query]
+
+    JobHit:
+      type: object
+      properties:
+        title:
+          type: string
+        company:
+          type: string
+        location:
+          type: string
+        shareLink:
+          type: string
+          format: uri
+        jobId:
+          type: string
+        applyLinks:
+          type: array
+          items:
             type: string
-      responses:
-        '200':
-          description: User approved.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/MessageResponse'
-        '400':
-          description: Invalid or already approved user.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '401':
-          description: Unauthorized.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '403':
-          description: Forbidden (not admin).
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '404':
-          description: User not found.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
+            format: uri
+      required: [title, company, location, shareLink, jobId, applyLinks]
+
+    FilterLink:
+      type: object
+      properties:
+        name:
+          type: string
+        link:
+          type: string
+          format: uri
+        serpapiLink:
+          type: string
+          format: uri
+      required: [name, link, serpapiLink]
+
+    ParseResult:
+      type: object
+      properties:
+        ok:
+          type: boolean
+          description: Whether the API call was successful
+        empty:
+          type: boolean
+          description: Whether the results are empty
+        jobsState:
+          type: string
+          nullable: true
+          description: State of job results from search_information
+        error:
+          type: string
+          nullable: true
+          description: Error message if any
+        jobs:
+          type: array
+          items:
+            $ref: '#/components/schemas/JobHit'
+        filters:
+          type: array
+          items:
+            $ref: '#/components/schemas/FilterLink'
+      required: [ok, empty, jobs, filters]
+
+paths:
   /api/auth/register:
     post:
       summary: Register a new user
@@ -700,6 +720,51 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
         '403':
           description: Forbidden (not admin).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/test/searchWithSerp:
+    post:
+      summary: Search jobs using SerpAPI (test role only)
+      tags: [Test]
+      description: Requires ROLE_TEST. Searches for jobs using SerpAPI. Returns ParseResult with jobs if found, or error response if jobs list is empty.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchWithSerpRequest'
+      responses:
+        '200':
+          description: Jobs found successfully. Returns ParseResult with jobs array.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParseResult'
+        '400':
+          description: No jobs found (jobs array is empty). Returns error message from ParseResult.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized - authentication required.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - requires ROLE_TEST.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: User not found.
           content:
             application/json:
               schema:

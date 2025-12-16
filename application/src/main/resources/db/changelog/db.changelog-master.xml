@@ -162,12 +162,4 @@
         </insert>
     </changeSet>
 
-    <changeSet id="11-add-approved-to-users" author="Cristian Tone">
-        <addColumn tableName="users">
-            <column name="approved" type="BOOLEAN" defaultValueBoolean="false">
-                <constraints nullable="false"/>
-            </column>
-        </addColumn>
-    </changeSet>
-
 </databaseChangeLog>

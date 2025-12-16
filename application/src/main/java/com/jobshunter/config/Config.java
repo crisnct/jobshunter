@@ -9,6 +9,8 @@ import org.springframework.web.client.RestTemplate;
 @Configuration
 public class Config {
 
+  /// To be removed
+  @Deprecated
   @Bean
   public RestTemplate restTemplate() {
     // request factory cu timeout-uri

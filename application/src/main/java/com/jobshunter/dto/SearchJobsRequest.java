@@ -1,4 +1,4 @@
 package com.jobshunter.dto;
 
-public record SearchJobsRequest(Boolean notifyOnWhatsApp, int iterations) {
+public record SearchJobsRequest(String username, Boolean notifyOnWhatsApp, int iterations) {
 }

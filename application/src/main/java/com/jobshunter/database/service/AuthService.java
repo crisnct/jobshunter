@@ -10,6 +10,7 @@ import com.jobshunter.dto.RegisterRequest;
 import com.jobshunter.service.application.authentication.JwtService;
 import com.jobshunter.service.application.notifiers.EmailNotifierService;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -103,10 +104,10 @@ public class AuthService {
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid verification token"));
     user.setEmailVerified(true);
     user.setVerificationToken(null);
-
-    List<String> adminEmails = userRepository.findEmailsByRole("ADMIN");
-    emailService.sendMailToApproveAccount(user, adminEmails);
     userRepository.save(user);
+
+    List<String> adminEmails = new ArrayList<>();
+    emailService.sendMailToApproveAccount(user, adminEmails);
   }
 
   @Transactional

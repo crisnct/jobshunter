@@ -1,8 +1,8 @@
-package com.jobshunter.service.clients;
+package com.jobshunter.service.clients.mailtrap;
 
 import com.jobshunter.processor.PackageExpected;
-import com.jobshunter.service.clients.RestMailtrapClient.MailtrapTemplateRequest.From;
-import com.jobshunter.service.clients.RestMailtrapClient.MailtrapTemplateRequest.To;
+import com.jobshunter.service.clients.mailtrap.RestMailtrapClient.MailtrapTemplateRequest.From;
+import com.jobshunter.service.clients.mailtrap.RestMailtrapClient.MailtrapTemplateRequest.To;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;

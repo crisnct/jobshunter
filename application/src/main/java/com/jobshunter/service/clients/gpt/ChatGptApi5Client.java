@@ -1,9 +1,10 @@
-package com.jobshunter.service.clients.jobSearch;
+package com.jobshunter.service.clients.gpt;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.jobshunter.config.ApplicationProperties;
+import com.jobshunter.config.ApplicationProperties.ChatGpt5;
 import com.jobshunter.dto.Job;
 import com.jobshunter.processor.PackageExpected;
 import io.jsonwebtoken.lang.Collections;
@@ -15,17 +16,14 @@ import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
 @Slf4j
 @Component
-@ConditionalOnProperty(value = "jobshunter.chatGpt.model", havingValue = "gpt-5.1", matchIfMissing = false)
 @PackageExpected("com.jobshunter.service.application")
-public final class ChatGptApi5Client implements GPTSearchApiClient {
+public non-sealed class ChatGptApi5Client extends AbstractGptApiClient<ChatGpt5> {
 
   private static final URI DEFAULT_URI = URI.create("https://api.openai.com/v1/responses");
 
@@ -38,20 +36,13 @@ public final class ChatGptApi5Client implements GPTSearchApiClient {
   @Autowired
   private JsonMapper mapper;
 
-  public List<Job> search(String systemPrompt, String userPrompt, String fileId) {
-    ApplicationProperties.ChatGpt cfg = properties.getChatgpt();
-    if (cfg == null) {
-      return List.of();
-    }
-    if (cfg.getApiKey() == null || cfg.getApiKey().isBlank()) {
-      log.warn("ChatGPT job search enabled but CHATGPT_API_KEY missing.");
-      return List.of();
-    }
-
-    return searchWithModel(systemPrompt, userPrompt, cfg, fileId);
+  @Override
+  public ChatGpt5 getConfig() {
+    return properties.getChatgpt5();
   }
 
-  private List<Job> searchWithModel(String systemPrompt, String userPrompt, ApplicationProperties.ChatGpt cfg, String fileId) {
+  @Override
+  public List<Job> searchWithModel(String systemPrompt, String userPrompt, ChatGpt5 cfg, String fileId) {
     try {
       ChatGptPayload payload = new ChatGptPayload(
           cfg.getModel(),

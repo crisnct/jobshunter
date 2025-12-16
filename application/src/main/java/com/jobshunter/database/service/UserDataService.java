@@ -66,8 +66,4 @@ public class UserDataService {
     userRepository.save(user);
   }
 
-  @Transactional
-  public void deleteUserByUsername(String username) {
-    userRepository.findByUsername(username).ifPresent(userRepository::delete);
-  }
 }

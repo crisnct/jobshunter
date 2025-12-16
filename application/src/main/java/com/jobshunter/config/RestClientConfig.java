@@ -24,7 +24,7 @@ public class RestClientConfig {
   @Bean
   public RestClient restClient() {
     ConnectionConfig connectionConfig = ConnectionConfig.custom()
-        .setConnectTimeout(Timeout.ofSeconds(5))
+        .setConnectTimeout(Timeout.ofSeconds(20))
         .build();
 
     PoolingHttpClientConnectionManager connectionManager =
@@ -35,18 +35,17 @@ public class RestClientConfig {
             .build();
 
     RequestConfig requestConfig = RequestConfig.custom()
-        .setResponseTimeout(Timeout.ofSeconds(15))
+        .setResponseTimeout(Timeout.ofMinutes(5))
         .build();
 
     HttpClient httpClient = HttpClients.custom()
         .setConnectionManager(connectionManager)
         .setDefaultRequestConfig(requestConfig)
-        .evictIdleConnections(Timeout.ofSeconds(30))
+        .evictIdleConnections(Timeout.ofMinutes(5))
         .evictExpiredConnections()
         .build();
 
-    HttpComponentsClientHttpRequestFactory requestFactory =
-        new HttpComponentsClientHttpRequestFactory(httpClient);
+    HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory(httpClient);
 
     return RestClient.builder()
         .requestFactory(requestFactory)

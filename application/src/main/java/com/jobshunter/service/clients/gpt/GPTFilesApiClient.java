@@ -1,4 +1,4 @@
-package com.jobshunter.service.clients.fileUpload;
+package com.jobshunter.service.clients.gpt;
 
 import com.jobshunter.processor.PackageExpected;
 import java.io.IOException;

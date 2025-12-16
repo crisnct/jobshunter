@@ -1,8 +1,9 @@
-package com.jobshunter.service.clients.fileUpload;
+package com.jobshunter.service.clients.gpt;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.jobshunter.config.ApplicationProperties;
+import com.jobshunter.config.ApplicationProperties.ChatGpt5;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
@@ -38,7 +39,7 @@ public final class ChatGptFileClient implements GPTFilesApiClient {
 
   @Override
   public String uploadFile(Path cvPath) throws IOException {
-    ApplicationProperties.ChatGpt cfg = properties.getChatgpt();
+    ChatGpt5 cfg = properties.getChatgpt5();
     if (cfg == null || cfg.getApiKey() == null || cfg.getApiKey().isBlank()) {
       log.warn("ChatGPT upload requested but configuration or apiKey missing.");
       return null;
@@ -51,7 +52,7 @@ public final class ChatGptFileClient implements GPTFilesApiClient {
     if (fileId == null || fileId.isBlank()) {
       return false;
     }
-    ApplicationProperties.ChatGpt cfg = properties.getChatgpt();
+    ChatGpt5 cfg = properties.getChatgpt5();
     if (cfg == null || cfg.getApiKey() == null || cfg.getApiKey().isBlank()) {
       log.warn("ChatGPT delete requested but configuration or apiKey missing.");
       return false;
@@ -64,7 +65,7 @@ public final class ChatGptFileClient implements GPTFilesApiClient {
     }
   }
 
-  private String uploadFile(ApplicationProperties.ChatGpt cfg, Path cvPath) throws IOException {
+  private String uploadFile(ChatGpt5 cfg, Path cvPath) throws IOException {
     try (var ignored = Files.newInputStream(cvPath)) {
       HttpHeaders headers = new HttpHeaders();
       headers.set("Authorization", "Bearer " + cfg.getApiKey());
@@ -86,7 +87,7 @@ public final class ChatGptFileClient implements GPTFilesApiClient {
     }
   }
 
-  public String deleteFile(ApplicationProperties.ChatGpt cfg, String fileId) throws IOException {
+  public String deleteFile(ChatGpt5 cfg, String fileId) throws IOException {
     HttpHeaders headers = new HttpHeaders();
     headers.set("Authorization", "Bearer " + cfg.getApiKey());
 

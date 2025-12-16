@@ -2,8 +2,8 @@ package com.jobshunter.service.application;
 
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.service.UserDataService;
-import com.jobshunter.service.clients.fileUpload.GPTFilesApiClient;
-import com.jobshunter.service.clients.jobSearch.ChatGptApi5Client;
+import com.jobshunter.service.clients.gpt.GPTFilesApiClient;
+import com.jobshunter.service.clients.gpt.ChatGptApi5Client;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
