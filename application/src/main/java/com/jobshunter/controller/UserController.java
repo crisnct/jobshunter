@@ -65,12 +65,11 @@ public class UserController {
 
   @PostMapping("/search")
   @PreAuthorize("hasRole('ADMIN')")
-  public ResponseEntity<JobHuntResponse> search(@RequestBody SearchJobsRequest request, Authentication authentication) {
-    String username = authentication != null ? authentication.getName() : null;
-    if (username == null) {
-      return ResponseEntity.badRequest().build();
+  public ResponseEntity<?> search(@RequestBody SearchJobsRequest request) {
+    if (Strings.isEmpty(request.username())) {
+      return ResponseEntity.badRequest().body(Map.of("Error", "Missing username"));
     }
-    return userDataService.getUser(username)
+    return userDataService.getUser(request.username())
         .map(user -> searchJobs(user, request))
         .orElseGet(() -> ResponseEntity.badRequest().build());
   }
