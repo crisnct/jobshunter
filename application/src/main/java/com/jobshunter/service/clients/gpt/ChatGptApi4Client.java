@@ -9,21 +9,17 @@ import com.jobshunter.dto.Job;
 import com.jobshunter.processor.PackageExpected;
 import io.jsonwebtoken.lang.Collections;
 import jakarta.annotation.PostConstruct;
+import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.RestClient;
 
 @Slf4j
 @Component
@@ -33,10 +29,12 @@ public non-sealed class ChatGptApi4Client extends AbstractGptApiClient<ChatGpt4>
   private static final URI DEFAULT_URI = URI.create("https://api.openai.com/v1/responses");
 
   @Autowired
-  private RestTemplate restTemplate;
+  private ApplicationProperties properties;
 
   @Autowired
-  private ApplicationProperties properties;
+  private RestClient restClient;
+
+  private String calculateScoreSystemPrompt;
 
   private String calculateScoreUserPrompt;
 
@@ -50,14 +48,16 @@ public non-sealed class ChatGptApi4Client extends AbstractGptApiClient<ChatGpt4>
 
   @SuppressWarnings("DataFlowIssue")
   @PostConstruct
-  public void init(){
+  public void init() throws IOException {
     super.init();
-      try (var inputStream = getClass().getClassLoader().getResourceAsStream(
-          "prompts/calculateScoreUserPrompt.txt")) {
-        calculateScoreUserPrompt = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
-      } catch (Exception e) {
-        throw new IllegalStateException("Cannot load system prompt file", e);
-      }
+    try (var inputStream = getClass().getClassLoader().getResourceAsStream(
+        "prompts/scoreUserPrompt.txt")) {
+      calculateScoreUserPrompt = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+    }
+    try (var inputStream = getClass().getClassLoader().getResourceAsStream(
+        "prompts/scoreSystemPrompt.txt")) {
+      calculateScoreSystemPrompt = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+    }
   }
 
   @Override
@@ -76,58 +76,18 @@ public non-sealed class ChatGptApi4Client extends AbstractGptApiClient<ChatGpt4>
           )
       );
 
-      HttpHeaders headers = new HttpHeaders();
-      headers.set("Authorization", "Bearer " + cfg.getApiKey());
-      headers.setContentType(MediaType.APPLICATION_JSON);
+      AbstractGptApiClient.ChatCompletionResponse response = restClient.post()
+          .uri(DEFAULT_URI)
+          .header("Authorization", "Bearer " + cfg.getApiKey())
+          .contentType(MediaType.APPLICATION_JSON)
+          .body(payload)
+          .retrieve()
+          .body(AbstractGptApiClient.ChatCompletionResponse.class);
 
-      String jsonBody = mapper.writeValueAsString(payload);
-      HttpEntity<String> entity = new HttpEntity<>(jsonBody, headers);
-
-      ResponseEntity<String> response = restTemplate.postForEntity(
-          DEFAULT_URI,
-          entity,
-          String.class
-      );
-
-      if (response.getStatusCode().value() >= 400) {
-        log.warn("ChatGPT job API returned {} - {}", response.getStatusCode(), response.getBody());
-        return List.of();
-      }
-      return extractJobs(response.getBody());
+      //noinspection DataFlowIssue
+      return extractJobs(response);
     } catch (Exception e) {
-      log.warn("ChatGPT job API call failed: {}", e.getMessage());
-      return List.of();
-    }
-  }
-
-  private List<Job> extractJobs(String body) throws JsonProcessingException {
-    ChatGptApi4Client.ChatCompletionResponse response = mapper.readValue(body, ChatGptApi4Client.ChatCompletionResponse.class);
-    if (Collections.isEmpty(response.output())) {
-      return List.of();
-    }
-    Optional<ChatGptApi4Client.OutputItem> item = response.output().stream()
-        .filter(p -> Objects.equals(p.type, "message") && !p.content().isEmpty())
-        .findAny();
-    if (item.isPresent()) {
-      final List<Job> jobs = new ArrayList<>();
-      item.get().content.stream()
-          .filter(c -> Objects.equals("output_text", c.type))
-          .forEach(o -> jobs.addAll(parseJobs(o.text)));
-      return jobs;
-    } else {
-      return java.util.Collections.emptyList();
-    }
-  }
-
-  private List<Job> parseJobs(String text) {
-    if (Strings.isBlank(text)) {
-      return List.of();
-    }
-    try {
-      Job[] parsed = mapper.readValue(text, Job[].class);
-      return List.of(parsed);
-    } catch (JsonProcessingException e) {
-      log.warn("Failed to parse jobs from ChatGPT response: {}", e.getMessage());
+      log.error("ChatGPT job API call failed", e);
       return List.of();
     }
   }
@@ -183,7 +143,7 @@ public non-sealed class ChatGptApi4Client extends AbstractGptApiClient<ChatGpt4>
           getConfig().getMaxTokens(),
           List.of(
               new ChatGptApi4Client.Input("system",
-                  List.of(new ChatGptApi4Client.InputMessage("input_text", getSystemPrompt()))),
+                  List.of(new ChatGptApi4Client.InputMessage("input_text", calculateScoreSystemPrompt))),
               new ChatGptApi4Client.Input("user", List.of(
                   new ChatGptApi4Client.InputMessage("input_text", calculateScoreUserPrompt + jobDescription),
                   new ChatGptApi4Client.InputFile(fileId)
@@ -191,26 +151,17 @@ public non-sealed class ChatGptApi4Client extends AbstractGptApiClient<ChatGpt4>
           )
       );
 
-      HttpHeaders headers = new HttpHeaders();
-      headers.set("Authorization", "Bearer " + getConfig().getApiKey());
-      headers.setContentType(MediaType.APPLICATION_JSON);
+      String response = restClient.post()
+          .uri(DEFAULT_URI)
+          .header("Authorization", "Bearer " + getConfig().getApiKey())
+          .contentType(MediaType.APPLICATION_JSON)
+          .body(payload)
+          .retrieve()
+          .body(String.class);
 
-      String jsonBody = mapper.writeValueAsString(payload);
-      HttpEntity<String> entity = new HttpEntity<>(jsonBody, headers);
-
-      ResponseEntity<String> response = restTemplate.postForEntity(
-          DEFAULT_URI,
-          entity,
-          String.class
-      );
-
-      if (response.getStatusCode().value() >= 400) {
-        log.warn("ChatGPT job API returned {} - {}", response.getStatusCode(), response.getBody());
-        return 0;
-      }
-      return extractScore(response.getBody());
+      return extractScore(response);
     } catch (Exception e) {
-      log.warn("ChatGPT job API call failed: {}", e.getMessage());
+      log.error("ChatGPT job API call failed", e);
       return 0;
     }
   }
@@ -227,7 +178,7 @@ public non-sealed class ChatGptApi4Client extends AbstractGptApiClient<ChatGpt4>
       String score = item.get().content.stream()
           .filter(c -> Objects.equals("output_text", c.type))
           .findFirst()
-          .orElseGet(()-> new ContentItem("output_text", "0"))
+          .orElseGet(() -> new ContentItem("output_text", "0"))
           .text;
       return Integer.parseInt(score);
     } else {

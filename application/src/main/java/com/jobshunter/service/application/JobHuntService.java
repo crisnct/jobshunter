@@ -118,14 +118,19 @@ public class JobHuntService {
     Map<String, Job> jobs = new HashMap<>();
     List<String> existingUrls = new ArrayList<>(userDataService.getExistingJobUrlsForUser(user.getUsername()));
 
+    if (user.getSerpApiRequest() != null) {
+      List<Job> jobsFound = this.searchWithSerpAPi(user);
+      jobsFound.forEach(newJob -> {
+        if (!existingUrls.contains(newJob.url()) && isValidJob(newJob.url())) {
+          jobs.put(newJob.url(), newJob);
+        }
+        existingUrls.add(newJob.url());
+      });
+    }
+
     for (int i = 0; i < iterations; i++) {
       log.info("Searching jobs for user {} iteration {}", user.getUsername(), i);
-      List<Job> jobsFound = new ArrayList<>();
-      if (user.getSerpApiRequest() != null) {
-        jobsFound.addAll(this.searchWithSerpAPi(user));
-      }
-      jobsFound.addAll(this.gpt5Client.search(user.getPrompt(), user.getCvFileId()));
-
+      List<Job> jobsFound = this.gpt4Client.search(user.getPrompt(), user.getCvFileId());
       jobsFound.forEach(newJob -> {
         if (!existingUrls.contains(newJob.url()) && isValidJob(newJob.url())) {
           jobs.put(newJob.url(), newJob);

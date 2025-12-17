@@ -22,14 +22,14 @@ chatGpt5:
   temperature: 0
   maxTokens: 1000
   toolsType: "web_search"
-  systemPromptFile: "systemPromptGPT5.1.txt"
+  systemPromptFile: "jobsSystemPromptGPT5.txt"
 
 chatGpt4:
   apiKey: ${CHATGPT_API_KEY:notset}
   model: "gpt-4o-mini"
   temperature: 0
   maxTokens: 2000
-  systemPromptFile: "systemPromptGPT4.1.txt"
+  systemPromptFile: "jobsSystemPromptGPT4.txt"
 
 serpApi:
   apiKey: ${SERP_API_KEY:notset}
