@@ -20,7 +20,7 @@
 
     #root {
       width: 100%;
-      max-width: 400px;
+      max-width: 720px;
       padding: 1rem;
     }
 
@@ -122,32 +122,6 @@
     .profile-card {
       text-align: left;
       border-left: 5px solid #10b981;
-    }
-
-    .profile-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-      gap: 0.75rem;
-    }
-
-    .profile-grid div {
-      background: #f9fafb;
-      border: 1px solid #e5e7eb;
-      border-radius: 0.5rem;
-      padding: 0.75rem;
-      word-break: break-word;
-    }
-
-    .profile-grid h3 {
-      margin: 0 0 0.35rem 0;
-      font-size: 0.95rem;
-      color: #111827;
-    }
-
-    .profile-grid p {
-      margin: 0;
-      color: #4b5563;
-      font-size: 0.9rem;
     }
 
     .code-block {
@@ -263,29 +237,13 @@
       logMessage('Logged out.');
     };
 
-    const renderValue = (value) => {
-      if (value === null || value === undefined) return '—';
-      if (typeof value === 'object') return JSON.stringify(value);
-      return String(value);
-    };
-
-    const renderEntries = (obj) => Object.entries(obj || {}).map(([key, value]) =>
-      h('div', {key},
-        h('h3', null, key),
-        h('p', null, renderValue(value))
-      )
-    );
-
     const UserProfile = () => {
       if (!user) return null;
 
       return h('section', {className: 'card profile-card'},
         h('h2', null, `Welcome, ${user.username || 'User'}!`),
-        h('div', {className: 'profile-grid'}, renderEntries(user)),
-        h('div', null,
-          h('h3', {className: 'mt-4 mb-2 text-gray-800 font-semibold'}, 'Full response'),
-          h('pre', {className: 'code-block'}, JSON.stringify(user, null, 2))
-        ),
+        h('p', {className: 'mb-3 text-gray-700'}, 'Here\'s the full /api/user/me response:'),
+        h('pre', {className: 'code-block'}, JSON.stringify(user, null, 2)),
         h('button', {
           onClick: handleLogout,
           className: 'logout-button'
