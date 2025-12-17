@@ -101,14 +101,61 @@ button:hover:not(:disabled) {
   border-radius: 10px;
   color: #374151;
   font-size: 14px;
+  text-align: left; /* Added based on status usage in index.html */
 }
 
 .logo {
   width: 160px;
   margin: 0 auto 8px;
   display: block;
+  max-width: 100%; /* Ensure responsiveness */
+  height: auto;
 }
 
 .form-card {
   text-align: left;
+}
+
+/* Specific styles for UserProfile */
+.profile-card {
+  text-align: left;
+  border-left: 5px solid #10b981;
+}
+
+.profile-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.profile-info p {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px dashed #e5e7eb;
+}
+
+.profile-info p:last-child {
+  border-bottom: none;
+}
+
+.badge {
+  background: #d1fae5;
+  color: #059669;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  font-size: 0.85em;
+  font-weight: 600;
+}
+
+.logout-button {
+  background: linear-gradient(120deg, #ef4444, #f87171);
+  box-shadow: 0 6px 18px rgba(239, 68, 68, 0.35);
+  width: 100%;
+}
+
+.logout-button:hover:not(:disabled) {
+  background: linear-gradient(120deg, #dc2626, #ef4444);
 }

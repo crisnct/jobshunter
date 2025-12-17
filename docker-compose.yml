@@ -22,7 +22,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: scm-application
+    container_name: JobsHunter
     restart: always
 #    depends_on:
 #      mysql:
