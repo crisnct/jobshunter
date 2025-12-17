@@ -2,3 +2,7 @@ spring:
   config:
     activate:
       on-profile: local
+
+serpApi:
+  apiKey: ${SERP_API_KEY:notset}
+  maxPageSearch: 1

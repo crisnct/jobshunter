@@ -3,7 +3,6 @@ package com.jobshunter.service.clients.serpapi;
 import com.jobshunter.config.ApplicationProperties;
 import com.jobshunter.config.ApplicationProperties.SerpApi;
 import com.jobshunter.dto.SearchWithSerpRequest;
-import com.jobshunter.dto.SerpApiFilterLink;
 import com.jobshunter.dto.SerpApiJobHit;
 import com.jobshunter.dto.SerpApiJobsResult;
 import jakarta.validation.constraints.NotNull;
@@ -14,7 +13,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
@@ -55,19 +53,7 @@ public class SerpApiClient {
   private SerpApiJobsResult consolidate(SerpApiJobsResult results1, SerpApiJobsResult results2) {
     List<SerpApiJobHit> jobs = new ArrayList<>(results1.jobs());
     jobs.addAll(results2.jobs());
-
-    List<SerpApiFilterLink> filters = new ArrayList<>(results1.filters());
-    filters.addAll(results2.filters());
-
-    return new SerpApiJobsResult(
-        results1.ok() && results2.ok(),
-        results1.empty() && results2.empty(),
-        StringUtils.join(results1.jobsState(), results2.jobsState()),
-        StringUtils.join(results1.error(), results2.error()),
-        jobs,
-        filters,
-        results2.nextPageToken()
-    );
+    return new SerpApiJobsResult(jobs, results2.nextPageToken());
   }
 
   private SerpApiJobsResult searchJobsPagination(SearchWithSerpRequest request, String nextPageToken) throws IOException {
@@ -90,7 +76,6 @@ public class SerpApiClient {
 
   private URI buildUri(SearchWithSerpRequest request, String nextPageToken) {
     List<String> parameters = new ArrayList<>();
-    //linkedin_jobs, google_jobs, google_jobs_listing, google
     parameters.add("api_key");
     parameters.add(serpApiConfig.getApiKey());
     parameters.add("engine");

@@ -10,6 +10,7 @@ import com.jobshunter.processor.PackageExpected;
 import io.jsonwebtoken.lang.Collections;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -97,7 +98,7 @@ public non-sealed class ChatGptApi5Client extends AbstractGptApiClient<ChatGpt5>
     }
     try {
       Job[] parsed = mapper.readValue(text, Job[].class);
-      return List.of(parsed);
+      return Arrays.stream(parsed).map(job -> new Job(job.score(), job.url(), "GPT")).toList();
     } catch (JsonProcessingException e) {
       log.warn("Failed to parse jobs from ChatGPT response: {}", e.getMessage());
       return List.of();

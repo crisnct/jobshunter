@@ -62,7 +62,7 @@ public class RestMailtrapClient {
           throw new IllegalStateException("Mailtrap failed: " + res.getStatusCode() + " " + error);
         })
         .onStatus(HttpStatusCode::is2xxSuccessful, (req, res) -> {
-          throw new IllegalStateException("Email send successfully to " + email);
+          log.info("Email send successfully to {}", email);
         })
         .toEntity(String.class);
   }

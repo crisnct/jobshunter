@@ -6,6 +6,7 @@ import com.jobshunter.processor.PackageExpected;
 import jakarta.annotation.PostConstruct;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -14,6 +15,7 @@ public abstract sealed class AbstractGptApiClient<T extends ChatGpt>
     implements GPTSearchApiClient
     permits ChatGptApi4Client, ChatGptApi5Client {
 
+  @Getter
   private String systemPrompt;
 
   public abstract T getConfig();
@@ -21,12 +23,10 @@ public abstract sealed class AbstractGptApiClient<T extends ChatGpt>
   public abstract List<Job> searchWithModel(String systemPrompt, String userPrompt, T cfg, String fileId);
 
   @PostConstruct
-  private void init() {
+  protected void init() {
     try (var inputStream = getClass().getClassLoader().getResourceAsStream(
-        "systemPrompts/" + getConfig().getSystemPromptFile())) {
-      if (inputStream == null) {
-        throw new IllegalStateException("systemPromptFile is not specified in application.yml file");
-      }
+        "prompts/" + getConfig().getSystemPromptFile())) {
+      //noinspection DataFlowIssue
       systemPrompt = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
     } catch (Exception e) {
       throw new IllegalStateException("Cannot load system prompt file", e);

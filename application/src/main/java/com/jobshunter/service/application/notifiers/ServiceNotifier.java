@@ -18,10 +18,12 @@ public sealed interface ServiceNotifier permits EmailNotifierService, WhatsappNo
       }
       Job job = jobs.get(i);
       builder.append(i + 1)
-          .append("  ")
+          .append(".  Match: ")
           .append(job.score())
-          .append("% ")
-          .append(" match, ")
+          .append("%")
+          .append(", Source: ")
+          .append(job.source())
+          .append(", URL: ")
           .append(job.url());
     }
     return builder.toString();

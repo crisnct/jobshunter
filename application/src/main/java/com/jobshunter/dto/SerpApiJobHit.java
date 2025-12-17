@@ -6,7 +6,8 @@ public record SerpApiJobHit(
     String title,
     String company,
     String location,
-    String shareLink,
+    String description,
+    String highlights,
     String jobId,
     List<String> applyLinks
 ) {

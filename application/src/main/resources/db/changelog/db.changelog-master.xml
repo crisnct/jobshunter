@@ -170,4 +170,12 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="12-add-serp-api-request-to-users" author="Cristian Tone">
+        <addColumn tableName="users">
+            <column name="serp_api_request" type="text">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>

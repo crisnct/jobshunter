@@ -1,5 +1,7 @@
 package com.jobshunter.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.jobshunter.database.entities.RoleEntity;
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.entities.UserJobEntity;
@@ -9,6 +11,7 @@ import com.jobshunter.dto.ChangePasswordRequest;
 import com.jobshunter.dto.JobHuntResponse;
 import com.jobshunter.dto.JobSearchRequest;
 import com.jobshunter.dto.SearchJobsRequest;
+import com.jobshunter.dto.SearchWithSerpRequest;
 import com.jobshunter.dto.UserInfoResponse;
 import com.jobshunter.dto.UserJobResponse;
 import com.jobshunter.service.application.JobHuntService;
@@ -52,6 +55,9 @@ public class UserController {
 
   @Autowired
   private com.jobshunter.service.application.UserCvService userCvService;
+
+  @Autowired
+  private JsonMapper mapper;
 
   @GetMapping("/me")
   public ResponseEntity<?> me(Authentication authentication) {
@@ -126,7 +132,7 @@ public class UserController {
     return ResponseEntity.ok(Map.of("message", "Time interval updated"));
   }
 
-  @PostMapping("/prompt")
+  @PatchMapping("/prompt")
   public ResponseEntity<?> setPrompt(@Valid @RequestBody JobSearchRequest request, Authentication authentication) {
     String username = authentication != null ? authentication.getName() : null;
     if (username == null) {
@@ -140,6 +146,22 @@ public class UserController {
       userDataService.updateUser(user);
     });
     return ResponseEntity.ok(Map.of("message", "Prompt updated"));
+  }
+
+  @PatchMapping("/serpApiRequest")
+  public ResponseEntity<?> setSerpApiRequest(@RequestBody SearchWithSerpRequest request, Authentication authentication)
+      throws JsonProcessingException {
+    String username = authentication != null ? authentication.getName() : null;
+    if (username == null) {
+      return ResponseEntity.status(401).body(Map.of("error", "Unauthorized"));
+    }
+    String valueString = mapper.writeValueAsString(request);
+
+    userDataService.getUser(username).ifPresent(user -> {
+      user.setSerpApiRequest(valueString);
+      userDataService.updateUser(user);
+    });
+    return ResponseEntity.ok(Map.of("message", "Serp API request updated"));
   }
 
   @PatchMapping("/password")

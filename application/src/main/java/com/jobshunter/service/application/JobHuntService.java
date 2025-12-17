@@ -1,15 +1,21 @@
 package com.jobshunter.service.application;
 
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.jobshunter.config.ApplicationProperties;
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.service.UserDataService;
 import com.jobshunter.dto.Job;
 import com.jobshunter.dto.JobHuntResponse;
+import com.jobshunter.dto.SearchWithSerpRequest;
+import com.jobshunter.dto.SerpApiJobHit;
+import com.jobshunter.dto.SerpApiJobsResult;
 import com.jobshunter.service.application.notifiers.EmailNotifierService;
 import com.jobshunter.service.application.notifiers.WhatsappNotifierService;
 import com.jobshunter.service.clients.gpt.ChatGptApi4Client;
 import com.jobshunter.service.clients.gpt.ChatGptApi5Client;
+import com.jobshunter.service.clients.serpapi.SerpApiClient;
 import jakarta.annotation.PostConstruct;
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.URI;
 import java.time.LocalDateTime;
@@ -46,6 +52,9 @@ public class JobHuntService {
   private ChatGptApi4Client gpt4Client;
 
   @Autowired
+  private SerpApiClient serpApiClient;
+
+  @Autowired
   private WhatsappNotifierService whatsappNotifierService;
 
   @Autowired
@@ -58,6 +67,9 @@ public class JobHuntService {
 
   @Autowired
   private RestTemplate restTemplate;
+
+  @Autowired
+  private JsonMapper mapper;
 
   @PostConstruct
   public void init() {
@@ -108,12 +120,17 @@ public class JobHuntService {
 
     for (int i = 0; i < iterations; i++) {
       log.info("Searching jobs for user {} iteration {}", user.getUsername(), i);
-      List<Job> jobsFound = gpt5Client.search(user.getPrompt(), user.getCvFileId());
+      List<Job> jobsFound = new ArrayList<>();
+      if (user.getSerpApiRequest() != null) {
+        jobsFound.addAll(this.searchWithSerpAPi(user));
+      }
+      jobsFound.addAll(this.gpt5Client.search(user.getPrompt(), user.getCvFileId()));
+
       jobsFound.forEach(newJob -> {
-        if (!existingUrls.contains(newJob.url())) {
-          existingUrls.add(newJob.url());
+        if (!existingUrls.contains(newJob.url()) && isValidJob(newJob.url())) {
           jobs.put(newJob.url(), newJob);
         }
+        existingUrls.add(newJob.url());
       });
 
       if (iterations > 1) {
@@ -126,9 +143,25 @@ public class JobHuntService {
     }
 
     return new JobHuntResponse(jobs.values().stream()
-        .filter(job -> isValidJob(job.url()))
         .sorted(Comparator.comparing(Job::score).reversed())
         .toList());
+  }
+
+  private List<Job> searchWithSerpAPi(UserEntity user){
+    List<Job> jobsFound = new ArrayList<>();
+    try {
+      SearchWithSerpRequest request = mapper.readValue(user.getSerpApiRequest(), SearchWithSerpRequest.class);
+      SerpApiJobsResult serpApiResult = serpApiClient.searchJobs(request);
+
+      for (SerpApiJobHit job: serpApiResult.jobs()){
+        String jobDescription = job.description() + "\n" + job.highlights();
+        int score = gpt4Client.computeScore(jobDescription, user.getCvFileId());
+        jobsFound.add(new Job(score, job.applyLinks().getFirst(), "Google"));
+      }
+    } catch (IOException e) {
+      log.error("Error at parsing response", e);
+    }
+    return jobsFound;
   }
 
   public void notifyWhatsApp(UserEntity user, JobHuntResponse summary) {

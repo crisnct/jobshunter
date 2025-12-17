@@ -48,12 +48,12 @@ public final class WhatsappNotifierService implements ServiceNotifier {
     List<Job> jobsToSend = jobsURLs;
     String formattedJobs = ServiceNotifier.formatJobs(jobsToSend);
     if (formattedJobs.length() > TwillioClient.TWILLIO_MAX_LIMIT_CHARS) {
-      jobsToSend = jobsURLs.stream().map(url -> {
+      jobsToSend = jobsURLs.stream().map(job -> {
         try {
-          return new Job(url.score(), tinyUrlClient.shorten(url.url()));
+          return new Job(job.score(), tinyUrlClient.shorten(job.url()), job.source());
         } catch (Exception e) {
-          log.error("Can not shorten url " + url);
-          return url;
+          log.error("Can not shorten url " + job);
+          return job;
         }
       }).toList();
       formattedJobs = ServiceNotifier.formatJobs(jobsToSend);

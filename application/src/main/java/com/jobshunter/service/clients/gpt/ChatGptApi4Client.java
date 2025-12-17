@@ -8,7 +8,9 @@ import com.jobshunter.config.ApplicationProperties.ChatGpt4;
 import com.jobshunter.dto.Job;
 import com.jobshunter.processor.PackageExpected;
 import io.jsonwebtoken.lang.Collections;
+import jakarta.annotation.PostConstruct;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -36,12 +38,26 @@ public non-sealed class ChatGptApi4Client extends AbstractGptApiClient<ChatGpt4>
   @Autowired
   private ApplicationProperties properties;
 
+  private String calculateScoreUserPrompt;
+
   @Autowired
   private JsonMapper mapper;
 
   @Override
   public ChatGpt4 getConfig() {
     return properties.getChatgpt4();
+  }
+
+  @SuppressWarnings("DataFlowIssue")
+  @PostConstruct
+  public void init(){
+    super.init();
+      try (var inputStream = getClass().getClassLoader().getResourceAsStream(
+          "prompts/calculateScoreUserPrompt.txt")) {
+        calculateScoreUserPrompt = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+      } catch (Exception e) {
+        throw new IllegalStateException("Cannot load system prompt file", e);
+      }
   }
 
   @Override
@@ -157,6 +173,66 @@ public non-sealed class ChatGptApi4Client extends AbstractGptApiClient<ChatGpt4>
   @JsonIgnoreProperties(ignoreUnknown = true)
   private record ContentItem(String type, String text) {
 
+  }
+
+  public final int computeScore(String jobDescription, String fileId) {
+    try {
+      Gpt4Payload payload = new Gpt4Payload(
+          getConfig().getModel(),
+          getConfig().getTemperature(),
+          getConfig().getMaxTokens(),
+          List.of(
+              new ChatGptApi4Client.Input("system",
+                  List.of(new ChatGptApi4Client.InputMessage("input_text", getSystemPrompt()))),
+              new ChatGptApi4Client.Input("user", List.of(
+                  new ChatGptApi4Client.InputMessage("input_text", calculateScoreUserPrompt + jobDescription),
+                  new ChatGptApi4Client.InputFile(fileId)
+              ))
+          )
+      );
+
+      HttpHeaders headers = new HttpHeaders();
+      headers.set("Authorization", "Bearer " + getConfig().getApiKey());
+      headers.setContentType(MediaType.APPLICATION_JSON);
+
+      String jsonBody = mapper.writeValueAsString(payload);
+      HttpEntity<String> entity = new HttpEntity<>(jsonBody, headers);
+
+      ResponseEntity<String> response = restTemplate.postForEntity(
+          DEFAULT_URI,
+          entity,
+          String.class
+      );
+
+      if (response.getStatusCode().value() >= 400) {
+        log.warn("ChatGPT job API returned {} - {}", response.getStatusCode(), response.getBody());
+        return 0;
+      }
+      return extractScore(response.getBody());
+    } catch (Exception e) {
+      log.warn("ChatGPT job API call failed: {}", e.getMessage());
+      return 0;
+    }
+  }
+
+  private int extractScore(String body) throws JsonProcessingException {
+    ChatGptApi4Client.ChatCompletionResponse response = mapper.readValue(body, ChatGptApi4Client.ChatCompletionResponse.class);
+    if (Collections.isEmpty(response.output())) {
+      return 0;
+    }
+    Optional<ChatGptApi4Client.OutputItem> item = response.output().stream()
+        .filter(p -> Objects.equals(p.type, "message") && !p.content().isEmpty())
+        .findAny();
+    if (item.isPresent()) {
+      String score = item.get().content.stream()
+          .filter(c -> Objects.equals("output_text", c.type))
+          .findFirst()
+          .orElseGet(()-> new ContentItem("output_text", "0"))
+          .text;
+      return Integer.parseInt(score);
+    } else {
+      return 0;
+    }
   }
 
 }

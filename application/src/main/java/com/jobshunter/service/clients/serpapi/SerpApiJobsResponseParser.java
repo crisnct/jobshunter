@@ -2,7 +2,6 @@ package com.jobshunter.service.clients.serpapi;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jobshunter.dto.SerpApiFilterLink;
 import com.jobshunter.dto.SerpApiJobHit;
 import com.jobshunter.dto.SerpApiJobsResult;
 import java.io.IOException;
@@ -19,16 +18,11 @@ final class SerpApiJobsResponseParser {
     // 1) If SerpAPI returns an explicit error, handle it cleanly
     String error = textOrNull(root, "error");
     if (error != null) {
-      return SerpApiJobsResult.error(error, readJobsState(root), readFilters(root));
+      return SerpApiJobsResult.empty();
     }
 
     // 2) Some responses have "Fully empty" state and no jobs_results
-    String jobsState = readJobsState(root);
     JsonNode jobsResultsNode = findJobsArray(root);
-
-    if ("Fully empty".equalsIgnoreCase(jobsState) || jobsResultsNode == null || !jobsResultsNode.isArray()) {
-      return SerpApiJobsResult.empty(jobsState, readFilters(root));
-    }
 
     // 3) Normal case: parse jobs_results[]
     List<SerpApiJobHit> jobs = new ArrayList<>();
@@ -36,7 +30,8 @@ final class SerpApiJobsResponseParser {
       String title = job.path("title").asText("");
       String company = job.path("company_name").asText("");
       String location = job.path("location").asText("");
-      String shareLink = job.path("share_link").asText("");
+      String description = job.path("description").asText("");
+      String highlights = job.path("job_highlights").toPrettyString();
       String jobId = job.path("job_id").asText("");
 
       List<String> applyLinks = new ArrayList<>();
@@ -50,10 +45,10 @@ final class SerpApiJobsResponseParser {
         }
       }
 
-      jobs.add(new SerpApiJobHit(title, company, location, shareLink, jobId, applyLinks));
+      jobs.add(new SerpApiJobHit(title, company, location, description, highlights, jobId, applyLinks));
     }
 
-    return SerpApiJobsResult.success(jobs, readFilters(root), readNextPageToken(root));
+    return SerpApiJobsResult.success(jobs, readNextPageToken(root));
   }
 
   private String readNextPageToken(JsonNode root) {
@@ -84,21 +79,6 @@ final class SerpApiJobsResponseParser {
       jobs = root.get("job_results");
     }
     return jobs;
-  }
-
-  private List<SerpApiFilterLink> readFilters(JsonNode root) {
-    List<SerpApiFilterLink> filters = new ArrayList<>();
-    JsonNode filtersNode = root.path("filters");
-    if (filtersNode.isArray()) {
-      for (JsonNode f : filtersNode) {
-        filters.add(new SerpApiFilterLink(
-            f.path("name").asText(""),
-            f.path("link").asText(""),
-            f.path("serpapi_link").asText("")
-        ));
-      }
-    }
-    return filters;
   }
 
   private String textOrNull(JsonNode node, String field) {

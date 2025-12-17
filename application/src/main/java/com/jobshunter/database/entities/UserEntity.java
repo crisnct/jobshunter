@@ -46,11 +46,11 @@ public class UserEntity implements UserDetails {
   @Column(nullable = false, length = 50)
   private String username;
 
-  @Column(nullable = false, length = 255)
+  @Column(nullable = false)
   private String email;
 
   @JsonIgnore
-  @Column(name = "password_hash", nullable = false, length = 255)
+  @Column(name = "password_hash", nullable = false)
   private String password;
 
   @Column(name = "phone_number", nullable = false, length = 30)
@@ -65,10 +65,10 @@ public class UserEntity implements UserDetails {
   @Column(name = "email_verified", nullable = false)
   private boolean emailVerified = false;
 
-  @Column(name = "verification_token", length = 255)
+  @Column(name = "verification_token")
   private String verificationToken;
 
-  @Column(name = "cv_file_id", length = 255)
+  @Column(name = "cv_file_id")
   private String cvFileId;
 
   @Column(name = "last_jobs")
@@ -79,6 +79,9 @@ public class UserEntity implements UserDetails {
 
   @Column(name = "prompt", length = 500)
   private String prompt;
+
+  @Column(name = "serp_api_request")
+  private String serpApiRequest;
 
   @Column(name = "created_at")
   private LocalDateTime createdAt;
