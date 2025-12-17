@@ -17,13 +17,17 @@ services:
 #      interval: 10s
 #      timeout: 5s
 #      retries: 5
+#volumes:
+#  mysql_data:
 
-  application-service:
+  jobshunter-service:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: JobsHunter
+    container_name: JobsHunterContainer
     restart: always
+    networks:
+      - jobshunter-net
 #    depends_on:
 #      mysql:
 #        condition: service_healthy
@@ -51,5 +55,19 @@ services:
     ports:
       - "9001:9001"
 
-volumes:
-  mysql_data:
+  ngrok:
+    image: ngrok/ngrok:latest
+    container_name: ngrok
+    command: start --all --config /ngrok/ngrok.yml
+    ports:
+      - "4040:4040"
+    volumes:
+      - D:\ngrok.yml:/ngrok/ngrok.yml
+    networks:
+      - jobshunter-net
+    depends_on:
+      - jobshunter-service
+
+networks:
+  jobshunter-net:
+    driver: bridge
