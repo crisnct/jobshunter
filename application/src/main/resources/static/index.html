@@ -278,7 +278,6 @@
     );
 
     return h('main', {className: 'page'},
-      h('h1', {className: 'title'}, 'JobsHunter'),
       h('img', {src: 'images/JobsHunterLogo.png', alt: 'JobsHunter logo', className: 'logo'}),
       user ? h(UserProfile) : h(LoginForm),
       h('div', {className: 'status'}, h('strong', null, 'Status:'), ` ${status}`)
