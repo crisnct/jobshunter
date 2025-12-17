@@ -292,7 +292,7 @@
     const [logoSrc, setLogoSrc] = useState('/images/JobsHunterLogo.png');
 
     const logMessage = (msg) => setStatus(msg);
-    const apiBaseUrl = window.location.origin;
+    const apiBaseUrl = window.location.origin.replace(/\/$/, '');
     const api = useApi(apiBaseUrl, token, logMessage);
 
     // Effect hook to fetch user profile when the token is successfully set
