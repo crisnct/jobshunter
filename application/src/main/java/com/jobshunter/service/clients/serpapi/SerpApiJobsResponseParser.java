@@ -1,22 +1,25 @@
-package com.jobshunter.service.clients.google;
+package com.jobshunter.service.clients.serpapi;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jobshunter.dto.SerpApiFilterLink;
+import com.jobshunter.dto.SerpApiJobHit;
+import com.jobshunter.dto.SerpApiJobsResult;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-final class SerpApiGoogleParser {
+final class SerpApiJobsResponseParser {
 
   private static final ObjectMapper MAPPER = new ObjectMapper();
 
-  ParseResult parse(String rawJson) throws IOException {
+  SerpApiJobsResult parse(String rawJson) throws IOException {
     JsonNode root = MAPPER.readTree(rawJson);
 
     // 1) If SerpAPI returns an explicit error, handle it cleanly
     String error = textOrNull(root, "error");
     if (error != null) {
-      return ParseResult.error(error, readJobsState(root), readFilters(root));
+      return SerpApiJobsResult.error(error, readJobsState(root), readFilters(root));
     }
 
     // 2) Some responses have "Fully empty" state and no jobs_results
@@ -24,11 +27,11 @@ final class SerpApiGoogleParser {
     JsonNode jobsResultsNode = findJobsArray(root);
 
     if ("Fully empty".equalsIgnoreCase(jobsState) || jobsResultsNode == null || !jobsResultsNode.isArray()) {
-      return ParseResult.empty(jobsState, readFilters(root));
+      return SerpApiJobsResult.empty(jobsState, readFilters(root));
     }
 
     // 3) Normal case: parse jobs_results[]
-    List<JobHit> jobs = new ArrayList<>();
+    List<SerpApiJobHit> jobs = new ArrayList<>();
     for (JsonNode job : jobsResultsNode) {
       String title = job.path("title").asText("");
       String company = job.path("company_name").asText("");
@@ -47,10 +50,22 @@ final class SerpApiGoogleParser {
         }
       }
 
-      jobs.add(new JobHit(title, company, location, shareLink, jobId, applyLinks));
+      jobs.add(new SerpApiJobHit(title, company, location, shareLink, jobId, applyLinks));
     }
 
-    return ParseResult.success(jobs, readFilters(root));
+    return SerpApiJobsResult.success(jobs, readFilters(root), readNextPageToken(root));
+  }
+
+  private String readNextPageToken(JsonNode root) {
+    String token = null;
+    JsonNode page = root.get("serpapi_pagination");
+    if (page != null) {
+      JsonNode nextPageToken = page.get("next_page_token");
+      if (nextPageToken != null) {
+        token = nextPageToken.asText();
+      }
+    }
+    return token;
   }
 
   private String readJobsState(JsonNode root) {
@@ -71,12 +86,12 @@ final class SerpApiGoogleParser {
     return jobs;
   }
 
-  private List<FilterLink> readFilters(JsonNode root) {
-    List<FilterLink> filters = new ArrayList<>();
+  private List<SerpApiFilterLink> readFilters(JsonNode root) {
+    List<SerpApiFilterLink> filters = new ArrayList<>();
     JsonNode filtersNode = root.path("filters");
     if (filtersNode.isArray()) {
       for (JsonNode f : filtersNode) {
-        filters.add(new FilterLink(
+        filters.add(new SerpApiFilterLink(
             f.path("name").asText(""),
             f.path("link").asText(""),
             f.path("serpapi_link").asText("")

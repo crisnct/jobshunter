@@ -4,9 +4,10 @@ import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.service.UserDataService;
 import com.jobshunter.dto.EmailRequest;
 import com.jobshunter.dto.JobHuntResponse;
+import com.jobshunter.dto.SearchWithSerpRequest;
+import com.jobshunter.dto.SerpApiJobsResult;
 import com.jobshunter.service.application.notifiers.EmailNotifierService;
-import com.jobshunter.service.clients.google.ParseResult;
-import com.jobshunter.service.clients.google.SerpApiJobsClient;
+import com.jobshunter.service.clients.serpapi.SerpApiClient;
 import io.jsonwebtoken.lang.Collections;
 import jakarta.validation.Valid;
 import java.io.IOException;
@@ -39,7 +40,7 @@ public class TestController {
   private UserDataService userDataService;
 
   @Autowired
-  private SerpApiJobsClient serpApi;
+  private SerpApiClient serpApi;
 
   @PostMapping(value = "/email/send", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ResponseEntity<?> send(
@@ -81,21 +82,13 @@ public class TestController {
     UserEntity user = userDataService.getUser(userDetails.getUsername())
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
     log.info("Searching jobs for {}", user.getUsername());
-    ParseResult jobs = serpApi.searchJobs(request);
+    SerpApiJobsResult jobs = serpApi.searchJobs(request);
     if (Collections.isEmpty(jobs.jobs())) {
-      return ResponseEntity.badRequest().body(Map.of("error", jobs.error()));
+      return ResponseEntity.badRequest().body(Map.of("error", jobs));
     } else {
       return ResponseEntity.ok(jobs);
     }
   }
 
-  public record SearchWithSerpRequest(
-      String query,
-      String engine,
-      String country,
-      String language
-  ) {
-
-  }
 
 }

@@ -12,6 +12,7 @@ public class ApplicationProperties {
   private Twilio twilio = new Twilio();
   private ChatGpt5 chatgpt5 = new ChatGpt5();
   private ChatGpt4 chatgpt4 = new ChatGpt4();
+  private SerpApi serpApi = new SerpApi();
 
   @Data
   @ConfigurationProperties(prefix = "jobshunter")
@@ -60,6 +61,15 @@ public class ApplicationProperties {
   public static class ChatGpt4 extends ChatGpt {
 
     private double temperature;
+  }
+
+  @Data
+  @ConfigurationProperties(prefix = "serpApi")
+  public static class SerpApi{
+
+    private String apiKey;
+
+    private int maxPageSearch;
   }
 
 }

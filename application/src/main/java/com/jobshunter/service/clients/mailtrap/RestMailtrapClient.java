@@ -58,9 +58,11 @@ public class RestMailtrapClient {
         .body(payload)
         .retrieve()
         .onStatus(HttpStatusCode::isError, (req, res) -> {
-          res.getBody();
           String error = new String(res.getBody().readAllBytes());
           throw new IllegalStateException("Mailtrap failed: " + res.getStatusCode() + " " + error);
+        })
+        .onStatus(HttpStatusCode::is2xxSuccessful, (req, res) -> {
+          throw new IllegalStateException("Email send successfully to " + email);
         })
         .toEntity(String.class);
   }

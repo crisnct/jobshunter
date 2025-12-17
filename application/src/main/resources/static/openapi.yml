@@ -218,20 +218,24 @@ components:
         query:
           type: string
           description: Job search query string
-        engine:
+        googleDomain:
           type: string
-          description: Search engine to use (linkedin_jobs, google_jobs, google_jobs_listing, google)
+          description: See more here https://serpapi.com/google-domains
+        datePosted:
+          type: string
+          description: Date when job was posted
           enum:
-            - linkedin_jobs
-            - google_jobs
-            - google_jobs_listing
-            - google
+            - today
+            - last_3_days
+            - last_7_days
+            - last_14_days
+            - last_30_days
         country:
           type: string
-          description: Country code for location filtering
+          description: Country code for location filtering. See more here https://serpapi.com/google-countries
         language:
           type: string
-          description: Language code (e.g., "en")
+          description: Language code (e.g., "en"). See more here https://serpapi.com/google-languages
       required: [query]
 
     JobHit:

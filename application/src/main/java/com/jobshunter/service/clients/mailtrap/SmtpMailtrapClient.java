@@ -29,7 +29,6 @@ public class SmtpMailtrapClient {
   @Value("${spring.mail.from:}")
   private String configuredFrom;
 
-
   public void sendEmail(
       @NonNull String to,
       @Nullable String subject,
@@ -58,7 +57,7 @@ public class SmtpMailtrapClient {
             attachment);
       }
       mailSender.send(mimeMessage);
-      log.info("Email sent successfully");
+      log.info("Email sent successfully to {}", (Object) to.toArray(String[]::new));
     } catch (MessagingException | MailException e) {
       log.error("Failed to send email with attachment to {}: {}", to, e.getMessage());
       throw new IllegalStateException("Failed to send email", e);

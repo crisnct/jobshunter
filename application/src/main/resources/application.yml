@@ -31,8 +31,9 @@ chatGpt4:
   maxTokens: 2000
   systemPromptFile: "systemPromptGPT4.1.txt"
 
-google:
-  serpApiKey: ${SERP_API_KEY:notset}
+serpApi:
+  apiKey: ${SERP_API_KEY:notset}
+  maxPageSearch: 3
 
 spring:
   profiles:

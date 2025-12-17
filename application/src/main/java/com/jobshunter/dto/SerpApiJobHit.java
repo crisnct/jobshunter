@@ -1,8 +1,8 @@
-package com.jobshunter.service.clients.google;
+package com.jobshunter.dto;
 
 import java.util.List;
 
-public record JobHit(
+public record SerpApiJobHit(
     String title,
     String company,
     String location,
