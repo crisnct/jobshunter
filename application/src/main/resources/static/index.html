@@ -4,10 +4,8 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>JobsHunter UI</title>
-  <!-- Tailwind CSS CDN for styling -->
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    /* Custom styles for aesthetic appeal and responsiveness */
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
 
     body {
@@ -40,14 +38,12 @@
       margin-bottom: 0;
     }
 
-    /* Updated logo styles */
     .logo {
-      max-width: 256px; /* Set max width as requested */
-      width: 100%; /* Make it responsive */
-      height: auto; /* Maintain aspect ratio */
+      max-width: 256px;
+      width: 100%;
+      height: auto;
       margin-bottom: 1rem;
       display: block;
-      /* Placeholder styles for background and border-radius removed */
     }
 
     .card {
@@ -123,47 +119,9 @@
       text-align: center;
     }
 
-    /* Profile Specific Styles */
     .profile-card {
       text-align: left;
-      border-left: 5px solid #10b981; /* Green accent */
-    }
-
-    .profile-info {
-      display: flex;
-      flex-direction: column;
-      gap: 0.75rem;
-      margin-bottom: 1.5rem;
-    }
-
-    .profile-info p {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 0.5rem 0;
-      border-bottom: 1px dashed #e5e7eb;
-    }
-
-    .profile-info p:last-child {
-      border-bottom: none;
-    }
-
-    .badge {
-      background: #d1fae5;
-      color: #059669;
-      padding: 4px 12px;
-      border-radius: 9999px;
-      font-size: 0.85em;
-      font-weight: 600;
-    }
-
-    .logout-button {
-      background-color: #ef4444;
-      width: 100%;
-    }
-
-    .logout-button:hover {
-      background-color: #dc2626;
+      border-left: 5px solid #10b981;
     }
 
     .profile-grid {
@@ -203,6 +161,14 @@
       border: 1px solid #1f2937;
     }
 
+    .logout-button {
+      background-color: #ef4444;
+      width: 100%;
+    }
+
+    .logout-button:hover {
+      background-color: #dc2626;
+    }
   </style>
 </head>
 <body>
@@ -214,9 +180,6 @@
 
   const h = React.createElement;
 
-  /**
-   * Custom hook for making API calls, including authentication header.
-   */
   function useApi(baseUrl, token, logMessage) {
     return useMemo(() => ({
       async call(path, {method = 'GET', body, headers = {}} = {}) {
@@ -229,56 +192,56 @@
           },
           body: body ? JSON.stringify(body) : undefined
         });
+
         const text = await resp.text();
         let parsed;
         try {
-          // Attempt to parse JSON if text is not empty
           parsed = text ? JSON.parse(text) : null;
         } catch (_) {
-          // Fallback to raw text if JSON parsing fails
           parsed = text;
         }
+
         if (!resp.ok) {
-          // Throw an error with the response message or status
           throw new Error((parsed && parsed.message) || parsed || `Request failed with ${resp.status}`);
         }
+
         logMessage(`OK ${method} ${path}`);
         return parsed;
       }
     }), [baseUrl, token, logMessage]);
   }
 
-  /**
-   * The main application component.
-   */
   const App = () => {
+    const baseUrl = 'https://ronin-archesporial-lonnie.ngrok-free.dev';
+
     const [status, setStatus] = useState('Ready');
     const [loginForm, setLoginForm] = useState({username: '', password: ''});
     const [token, setToken] = useState('');
-    const [user, setUser] = useState(null); // State to store user profile data
+    const [user, setUser] = useState(null);
 
-    const logMessage = (msg) => setStatus(msg);
-    const api = useApi('https://ronin-archesporial-lonnie.ngrok-free.dev', token, logMessage);
+    // ✅ make logMessage stable (prevents api object churn)
+    const logMessage = React.useCallback((msg) => setStatus(msg), []);
 
-    // Effect hook to fetch user profile when the token is successfully set
+    const api = useApi(baseUrl, token, logMessage);
+
+    // ✅ fetch profile only when token changes (no loop)
     React.useEffect(() => {
-      if (token) {
-        logMessage('Fetching user profile...');
-        api.call('/api/user/me')
-          .then(data => {
-            setUser(data);
-            logMessage('User profile loaded successfully.');
-          })
-          .catch(err => {
-            logMessage(`Profile fetch error: ${err.message}`);
-            // Clear token if profile fetch fails (e.g., token expired)
-            setToken('');
-          });
-      } else {
-        // Clear user data when token is removed
+      if (!token) {
         setUser(null);
+        return;
       }
-    }, [token, api]);
+
+      logMessage('Fetching user profile...');
+      api.call('/api/user/me')
+        .then(data => {
+          setUser(data);
+          logMessage('User profile loaded successfully.');
+        })
+        .catch(err => {
+          logMessage(`Profile fetch error: ${err.message}`);
+          setToken('');
+        });
+    }, [token]); // intentionally only token
 
     const handleLogin = async (e) => {
       e.preventDefault();
@@ -288,7 +251,7 @@
         setToken(res.token);
         logMessage('Login successful. Token acquired.');
       } catch (err) {
-        setToken(''); // Ensure token is cleared on login failure
+        setToken('');
         logMessage(err.message);
       }
     };
@@ -313,7 +276,6 @@
       )
     );
 
-    // Helper component to display user profile information
     const UserProfile = () => {
       if (!user) return null;
 
@@ -331,10 +293,9 @@
       );
     };
 
-    // Helper component for the Login Form
     const LoginForm = () => (
       h('section', {className: 'card form-card'},
-        h('h2', null, 'Login'), // Title changed to just 'Login'
+        h('h2', null, 'Login'),
         h('form', {className: 'form', onSubmit: handleLogin},
           h('label', {className: 'field'},
             h('span', null, 'Username'),
@@ -360,12 +321,8 @@
 
     return h('main', {className: 'page'},
       h('h1', {className: 'title'}, 'JobsHunter'),
-
       h('img', {src: 'images/JobsHunterLogo.png', alt: 'JobsHunter logo', className: 'logo'}),
-
-      // Conditionally render the profile or the login form
       user ? h(UserProfile) : h(LoginForm),
-
       h('div', {className: 'status'}, h('strong', null, 'Status:'), ` ${status}`)
     );
   };
