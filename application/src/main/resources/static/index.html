@@ -289,10 +289,11 @@
     const [loginForm, setLoginForm] = useState({username: '', password: ''});
     const [token, setToken] = useState('');
     const [user, setUser] = useState(null); // State to store user profile data
-    const [logoSrc, setLogoSrc] = useState('images/JobsHunterLogo.png');
+    const [logoSrc, setLogoSrc] = useState('/images/JobsHunterLogo.png');
 
     const logMessage = (msg) => setStatus(msg);
-    const api = useApi('https://ronin-archesporial-lonnie.ngrok-free.dev', token, logMessage);
+    const apiBaseUrl = window.location.origin;
+    const api = useApi(apiBaseUrl, token, logMessage);
 
     // Effect hook to fetch user profile when the token is successfully set
     React.useEffect(() => {
@@ -420,7 +421,7 @@
         src: logoSrc,
         alt: 'JobsHunter logo',
         className: 'logo',
-        onError: () => setLogoSrc('images/JobsHunterLogo.svg')
+        onError: () => setLogoSrc('/images/JobsHunterLogo.svg')
       }),
 
       // Conditionally render the profile or the login form
