@@ -82,8 +82,10 @@ public abstract sealed class AbstractGptApiClient<T extends Gpt>
       return List.of();
     }
     try {
+      text = text.replaceFirst("```json", "");
+      text = text.replace("```", "");
       Job[] parsed = mapper.readValue(text, Job[].class);
-      return Arrays.stream(parsed).map(job -> new Job(job.score(), job.url(), getConfig().getModel().toUpperCase())).toList();
+      return Arrays.stream(parsed).map(job -> new Job(job.score(), job.url(), getConfig().getModel())).toList();
     } catch (JsonProcessingException e) {
       log.warn("Failed to parse jobs from ChatGPT response: {}", e.getMessage());
       return List.of();
@@ -105,5 +107,39 @@ public abstract sealed class AbstractGptApiClient<T extends Gpt>
   private record ContentItem(String type, String text) {
 
   }
+
+  protected record Tools(String type) {
+
+  }
+
+  protected sealed interface InputObj permits InputMessage, InputFile {
+
+  }
+
+  protected record Input(String role, List<InputObj> content) {
+
+  }
+
+  protected record InputMessage(String type, String text) implements InputObj {
+
+  }
+
+  protected record InputFile(String type, String file_id) implements InputObj {
+
+    public InputFile(String file_id) {
+      this("input_file", file_id);
+    }
+  }
+
+  protected record GptJobsPayload(
+      String model,
+      double temperature,
+      int max_output_tokens,
+      List<Tools> tools,
+      List<Input> input
+  ) {
+
+  }
+
 
 }

@@ -44,20 +44,20 @@ public class ApplicationProperties {
     private String model;
     private int maxTokens;
     private String systemPromptFile;
-  }
-
-  @Data
-  @EqualsAndHashCode(callSuper = true)
-  @ConfigurationProperties(prefix = "chatGpt5")
-  public static class Gpt5 extends Gpt {
-
-    private double temperature;
     private String toolsType;
   }
 
   @Data
   @EqualsAndHashCode(callSuper = true)
-  @ConfigurationProperties(prefix = "chatGpt4")
+  @ConfigurationProperties(prefix = "gpt5")
+  public static class Gpt5 extends Gpt {
+
+    private double temperature;
+  }
+
+  @Data
+  @EqualsAndHashCode(callSuper = true)
+  @ConfigurationProperties(prefix = "gpt4")
   public static class Gpt4 extends Gpt {
 
     private double temperature;

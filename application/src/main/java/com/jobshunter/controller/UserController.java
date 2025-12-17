@@ -77,7 +77,7 @@ public class UserController {
     }
     return userDataService.getUser(request.username())
         .map(user -> searchJobs(user, request))
-        .orElseGet(() -> ResponseEntity.badRequest().build());
+        .orElseGet(() -> ResponseEntity.ok().build());
   }
 
   private ResponseEntity<JobHuntResponse> searchJobs(UserEntity user, SearchJobsRequest request) {

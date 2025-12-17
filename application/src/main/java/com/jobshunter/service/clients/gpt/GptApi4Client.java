@@ -63,15 +63,16 @@ public non-sealed class GptApi4Client extends AbstractGptApiClient<Gpt4> {
   @Override
   public List<Job> searchWithModel(String systemPrompt, String userPrompt, Gpt4 cfg, String fileId) {
     try {
-      Gpt4Payload payload = new Gpt4Payload(
+      GptJobsPayload payload = new GptJobsPayload(
           cfg.getModel(),
           cfg.getTemperature(),
           cfg.getMaxTokens(),
+          List.of(new Tools(cfg.getToolsType())),
           List.of(
-              new GptApi4Client.Input("system", List.of(new GptApi4Client.InputMessage("input_text", systemPrompt))),
-              new GptApi4Client.Input("user", List.of(
-                  new GptApi4Client.InputMessage("input_text", userPrompt),
-                  new GptApi4Client.InputFile(fileId)
+              new Input("system", List.of(new InputMessage("input_text", systemPrompt))),
+              new Input("user", List.of(
+                  new InputMessage("input_text", userPrompt),
+                  new InputFile(fileId)
               ))
           )
       );
@@ -92,7 +93,7 @@ public non-sealed class GptApi4Client extends AbstractGptApiClient<Gpt4> {
     }
   }
 
-  private record Gpt4Payload(
+  private record Gpt4ScorePayload(
       String model,
       double temperature,
       int max_output_tokens,
@@ -101,24 +102,6 @@ public non-sealed class GptApi4Client extends AbstractGptApiClient<Gpt4> {
 
   }
 
-  private sealed interface InputObj permits GptApi4Client.InputMessage, GptApi4Client.InputFile {
-
-  }
-
-  private record Input(String role, List<GptApi4Client.InputObj> content) {
-
-  }
-
-  private record InputMessage(String type, String text) implements GptApi4Client.InputObj {
-
-  }
-
-  private record InputFile(String type, String file_id) implements GptApi4Client.InputObj {
-
-    public InputFile(String file_id) {
-      this("input_file", file_id);
-    }
-  }
 
   @JsonIgnoreProperties(ignoreUnknown = true)
   private record ChatCompletionResponse(List<GptApi4Client.OutputItem> output) {
@@ -137,16 +120,16 @@ public non-sealed class GptApi4Client extends AbstractGptApiClient<Gpt4> {
 
   public final int computeScore(String jobDescription, String fileId) {
     try {
-      Gpt4Payload payload = new Gpt4Payload(
+      Gpt4ScorePayload payload = new Gpt4ScorePayload(
           getConfig().getModel(),
           getConfig().getTemperature(),
           getConfig().getMaxTokens(),
           List.of(
-              new GptApi4Client.Input("system",
-                  List.of(new GptApi4Client.InputMessage("input_text", calculateScoreSystemPrompt))),
-              new GptApi4Client.Input("user", List.of(
-                  new GptApi4Client.InputMessage("input_text", calculateScoreUserPrompt + jobDescription),
-                  new GptApi4Client.InputFile(fileId)
+              new Input("system",
+                  List.of(new InputMessage("input_text", calculateScoreSystemPrompt))),
+              new Input("user", List.of(
+                  new InputMessage("input_text", calculateScoreUserPrompt + jobDescription),
+                  new InputFile(fileId)
               ))
           )
       );
@@ -167,7 +150,7 @@ public non-sealed class GptApi4Client extends AbstractGptApiClient<Gpt4> {
   }
 
   private int extractScore(String body) throws JsonProcessingException {
-    GptApi4Client.ChatCompletionResponse response = mapper.readValue(body, GptApi4Client.ChatCompletionResponse.class);
+    ChatCompletionResponse response = mapper.readValue(body, ChatCompletionResponse.class);
     if (Collections.isEmpty(response.output())) {
       return 0;
     }

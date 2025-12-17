@@ -33,7 +33,7 @@ public non-sealed class GptApi5Client extends AbstractGptApiClient<Gpt5> {
   @Override
   public List<Job> searchWithModel(String systemPrompt, String userPrompt, Gpt5 cfg, String fileId) {
     try {
-      Gpt5Payload payload = new Gpt5Payload(
+      GptJobsPayload payload = new GptJobsPayload(
           cfg.getModel(),
           cfg.getTemperature(),
           cfg.getMaxTokens(),
@@ -61,40 +61,6 @@ public non-sealed class GptApi5Client extends AbstractGptApiClient<Gpt5> {
       log.error("ChatGPT job API call failed: {}", e.getMessage());
       return List.of();
     }
-  }
-
-
-  private record Gpt5Payload(
-      String model,
-      double temperature,
-      int max_output_tokens,
-      List<Tools> tools,
-      List<Input> input
-  ) {
-
-  }
-
-  private sealed interface InputObj permits InputMessage, InputFile {
-
-  }
-
-  private record Input(String role, List<InputObj> content) {
-
-  }
-
-  private record InputMessage(String type, String text) implements InputObj {
-
-  }
-
-  private record InputFile(String type, String file_id) implements InputObj {
-
-    public InputFile(String file_id) {
-      this("input_file", file_id);
-    }
-  }
-
-  private record Tools(String type) {
-
   }
 
 
