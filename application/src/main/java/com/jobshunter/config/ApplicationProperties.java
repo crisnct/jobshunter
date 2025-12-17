@@ -10,8 +10,8 @@ public class ApplicationProperties {
 
   private JobsHunter jobsHunter = new JobsHunter();
   private Twilio twilio = new Twilio();
-  private ChatGpt5 chatgpt5 = new ChatGpt5();
-  private ChatGpt4 chatgpt4 = new ChatGpt4();
+  private Gpt5 gpt5 = new Gpt5();
+  private Gpt4 gpt4 = new Gpt4();
   private SerpApi serpApi = new SerpApi();
 
   @Data
@@ -38,7 +38,7 @@ public class ApplicationProperties {
   }
 
   @Data
-  public static class ChatGpt {
+  public static class Gpt {
 
     private String apiKey;
     private String model;
@@ -49,7 +49,7 @@ public class ApplicationProperties {
   @Data
   @EqualsAndHashCode(callSuper = true)
   @ConfigurationProperties(prefix = "chatGpt5")
-  public static class ChatGpt5 extends ChatGpt {
+  public static class Gpt5 extends Gpt {
 
     private double temperature;
     private String toolsType;
@@ -58,7 +58,7 @@ public class ApplicationProperties {
   @Data
   @EqualsAndHashCode(callSuper = true)
   @ConfigurationProperties(prefix = "chatGpt4")
-  public static class ChatGpt4 extends ChatGpt {
+  public static class Gpt4 extends Gpt {
 
     private double temperature;
   }

@@ -1,7 +1,7 @@
 package com.jobshunter.service.clients.gpt;
 
 import com.jobshunter.config.ApplicationProperties;
-import com.jobshunter.config.ApplicationProperties.ChatGpt5;
+import com.jobshunter.config.ApplicationProperties.Gpt5;
 import com.jobshunter.dto.Job;
 import com.jobshunter.processor.PackageExpected;
 import java.net.URI;
@@ -15,7 +15,7 @@ import org.springframework.web.client.RestClient;
 @Slf4j
 @Component
 @PackageExpected("com.jobshunter.service.application")
-public non-sealed class ChatGptApi5Client extends AbstractGptApiClient<ChatGpt5> {
+public non-sealed class GptApi5Client extends AbstractGptApiClient<Gpt5> {
 
   private static final URI DEFAULT_URI = URI.create("https://api.openai.com/v1/responses");
 
@@ -26,14 +26,14 @@ public non-sealed class ChatGptApi5Client extends AbstractGptApiClient<ChatGpt5>
   private ApplicationProperties properties;
 
   @Override
-  public ChatGpt5 getConfig() {
-    return properties.getChatgpt5();
+  public Gpt5 getConfig() {
+    return properties.getGpt5();
   }
 
   @Override
-  public List<Job> searchWithModel(String systemPrompt, String userPrompt, ChatGpt5 cfg, String fileId) {
+  public List<Job> searchWithModel(String systemPrompt, String userPrompt, Gpt5 cfg, String fileId) {
     try {
-      ChatGpt5Payload payload = new ChatGpt5Payload(
+      Gpt5Payload payload = new Gpt5Payload(
           cfg.getModel(),
           cfg.getTemperature(),
           cfg.getMaxTokens(),
@@ -47,13 +47,13 @@ public non-sealed class ChatGptApi5Client extends AbstractGptApiClient<ChatGpt5>
           )
       );
 
-      ChatCompletionResponse response = restClient.post()
+      GptCompletionResponse response = restClient.post()
           .uri(DEFAULT_URI)
           .header("Authorization", "Bearer " + cfg.getApiKey())
           .contentType(MediaType.APPLICATION_JSON)
           .body(payload)
           .retrieve()
-          .body(ChatCompletionResponse.class);
+          .body(GptCompletionResponse.class);
 
       //noinspection DataFlowIssue
       return extractJobs(response);
@@ -64,7 +64,7 @@ public non-sealed class ChatGptApi5Client extends AbstractGptApiClient<ChatGpt5>
   }
 
 
-  private record ChatGpt5Payload(
+  private record Gpt5Payload(
       String model,
       double temperature,
       int max_output_tokens,

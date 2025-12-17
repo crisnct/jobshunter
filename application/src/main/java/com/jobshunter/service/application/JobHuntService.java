@@ -11,8 +11,8 @@ import com.jobshunter.dto.SerpApiJobHit;
 import com.jobshunter.dto.SerpApiJobsResult;
 import com.jobshunter.service.application.notifiers.EmailNotifierService;
 import com.jobshunter.service.application.notifiers.WhatsappNotifierService;
-import com.jobshunter.service.clients.gpt.ChatGptApi4Client;
-import com.jobshunter.service.clients.gpt.ChatGptApi5Client;
+import com.jobshunter.service.clients.gpt.GptApi4Client;
+import com.jobshunter.service.clients.gpt.GptApi5Client;
 import com.jobshunter.service.clients.serpapi.SerpApiClient;
 import jakarta.annotation.PostConstruct;
 import java.io.IOException;
@@ -46,10 +46,10 @@ public class JobHuntService {
   private ApplicationProperties properties;
 
   @Autowired
-  private ChatGptApi5Client gpt5Client;
+  private GptApi5Client gpt5Client;
 
   @Autowired
-  private ChatGptApi4Client gpt4Client;
+  private GptApi4Client gpt4Client;
 
   @Autowired
   private SerpApiClient serpApiClient;

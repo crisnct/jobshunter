@@ -5,7 +5,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 @PackageExpected("com.jobshunter.service.application")
-public sealed interface GPTFilesApiClient permits ChatGptFileClient {
+public sealed interface GPTFilesApiClient permits GptFileClient {
 
   String uploadFile(Path cvPath) throws IOException;
 

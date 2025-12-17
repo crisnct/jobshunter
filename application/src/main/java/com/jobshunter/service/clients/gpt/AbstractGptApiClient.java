@@ -3,7 +3,7 @@ package com.jobshunter.service.clients.gpt;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.json.JsonMapper;
-import com.jobshunter.config.ApplicationProperties.ChatGpt;
+import com.jobshunter.config.ApplicationProperties.Gpt;
 import com.jobshunter.dto.Job;
 import com.jobshunter.processor.PackageExpected;
 import io.jsonwebtoken.lang.Collections;
@@ -21,9 +21,9 @@ import org.apache.logging.log4j.util.Strings;
 
 @Slf4j
 @PackageExpected("com.jobshunter.service.application")
-public abstract sealed class AbstractGptApiClient<T extends ChatGpt>
+public abstract sealed class AbstractGptApiClient<T extends Gpt>
     implements GPTSearchApiClient
-    permits ChatGptApi4Client, ChatGptApi5Client {
+    permits GptApi4Client, GptApi5Client {
 
   private JsonMapper mapper;
 
@@ -58,7 +58,7 @@ public abstract sealed class AbstractGptApiClient<T extends ChatGpt>
     return searchWithModel(jobsSystemPrompt, userPrompt, cfg, fileId);
   }
 
-  protected List<Job> extractJobs(ChatCompletionResponse response) {
+  protected List<Job> extractJobs(GptCompletionResponse response) {
     if (Collections.isEmpty(response.output())) {
       return List.of();
     }
@@ -83,7 +83,7 @@ public abstract sealed class AbstractGptApiClient<T extends ChatGpt>
     }
     try {
       Job[] parsed = mapper.readValue(text, Job[].class);
-      return Arrays.stream(parsed).map(job -> new Job(job.score(), job.url(), "GPT")).toList();
+      return Arrays.stream(parsed).map(job -> new Job(job.score(), job.url(), getConfig().getModel().toUpperCase())).toList();
     } catch (JsonProcessingException e) {
       log.warn("Failed to parse jobs from ChatGPT response: {}", e.getMessage());
       return List.of();
@@ -92,7 +92,7 @@ public abstract sealed class AbstractGptApiClient<T extends ChatGpt>
 
 
   @JsonIgnoreProperties(ignoreUnknown = true)
-  protected record ChatCompletionResponse(List<OutputItem> output) {
+  protected record GptCompletionResponse(List<OutputItem> output) {
 
   }
 

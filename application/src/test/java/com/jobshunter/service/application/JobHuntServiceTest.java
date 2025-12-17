@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import com.jobshunter.config.ApplicationProperties;
-import com.jobshunter.config.ApplicationProperties.ChatGpt5;
+import com.jobshunter.config.ApplicationProperties.Gpt5;
 import com.jobshunter.config.ApplicationProperties.Twilio;
 import com.jobshunter.database.service.UserDataService;
 import com.jobshunter.service.clients.TwillioClient;
@@ -140,19 +140,19 @@ class JobHuntServiceTest {
     }
 
     // nested ChatGPT
-    ChatGpt5 chatGpt5 = result.getChatgpt5();
-    if (chatGpt5 != null) {
-      setIfPresent(props, "jobshunter.chatGpt.apiKey", chatGpt5, "apiKey");
-      setIfPresent(props, "jobshunter.chatGpt.model", chatGpt5, "model");
-      setIfPresent(props, "jobshunter.chatGpt.toolsType", chatGpt5, "toolsType");
+    Gpt5 gpt5 = result.getGpt5();
+    if (gpt5 != null) {
+      setIfPresent(props, "jobshunter.chatGpt.apiKey", gpt5, "apiKey");
+      setIfPresent(props, "jobshunter.chatGpt.model", gpt5, "model");
+      setIfPresent(props, "jobshunter.chatGpt.toolsType", gpt5, "toolsType");
 
       String temp = props.getProperty("jobshunter.chatGpt.temperature");
       if (StringUtils.hasText(temp)) {
-        ReflectionTestUtils.setField(chatGpt5, "temperature", Double.parseDouble(temp));
+        ReflectionTestUtils.setField(gpt5, "temperature", Double.parseDouble(temp));
       }
       String maxTokens = props.getProperty("jobshunter.chatGpt.maxTokens");
       if (StringUtils.hasText(maxTokens)) {
-        ReflectionTestUtils.setField(chatGpt5, "maxTokens", Integer.parseInt(maxTokens));
+        ReflectionTestUtils.setField(gpt5, "maxTokens", Integer.parseInt(maxTokens));
       }
     }
 

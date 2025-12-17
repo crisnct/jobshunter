@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.jobshunter.config.ApplicationProperties;
-import com.jobshunter.config.ApplicationProperties.ChatGpt4;
+import com.jobshunter.config.ApplicationProperties.Gpt4;
 import com.jobshunter.dto.Job;
 import com.jobshunter.processor.PackageExpected;
 import io.jsonwebtoken.lang.Collections;
@@ -24,7 +24,7 @@ import org.springframework.web.client.RestClient;
 @Slf4j
 @Component
 @PackageExpected("com.jobshunter.service.application")
-public non-sealed class ChatGptApi4Client extends AbstractGptApiClient<ChatGpt4> {
+public non-sealed class GptApi4Client extends AbstractGptApiClient<Gpt4> {
 
   private static final URI DEFAULT_URI = URI.create("https://api.openai.com/v1/responses");
 
@@ -42,8 +42,8 @@ public non-sealed class ChatGptApi4Client extends AbstractGptApiClient<ChatGpt4>
   private JsonMapper mapper;
 
   @Override
-  public ChatGpt4 getConfig() {
-    return properties.getChatgpt4();
+  public Gpt4 getConfig() {
+    return properties.getGpt4();
   }
 
   @SuppressWarnings("DataFlowIssue")
@@ -61,28 +61,28 @@ public non-sealed class ChatGptApi4Client extends AbstractGptApiClient<ChatGpt4>
   }
 
   @Override
-  public List<Job> searchWithModel(String systemPrompt, String userPrompt, ChatGpt4 cfg, String fileId) {
+  public List<Job> searchWithModel(String systemPrompt, String userPrompt, Gpt4 cfg, String fileId) {
     try {
       Gpt4Payload payload = new Gpt4Payload(
           cfg.getModel(),
           cfg.getTemperature(),
           cfg.getMaxTokens(),
           List.of(
-              new ChatGptApi4Client.Input("system", List.of(new ChatGptApi4Client.InputMessage("input_text", systemPrompt))),
-              new ChatGptApi4Client.Input("user", List.of(
-                  new ChatGptApi4Client.InputMessage("input_text", userPrompt),
-                  new ChatGptApi4Client.InputFile(fileId)
+              new GptApi4Client.Input("system", List.of(new GptApi4Client.InputMessage("input_text", systemPrompt))),
+              new GptApi4Client.Input("user", List.of(
+                  new GptApi4Client.InputMessage("input_text", userPrompt),
+                  new GptApi4Client.InputFile(fileId)
               ))
           )
       );
 
-      AbstractGptApiClient.ChatCompletionResponse response = restClient.post()
+      GptCompletionResponse response = restClient.post()
           .uri(DEFAULT_URI)
           .header("Authorization", "Bearer " + cfg.getApiKey())
           .contentType(MediaType.APPLICATION_JSON)
           .body(payload)
           .retrieve()
-          .body(AbstractGptApiClient.ChatCompletionResponse.class);
+          .body(GptCompletionResponse.class);
 
       //noinspection DataFlowIssue
       return extractJobs(response);
@@ -96,24 +96,24 @@ public non-sealed class ChatGptApi4Client extends AbstractGptApiClient<ChatGpt4>
       String model,
       double temperature,
       int max_output_tokens,
-      List<ChatGptApi4Client.Input> input
+      List<GptApi4Client.Input> input
   ) {
 
   }
 
-  private sealed interface InputObj permits ChatGptApi4Client.InputMessage, ChatGptApi4Client.InputFile {
+  private sealed interface InputObj permits GptApi4Client.InputMessage, GptApi4Client.InputFile {
 
   }
 
-  private record Input(String role, List<ChatGptApi4Client.InputObj> content) {
+  private record Input(String role, List<GptApi4Client.InputObj> content) {
 
   }
 
-  private record InputMessage(String type, String text) implements ChatGptApi4Client.InputObj {
+  private record InputMessage(String type, String text) implements GptApi4Client.InputObj {
 
   }
 
-  private record InputFile(String type, String file_id) implements ChatGptApi4Client.InputObj {
+  private record InputFile(String type, String file_id) implements GptApi4Client.InputObj {
 
     public InputFile(String file_id) {
       this("input_file", file_id);
@@ -121,12 +121,12 @@ public non-sealed class ChatGptApi4Client extends AbstractGptApiClient<ChatGpt4>
   }
 
   @JsonIgnoreProperties(ignoreUnknown = true)
-  private record ChatCompletionResponse(List<ChatGptApi4Client.OutputItem> output) {
+  private record ChatCompletionResponse(List<GptApi4Client.OutputItem> output) {
 
   }
 
   @JsonIgnoreProperties(ignoreUnknown = true)
-  private record OutputItem(String id, String type, String status, List<ChatGptApi4Client.ContentItem> content) {
+  private record OutputItem(String id, String type, String status, List<GptApi4Client.ContentItem> content) {
 
   }
 
@@ -142,11 +142,11 @@ public non-sealed class ChatGptApi4Client extends AbstractGptApiClient<ChatGpt4>
           getConfig().getTemperature(),
           getConfig().getMaxTokens(),
           List.of(
-              new ChatGptApi4Client.Input("system",
-                  List.of(new ChatGptApi4Client.InputMessage("input_text", calculateScoreSystemPrompt))),
-              new ChatGptApi4Client.Input("user", List.of(
-                  new ChatGptApi4Client.InputMessage("input_text", calculateScoreUserPrompt + jobDescription),
-                  new ChatGptApi4Client.InputFile(fileId)
+              new GptApi4Client.Input("system",
+                  List.of(new GptApi4Client.InputMessage("input_text", calculateScoreSystemPrompt))),
+              new GptApi4Client.Input("user", List.of(
+                  new GptApi4Client.InputMessage("input_text", calculateScoreUserPrompt + jobDescription),
+                  new GptApi4Client.InputFile(fileId)
               ))
           )
       );
@@ -167,11 +167,11 @@ public non-sealed class ChatGptApi4Client extends AbstractGptApiClient<ChatGpt4>
   }
 
   private int extractScore(String body) throws JsonProcessingException {
-    ChatGptApi4Client.ChatCompletionResponse response = mapper.readValue(body, ChatGptApi4Client.ChatCompletionResponse.class);
+    GptApi4Client.ChatCompletionResponse response = mapper.readValue(body, GptApi4Client.ChatCompletionResponse.class);
     if (Collections.isEmpty(response.output())) {
       return 0;
     }
-    Optional<ChatGptApi4Client.OutputItem> item = response.output().stream()
+    Optional<GptApi4Client.OutputItem> item = response.output().stream()
         .filter(p -> Objects.equals(p.type, "message") && !p.content().isEmpty())
         .findAny();
     if (item.isPresent()) {

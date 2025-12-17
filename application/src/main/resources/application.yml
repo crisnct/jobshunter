@@ -16,7 +16,7 @@ twilio:
   auth-token: ${TWILIO_AUTH_TOKEN:notset}
   from-number: ${TWILIO_WHATSAPP_FROM:notset}
 
-chatGpt5:
+gpt5:
   apiKey: ${CHATGPT_API_KEY:notset}
   model: "gpt-5.1"
   temperature: 0
@@ -24,7 +24,7 @@ chatGpt5:
   toolsType: "web_search"
   systemPromptFile: "jobsSystemPromptGPT5.txt"
 
-chatGpt4:
+gpt4:
   apiKey: ${CHATGPT_API_KEY:notset}
   model: "gpt-4o-mini"
   temperature: 0

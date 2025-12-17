@@ -3,7 +3,7 @@ package com.jobshunter.service.clients.gpt;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.jobshunter.config.ApplicationProperties;
-import com.jobshunter.config.ApplicationProperties.ChatGpt5;
+import com.jobshunter.config.ApplicationProperties.Gpt5;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
@@ -24,7 +24,7 @@ import org.springframework.web.client.RestTemplate;
 
 @Slf4j
 @Component
-public final class ChatGptFileClient implements GPTFilesApiClient {
+public final class GptFileClient implements GPTFilesApiClient {
 
   private static final String API_URI = "https://api.openai.com/v1/files";
 
@@ -39,7 +39,7 @@ public final class ChatGptFileClient implements GPTFilesApiClient {
 
   @Override
   public String uploadFile(Path cvPath) throws IOException {
-    ChatGpt5 cfg = properties.getChatgpt5();
+    Gpt5 cfg = properties.getGpt5();
     if (cfg == null || cfg.getApiKey() == null || cfg.getApiKey().isBlank()) {
       log.warn("ChatGPT upload requested but configuration or apiKey missing.");
       return null;
@@ -52,7 +52,7 @@ public final class ChatGptFileClient implements GPTFilesApiClient {
     if (fileId == null || fileId.isBlank()) {
       return false;
     }
-    ChatGpt5 cfg = properties.getChatgpt5();
+    Gpt5 cfg = properties.getGpt5();
     if (cfg == null || cfg.getApiKey() == null || cfg.getApiKey().isBlank()) {
       log.warn("ChatGPT delete requested but configuration or apiKey missing.");
       return false;
@@ -65,7 +65,7 @@ public final class ChatGptFileClient implements GPTFilesApiClient {
     }
   }
 
-  private String uploadFile(ChatGpt5 cfg, Path cvPath) throws IOException {
+  private String uploadFile(Gpt5 cfg, Path cvPath) throws IOException {
     try (var ignored = Files.newInputStream(cvPath)) {
       HttpHeaders headers = new HttpHeaders();
       headers.set("Authorization", "Bearer " + cfg.getApiKey());
@@ -82,12 +82,12 @@ public final class ChatGptFileClient implements GPTFilesApiClient {
         return null;
       }
 
-      ChatGptFileClient.UploadFileResponse responseMapper = mapper.readValue(response.getBody(), ChatGptFileClient.UploadFileResponse.class);
+      GptFileClient.UploadFileResponse responseMapper = mapper.readValue(response.getBody(), GptFileClient.UploadFileResponse.class);
       return responseMapper.id();
     }
   }
 
-  public String deleteFile(ChatGpt5 cfg, String fileId) throws IOException {
+  public String deleteFile(Gpt5 cfg, String fileId) throws IOException {
     HttpHeaders headers = new HttpHeaders();
     headers.set("Authorization", "Bearer " + cfg.getApiKey());
 
@@ -103,26 +103,26 @@ public final class ChatGptFileClient implements GPTFilesApiClient {
       log.warn("ChatGPT job API returned {} - {}", httpResponse.getStatusCode(), httpResponse.getBody());
       return null;
     }
-    ChatGptFileClient.DeleteFileResponse respoanse = mapper.readValue(httpResponse.getBody(), ChatGptFileClient.DeleteFileResponse.class);
+    GptFileClient.DeleteFileResponse respoanse = mapper.readValue(httpResponse.getBody(), GptFileClient.DeleteFileResponse.class);
     return respoanse.id();
   }
 
 
-  private sealed interface InputObj permits ChatGptFileClient.InputMessage, ChatGptFileClient.InputFile {
+  private sealed interface InputObj permits GptFileClient.InputMessage, GptFileClient.InputFile {
 
   }
 
-  private record InputMessage(String type, String text) implements ChatGptFileClient.InputObj {
+  private record InputMessage(String type, String text) implements GptFileClient.InputObj {
 
   }
 
-  private record InputFile(String type, String file_id) implements ChatGptFileClient.InputObj {
+  private record InputFile(String type, String file_id) implements GptFileClient.InputObj {
 
   }
 
 
   @JsonIgnoreProperties(ignoreUnknown = true)
-  private record ChatCompletionResponse(List<ChatGptFileClient.OutputItem> output) {
+  private record ChatCompletionResponse(List<GptFileClient.OutputItem> output) {
 
   }
 
@@ -137,7 +137,7 @@ public final class ChatGptFileClient implements GPTFilesApiClient {
   }
 
   @JsonIgnoreProperties(ignoreUnknown = true)
-  private record OutputItem(String id, String type, String status, List<ChatGptFileClient.ContentItem> content) {
+  private record OutputItem(String id, String type, String status, List<GptFileClient.ContentItem> content) {
 
   }
 
