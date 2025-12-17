@@ -105,7 +105,7 @@ button:hover:not(:disabled) {
 }
 
 .logo {
-  width: 160px;
+  width: 250px;
   margin: 0 auto 8px;
   display: block;
   max-width: 100%; /* Ensure responsiveness */
