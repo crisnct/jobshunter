@@ -7,23 +7,25 @@ body {
   font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
   background: radial-gradient(circle at 20% 20%, #f6f9ff, #eef2ff 40%, #ffffff 70%);
   color: #1f2937;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .page {
-  max-width: 1100px;
+  width: min(480px, 100%);
   margin: 0 auto;
-  padding: 32px 20px 60px;
+  padding: 48px 20px 60px;
+  display: grid;
+  gap: 20px;
+  text-align: center;
 }
 
-header h1 {
-  margin: 0 0 6px;
-  font-size: 32px;
+.title {
+  margin: 0;
+  font-size: 36px;
   color: #111827;
-}
-
-header p {
-  margin: 0 0 18px;
-  color: #4b5563;
 }
 
 .card {
@@ -37,13 +39,6 @@ header p {
 .card h2 {
   margin: 0 0 12px;
   font-size: 20px;
-}
-
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 16px;
-  margin-top: 16px;
 }
 
 .form {
@@ -100,7 +95,7 @@ button:hover:not(:disabled) {
 }
 
 .status {
-  margin-top: 10px;
+  margin-top: 14px;
   padding: 10px 12px;
   background: #f3f4f6;
   border-radius: 10px;
@@ -108,21 +103,12 @@ button:hover:not(:disabled) {
   font-size: 14px;
 }
 
-.response {
-  margin-top: 12px;
-  background: #0b1221;
-  color: #e5e7eb;
-  padding: 12px;
-  border-radius: 10px;
-  min-height: 80px;
-  overflow: auto;
-  font-family: "SFMono-Regular", Consolas, Monaco, "Ubuntu Mono", monospace;
-  font-size: 13px;
+.logo {
+  width: 160px;
+  margin: 0 auto 8px;
+  display: block;
 }
 
-.checkbox {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 12px;
+.form-card {
+  text-align: left;
 }
