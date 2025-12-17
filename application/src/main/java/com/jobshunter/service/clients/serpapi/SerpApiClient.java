@@ -41,12 +41,12 @@ public class SerpApiClient {
   }
 
   public SerpApiJobsResult searchJobs(@NotNull SearchWithSerpRequest request) throws IOException {
-    SerpApiJobsResult results = searchJobs2(request, null);
+    SerpApiJobsResult results = searchJobsPagination(request, null);
     for (int i = 0; i < serpApiConfig.getMaxPageSearch(); i++) {
       if (results.nextPageToken() == null) {
         break;
       } else {
-        results = consolidate(results, searchJobs2(request, results.nextPageToken()));
+        results = consolidate(results, searchJobsPagination(request, results.nextPageToken()));
       }
     }
     return results;
@@ -70,7 +70,7 @@ public class SerpApiClient {
     );
   }
 
-  private SerpApiJobsResult searchJobs2(SearchWithSerpRequest request, String nextPageToken) throws IOException {
+  private SerpApiJobsResult searchJobsPagination(SearchWithSerpRequest request, String nextPageToken) throws IOException {
     log.info("Searching jobs with Serp Api, query: {}", request.query());
     URI uri = this.buildUri(request, nextPageToken);
     ResponseEntity<String> response = restClient.get()
