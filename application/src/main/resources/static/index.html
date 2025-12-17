@@ -132,20 +132,90 @@
     .profile-info {
       display: flex;
       flex-direction: column;
-      gap: 0.75rem;
+      gap: 0;
       margin-bottom: 1.5rem;
     }
 
-    .profile-info p {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+    .detail-row {
+      display: grid;
+      grid-template-columns: 1fr 2fr;
+      gap: 0.75rem;
+      align-items: start;
       padding: 0.5rem 0;
       border-bottom: 1px dashed #e5e7eb;
+      width: 100%;
     }
 
-    .profile-info p:last-child {
+    .detail-row:last-child {
       border-bottom: none;
+    }
+
+    .detail-key {
+      font-weight: 600;
+      color: #111827;
+      text-transform: capitalize;
+    }
+
+    .detail-value {
+      color: #374151;
+      word-break: break-word;
+    }
+
+    .nested {
+      padding-left: 0.5rem;
+      border-left: 2px solid #e5e7eb;
+      margin-left: 0.25rem;
+    }
+
+    .nested-fields {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    .text-muted {
+      color: #9ca3af;
+      font-style: italic;
+    }
+
+    .json-card {
+      width: 100%;
+      margin-top: 1rem;
+      border: 1px solid #e5e7eb;
+      border-radius: 0.75rem;
+      overflow: hidden;
+      background: #f9fafb;
+    }
+
+    .json-card__header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem 1rem;
+      background: #111827;
+      color: white;
+    }
+
+    .json-card__badge {
+      background: #22c55e;
+      color: #064e3b;
+      padding: 0.25rem 0.75rem;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .json-card__body {
+      margin: 0;
+      padding: 1rem;
+      background: #0b1621;
+      color: #d1d5db;
+      font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+      font-size: 0.9rem;
+      white-space: pre-wrap;
+      word-break: break-word;
     }
 
     .badge {
@@ -219,6 +289,7 @@
     const [loginForm, setLoginForm] = useState({username: '', password: ''});
     const [token, setToken] = useState('');
     const [user, setUser] = useState(null); // State to store user profile data
+    const [logoSrc, setLogoSrc] = useState('images/JobsHunterLogo.png');
 
     const logMessage = (msg) => setStatus(msg);
     const api = useApi('https://ronin-archesporial-lonnie.ngrok-free.dev', token, logMessage);
@@ -264,15 +335,49 @@
     };
 
     // Helper component to display user profile information
+    const FieldValue = ({value}) => {
+      if (value === null || value === undefined) {
+        return h('span', {className: 'text-muted'}, 'Not provided');
+      }
+
+      if (Array.isArray(value)) {
+        if (value.length === 0) return h('span', {className: 'text-muted'}, '[]');
+        return h('ul', {className: 'list-disc list-inside space-y-1'}, value.map((item, idx) =>
+          h('li', {key: idx}, h(FieldValue, {value: item}))
+        ));
+      }
+
+      if (typeof value === 'object') {
+        return h('div', {className: 'nested-fields'}, Object.entries(value).map(([k, v]) =>
+          h('div', {className: 'detail-row nested', key: k},
+            h('span', {className: 'detail-key'}, k),
+            h('div', {className: 'detail-value'}, h(FieldValue, {value: v}))
+          )
+        ));
+      }
+
+      return h('span', null, String(value));
+    };
+
     const UserProfile = () => {
       if (!user) return null;
 
+      const jsonString = JSON.stringify(user, null, 2);
+
       return h('section', {className: 'card profile-card'},
-        h('h2', null, `Welcome, ${user.username}!`),
-        h('div', {className: 'profile-info'},
-          h('p', null, h('strong', null, 'User ID:'), h('span', null, user.id)),
-          h('p', null, h('strong', null, 'Email:'), h('span', null, user.email || 'Not provided')),
-          h('p', null, h('strong', null, 'Role:'), h('span', {className: 'badge'}, user.role || 'GUEST')),
+        h('h2', null, `Welcome, ${user.username || 'User'}!`),
+        h('div', {className: 'profile-info'}, Object.entries(user).map(([key, value]) =>
+          h('div', {className: 'detail-row', key},
+            h('span', {className: 'detail-key'}, `${key}:`),
+            h('div', {className: 'detail-value'}, h(FieldValue, {value}))
+          )
+        )),
+        h('div', {className: 'json-card'},
+          h('div', {className: 'json-card__header'},
+            h('h3', null, 'Full API response'),
+            h('span', {className: 'json-card__badge'}, 'Read-only')
+          ),
+          h('pre', {className: 'json-card__body'}, jsonString)
         ),
         h('button', {
           onClick: handleLogout,
@@ -311,7 +416,12 @@
     return h('main', {className: 'page'},
       h('h1', {className: 'title'}, 'JobsHunter'),
 
-      h('img', {src: '/images/JobsHunterLogo.png', alt: 'JobsHunter logo', className: 'logo'}),
+      h('img', {
+        src: logoSrc,
+        alt: 'JobsHunter logo',
+        className: 'logo',
+        onError: () => setLogoSrc('images/JobsHunterLogo.svg')
+      }),
 
       // Conditionally render the profile or the login form
       user ? h(UserProfile) : h(LoginForm),
