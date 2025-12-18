@@ -10,7 +10,6 @@ import com.jobshunter.service.application.notifiers.EmailNotifierService;
 import com.jobshunter.service.clients.SerpApiClient;
 import io.jsonwebtoken.lang.Collections;
 import jakarta.validation.Valid;
-import java.io.IOException;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,7 +39,7 @@ public class TestController {
   private UserDataService userDataService;
 
   @Autowired
-  private SerpApiClient serpApi;
+  private SerpApiClient<SearchWithSerpRequest, SerpApiJobsResult> serpApi;
 
   @PostMapping(value = "/email/send", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ResponseEntity<?> send(
@@ -49,9 +48,7 @@ public class TestController {
     if (userDetails == null) {
       throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authentication required");
     }
-    log.info("Sending email to {} initiated by {}", request.getEmail(), userDetails.getUsername());
     emailNotifierService.sendCustomEmail(request.getEmail(), request.getSubject(), request.getMessage(), request.getFile());
-    log.info("Email sent successfully to {}", request.getEmail());
     return ResponseEntity.ok(Map.of("message", "Email sent successfully"));
   }
 
@@ -65,9 +62,7 @@ public class TestController {
     }
     UserEntity user = userDataService.getUser(userDetails.getUsername())
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
-    log.info("Sending email to {}", user.getEmail());
     emailNotifierService.sendUsingTemplate(jobs.jobsFound(), user);
-    log.info("Email sent successfully to {}", user.getEmail());
     return ResponseEntity.ok(Map.of("message", "Email sent successfully"));
   }
 
@@ -75,7 +70,7 @@ public class TestController {
   public ResponseEntity<?> searchJobsWithSERP(
       @Valid @RequestBody SearchWithSerpRequest request,
       @AuthenticationPrincipal UserDetails userDetails
-  ) throws IOException {
+  ) {
     if (userDetails == null) {
       throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authentication required");
     }

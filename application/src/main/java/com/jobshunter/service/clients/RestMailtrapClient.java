@@ -8,7 +8,7 @@ import lombok.NonNull;
 @PackageExpected("com.jobshunter.service.application.notifiers")
 public sealed interface RestMailtrapClient permits RestMailtrapClientImpl, DummyRestMailtrapClient {
 
-  String sendEmailWithNewJobs(
+  void sendEmailWithNewJobs(
       @NonNull String username,
       @NonNull String email,
       @NonNull String body

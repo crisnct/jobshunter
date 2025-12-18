@@ -14,8 +14,9 @@ import org.springframework.stereotype.Component;
 public final class DummyRestMailtrapClient implements RestMailtrapClient {
 
   @Override
-  public String sendEmailWithNewJobs(@NonNull String username, @NonNull String email, @NonNull String body) {
-    return "Email sent successfully";
+  public void sendEmailWithNewJobs(@NonNull String username, @NonNull String email, @NonNull String body) {
+    log.info("Sending email to {}", username);
+    log.info("Email send successfully to {}", username);
   }
 
 }

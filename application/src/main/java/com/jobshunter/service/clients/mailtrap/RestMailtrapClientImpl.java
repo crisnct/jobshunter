@@ -41,11 +41,12 @@ public non-sealed class RestMailtrapClientImpl implements RestMailtrapClient {
   private String templateUUID;
 
   @Override
-  public String sendEmailWithNewJobs(
+  public void sendEmailWithNewJobs(
       @NonNull String username,
       @NonNull String email,
       @NonNull String body
   ) {
+    log.info("Sending email to {}", username);
     MailtrapTemplateRequest payload
         = new MailtrapTemplateRequest(
         new From(configuredFrom, appName),
@@ -54,7 +55,7 @@ public non-sealed class RestMailtrapClientImpl implements RestMailtrapClient {
         Map.of("1", username, "2", body)
     );
 
-    return restClient.post()
+    restClient.post()
         .uri(MAILTRAP_URI)
         .header("Authorization", "Bearer " + apiKey)
         .contentType(MediaType.APPLICATION_JSON)
@@ -67,7 +68,7 @@ public non-sealed class RestMailtrapClientImpl implements RestMailtrapClient {
         .onStatus(HttpStatusCode::is2xxSuccessful, (req, res) -> {
           log.info("Email send successfully to {}", email);
         })
-        .toString();
+        .toBodilessEntity();
   }
 
   public record MailtrapTemplateRequest(
