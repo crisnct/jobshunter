@@ -18,6 +18,7 @@ import com.jobshunter.service.application.JobHuntService;
 import com.jobshunter.service.application.notifiers.EmailNotifierService;
 import jakarta.validation.Valid;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
@@ -76,26 +77,9 @@ public class UserController {
       return ResponseEntity.badRequest().body(Map.of("Error", "Missing username"));
     }
     return userDataService.getUser(request.username())
-        .map(user -> searchJobs(user, request))
-        .orElseGet(() -> ResponseEntity.ok().build());
-  }
-
-  private ResponseEntity<JobHuntResponse> searchJobs(UserEntity user, SearchJobsRequest request) {
-    JobHuntResponse jobs = jobHuntService.searchJobsForUser(user, request.iterations());
-    if (jobs.jobsFound().isEmpty()) {
-      return ResponseEntity.ofNullable(null);
-    } else {
-      if (user.isNotifyEmail() || user.isNotifyWhatsapp()) {
-        userDataService.updateUser(user, jobs.jobsFound());
-      }
-      if (request.notifyOnWhatsApp() && user.isNotifyWhatsapp()) {
-        jobHuntService.notifyWhatsApp(user, jobs);
-      }
-      if (user.isNotifyEmail()) {
-        jobHuntService.notifyEmail(user, jobs);
-      }
-      return ResponseEntity.ok(jobs);
-    }
+        .map(user -> jobHuntService.searchJobsForUser(user, request.iterations()))
+        .map(ResponseEntity::ok)
+        .orElseGet(() -> ResponseEntity.ok(new JobHuntResponse(Collections.emptyList())));
   }
 
   @GetMapping("/all")

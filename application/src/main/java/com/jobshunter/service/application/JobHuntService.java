@@ -84,7 +84,7 @@ public class JobHuntService {
     expiredJobsPatterns = Collections.unmodifiableList(expiredJobsPatterns);
   }
 
-  public void scheduledRun() throws InterruptedException {
+  public void scheduledRun() {
     log.info("Starts scheduled job hunt...");
     for (var user : userDataService.getAllUsers()) {
       if (user.isNotifyWhatsapp() || user.isNotifyEmail()) {
@@ -93,19 +93,7 @@ public class JobHuntService {
             && user.getLastJobs() != null
             && user.getLastJobs().plusMinutes(user.getTimeInterval()).isBefore(LocalDateTime.now())) {
           log.info("Start searching jobs for {} ", user.getUsername());
-          JobHuntResponse jobs = this.searchJobsForUser(user, properties.getJobsHunter().getIterationPerUser());
-          log.info("Found {} jobs for {} ", jobs.jobsFound().size(), user.getEmail());
-          jobs.jobsFound().forEach(System.out::println);
-          if (!jobs.jobsFound().isEmpty()) {
-            userDataService.updateUser(user, jobs.jobsFound());
-            if (user.isNotifyWhatsapp()) {
-              this.notifyWhatsApp(user, jobs);
-            }
-            if (user.isNotifyEmail()) {
-              this.notifyEmail(user, jobs);
-            }
-          }
-          Thread.sleep(properties.getJobsHunter().getIterationDelay());
+          this.searchJobsForUser(user, properties.getJobsHunter().getIterationPerUser());
         }
       }
     }
@@ -125,10 +113,28 @@ public class JobHuntService {
     CompletableFuture<Void> gptFuture = gptSearch(jobsSync, user, iterations);
     CompletableFuture.allOf(serpFuture, gptFuture).join();
 
-    return new JobHuntResponse(jobsSync.getJobs().stream()
+    JobHuntResponse jobHuntResponse = new JobHuntResponse(jobsSync.getJobs().stream()
         .distinct()
         .sorted(Comparator.comparing(Job::score).reversed())
         .toList());
+
+    List<Job> jobs = jobHuntResponse.jobsFound();
+    if (jobs.isEmpty()) {
+      log.info("No jobs found for user {} ", user.getUsername());
+    } else if (user.isNotifyEmail() || user.isNotifyWhatsapp()) {
+      userDataService.updateUser(user, jobs);
+      log.info("Found {} jobs for {} ", jobs.size(), user.getEmail());
+      jobs.forEach(System.out::println);
+
+      if (user.isNotifyWhatsapp()) {
+        whatsappNotifierService.send(jobs, user);
+      }
+      if (user.isNotifyEmail()) {
+        emailNotifierService.sendUsingTemplate(jobs, user);
+      }
+    }
+
+    return jobHuntResponse;
   }
 
   private CompletableFuture<Void> gptSearch(JobsSynchronizer jobsSync, UserEntity user, int iterations) {
@@ -165,14 +171,6 @@ public class JobHuntService {
     } catch (IOException e) {
       log.error("Error at parsing response", e);
     }
-  }
-
-  public void notifyWhatsApp(UserEntity user, JobHuntResponse summary) {
-    whatsappNotifierService.send(summary.jobsFound(), user);
-  }
-
-  public void notifyEmail(UserEntity user, JobHuntResponse summary) {
-    emailNotifierService.sendUsingTemplate(summary.jobsFound(), user);
   }
 
   private boolean isValidJob(String jobURL) {
