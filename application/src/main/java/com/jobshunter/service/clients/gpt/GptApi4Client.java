@@ -7,6 +7,7 @@ import com.jobshunter.config.ApplicationProperties;
 import com.jobshunter.config.ApplicationProperties.Gpt4;
 import com.jobshunter.dto.Job;
 import com.jobshunter.processor.PackageExpected;
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import io.jsonwebtoken.lang.Collections;
 import jakarta.annotation.PostConstruct;
 import java.io.IOException;
@@ -118,7 +119,8 @@ public non-sealed class GptApi4Client extends AbstractGptApiClient<Gpt4> {
 
   }
 
-  public final int computeScore(String jobDescription, String fileId) {
+  @RateLimiter(name = "openaiLimiter")
+  public int computeScore(String jobDescription, String fileId) {
     try {
       Gpt4ScorePayload payload = new Gpt4ScorePayload(
           getConfig().getModel(),

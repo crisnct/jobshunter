@@ -17,8 +17,9 @@ public class ApplicationProperties {
   @Data
   @ConfigurationProperties(prefix = "jobshunter")
   public static class JobsHunter {
-
+    private String name;
     private String expiredExpressions;
+    private Boolean useDummyData;
     private int iterationPerUser;
     private long iterationDelay;
     private Scheduler scheduler = new Scheduler();

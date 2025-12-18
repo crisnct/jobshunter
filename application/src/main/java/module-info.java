@@ -8,12 +8,10 @@ open module com.jobshunter.application {
   requires spring.web;
   requires spring.webmvc;
   requires spring.aop;
-
   requires spring.security.config;
   requires spring.security.web;
   requires spring.security.core;
   requires spring.security.crypto;
-
   requires spring.data.jpa;
   requires spring.data.commons;
   requires spring.orm;
@@ -52,6 +50,7 @@ open module com.jobshunter.application {
   requires com.auth0.jwt;
   requires jjwt.api;
   requires java.sql;
+  requires io.github.resilience4j.annotations;
 
   requires static lombok;
   requires static com.jobshunter.processor;

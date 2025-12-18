@@ -32,6 +32,7 @@ import java.util.stream.IntStream;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -56,6 +57,10 @@ public class JobHuntService {
 
   @Autowired
   private SerpApiClient serpApiClient;
+
+  @Autowired
+  @Qualifier("gptSearchExecutor")
+  private Executor gptSearchExecutor;
 
   @Autowired
   private WhatsappNotifierService whatsappNotifierService;
@@ -144,7 +149,8 @@ public class JobHuntService {
         .mapToObj(i -> {
           Executor delayedExecutor = CompletableFuture.delayedExecutor(
               i * properties.getJobsHunter().getIterationDelay(),
-              TimeUnit.MILLISECONDS
+              TimeUnit.MILLISECONDS,
+              gptSearchExecutor
           );
           return CompletableFuture.runAsync(() -> {
             log.info("Searching jobs for user {} iteration {}", user.getUsername(), i);
@@ -155,7 +161,11 @@ public class JobHuntService {
         .toList();
 
     // Combine all async iteration futures into one
-    return CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new));
+    return CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new))
+        .exceptionally(ex -> {
+          log.error("GPT search failed for {}", user.getUsername(), ex);
+          return null;
+        });
   }
 
   private void searchWithSerpAPi(JobsSynchronizer jobsSync, UserEntity user) {

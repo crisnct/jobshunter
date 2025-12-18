@@ -3,6 +3,9 @@ spring:
     activate:
       on-profile: local
 
+jobshunter:
+  useDummyData: true
+
 serpApi:
   apiKey: ${SERP_API_KEY:notset}
   maxPageSearch: 1

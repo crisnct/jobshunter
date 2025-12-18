@@ -8,6 +8,7 @@ import com.jobshunter.dto.GptJobSearchRequest;
 import com.jobshunter.dto.Job;
 import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.clients.JobSearchApiClient;
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import io.jsonwebtoken.lang.Collections;
 import jakarta.annotation.PostConstruct;
 import java.io.IOException;
@@ -34,6 +35,7 @@ public abstract sealed class AbstractGptApiClient<C extends Gpt>
 
   public abstract C getConfig();
 
+  @RateLimiter(name = "openaiLimiter")
   public abstract List<Job> searchWithModel(String systemPrompt, String userPrompt, C cfg, String fileId);
 
   @PostConstruct
@@ -49,7 +51,7 @@ public abstract sealed class AbstractGptApiClient<C extends Gpt>
   }
 
   @Override
-  public final List<Job> searchJobs(GptJobSearchRequest request) {
+  public List<Job> searchJobs(GptJobSearchRequest request) {
     C cfg = getConfig();
     if (cfg == null) {
       return List.of();
