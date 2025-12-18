@@ -5,6 +5,7 @@ import com.jobshunter.config.ApplicationProperties.SerpApi;
 import com.jobshunter.dto.SearchWithSerpRequest;
 import com.jobshunter.dto.SerpApiJobHit;
 import com.jobshunter.dto.SerpApiJobsResult;
+import com.jobshunter.service.clients.JobSearchApiClient;
 import jakarta.validation.constraints.NotNull;
 import java.io.IOException;
 import java.net.URI;
@@ -25,7 +26,7 @@ import org.springframework.web.client.RestClient;
  */
 @Slf4j
 @Component
-public class SerpApiClient {
+public non-sealed class SerpApiClient implements JobSearchApiClient<SearchWithSerpRequest, SerpApiJobsResult> {
 
   private static final URI BASE = URI.create("https://serpapi.com/search");
 
@@ -38,14 +39,20 @@ public class SerpApiClient {
     serpApiConfig = properties.getSerpApi();
   }
 
-  public SerpApiJobsResult searchJobs(@NotNull SearchWithSerpRequest request) throws IOException {
-    SerpApiJobsResult results = searchJobsPagination(request, null);
-    for (int i = 0; i < serpApiConfig.getMaxPageSearch(); i++) {
-      if (results.nextPageToken() == null) {
-        break;
-      } else {
-        results = consolidate(results, searchJobsPagination(request, results.nextPageToken()));
+  @Override
+  public SerpApiJobsResult searchJobs(@NotNull SearchWithSerpRequest request) {
+    SerpApiJobsResult results = null;
+    try {
+      results = searchJobsPagination(request, null);
+      for (int i = 0; i < serpApiConfig.getMaxPageSearch(); i++) {
+        if (results.nextPageToken() == null) {
+          break;
+        } else {
+          results = consolidate(results, searchJobsPagination(request, results.nextPageToken()));
+        }
       }
+    } catch (IOException e) {
+      throw new RuntimeException(e);
     }
     return results;
   }

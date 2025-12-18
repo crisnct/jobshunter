@@ -1,4 +1,4 @@
-package com.jobshunter.service.clients;
+package com.jobshunter.service.clients.twilio;
 
 import com.jobshunter.config.ApplicationProperties;
 import com.jobshunter.processor.PackageExpected;
@@ -16,7 +16,7 @@ import org.springframework.util.StringUtils;
 @Service
 @RequiredArgsConstructor
 @PackageExpected("com.jobshunter.service.application.notifiers")
-public class TwillioClient {
+public class TwilioClient {
 
   public static final int TWILLIO_MAX_LIMIT_CHARS = 1600;
 

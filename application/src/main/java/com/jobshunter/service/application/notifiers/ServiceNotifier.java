@@ -14,7 +14,7 @@ public sealed interface ServiceNotifier permits EmailNotifierService, WhatsappNo
     StringBuilder builder = new StringBuilder();
     for (int i = 0; i < jobs.size(); i++) {
       if (i > 0) {
-        builder.append('\n');
+        builder.append("\n\n");
       }
       Job job = jobs.get(i);
       builder.append(i + 1)

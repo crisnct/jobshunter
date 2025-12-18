@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.jobshunter.config.ApplicationProperties;
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.service.UserDataService;
+import com.jobshunter.dto.GptJobSearchRequest;
 import com.jobshunter.dto.Job;
 import com.jobshunter.dto.JobHuntResponse;
 import com.jobshunter.dto.SearchWithSerpRequest;
@@ -22,10 +23,12 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
+import java.util.stream.IntStream;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -115,58 +118,53 @@ public class JobHuntService {
       return new JobHuntResponse(Collections.emptyList());
     }
 
-    Map<String, Job> jobs = new HashMap<>();
-    List<String> existingUrls = new ArrayList<>(userDataService.getExistingJobUrlsForUser(user.getUsername()));
+    final JobsSynchronizer jobsSync =
+        new JobsSynchronizer(userDataService.getExistingJobUrlsForUser(user.getUsername()), this::isValidJob);
 
-    if (user.getSerpApiRequest() != null) {
-      List<Job> jobsFound = this.searchWithSerpAPi(user);
-      jobsFound.forEach(newJob -> {
-        if (!existingUrls.contains(newJob.url()) && isValidJob(newJob.url())) {
-          jobs.put(newJob.url(), newJob);
-        }
-        existingUrls.add(newJob.url());
-      });
-    }
+    CompletableFuture<Void> serpFuture = CompletableFuture.runAsync(() -> searchWithSerpAPi(jobsSync, user));
+    CompletableFuture<Void> gptFuture = gptSearch(jobsSync, user, iterations);
+    CompletableFuture.allOf(serpFuture, gptFuture).join();
 
-    for (int i = 0; i < iterations; i++) {
-      log.info("Searching jobs for user {} iteration {}", user.getUsername(), i);
-      List<Job> jobsFound = this.gpt4Client.search(user.getPrompt(), user.getCvFileId());
-      jobsFound.forEach(newJob -> {
-        if (!existingUrls.contains(newJob.url()) && isValidJob(newJob.url())) {
-          jobs.put(newJob.url(), newJob);
-        }
-        existingUrls.add(newJob.url());
-      });
-
-      if (iterations > 1) {
-        try {
-          Thread.sleep(properties.getJobsHunter().getIterationDelay());
-        } catch (InterruptedException e) {
-          throw new RuntimeException(e);
-        }
-      }
-    }
-
-    return new JobHuntResponse(jobs.values().stream()
+    return new JobHuntResponse(jobsSync.getJobs().stream()
+        .distinct()
         .sorted(Comparator.comparing(Job::score).reversed())
         .toList());
   }
 
-  private List<Job> searchWithSerpAPi(UserEntity user){
-    List<Job> jobsFound = new ArrayList<>();
+  private CompletableFuture<Void> gptSearch(JobsSynchronizer jobsSync, UserEntity user, int iterations) {
+    GptJobSearchRequest request = new GptJobSearchRequest(user.getPrompt(), user.getCvFileId());
+
+    List<CompletableFuture<Void>> futures = IntStream.range(0, iterations)
+        .mapToObj(i -> {
+          Executor delayedExecutor = CompletableFuture.delayedExecutor(
+              i * properties.getJobsHunter().getIterationDelay(),
+              TimeUnit.MILLISECONDS
+          );
+          return CompletableFuture.runAsync(() -> {
+            log.info("Searching jobs for user {} iteration {}", user.getUsername(), i);
+            List<Job> jobsFound = gpt4Client.searchJobs(request);
+            jobsSync.addJobs(jobsFound);
+          }, delayedExecutor);
+        })
+        .toList();
+
+    // Combine all async iteration futures into one
+    return CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new));
+  }
+
+  private void searchWithSerpAPi(JobsSynchronizer jobsSync, UserEntity user) {
     try {
       SearchWithSerpRequest request = mapper.readValue(user.getSerpApiRequest(), SearchWithSerpRequest.class);
       SerpApiJobsResult serpApiResult = serpApiClient.searchJobs(request);
 
-      for (SerpApiJobHit job: serpApiResult.jobs()){
+      for (SerpApiJobHit job : serpApiResult.jobs()) {
         String jobDescription = job.description() + "\n" + job.highlights();
         int score = gpt4Client.computeScore(jobDescription, user.getCvFileId());
-        jobsFound.add(new Job(score, job.applyLinks().getFirst(), "Google"));
+        jobsSync.addJob(new Job(score, job.applyLinks().getFirst(), "Google"));
       }
     } catch (IOException e) {
       log.error("Error at parsing response", e);
     }
-    return jobsFound;
   }
 
   public void notifyWhatsApp(UserEntity user, JobHuntResponse summary) {

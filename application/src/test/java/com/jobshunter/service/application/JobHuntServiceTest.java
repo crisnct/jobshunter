@@ -7,7 +7,7 @@ import com.jobshunter.config.ApplicationProperties;
 import com.jobshunter.config.ApplicationProperties.Gpt5;
 import com.jobshunter.config.ApplicationProperties.Twilio;
 import com.jobshunter.database.service.UserDataService;
-import com.jobshunter.service.clients.TwillioClient;
+import com.jobshunter.service.clients.twilio.TwilioClient;
 import java.lang.reflect.Method;
 import java.util.Properties;
 import org.junit.jupiter.api.AfterAll;
@@ -166,7 +166,7 @@ class JobHuntServiceTest {
     }
   }
 
-  private static class NoOpNotifier extends TwillioClient {
+  private static class NoOpNotifier extends TwilioClient {
 
   }
 

@@ -4,8 +4,10 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.jobshunter.config.ApplicationProperties.Gpt;
+import com.jobshunter.dto.GptJobSearchRequest;
 import com.jobshunter.dto.Job;
 import com.jobshunter.processor.PackageExpected;
+import com.jobshunter.service.clients.JobSearchApiClient;
 import io.jsonwebtoken.lang.Collections;
 import jakarta.annotation.PostConstruct;
 import java.io.IOException;
@@ -21,8 +23,8 @@ import org.apache.logging.log4j.util.Strings;
 
 @Slf4j
 @PackageExpected("com.jobshunter.service.application")
-public abstract sealed class AbstractGptApiClient<T extends Gpt>
-    implements GPTSearchApiClient
+public abstract sealed class AbstractGptApiClient<C extends Gpt>
+    implements JobSearchApiClient<GptJobSearchRequest, List<Job>>
     permits GptApi4Client, GptApi5Client {
 
   private JsonMapper mapper;
@@ -30,9 +32,9 @@ public abstract sealed class AbstractGptApiClient<T extends Gpt>
   @Getter
   private String jobsSystemPrompt;
 
-  public abstract T getConfig();
+  public abstract C getConfig();
 
-  public abstract List<Job> searchWithModel(String systemPrompt, String userPrompt, T cfg, String fileId);
+  public abstract List<Job> searchWithModel(String systemPrompt, String userPrompt, C cfg, String fileId);
 
   @PostConstruct
   protected void init() throws IOException {
@@ -46,8 +48,9 @@ public abstract sealed class AbstractGptApiClient<T extends Gpt>
     }
   }
 
-  public final List<Job> search(String userPrompt, String fileId) {
-    T cfg = getConfig();
+  @Override
+  public final List<Job> searchJobs(GptJobSearchRequest request) {
+    C cfg = getConfig();
     if (cfg == null) {
       return List.of();
     }
@@ -55,7 +58,7 @@ public abstract sealed class AbstractGptApiClient<T extends Gpt>
       log.warn("ChatGPT job search enabled but CHATGPT_API_KEY missing.");
       return List.of();
     }
-    return searchWithModel(jobsSystemPrompt, userPrompt, cfg, fileId);
+    return searchWithModel(jobsSystemPrompt, request.userPrompt(), cfg, request.fileId());
   }
 
   protected List<Job> extractJobs(GptCompletionResponse response) {

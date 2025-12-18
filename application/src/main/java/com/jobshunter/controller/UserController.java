@@ -85,6 +85,9 @@ public class UserController {
     if (jobs.jobsFound().isEmpty()) {
       return ResponseEntity.ofNullable(null);
     } else {
+      if (user.isNotifyEmail() || user.isNotifyWhatsapp()) {
+        userDataService.updateUser(user, jobs.jobsFound());
+      }
       if (request.notifyOnWhatsApp() && user.isNotifyWhatsapp()) {
         jobHuntService.notifyWhatsApp(user, jobs);
       }

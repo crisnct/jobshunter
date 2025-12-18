@@ -1,4 +1,4 @@
-package com.jobshunter.service.clients;
+package com.jobshunter.service.clients.tinyurl;
 
 import com.jobshunter.processor.PackageExpected;
 import java.net.URI;
