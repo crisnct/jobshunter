@@ -1,7 +1,6 @@
 package com.jobshunter.config;
 
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @Data
@@ -10,13 +9,13 @@ public class ApplicationProperties {
 
   private JobsHunter jobsHunter = new JobsHunter();
   private Twilio twilio = new Twilio();
-  private Gpt5 gpt5 = new Gpt5();
-  private Gpt4 gpt4 = new Gpt4();
+  private Gpt gpt = new Gpt();
   private SerpApi serpApi = new SerpApi();
 
   @Data
   @ConfigurationProperties(prefix = "jobshunter")
   public static class JobsHunter {
+
     private String name;
     private String expiredExpressions;
     private Boolean useDummyData;
@@ -27,46 +26,41 @@ public class ApplicationProperties {
 
   @Data
   public static class Scheduler {
+
     private String frequency;
   }
 
   @Data
   @ConfigurationProperties(prefix = "twilio")
   public static class Twilio {
+
     private String accountSid;
     private String authToken;
     private String fromNumber;
   }
 
   @Data
+  @ConfigurationProperties(prefix = "gpt")
   public static class Gpt {
 
     private String apiKey;
-    private String model;
+    private double temperature;
     private int maxTokens;
-    private String systemPromptFile;
     private String toolsType;
+    private ModelSpecific economy;
+    private ModelSpecific premium;
   }
 
   @Data
-  @EqualsAndHashCode(callSuper = true)
-  @ConfigurationProperties(prefix = "gpt5")
-  public static class Gpt5 extends Gpt {
+  public static class ModelSpecific {
 
-    private double temperature;
-  }
-
-  @Data
-  @EqualsAndHashCode(callSuper = true)
-  @ConfigurationProperties(prefix = "gpt4")
-  public static class Gpt4 extends Gpt {
-
-    private double temperature;
+    private String model;
+    private String systemPromptFile;
   }
 
   @Data
   @ConfigurationProperties(prefix = "serpApi")
-  public static class SerpApi{
+  public static class SerpApi {
 
     private String apiKey;
 

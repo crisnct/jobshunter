@@ -5,7 +5,7 @@ import com.jobshunter.config.ApplicationProperties.SerpApi;
 import com.jobshunter.dto.SearchWithSerpRequest;
 import com.jobshunter.dto.SerpApiJobHit;
 import com.jobshunter.dto.SerpApiJobsResult;
-import com.jobshunter.service.clients.JobSearchApiClient;
+import com.jobshunter.service.clients.SerpApiClient;
 import jakarta.validation.constraints.NotNull;
 import java.io.IOException;
 import java.net.URI;
@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
@@ -26,7 +27,8 @@ import org.springframework.web.client.RestClient;
  */
 @Slf4j
 @Component
-public non-sealed class SerpApiClient implements JobSearchApiClient<SearchWithSerpRequest, SerpApiJobsResult> {
+@ConditionalOnProperty(name = "jobshunter.useDummyData", havingValue = "false")
+public non-sealed class SerpApiClientImpl implements SerpApiClient<SearchWithSerpRequest, SerpApiJobsResult> {
 
   private static final URI BASE = URI.create("https://serpapi.com/search");
 
@@ -35,7 +37,7 @@ public non-sealed class SerpApiClient implements JobSearchApiClient<SearchWithSe
 
   private final SerpApi serpApiConfig;
 
-  public SerpApiClient(ApplicationProperties properties) {
+  public SerpApiClientImpl(ApplicationProperties properties) {
     serpApiConfig = properties.getSerpApi();
   }
 

@@ -1,8 +1,9 @@
 package com.jobshunter.service.clients.mailtrap;
 
 import com.jobshunter.processor.PackageExpected;
-import com.jobshunter.service.clients.mailtrap.RestMailtrapClient.MailtrapTemplateRequest.From;
-import com.jobshunter.service.clients.mailtrap.RestMailtrapClient.MailtrapTemplateRequest.To;
+import com.jobshunter.service.clients.RestMailtrapClient;
+import com.jobshunter.service.clients.mailtrap.RestMailtrapClientImpl.MailtrapTemplateRequest.From;
+import com.jobshunter.service.clients.mailtrap.RestMailtrapClientImpl.MailtrapTemplateRequest.To;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
@@ -10,16 +11,17 @@ import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
 @Slf4j
 @Component
 @PackageExpected("com.jobshunter.service.application.notifiers")
-public class RestMailtrapClient {
+@ConditionalOnProperty(name = "jobshunter.useDummyData", havingValue = "false")
+public non-sealed class RestMailtrapClientImpl implements RestMailtrapClient {
 
   private static final URI MAILTRAP_URI = URI.create("https://send.api.mailtrap.io/api/send");
 
@@ -38,7 +40,8 @@ public class RestMailtrapClient {
   @Value("${spring.mail.templateUUID:}")
   private String templateUUID;
 
-  public ResponseEntity<String> sendEmailWithNewJobs(
+  @Override
+  public String sendEmailWithNewJobs(
       @NonNull String username,
       @NonNull String email,
       @NonNull String body
@@ -64,7 +67,7 @@ public class RestMailtrapClient {
         .onStatus(HttpStatusCode::is2xxSuccessful, (req, res) -> {
           log.info("Email send successfully to {}", email);
         })
-        .toEntity(String.class);
+        .toString();
   }
 
   public record MailtrapTemplateRequest(

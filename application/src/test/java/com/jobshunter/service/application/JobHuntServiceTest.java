@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import com.jobshunter.config.ApplicationProperties;
-import com.jobshunter.config.ApplicationProperties.Gpt5;
+import com.jobshunter.config.ApplicationProperties.Gpt;
 import com.jobshunter.config.ApplicationProperties.Twilio;
 import com.jobshunter.database.service.UserDataService;
 import com.jobshunter.service.clients.twilio.TwilioClient;
@@ -140,7 +140,7 @@ class JobHuntServiceTest {
     }
 
     // nested ChatGPT
-    Gpt5 gpt5 = result.getGpt5();
+    Gpt gpt5 = result.getGpt();
     if (gpt5 != null) {
       setIfPresent(props, "jobshunter.chatGpt.apiKey", gpt5, "apiKey");
       setIfPresent(props, "jobshunter.chatGpt.model", gpt5, "model");

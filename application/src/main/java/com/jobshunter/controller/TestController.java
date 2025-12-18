@@ -7,7 +7,7 @@ import com.jobshunter.dto.JobHuntResponse;
 import com.jobshunter.dto.SearchWithSerpRequest;
 import com.jobshunter.dto.SerpApiJobsResult;
 import com.jobshunter.service.application.notifiers.EmailNotifierService;
-import com.jobshunter.service.clients.serpapi.SerpApiClient;
+import com.jobshunter.service.clients.SerpApiClient;
 import io.jsonwebtoken.lang.Collections;
 import jakarta.validation.Valid;
 import java.io.IOException;

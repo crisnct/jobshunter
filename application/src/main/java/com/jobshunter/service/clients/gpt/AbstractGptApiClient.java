@@ -1,17 +1,22 @@
 package com.jobshunter.service.clients.gpt;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.json.JsonMapper;
+import com.jobshunter.config.ApplicationProperties;
 import com.jobshunter.config.ApplicationProperties.Gpt;
+import com.jobshunter.config.ApplicationProperties.ModelSpecific;
+import com.jobshunter.dto.GptCompletionResponse;
 import com.jobshunter.dto.GptJobSearchRequest;
+import com.jobshunter.dto.Input;
 import com.jobshunter.dto.Job;
+import com.jobshunter.dto.OutputItem;
+import com.jobshunter.dto.Tools;
 import com.jobshunter.processor.PackageExpected;
-import com.jobshunter.service.clients.JobSearchApiClient;
+import com.jobshunter.testdata.DummyEconomyGpt;
+import com.jobshunter.testdata.DummyPremiumGpt;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import io.jsonwebtoken.lang.Collections;
 import jakarta.annotation.PostConstruct;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -21,25 +26,27 @@ import java.util.Optional;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
+import org.springframework.beans.factory.annotation.Autowired;
 
 @Slf4j
-@PackageExpected("com.jobshunter.service.application")
-public abstract sealed class AbstractGptApiClient<C extends Gpt>
-    implements JobSearchApiClient<GptJobSearchRequest, List<Job>>
-    permits GptApi4Client, GptApi5Client {
+@PackageExpected("com.jobshunter.service.clients.gpt")
+public abstract sealed class AbstractGptApiClient permits EconomyGptJobSearchImpl, PremiumGptJobSearchImpl, DummyEconomyGpt, DummyPremiumGpt {
 
   private JsonMapper mapper;
+
+  @Autowired
+  private ApplicationProperties properties;
 
   @Getter
   private String jobsSystemPrompt;
 
-  public abstract C getConfig();
+  public abstract ModelSpecific getConfig();
 
   @RateLimiter(name = "openaiLimiter")
-  public abstract List<Job> searchWithModel(String systemPrompt, String userPrompt, C cfg, String fileId);
+  public abstract List<Job> searchWithModel(String systemPrompt, String userPrompt, ModelSpecific cfg, String fileId);
 
   @PostConstruct
-  protected void init() throws IOException {
+  protected void init() {
     mapper = JsonMapper.builder().findAndAddModules().build();
     try (var inputStream = getClass().getClassLoader().getResourceAsStream(
         "prompts/" + getConfig().getSystemPromptFile())) {
@@ -50,17 +57,13 @@ public abstract sealed class AbstractGptApiClient<C extends Gpt>
     }
   }
 
-  @Override
   public List<Job> searchJobs(GptJobSearchRequest request) {
-    C cfg = getConfig();
-    if (cfg == null) {
-      return List.of();
-    }
-    if (cfg.getApiKey() == null || cfg.getApiKey().isBlank()) {
+    Gpt gpt = properties.getGpt();
+    if (gpt.getApiKey() == null || gpt.getApiKey().isBlank()) {
       log.warn("ChatGPT job search enabled but CHATGPT_API_KEY missing.");
       return List.of();
     }
-    return searchWithModel(jobsSystemPrompt, request.userPrompt(), cfg, request.fileId());
+    return searchWithModel(jobsSystemPrompt, request.userPrompt(), getConfig(), request.fileId());
   }
 
   protected List<Job> extractJobs(GptCompletionResponse response) {
@@ -68,14 +71,14 @@ public abstract sealed class AbstractGptApiClient<C extends Gpt>
       return List.of();
     }
     Optional<OutputItem> item = response.output().stream()
-        .filter(p -> Objects.equals(p.type, "message") && !p.content().isEmpty())
+        .filter(p -> Objects.equals(p.type(), "message") && !p.content().isEmpty())
         .findAny();
     if (item.isPresent()) {
       final List<Job> jobs = new ArrayList<>();
-      item.get().content.stream()
-          .filter(c -> c.text.length() > 2)
-          .filter(c -> Objects.equals("output_text", c.type))
-          .forEach(o -> jobs.addAll(parseJobs(o.text)));
+      item.get().content().stream()
+          .filter(c -> c.text().length() > 2)
+          .filter(c -> Objects.equals("output_text", c.type()))
+          .forEach(o -> jobs.addAll(parseJobs(o.text())));
       return jobs;
     } else {
       return java.util.Collections.emptyList();
@@ -92,47 +95,8 @@ public abstract sealed class AbstractGptApiClient<C extends Gpt>
       Job[] parsed = mapper.readValue(text, Job[].class);
       return Arrays.stream(parsed).map(job -> new Job(job.score(), job.url(), getConfig().getModel())).toList();
     } catch (JsonProcessingException e) {
-      log.warn("Failed to parse jobs from ChatGPT response: {}", e.getMessage());
+      log.error("Failed to parse jobs from ChatGPT response: {}", e.getMessage());
       return List.of();
-    }
-  }
-
-
-  @JsonIgnoreProperties(ignoreUnknown = true)
-  protected record GptCompletionResponse(List<OutputItem> output) {
-
-  }
-
-  @JsonIgnoreProperties(ignoreUnknown = true)
-  private record OutputItem(String id, String type, String status, List<ContentItem> content) {
-
-  }
-
-  @JsonIgnoreProperties(ignoreUnknown = true)
-  private record ContentItem(String type, String text) {
-
-  }
-
-  protected record Tools(String type) {
-
-  }
-
-  protected sealed interface InputObj permits InputMessage, InputFile {
-
-  }
-
-  protected record Input(String role, List<InputObj> content) {
-
-  }
-
-  protected record InputMessage(String type, String text) implements InputObj {
-
-  }
-
-  protected record InputFile(String type, String file_id) implements InputObj {
-
-    public InputFile(String file_id) {
-      this("input_file", file_id);
     }
   }
 

@@ -1,0 +1,21 @@
+package com.jobshunter.testdata;
+
+import com.jobshunter.processor.PackageExpected;
+import com.jobshunter.service.clients.RestMailtrapClient;
+import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.stereotype.Component;
+
+@Slf4j
+@Component
+@PackageExpected("com.jobshunter.service.application.notifiers")
+@ConditionalOnProperty(name = "jobshunter.useDummyData", havingValue = "true")
+public final class DummyRestMailtrapClient implements RestMailtrapClient {
+
+  @Override
+  public String sendEmailWithNewJobs(@NonNull String username, @NonNull String email, @NonNull String body) {
+    return "Email sent successfully";
+  }
+
+}

@@ -12,9 +12,10 @@ import com.jobshunter.dto.SerpApiJobHit;
 import com.jobshunter.dto.SerpApiJobsResult;
 import com.jobshunter.service.application.notifiers.EmailNotifierService;
 import com.jobshunter.service.application.notifiers.WhatsappNotifierService;
-import com.jobshunter.service.clients.gpt.GptApi4Client;
-import com.jobshunter.service.clients.gpt.GptApi5Client;
-import com.jobshunter.service.clients.serpapi.SerpApiClient;
+import com.jobshunter.service.clients.EconomyGptClient;
+import com.jobshunter.service.clients.GptJobScoreCalculatorClient;
+import com.jobshunter.service.clients.PremiumGptClient;
+import com.jobshunter.service.clients.SerpApiClient;
 import jakarta.annotation.PostConstruct;
 import java.io.IOException;
 import java.net.InetAddress;
@@ -50,13 +51,16 @@ public class JobHuntService {
   private ApplicationProperties properties;
 
   @Autowired
-  private GptApi5Client gpt5Client;
+  private PremiumGptClient<GptJobSearchRequest, List<Job>> gpt5Client;
 
   @Autowired
-  private GptApi4Client gpt4Client;
+  private EconomyGptClient<GptJobSearchRequest, List<Job>> gpt4Client;
 
   @Autowired
-  private SerpApiClient serpApiClient;
+  private GptJobScoreCalculatorClient scoreCalculator;
+
+  @Autowired
+  private SerpApiClient<SearchWithSerpRequest, SerpApiJobsResult> serpApiClient;
 
   @Autowired
   @Qualifier("gptSearchExecutor")
@@ -175,7 +179,7 @@ public class JobHuntService {
 
       for (SerpApiJobHit job : serpApiResult.jobs()) {
         String jobDescription = job.description() + "\n" + job.highlights();
-        int score = gpt4Client.computeScore(jobDescription, user.getCvFileId());
+        int score = scoreCalculator.computeScore(jobDescription, user.getCvFileId());
         jobsSync.addJob(new Job(score, job.applyLinks().getFirst(), "Google"));
       }
     } catch (IOException e) {

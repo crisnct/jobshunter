@@ -2,8 +2,7 @@ package com.jobshunter.service.application;
 
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.service.UserDataService;
-import com.jobshunter.service.clients.gpt.GPTFilesApiClient;
-import com.jobshunter.service.clients.gpt.GptApi5Client;
+import com.jobshunter.service.clients.GPTFileApiClient;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -37,10 +36,7 @@ public class UserCvService {
   private UserDataService userDataService;
 
   @Autowired
-  private GptApi5Client chatGptApiClient;
-
-  @Autowired
-  private GPTFilesApiClient filesClient;
+  private GPTFileApiClient filesClient;
 
   @Transactional
   public String uploadUserCv(String username, MultipartFile file) throws IOException {

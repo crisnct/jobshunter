@@ -1,12 +1,18 @@
 package com.jobshunter.service.clients.gpt;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.jobshunter.config.ApplicationProperties;
-import com.jobshunter.config.ApplicationProperties.Gpt4;
-import com.jobshunter.dto.Job;
+import com.jobshunter.config.ApplicationProperties.Gpt;
+import com.jobshunter.dto.ContentItem;
+import com.jobshunter.dto.Gpt4ScorePayload;
+import com.jobshunter.dto.GptCompletionResponse;
+import com.jobshunter.dto.Input;
+import com.jobshunter.dto.InputFile;
+import com.jobshunter.dto.InputMessage;
+import com.jobshunter.dto.OutputItem;
 import com.jobshunter.processor.PackageExpected;
+import com.jobshunter.service.clients.GptJobScoreCalculatorClient;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import io.jsonwebtoken.lang.Collections;
 import jakarta.annotation.PostConstruct;
@@ -18,14 +24,16 @@ import java.util.Objects;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
 @Slf4j
 @Component
-@PackageExpected("com.jobshunter.service.application")
-public non-sealed class GptApi4Client extends AbstractGptApiClient<Gpt4> {
+@PackageExpected("com.jobshunter.service.clients.gpt")
+@ConditionalOnProperty(name = "jobshunter.useDummyData", havingValue = "false")
+public non-sealed class GptJobScoreCalculatorClientImpl implements GptJobScoreCalculatorClient {
 
   private static final URI DEFAULT_URI = URI.create("https://api.openai.com/v1/responses");
 
@@ -42,15 +50,9 @@ public non-sealed class GptApi4Client extends AbstractGptApiClient<Gpt4> {
   @Autowired
   private JsonMapper mapper;
 
-  @Override
-  public Gpt4 getConfig() {
-    return properties.getGpt4();
-  }
-
-  @SuppressWarnings("DataFlowIssue")
   @PostConstruct
+  @SuppressWarnings("DataFlowIssue")
   public void init() throws IOException {
-    super.init();
     try (var inputStream = getClass().getClassLoader().getResourceAsStream(
         "prompts/scoreUserPrompt.txt")) {
       calculateScoreUserPrompt = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
@@ -62,70 +64,15 @@ public non-sealed class GptApi4Client extends AbstractGptApiClient<Gpt4> {
   }
 
   @Override
-  public List<Job> searchWithModel(String systemPrompt, String userPrompt, Gpt4 cfg, String fileId) {
-    try {
-      GptJobsPayload payload = new GptJobsPayload(
-          cfg.getModel(),
-          cfg.getTemperature(),
-          cfg.getMaxTokens(),
-          List.of(new Tools(cfg.getToolsType())),
-          List.of(
-              new Input("system", List.of(new InputMessage("input_text", systemPrompt))),
-              new Input("user", List.of(
-                  new InputMessage("input_text", userPrompt),
-                  new InputFile(fileId)
-              ))
-          )
-      );
-
-      GptCompletionResponse response = restClient.post()
-          .uri(DEFAULT_URI)
-          .header("Authorization", "Bearer " + cfg.getApiKey())
-          .contentType(MediaType.APPLICATION_JSON)
-          .body(payload)
-          .retrieve()
-          .body(GptCompletionResponse.class);
-
-      //noinspection DataFlowIssue
-      return extractJobs(response);
-    } catch (Exception e) {
-      log.error("ChatGPT job API call failed", e);
-      return List.of();
-    }
-  }
-
-  private record Gpt4ScorePayload(
-      String model,
-      double temperature,
-      int max_output_tokens,
-      List<GptApi4Client.Input> input
-  ) {
-
-  }
-
-
-  @JsonIgnoreProperties(ignoreUnknown = true)
-  private record ChatCompletionResponse(List<GptApi4Client.OutputItem> output) {
-
-  }
-
-  @JsonIgnoreProperties(ignoreUnknown = true)
-  private record OutputItem(String id, String type, String status, List<GptApi4Client.ContentItem> content) {
-
-  }
-
-  @JsonIgnoreProperties(ignoreUnknown = true)
-  private record ContentItem(String type, String text) {
-
-  }
-
   @RateLimiter(name = "openaiLimiter")
   public int computeScore(String jobDescription, String fileId) {
     try {
+      Gpt config = properties.getGpt();
+
       Gpt4ScorePayload payload = new Gpt4ScorePayload(
-          getConfig().getModel(),
-          getConfig().getTemperature(),
-          getConfig().getMaxTokens(),
+          config.getEconomy().getModel(),
+          config.getTemperature(),
+          config.getMaxTokens(),
           List.of(
               new Input("system",
                   List.of(new InputMessage("input_text", calculateScoreSystemPrompt))),
@@ -138,7 +85,7 @@ public non-sealed class GptApi4Client extends AbstractGptApiClient<Gpt4> {
 
       String response = restClient.post()
           .uri(DEFAULT_URI)
-          .header("Authorization", "Bearer " + getConfig().getApiKey())
+          .header("Authorization", "Bearer " + config.getApiKey())
           .contentType(MediaType.APPLICATION_JSON)
           .body(payload)
           .retrieve()
@@ -152,19 +99,19 @@ public non-sealed class GptApi4Client extends AbstractGptApiClient<Gpt4> {
   }
 
   private int extractScore(String body) throws JsonProcessingException {
-    ChatCompletionResponse response = mapper.readValue(body, ChatCompletionResponse.class);
+    GptCompletionResponse response = mapper.readValue(body, GptCompletionResponse.class);
     if (Collections.isEmpty(response.output())) {
       return 0;
     }
-    Optional<GptApi4Client.OutputItem> item = response.output().stream()
-        .filter(p -> Objects.equals(p.type, "message") && !p.content().isEmpty())
+    Optional<OutputItem> item = response.output().stream()
+        .filter(p -> Objects.equals(p.type(), "message") && !p.content().isEmpty())
         .findAny();
     if (item.isPresent()) {
-      String score = item.get().content.stream()
-          .filter(c -> Objects.equals("output_text", c.type))
+      String score = item.get().content().stream()
+          .filter(c -> Objects.equals("output_text", c.type()))
           .findFirst()
           .orElseGet(() -> new ContentItem("output_text", "0"))
-          .text;
+          .text();
       return Integer.parseInt(score);
     } else {
       return 0;

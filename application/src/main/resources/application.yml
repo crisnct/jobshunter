@@ -17,21 +17,17 @@ twilio:
   auth-token: ${TWILIO_AUTH_TOKEN:notset}
   from-number: ${TWILIO_WHATSAPP_FROM:notset}
 
-gpt5:
+gpt:
   apiKey: ${CHATGPT_API_KEY:notset}
-  model: "gpt-5.1"
   temperature: 0
   maxTokens: 1000
   toolsType: "web_search"
-  systemPromptFile: "jobsSystemPromptGPT5.txt"
-
-gpt4:
-  apiKey: ${CHATGPT_API_KEY:notset}
-  model: "gpt-4o-mini"
-  temperature: 0
-  maxTokens: 2000
-  toolsType: "web_search"
-  systemPromptFile: "jobsSystemPromptGPT4.txt"
+  economy:
+    model: "gpt-4o-mini"
+    systemPromptFile: "jobsSystemPromptGPT4.txt"
+  premium:
+    model: "gpt-5.2"
+    systemPromptFile: "jobsSystemPromptGPT5.txt"
 
 serpApi:
   apiKey: ${SERP_API_KEY:notset}
