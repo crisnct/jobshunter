@@ -1,0 +1,7 @@
+Dear admins,
+
+A new account has been created for user {{1}} who has email address {{2}}
+Please check and approve it or reject it.
+
+Sincerely,
+JobsHunter

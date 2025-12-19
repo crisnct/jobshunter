@@ -1,0 +1,1 @@
+Calculate a score from 1 to 100 for matching of attached resume with this job description:

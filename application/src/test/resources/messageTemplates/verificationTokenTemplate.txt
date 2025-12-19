@@ -1,0 +1,6 @@
+Dear {{1}},
+
+Your token is: {{2}}
+
+Sincerely,
+JobsHunter

@@ -3,6 +3,7 @@ server:
 
 jobshunter:
   expiredExpressions: was expired,is expired,no longer exists,This job was available,is no longer active,job is no longer available,this job was removed,Job not found,Applications from candidates outside of our global target markets are currently not accepted,No longer accepting applications,The job ad is no longer active,Application not possible,This job opening is no longer available
+  useDummyData: true
   iterationPerUser: 1
   iterationDelay: 30000
 
@@ -14,12 +15,17 @@ jobshunter:
     auth-token: ${TWILIO_AUTH_TOKEN:}
     from-number: ${TWILIO_WHATSAPP_FROM:}
 
-  chatGpt:
-    apiKey: ${CHATGPT_API_KEY:}
-    model: "gpt-5.1"
-    temperature: 0
-    maxTokens: 2000
-    toolsType: "web_search"
+gpt:
+  apiKey: ${CHATGPT_API_KEY:notset}
+  temperature: 0
+  maxTokens: 1000
+  toolsType: "web_search"
+  economy:
+    model: "gpt-4o-mini"
+    systemPromptFile: "jobsSystemPromptGPT4.txt"
+  premium:
+    model: "gpt-5.2"
+    systemPromptFile: "jobsSystemPromptGPT5.txt"
 
 spring:
   datasource:
@@ -33,7 +39,7 @@ spring:
     open-in-view: false
   liquibase:
     change-log: classpath:db/changelog/db.changelog-master.xml
-    enabled: ${LIQUIBASE_ENABLED:true}
+    enabled: false
 
 security:
   jwt:
