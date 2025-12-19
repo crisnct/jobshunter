@@ -1,0 +1,416 @@
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  AlertCircle,
+  Bell,
+  Briefcase,
+  CheckCircle2,
+  Clock,
+  Globe,
+  LayoutDashboard,
+  Loader2,
+  LogOut,
+  MoreVertical,
+  Plus,
+  Search,
+  Settings,
+  ShieldCheck,
+  User,
+} from 'lucide-react';
+import './index.css';
+
+const App = () => {
+  const baseUrl = import.meta.env.VITE_API_BASE_URL || 'https://ronin-archesporial-lonnie.ngrok-free.dev';
+
+  const [status, setStatus] = useState({ type: 'info', message: 'System Ready' });
+  const [loginForm, setLoginForm] = useState({ username: '', password: '' });
+  const [token, setToken] = useState('');
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState('dash');
+
+  const logMessage = useCallback((message, type = 'info') => {
+    setStatus({ type, message });
+  }, []);
+
+  const api = useMemo(
+    () => ({
+      async call(path, { method = 'GET', body, headers = {} } = {}) {
+        const resp = await fetch(`${baseUrl}${path}`, {
+          method,
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            ...headers,
+          },
+          body: body ? JSON.stringify(body) : undefined,
+        });
+
+        const text = await resp.text();
+        let parsed;
+        try {
+          parsed = text ? JSON.parse(text) : null;
+        } catch (_) {
+          parsed = text;
+        }
+
+        if (!resp.ok) {
+          throw new Error((parsed && parsed.message) || parsed || `Request failed with ${resp.status}`);
+        }
+
+        return parsed;
+      },
+    }),
+    [baseUrl, token]
+  );
+
+  useEffect(() => {
+    if (!token) {
+      setUser(null);
+      return;
+    }
+
+    setLoading(true);
+    api
+      .call('/api/user/me')
+      .then((data) => {
+        setUser(data);
+        logMessage('Secure connection established', 'success');
+      })
+      .catch((err) => {
+        logMessage(`Session expired: ${err.message}`, 'error');
+        setToken('');
+      })
+      .finally(() => setLoading(false));
+  }, [token, api, logMessage]);
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    logMessage('Verifying credentials...', 'info');
+    try {
+      const res = await api.call('/api/auth/login', { method: 'POST', body: loginForm });
+      setToken(res.token);
+    } catch (err) {
+      setToken('');
+      logMessage(err.message, 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLogout = () => {
+    setToken('');
+    setUser(null);
+    setLoginForm({ username: '', password: '' });
+    logMessage('Logged out successfully.', 'info');
+  };
+
+  const applications = [
+    { id: 1, company: 'TechFlow', role: 'Senior React Developer', status: 'Interview', date: '2h ago', color: 'bg-blue-100 text-blue-700' },
+    { id: 2, company: 'Innovate AI', role: 'Full Stack Engineer', status: 'Pending', date: '5h ago', color: 'bg-amber-100 text-amber-700' },
+    { id: 3, company: 'CloudScale', role: 'Frontend Lead', status: 'Rejected', date: 'Yesterday', color: 'bg-red-100 text-red-700' },
+  ];
+
+  const SidebarItem = ({ icon: Icon, label, id, active }) => (
+    <button
+      onClick={() => setActiveTab(id)}
+      className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group ${
+        active ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-100' : 'text-slate-500 hover:bg-slate-50 hover:text-indigo-600'
+      }`}
+    >
+      <Icon size={18} className={active ? 'text-white' : 'text-slate-400 group-hover:text-indigo-500'} />
+      <span className="font-semibold text-sm">{label}</span>
+    </button>
+  );
+
+  const StatusToast = () => (
+    <div
+      className={`fixed bottom-6 right-6 flex items-center gap-3 px-5 py-3 rounded-2xl shadow-2xl border transition-all duration-300 transform z-50 ${
+        status.type === 'error'
+          ? 'bg-red-50 border-red-100 text-red-700'
+          : status.type === 'success'
+            ? 'bg-emerald-50 border-emerald-100 text-emerald-700'
+            : 'bg-white border-slate-100 text-slate-600'
+      }`}
+    >
+      {status.type === 'error' && <AlertCircle size={18} />}
+      {status.type === 'success' && <CheckCircle2 size={18} />}
+      <span className="text-sm font-medium">{status.message}</span>
+    </div>
+  );
+
+  if (!user && !loading && !token) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6 font-sans">
+        <div className="w-full max-w-md">
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-indigo-600 rounded-2xl shadow-xl mb-4">
+              <Globe className="text-white" size={32} />
+            </div>
+            <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">JobsHunter</h1>
+            <p className="text-slate-500 mt-2 font-medium">Your gateway to the next career leap</p>
+          </div>
+
+          <div className="bg-white rounded-3xl shadow-2xl shadow-slate-200/60 p-8 border border-slate-100">
+            <form onSubmit={handleLogin} className="space-y-6">
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">Username</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Enter your username"
+                  className="w-full px-4 py-3.5 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all"
+                  value={loginForm.username}
+                  onChange={(e) => setLoginForm({ ...loginForm, username: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">Password</label>
+                <input
+                  type="password"
+                  required
+                  placeholder="••••••••"
+                  className="w-full px-4 py-3.5 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all"
+                  value={loginForm.password}
+                  onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-xl shadow-lg shadow-indigo-100 transition-all flex items-center justify-center gap-2 active:scale-[0.98] disabled:opacity-70"
+              >
+                {loading ? <Loader2 className="animate-spin" size={20} /> : 'Login to Dashboard'}
+              </button>
+            </form>
+          </div>
+          <StatusToast />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-slate-50 flex font-sans">
+      <aside className="w-64 bg-white border-r border-slate-200 hidden lg:flex flex-col p-6 shrink-0">
+        <div className="flex items-center gap-3 mb-10 px-2">
+          <div className="w-9 h-9 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-100">
+            <Globe className="text-white" size={20} />
+          </div>
+          <span className="font-black text-xl text-slate-900 tracking-tight">JobsHunter</span>
+        </div>
+
+        <nav className="flex-1 space-y-1.5">
+          <SidebarItem icon={LayoutDashboard} label="Dashboard" id="dash" active={activeTab === 'dash'} />
+          <SidebarItem icon={Briefcase} label="My Applications" id="apps" active={activeTab === 'apps'} />
+          <SidebarItem icon={User} label="Profile Details" id="profile" active={activeTab === 'profile'} />
+          <SidebarItem icon={Bell} label="Alerts" id="notif" active={activeTab === 'notif'} />
+          <div className="pt-4 pb-2">
+            <p className="px-4 text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Preferences</p>
+          </div>
+          <SidebarItem icon={Settings} label="Account Settings" id="settings" active={activeTab === 'settings'} />
+        </nav>
+
+        <div className="pt-6 border-t border-slate-100">
+          <div className="bg-slate-50 rounded-2xl p-4 mb-4">
+            <p className="text-xs font-bold text-slate-400 mb-1 uppercase tracking-tight text-center">Connected as</p>
+            <p className="text-sm font-bold text-slate-900 text-center truncate">{user?.username}</p>
+          </div>
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-slate-500 hover:bg-red-50 hover:text-red-600 transition-all font-bold text-sm"
+          >
+            <LogOut size={18} />
+            Sign Out
+          </button>
+        </div>
+      </aside>
+
+      <main className="flex-1 flex flex-col h-screen overflow-hidden">
+        <header className="bg-white/80 backdrop-blur-md border-b border-slate-200 h-20 flex items-center justify-between px-8 shrink-0 z-10">
+          <div className="flex items-center gap-4 flex-1">
+            <div className="relative max-w-md w-full">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+              <input
+                type="text"
+                placeholder="Search jobs, companies..."
+                className="w-full pl-11 pr-4 py-2.5 bg-slate-100 border-none rounded-2xl text-sm focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all"
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <button className="p-2.5 text-slate-500 hover:bg-slate-100 rounded-xl transition-colors relative">
+              <Bell size={20} />
+              <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white" />
+            </button>
+            <div className="h-8 w-[1px] bg-slate-200 mx-2" />
+            <div className="flex items-center gap-3 pl-2">
+              <div className="text-right hidden sm:block">
+                <p className="text-sm font-bold text-slate-900 leading-none">{user?.username}</p>
+                <p className="text-[11px] font-medium text-emerald-600 mt-1 uppercase tracking-tighter">Premium Hunter</p>
+              </div>
+              <div className="w-10 h-10 rounded-2xl bg-indigo-100 border border-indigo-200 flex items-center justify-center text-indigo-600 shadow-sm">
+                <User size={22} />
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <div className="flex-1 overflow-y-auto bg-slate-50/50 p-8">
+          {loading ? (
+            <div className="h-full flex flex-col items-center justify-center text-slate-400 gap-4">
+              <div className="relative">
+                <div className="w-12 h-12 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin" />
+              </div>
+              <p className="font-bold text-sm tracking-wide">Fetching secure data...</p>
+            </div>
+          ) : (
+            <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+              {activeTab === 'dash' && (
+                <>
+                  <section className="relative overflow-hidden bg-gradient-to-br from-indigo-900 to-indigo-800 rounded-[2.5rem] p-10 text-white shadow-2xl shadow-indigo-200">
+                    <div className="relative z-10 grid md:grid-cols-2 gap-8 items-center">
+                      <div>
+                        <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-indigo-100 text-[10px] font-black uppercase tracking-widest mb-4 border border-white/5 backdrop-blur-sm">
+                          <ShieldCheck size={12} /> Live Account
+                        </span>
+                        <h1 className="text-4xl font-extrabold mb-3 tracking-tight">Success is near, {user?.username}.</h1>
+                        <p className="text-indigo-100/80 text-lg font-medium leading-relaxed">You have 3 active interviews scheduled for this week. Good luck!</p>
+                        <div className="mt-8 flex gap-4">
+                          <button className="bg-white text-indigo-900 px-6 py-3 rounded-xl font-bold text-sm shadow-xl shadow-indigo-950/20 hover:scale-105 transition-transform">
+                            View Schedule
+                          </button>
+                          <button className="bg-white/10 border border-white/20 px-6 py-3 rounded-xl font-bold text-sm backdrop-blur-sm hover:bg-white/20 transition-all">
+                            New Hunt
+                          </button>
+                        </div>
+                      </div>
+                      <div className="hidden md:flex justify-end">
+                        <div className="grid grid-cols-2 gap-4">
+                          {[{ label: 'Applications', val: '24' }, { label: 'Interviews', val: '3' }, { label: 'Offers', val: '1' }, { label: 'Views', val: '142' }].map((stat) => (
+                            <div key={stat.label} className="bg-white/5 backdrop-blur-md border border-white/10 p-5 rounded-3xl min-w-[120px]">
+                              <p className="text-indigo-200 text-[10px] font-bold uppercase tracking-widest mb-1">{stat.label}</p>
+                              <p className="text-2xl font-black">{stat.val}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="absolute -right-16 -top-16 w-80 h-80 bg-white/5 rounded-full blur-3xl" />
+                    <div className="absolute -left-16 -bottom-16 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl" />
+                  </section>
+
+                  <div className="grid lg:grid-cols-3 gap-8">
+                    <div className="lg:col-span-2 space-y-6">
+                      <div className="flex items-center justify-between px-2">
+                        <h3 className="font-black text-slate-800 uppercase text-xs tracking-[0.2em]">Recent Applications</h3>
+                        <button className="text-indigo-600 font-bold text-xs hover:underline">View All</button>
+                      </div>
+                      <div className="space-y-3">
+                        {applications.map((app) => (
+                          <div key={app.id} className="group bg-white p-5 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-xl hover:shadow-slate-200/50 transition-all flex items-center justify-between">
+                            <div className="flex items-center gap-5">
+                              <div className="w-14 h-14 bg-slate-50 rounded-2xl flex items-center justify-center border border-slate-100 group-hover:bg-indigo-50 group-hover:border-indigo-100 transition-colors">
+                                <Briefcase className="text-slate-400 group-hover:text-indigo-500" size={24} />
+                              </div>
+                              <div>
+                                <h4 className="font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">{app.role}</h4>
+                                <div className="flex items-center gap-3 mt-1">
+                                  <span className="text-sm font-semibold text-slate-500">{app.company}</span>
+                                  <span className="w-1 h-1 rounded-full bg-slate-300" />
+                                  <span className="text-xs text-slate-400 flex items-center gap-1 font-medium">
+                                    <Clock size={12} /> {app.date}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-6">
+                              <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest ${app.color}`}>
+                                {app.status}
+                              </span>
+                              <button className="p-2 text-slate-300 hover:text-slate-900 transition-colors">
+                                <MoreVertical size={18} />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="space-y-6">
+                      <h3 className="font-black text-slate-800 uppercase text-xs tracking-[0.2em] px-2">Account Summary</h3>
+                      <div className="bg-white rounded-[2rem] border border-slate-100 p-6 shadow-sm overflow-hidden relative">
+                        <div className="space-y-6 relative z-10">
+                          <div>
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Authenticated ID</p>
+                            <p className="text-xs font-mono text-slate-600 truncate bg-slate-50 p-2 rounded-lg">{user?.id || 'Anonymous'}</p>
+                          </div>
+                          <div>
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 text-center">Profile Integrity</p>
+                            <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                              <div className="bg-indigo-600 h-full w-[85%]" />
+                            </div>
+                            <p className="text-right text-[10px] font-bold text-indigo-600 mt-2">85% Complete</p>
+                          </div>
+                          <button className="w-full py-3 bg-slate-900 text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-slate-800 transition-colors">
+                            Update CV <Plus size={16} />
+                          </button>
+                        </div>
+                        <div className="absolute -right-8 -bottom-10 w-40 h-40 bg-indigo-50 rounded-full blur-2xl" />
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {activeTab === 'profile' && (
+                <div className="space-y-8 max-w-4xl mx-auto">
+                  <div className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm">
+                    <div className="flex flex-col md:flex-row gap-10">
+                      <div className="shrink-0 flex flex-col items-center">
+                        <div className="w-32 h-32 rounded-[2.5rem] bg-indigo-50 border-4 border-white shadow-xl flex items-center justify-center text-indigo-600 relative overflow-hidden group">
+                          <User size={48} />
+                          <div className="absolute inset-0 bg-indigo-600/0 group-hover:bg-indigo-600/10 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+                            <Plus className="text-white" size={24} />
+                          </div>
+                        </div>
+                        <h2 className="mt-6 font-black text-2xl text-slate-900">{user?.username}</h2>
+                        <p className="text-slate-500 font-bold text-sm tracking-tight">Active Member since 2024</p>
+                      </div>
+
+                      <div className="flex-1 grid sm:grid-cols-2 gap-8">
+                        {[{ label: 'Primary Contact', value: `${user?.username}@jobshunter.io` }, { label: 'Location', value: 'San Francisco, CA' }, { label: 'Role Type', value: 'Full-time / Remote' }, { label: 'Experience', value: '5+ Years' }].map((item) => (
+                          <div key={item.label}>
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{item.label}</p>
+                            <p className="font-bold text-slate-800">{item.value}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-slate-900 rounded-[2.5rem] overflow-hidden border border-slate-800 shadow-2xl">
+                    <div className="p-6 border-b border-white/5 flex justify-between items-center bg-white/[0.02]">
+                      <h3 className="font-black text-white text-xs tracking-widest uppercase flex items-center gap-2">
+                        <ShieldCheck size={14} className="text-indigo-400" /> API Object Response
+                      </h3>
+                      <span className="text-[10px] font-black text-slate-500 bg-white/5 px-3 py-1 rounded-full uppercase">Raw Metadata</span>
+                    </div>
+                    <div className="p-8">
+                      <pre className="text-emerald-400 font-mono text-sm leading-relaxed overflow-x-auto selection:bg-indigo-500 selection:text-white">{JSON.stringify(user, null, 2)}</pre>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </main>
+
+      <StatusToast />
+    </div>
+  );
+};
+
+export default App;
