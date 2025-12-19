@@ -198,7 +198,7 @@ public class UserController {
   @PreAuthorize("hasRole('ADMIN')")
   public ResponseEntity<?> approveUser(
       @RequestParam("username") String username,
-      @RequestParam("rejectReason") String rejectReason
+      @RequestParam(value = "rejectReason", required = false) String rejectReason
   ) {
     if (username == null || username.isBlank()) {
       return ResponseEntity.badRequest().body(Map.of("error", "username must not be blank"));

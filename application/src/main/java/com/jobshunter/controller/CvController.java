@@ -24,7 +24,6 @@ public class CvController {
   private UserCvService userCvService;
 
   @PostMapping(value = "/upload", consumes = "multipart/form-data")
-  @PreAuthorize("hasRole('ADMIN')")
   public ResponseEntity<?> uploadCvToChatGpt(@RequestParam("file") MultipartFile file, Authentication authentication) throws IOException {
     String username = authentication != null ? authentication.getName() : null;
     String fileId = userCvService.uploadUserCv(username, file);
