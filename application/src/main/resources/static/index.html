@@ -189,6 +189,48 @@
     }), [baseUrl, token, logMessage]);
   }
 
+  const UserProfile = ({user, onLogout}) => {
+    if (!user) return null;
+
+    return h('section', {className: 'card profile-card'},
+      h('h2', null, `Welcome, ${user.username || 'User'}!`),
+      h('p', {className: 'mb-3 text-gray-700'}, 'Here\'s the full /api/user/me response:'),
+      h('pre', {className: 'code-block'}, JSON.stringify(user, null, 2)),
+      h('button', {
+        onClick: onLogout,
+        className: 'logout-button'
+      }, 'Logout')
+    );
+  };
+
+  const LoginForm = ({loginForm, onLogin, onUsernameChange, onPasswordChange}) => (
+    h('section', {className: 'card form-card'},
+      h('h2', null, 'Login'),
+      h('form', {className: 'form', onSubmit: onLogin},
+        h('label', {className: 'field'},
+          h('span', null, 'Username'),
+          h('input', {
+            className: 'auth-input',
+            required: true,
+            value: loginForm.username,
+            onChange: onUsernameChange
+          })
+        ),
+        h('label', {className: 'field'},
+          h('span', null, 'Password'),
+          h('input', {
+            type: 'password',
+            className: 'auth-input',
+            required: true,
+            value: loginForm.password,
+            onChange: onPasswordChange
+          })
+        ),
+        h('button', {type: 'submit'}, 'Login')
+      )
+    )
+  );
+
   const App = () => {
     const baseUrl = 'https://ronin-archesporial-lonnie.ngrok-free.dev';
 
@@ -241,51 +283,22 @@
       logMessage('Logged out.');
     };
 
-    const UserProfile = () => {
-      if (!user) return null;
+    const handleUsernameChange = React.useCallback((ev) => {
+      setLoginForm((prev) => ({...prev, username: ev.target.value}));
+    }, []);
 
-      return h('section', {className: 'card profile-card'},
-        h('h2', null, `Welcome, ${user.username || 'User'}!`),
-        h('p', {className: 'mb-3 text-gray-700'}, 'Here\'s the full /api/user/me response:'),
-        h('pre', {className: 'code-block'}, JSON.stringify(user, null, 2)),
-        h('button', {
-          onClick: handleLogout,
-          className: 'logout-button'
-        }, 'Logout')
-      );
-    };
-
-    const LoginForm = () => (
-      h('section', {className: 'card form-card'},
-        h('h2', null, 'Login'),
-        h('form', {className: 'form', onSubmit: handleLogin},
-          h('label', {className: 'field'},
-            h('span', null, 'Username'),
-            h('input', {
-              className: 'auth-input',
-              required: true,
-              value: loginForm.username,
-              onChange: (ev) => setLoginForm({...loginForm, username: ev.target.value})
-            })
-          ),
-          h('label', {className: 'field'},
-            h('span', null, 'Password'),
-            h('input', {
-              type: 'password',
-              className: 'auth-input',
-              required: true,
-              value: loginForm.password,
-              onChange: (ev) => setLoginForm({...loginForm, password: ev.target.value})
-            })
-          ),
-          h('button', {type: 'submit'}, 'Login')
-        )
-      )
-    );
+    const handlePasswordChange = React.useCallback((ev) => {
+      setLoginForm((prev) => ({...prev, password: ev.target.value}));
+    }, []);
 
     return h('main', {className: 'page'},
       h('img', {src: 'images/JobsHunterLogo.png', alt: 'JobsHunter logo', className: 'logo'}),
-      user ? h(UserProfile) : h(LoginForm),
+      user ? h(UserProfile, {user, onLogout: handleLogout}) : h(LoginForm, {
+        loginForm,
+        onLogin: handleLogin,
+        onUsernameChange: handleUsernameChange,
+        onPasswordChange: handlePasswordChange
+      }),
       h('div', {className: 'status'}, h('strong', null, 'Status:'), ` ${status}`)
     );
   };
