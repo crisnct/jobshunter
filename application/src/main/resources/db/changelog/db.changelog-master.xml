@@ -180,23 +180,8 @@
 
     <changeSet id="13-add-jwt-token-to-users" author="codex">
         <addColumn tableName="users">
-            <column name="jwt_token" type="VARCHAR(512)"/>
+            <column name="jwt_token" type="text"/>
         </addColumn>
-        <createIndex tableName="users" indexName="idx_users_jwt_token">
-            <column name="jwt_token"/>
-        </createIndex>
-    </changeSet>
-
-    <changeSet id="14-hash-jwt-token-column" author="codex">
-        <dropIndex tableName="users" indexName="idx_users_jwt_token"/>
-        <modifyDataType tableName="users" columnName="jwt_token" newDataType="CHAR(64)"/>
-        <update tableName="users">
-            <column name="jwt_token" valueComputed="NULL"/>
-            <where>jwt_token IS NOT NULL</where>
-        </update>
-        <createIndex tableName="users" indexName="idx_users_jwt_token">
-            <column name="jwt_token"/>
-        </createIndex>
     </changeSet>
 
 </databaseChangeLog>
