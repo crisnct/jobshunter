@@ -100,7 +100,7 @@ public class UserEntity implements UserDetails {
   private List<UserJobEntity> jobs = new ArrayList<>();
 
   @JsonIgnore
-  @Column(name = "jwt_token", length = 1024)
+  @Column(name = "jwt_token", length = 512)
   private String jwtToken;
 
   @Override
