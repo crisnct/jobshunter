@@ -13,8 +13,18 @@ import org.springframework.web.multipart.MultipartFile;
 @Slf4j
 @Component
 @PackageExpected("com.jobshunter.service.application.notifiers")
-@ConditionalOnProperty(name = "jobshunter.useDummyData", havingValue = "false")
+@ConditionalOnProperty(name = "jobshunter.useDummyData", havingValue = "true")
 public final class DummySmtpMailtrapClient implements SmtpMailtrapClient {
+
+  @Override
+  public void sendEmail(
+      @NonNull String to,
+      @Nullable String subject,
+      @NonNull String body
+  ) {
+    log.info("Sending email to {}", to);
+    log.info("Email send successfully to {}", to);
+  }
 
   @Override
   public void sendEmail(
@@ -23,8 +33,8 @@ public final class DummySmtpMailtrapClient implements SmtpMailtrapClient {
       @NonNull String body,
       @Nullable MultipartFile attachment
   ) {
-    log.info("Sending email to {}", to);
-    log.info("Email send successfully to {}", to);
+    log.info("Sending email with attachement to {}", to);
+    log.info("Email send with attachement  successfully to {}", to);
   }
 
 }

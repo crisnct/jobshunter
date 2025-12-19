@@ -12,10 +12,15 @@ import org.springframework.web.multipart.MultipartFile;
 public sealed interface SmtpMailtrapClient permits SmtpMailtrapClientImpl, DummySmtpMailtrapClient {
 
   void sendEmail(
+      @NonNull String to,
+      @Nullable String subject,
+      @NonNull String body
+  );
+
+  void sendEmail(
       @NonNull List<String> to,
       @Nullable String subject,
       @NonNull String body,
       @Nullable MultipartFile attachment
   );
-
 }

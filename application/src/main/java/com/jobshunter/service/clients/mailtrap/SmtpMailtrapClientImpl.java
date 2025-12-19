@@ -32,6 +32,7 @@ public non-sealed class SmtpMailtrapClientImpl implements SmtpMailtrapClient {
   @Value("${spring.mail.from:}")
   private String configuredFrom;
 
+  @Override
   public void sendEmail(
       @NonNull String to,
       @Nullable String subject,
