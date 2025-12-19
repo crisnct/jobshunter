@@ -178,4 +178,13 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="13-add-jwt-token-to-users" author="codex">
+        <addColumn tableName="users">
+            <column name="jwt_token" type="VARCHAR(1024)"/>
+        </addColumn>
+        <createIndex tableName="users" indexName="idx_users_jwt_token">
+            <column name="jwt_token"/>
+        </createIndex>
+    </changeSet>
+
 </databaseChangeLog>

@@ -99,6 +99,10 @@ public class UserEntity implements UserDetails {
   @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<UserJobEntity> jobs = new ArrayList<>();
 
+  @JsonIgnore
+  @Column(name = "jwt_token", length = 1024)
+  private String jwtToken;
+
   @Override
   @JsonIgnore
   public Collection<? extends GrantedAuthority> getAuthorities() {

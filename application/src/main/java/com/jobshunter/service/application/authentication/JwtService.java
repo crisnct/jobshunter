@@ -8,6 +8,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.Date;
 import java.util.Map;
+import com.jobshunter.database.entities.UserEntity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -43,9 +44,16 @@ public class JwtService {
         .compact();
   }
 
-  public boolean isTokenValid(String token, UserDetails userDetails) {
-    String username = extractUsername(token);
-    return username.equals(userDetails.getUsername()) && !isTokenExpired(token);
+  public boolean isTokenValid(String token, UserEntity user) {
+    try {
+      if (user.getJwtToken() == null || !user.getJwtToken().equals(token)) {
+        return false;
+      }
+      String username = extractUsername(token);
+      return username.equals(user.getUsername()) && !isTokenExpired(token);
+    } catch (Exception ex) {
+      return false;
+    }
   }
 
   private Claims extractAllClaims(String token) {
