@@ -2,22 +2,20 @@ package com.jobshunter.service.application.notifiers;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.jobshunter.database.entities.RoleEntity;
-import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.repository.RoleRepository;
 import com.jobshunter.database.repository.UserRepository;
 import com.jobshunter.database.service.AuthService;
 import com.jobshunter.dto.RegisterRequest;
 import com.jobshunter.service.clients.SmtpMailtrapClient;
-import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,16 +24,19 @@ import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 @SpringBootTest(
     webEnvironment = WebEnvironment.RANDOM_PORT,
     properties = {
-        "spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration," +
-            "org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration," +
-            "org.springframework.boot.autoconfigure.liquibase.LiquibaseAutoConfiguration",
+        "spring.datasource.url=jdbc:h2:mem:testdb;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE",
+        "spring.datasource.driver-class-name=org.h2.Driver",
+        "spring.datasource.username=sa",
+        "spring.datasource.password=",
+        "spring.jpa.hibernate.ddl-auto=create-drop",
+        "spring.jpa.database-platform=org.hibernate.dialect.H2Dialect",
+        "spring.liquibase.enabled=false",
         "jobshunter.useDummyData=false"
     }
 )
@@ -49,13 +50,11 @@ class EmailNotifierTest {
   @Autowired
   private JsonMapper mapper;
 
-  //MOCKS -------------------------------
-  @MockitoBean
-  private UserRepository userRepository;
-
-  @MockitoBean
+  @Autowired
   private RoleRepository roleRepository;
-  //--------------------------------------
+
+  @Autowired
+  private UserRepository userRepository;
 
   @MockitoSpyBean
   private AuthService authService;
@@ -72,20 +71,10 @@ class EmailNotifierTest {
     RegisterRequest request = new RegisterRequest(
         "dummy.user", "test@test.com", "test1909test", "+40710221441");
 
-    UserEntity user = new UserEntity();
-    user.setUsername(request.username());
-    user.setEmail(request.email());
-    user.setVerificationToken("token-123");
+    RoleEntity role = new RoleEntity();
+    role.setName("USER");
+    roleRepository.save(role);
 
-    RoleEntity testRole = new RoleEntity();
-    testRole.setId(1L);
-    testRole.setName("TEST");
-
-    when(userRepository.existsByEmailIgnoreCase(any())).thenReturn(false);
-    when(userRepository.existsByUsernameIgnoreCase(any())).thenReturn(false);
-    when(userRepository.existsByPhoneNumberIgnoreCase(any())).thenReturn(false);
-    when(userRepository.save(any())).thenReturn(user);
-    when(roleRepository.findByName(any())).thenReturn(Optional.of(testRole));
     doNothing().when(smtpMailtrapClient).sendEmail(anyString(), any(), anyString());
 
     mockMvc.perform(post("/api/auth/register")
@@ -94,7 +83,9 @@ class EmailNotifierTest {
         .andExpect(status().isOk());
 
     verify(authService).register(request);
-    verify(emailNotifierService).sendVerificationToken(user);
+    verify(emailNotifierService).sendVerificationToken(argThat(u ->
+        u != null && request.username().equals(u.getUsername()) && request.email().equals(u.getEmail())
+    ));
     verify(smtpMailtrapClient).sendEmail(eq(request.email()), any(), any());
   }
 
