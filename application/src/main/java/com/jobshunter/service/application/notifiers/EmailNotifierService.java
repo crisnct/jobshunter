@@ -5,7 +5,7 @@ import com.jobshunter.dto.Job;
 import com.jobshunter.service.application.UserMessagesFactory;
 import com.jobshunter.service.application.UserMessagesFactory.MessageTemplate;
 import com.jobshunter.service.clients.RestMailtrapClient;
-import com.jobshunter.service.clients.mailtrap.SmtpMailtrapClient;
+import com.jobshunter.service.clients.mailtrap.SmtpMailtrapClientImpl;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -19,7 +19,7 @@ import org.springframework.web.multipart.MultipartFile;
 public final class EmailNotifierService implements ServiceNotifier {
 
   @Autowired
-  private SmtpMailtrapClient emailClient;
+  private SmtpMailtrapClientImpl emailClient;
 
   @Autowired
   private RestMailtrapClient restMailtrapClient;

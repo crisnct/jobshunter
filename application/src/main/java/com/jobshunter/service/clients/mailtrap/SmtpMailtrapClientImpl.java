@@ -1,6 +1,7 @@
 package com.jobshunter.service.clients.mailtrap;
 
 import com.jobshunter.processor.PackageExpected;
+import com.jobshunter.service.clients.SmtpMailtrapClient;
 import jakarta.annotation.Nullable;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
@@ -9,6 +10,7 @@ import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.mail.MailException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -19,7 +21,8 @@ import org.springframework.web.multipart.MultipartFile;
 @Slf4j
 @Component
 @PackageExpected("com.jobshunter.service.application.notifiers")
-public class SmtpMailtrapClient {
+@ConditionalOnProperty(name = "jobshunter.useDummyData", havingValue = "false")
+public non-sealed class SmtpMailtrapClientImpl implements SmtpMailtrapClient {
 
   private static final String DEFAULT_SUBJECT = "JobsHunter notification";
 
@@ -37,6 +40,7 @@ public class SmtpMailtrapClient {
     sendEmail(List.of(to), subject, body, null);
   }
 
+  @Override
   public void sendEmail(
       @NonNull List<String> to,
       @Nullable String subject,

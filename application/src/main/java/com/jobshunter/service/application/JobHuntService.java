@@ -121,6 +121,7 @@ public class JobHuntService {
 
     CompletableFuture<Void> serpFuture = CompletableFuture.runAsync(() -> searchWithSerpAPi(jobsSync, user));
     CompletableFuture<Void> gptFuture = gptSearch(jobsSync, user, iterations);
+
     CompletableFuture.allOf(serpFuture, gptFuture).join();
 
     JobHuntResponse jobHuntResponse = new JobHuntResponse(jobsSync.getJobs().stream()

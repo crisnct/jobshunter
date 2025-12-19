@@ -51,10 +51,10 @@ open module com.jobshunter.application {
   requires jjwt.api;
   requires java.sql;
   requires io.github.resilience4j.annotations;
+  requires java.net.http;
+  requires org.jsoup;
 
   requires static lombok;
   requires static com.jobshunter.processor;
-  requires java.net.http;
-  requires org.jsoup;
 
 }
