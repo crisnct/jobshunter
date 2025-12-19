@@ -1,12 +1,15 @@
 package com.jobshunter.service.application.authentication;
 
+import com.jobshunter.database.entities.UserEntity;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
+import java.security.MessageDigest;
 import java.util.Date;
+import java.util.HexFormat;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.GrantedAuthority;
@@ -43,9 +46,17 @@ public class JwtService {
         .compact();
   }
 
-  public boolean isTokenValid(String token, UserDetails userDetails) {
-    String username = extractUsername(token);
-    return username.equals(userDetails.getUsername()) && !isTokenExpired(token);
+  public boolean isTokenValid(String token, UserEntity user) {
+    try {
+      String hashedToken = hashToken(token);
+      if (user.getJwtToken() == null || !user.getJwtToken().equals(hashedToken)) {
+        return false;
+      }
+      String username = extractUsername(token);
+      return username.equals(user.getUsername()) && !isTokenExpired(token);
+    } catch (Exception ex) {
+      return false;
+    }
   }
 
   private Claims extractAllClaims(String token) {
@@ -68,5 +79,19 @@ public class JwtService {
       throw new IllegalStateException("JWT expiration (security.jwt.expiration-ms) must be positive");
     }
     return Keys.hmacShaKeyFor(jwtProperties.getSecret().getBytes(StandardCharsets.UTF_8));
+  }
+
+  public String hashToken(String token) {
+    MessageDigest digest = getDigest();
+    byte[] hash = digest.digest(token.getBytes(StandardCharsets.UTF_8));
+    return HexFormat.of().formatHex(hash);
+  }
+
+  private MessageDigest getDigest() {
+    try {
+      return MessageDigest.getInstance("SHA-256");
+    } catch (Exception ex) {
+      throw new IllegalStateException("Unable to initialize SHA-256 MessageDigest", ex);
+    }
   }
 }

@@ -178,6 +178,7 @@ public class UserController {
         formatDateTime(user.getLastJobs()),
         user.getTimeInterval(),
         user.getPrompt(),
+        user.getSerpApiRequest(),
         formatDateTime(user.getCreatedAt()),
         roles
     );

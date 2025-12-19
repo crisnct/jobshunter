@@ -77,6 +77,7 @@ public class AuthService {
     return userRepository.save(user);
   }
 
+  @Transactional
   public String login(LoginRequest request) {
     UserEntity user = userRepository.findByUsername(request.username())
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials"));
@@ -95,7 +96,10 @@ public class AuthService {
       throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
     }
 
-    return jwtService.generateToken(user);
+    String token = jwtService.generateToken(user);
+    user.setJwtToken(jwtService.hashToken(token));
+    userRepository.save(user);
+    return token;
   }
 
   @Transactional

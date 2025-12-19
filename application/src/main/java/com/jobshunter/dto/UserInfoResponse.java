@@ -13,7 +13,8 @@ public record UserInfoResponse(
     String cvFileId,
     String lastJobs,
     Integer timeInterval,
-    String prompt,
+    String gptPrompt,
+    String serpaAPIRequest,
     String createdAt,
     List<String> roles
 ) {

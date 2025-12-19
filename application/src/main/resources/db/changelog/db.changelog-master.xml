@@ -178,4 +178,10 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="13-add-jwt-token-to-users" author="codex">
+        <addColumn tableName="users">
+            <column name="jwt_token" type="text"/>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>
