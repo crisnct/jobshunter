@@ -266,6 +266,9 @@
                 <groupId>com.github.eirslett</groupId>
                 <artifactId>frontend-maven-plugin</artifactId>
                 <version>1.15.0</version>
+                <configuration>
+                    <workingDirectory>${project.parent.basedir}</workingDirectory>
+                </configuration>
                 <executions>
                     <!-- 1. Install Node and npm -->
                     <execution>
