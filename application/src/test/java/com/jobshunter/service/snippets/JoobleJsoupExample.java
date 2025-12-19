@@ -1,4 +1,4 @@
-package com.jobshunter.service;
+package com.jobshunter.service.snippets;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;

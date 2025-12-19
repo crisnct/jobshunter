@@ -1,4 +1,4 @@
-package com.jobshunter.service;
+package com.jobshunter.service.snippets;
 
 import java.net.URI;
 import java.util.ArrayList;
