@@ -12,7 +12,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.jobshunter.database.entities.RoleEntity;
 import com.jobshunter.database.repository.RoleRepository;
-import com.jobshunter.database.repository.UserRepository;
 import com.jobshunter.database.service.AuthService;
 import com.jobshunter.dto.RegisterRequest;
 import com.jobshunter.service.clients.SmtpMailtrapClient;
@@ -52,9 +51,6 @@ class EmailNotifierTest {
 
   @Autowired
   private RoleRepository roleRepository;
-
-  @Autowired
-  private UserRepository userRepository;
 
   @MockitoSpyBean
   private AuthService authService;
