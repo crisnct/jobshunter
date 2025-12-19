@@ -54,5 +54,7 @@ open module com.jobshunter.application {
 
   requires static lombok;
   requires static com.jobshunter.processor;
+  requires java.net.http;
+  requires org.jsoup;
 
 }

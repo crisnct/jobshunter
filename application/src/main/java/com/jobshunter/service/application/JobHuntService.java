@@ -32,6 +32,7 @@ import java.util.regex.Pattern;
 import java.util.stream.IntStream;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
+import org.jsoup.Jsoup;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpEntity;
@@ -157,7 +158,7 @@ public class JobHuntService {
               gptSearchExecutor
           );
           return CompletableFuture.runAsync(() -> {
-            log.info("Searching jobs for user {} iteration {}", user.getUsername(), i);
+            log.info("Searching jobs for user {} iteration {} with gpt api", user.getUsername(), i);
             List<Job> jobsFound = gpt4Client.searchJobs(request);
             jobsSync.addJobs(jobsFound);
           }, delayedExecutor);
@@ -174,6 +175,7 @@ public class JobHuntService {
 
   private void searchWithSerpAPi(JobsSynchronizer jobsSync, UserEntity user) {
     try {
+      log.info("Searching jobs for user {} with serp api", user.getUsername());
       SearchWithSerpRequest request = mapper.readValue(user.getSerpApiRequest(), SearchWithSerpRequest.class);
       SerpApiJobsResult serpApiResult = serpApiClient.searchJobs(request);
 
@@ -207,7 +209,7 @@ public class JobHuntService {
       );
 
       if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
-        String html = response.getBody();
+        String html = Jsoup.parse(response.getBody()).text().toLowerCase();
         boolean isExpired = expiredJobsPatterns.stream().anyMatch(pattern -> pattern.matcher(html).find());
         log.info("Expired: {} {}", isExpired, jobURL);
         return !isExpired;
