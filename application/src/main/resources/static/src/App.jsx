@@ -144,8 +144,12 @@ const App = () => {
       <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6 font-sans">
         <div className="w-full max-w-md">
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-indigo-600 rounded-2xl shadow-xl mb-4">
-              <Globe className="text-white" size={32} />
+            <div className="inline-flex items-center justify-center mb-4">
+              <img
+                src="/images/JobsHunterLogo2.png"
+                alt="JobsHunter logo"
+                className="max-w-[512px] w-48 h-auto drop-shadow-xl"
+              />
             </div>
             <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">JobsHunter</h1>
             <p className="text-slate-500 mt-2 font-medium">Your gateway to the next career leap</p>
@@ -180,7 +184,7 @@ const App = () => {
                 disabled={loading}
                 className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-xl shadow-lg shadow-indigo-100 transition-all flex items-center justify-center gap-2 active:scale-[0.98] disabled:opacity-70"
               >
-                {loading ? <Loader2 className="animate-spin" size={20} /> : 'Login to Dashboard'}
+                {loading ? <Loader2 className="animate-spin" size={20} /> : 'Login'}
               </button>
             </form>
           </div>
