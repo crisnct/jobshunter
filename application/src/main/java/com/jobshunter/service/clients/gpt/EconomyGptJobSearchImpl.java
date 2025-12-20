@@ -2,15 +2,15 @@ package com.jobshunter.service.clients.gpt;
 
 import com.jobshunter.config.ApplicationProperties;
 import com.jobshunter.config.ApplicationProperties.ModelSpecific;
-import com.jobshunter.dto.gptResponse.GptCompletionResponse;
+import com.jobshunter.dto.Job;
 import com.jobshunter.dto.gptRequest.GptJobSearchRequest;
 import com.jobshunter.dto.gptRequest.GptJobsPayload;
 import com.jobshunter.dto.gptRequest.Input;
 import com.jobshunter.dto.gptRequest.InputFile;
 import com.jobshunter.dto.gptRequest.InputMessage;
-import com.jobshunter.dto.Job;
-import com.jobshunter.dto.gptRequest.Reasoning;
+import com.jobshunter.dto.gptRequest.Text;
 import com.jobshunter.dto.gptRequest.tools.Tools;
+import com.jobshunter.dto.gptResponse.GptCompletionResponse;
 import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.clients.EconomyGptClient;
 import java.net.URI;
@@ -48,10 +48,10 @@ public non-sealed class EconomyGptJobSearchImpl extends AbstractGptApiClient
       GptJobsPayload payload = new GptJobsPayload(
           cfg.getModel(),
           null,
-          0,
           properties.getGpt().getMaxTokens(),
           List.of(new Tools("web_search_preview")),
           null,
+          new Text(getOutputSchema()),
           List.of(
               new Input("system", List.of(new InputMessage("input_text", systemPrompt))),
               new Input("user", List.of(

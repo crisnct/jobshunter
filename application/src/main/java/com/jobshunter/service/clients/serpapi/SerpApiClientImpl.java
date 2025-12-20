@@ -43,7 +43,7 @@ public non-sealed class SerpApiClientImpl implements SerpApiClient<SearchWithSer
 
   @Override
   public SerpApiJobsResult searchJobs(@NotNull SearchWithSerpRequest request) {
-    SerpApiJobsResult results = null;
+    SerpApiJobsResult results;
     try {
       results = searchJobsPagination(request, null);
       for (int i = 0; i < serpApiConfig.getMaxPageSearch(); i++) {

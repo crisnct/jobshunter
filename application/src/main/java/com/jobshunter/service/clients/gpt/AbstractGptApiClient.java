@@ -8,6 +8,7 @@ import com.jobshunter.config.ApplicationProperties.ModelSpecific;
 import com.jobshunter.dto.gptResponse.GptCompletionResponse;
 import com.jobshunter.dto.gptRequest.GptJobSearchRequest;
 import com.jobshunter.dto.Job;
+import com.jobshunter.dto.gptResponse.JobResults;
 import com.jobshunter.dto.gptResponse.OutputItem;
 import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.testdata.DummyEconomyGpt;
@@ -38,6 +39,9 @@ public abstract sealed class AbstractGptApiClient permits EconomyGptJobSearchImp
   @Getter
   private String jobsSystemPrompt;
 
+  @Getter
+  private Object outputSchema;
+
   public abstract ModelSpecific getConfig();
 
   @RateLimiter(name = "openaiLimiter")
@@ -52,6 +56,13 @@ public abstract sealed class AbstractGptApiClient permits EconomyGptJobSearchImp
       jobsSystemPrompt = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
     } catch (Exception e) {
       throw new IllegalStateException("Cannot load system prompt file", e);
+    }
+    try (var inputStream = getClass().getClassLoader().getResourceAsStream("prompts/jobsJsonOutputSchema.txt")) {
+      //noinspection DataFlowIssue
+      String schemaJson = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+      outputSchema = mapper.readValue(schemaJson, Object.class);
+    } catch (Exception e) {
+      throw new IllegalStateException("Cannot load output schema file", e);
     }
   }
 
@@ -90,8 +101,8 @@ public abstract sealed class AbstractGptApiClient permits EconomyGptJobSearchImp
     try {
       text = text.replaceFirst("```json", "");
       text = text.replace("```", "");
-      Job[] parsed = mapper.readValue(text, Job[].class);
-      return Arrays.stream(parsed).map(job -> new Job(job.score(), job.url(), getConfig().getModel())).toList();
+      JobResults parsed = mapper.readValue(text, JobResults.class);
+      return Arrays.stream(parsed.results()).map(job -> new Job(job.score(), job.url(), getConfig().getModel())).toList();
     } catch (JsonProcessingException e) {
       log.error("Failed to parse jobs from ChatGPT response: {}", e.getMessage());
       return List.of();

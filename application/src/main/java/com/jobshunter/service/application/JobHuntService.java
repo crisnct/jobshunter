@@ -4,9 +4,10 @@ import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.jobshunter.config.ApplicationProperties;
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.service.UserDataService;
-import com.jobshunter.dto.gptRequest.GptJobSearchRequest;
 import com.jobshunter.dto.Job;
 import com.jobshunter.dto.JobHuntResponse;
+import com.jobshunter.dto.SearchJobOrder;
+import com.jobshunter.dto.gptRequest.GptJobSearchRequest;
 import com.jobshunter.dto.serpRequest.SearchWithSerpRequest;
 import com.jobshunter.dto.serpResponse.SerpApiJobHit;
 import com.jobshunter.dto.serpResponse.SerpApiJobsResult;
@@ -43,6 +44,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.server.ResponseStatusException;
 
 @Slf4j
 @Service
@@ -103,14 +105,15 @@ public class JobHuntService {
             && user.getLastJobs() != null
             && user.getLastJobs().plusMinutes(user.getTimeInterval()).isBefore(LocalDateTime.now())) {
           log.info("Start searching jobs for {} ", user.getUsername());
-          this.searchJobsForUser(user, properties.getJobsHunter().getIterationPerUser());
+          this.searchJobsForUser(new SearchJobOrder(user, "gpt-4o-mini", properties.getJobsHunter().getIterationPerUser()));
         }
       }
     }
     log.info("Stop scheduled job hunt.");
   }
 
-  public JobHuntResponse searchJobsForUser(UserEntity user, int iterations) {
+  public JobHuntResponse searchJobsForUser(SearchJobOrder order) {
+    UserEntity user = order.user();
     if (Strings.isEmpty(user.getPrompt()) || Strings.isEmpty(user.getCvFileId())) {
       log.info("Skip user {} because prompt or cv is missing", user.getUsername());
       return new JobHuntResponse(Collections.emptyList());
@@ -120,7 +123,7 @@ public class JobHuntService {
         new JobsSynchronizer(userDataService.getExistingJobUrlsForUser(user.getUsername()), this::isValidJob);
 
     CompletableFuture<Void> serpFuture = CompletableFuture.runAsync(() -> searchWithSerpAPi(jobsSync, user));
-    CompletableFuture<Void> gptFuture = gptSearch(jobsSync, user, iterations);
+    CompletableFuture<Void> gptFuture = gptSearch(jobsSync, order);
 
     CompletableFuture.allOf(serpFuture, gptFuture).join();
 
@@ -148,10 +151,11 @@ public class JobHuntService {
     return jobHuntResponse;
   }
 
-  private CompletableFuture<Void> gptSearch(JobsSynchronizer jobsSync, UserEntity user, int iterations) {
+  private CompletableFuture<Void> gptSearch(JobsSynchronizer jobsSync, SearchJobOrder order) {
+    UserEntity user = order.user();
     GptJobSearchRequest request = new GptJobSearchRequest(user.getPrompt(), user.getCvFileId());
 
-    List<CompletableFuture<Void>> futures = IntStream.range(0, iterations)
+    List<CompletableFuture<Void>> futures = IntStream.range(0, order.iterations())
         .mapToObj(i -> {
           Executor delayedExecutor = CompletableFuture.delayedExecutor(
               i * properties.getJobsHunter().getIterationDelay(),
@@ -160,8 +164,13 @@ public class JobHuntService {
           );
           return CompletableFuture.runAsync(() -> {
             log.info("Searching jobs for user {} iteration {} with gpt api", user.getUsername(), i);
-            List<Job> jobsFound = gpt4Client.searchJobs(request);
+            List<Job> jobsFound = switch (order.gptModel()) {
+              case "gpt-4o-mini" -> gpt4Client.searchJobs(request);
+              case "gpt-5.2" -> gpt5Client.searchJobs(request);
+              default -> throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid GPT model");
+            };
             jobsSync.addJobs(jobsFound);
+            log.info("Found {} jobs for {}. Are going to be validated.", jobsFound.size(), user.getUsername());
           }, delayedExecutor);
         })
         .toList();
@@ -185,6 +194,7 @@ public class JobHuntService {
         int score = scoreCalculator.computeScore(jobDescription, user.getCvFileId());
         jobsSync.addJob(new Job(score, job.applyLinks().getFirst(), "Google"));
       }
+      log.info("Serp Api found {} jobs for user {}", serpApiResult.jobs().size(), user.getUsername());
     } catch (IOException e) {
       log.error("Error at parsing response", e);
     }

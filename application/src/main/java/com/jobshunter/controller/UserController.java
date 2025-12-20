@@ -10,10 +10,11 @@ import com.jobshunter.database.service.UserDataService;
 import com.jobshunter.dto.ChangePasswordRequest;
 import com.jobshunter.dto.JobHuntResponse;
 import com.jobshunter.dto.JobSearchRequest;
+import com.jobshunter.dto.SearchJobOrder;
 import com.jobshunter.dto.SearchJobsRequest;
-import com.jobshunter.dto.serpRequest.SearchWithSerpRequest;
 import com.jobshunter.dto.UserInfoResponse;
 import com.jobshunter.dto.UserJobResponse;
+import com.jobshunter.dto.serpRequest.SearchWithSerpRequest;
 import com.jobshunter.service.application.JobHuntService;
 import com.jobshunter.service.application.notifiers.EmailNotifierService;
 import jakarta.validation.Valid;
@@ -77,7 +78,8 @@ public class UserController {
       return ResponseEntity.badRequest().body(Map.of("Error", "Missing username"));
     }
     return userDataService.getUser(request.username())
-        .map(user -> jobHuntService.searchJobsForUser(user, request.iterations()))
+        .map(user -> new SearchJobOrder(user, request.gptModel(), request.iterations()))
+        .map(order -> jobHuntService.searchJobsForUser(order))
         .map(ResponseEntity::ok)
         .orElseGet(() -> ResponseEntity.ok(new JobHuntResponse(Collections.emptyList())));
   }

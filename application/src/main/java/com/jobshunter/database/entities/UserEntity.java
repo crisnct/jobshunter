@@ -77,7 +77,7 @@ public class UserEntity implements UserDetails {
   @Column(name = "time_interval")
   private Integer timeInterval;
 
-  @Column(name = "prompt", length = 500)
+  @Column(name = "prompt")
   private String prompt;
 
   @Column(name = "serp_api_request")
