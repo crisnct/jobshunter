@@ -1,7 +1,10 @@
+<p style="text-align: center;">
+ <img src="application/src/main/resources/static/images/JobsHunterLogo.jpg" width="150" style="float: left; margin: 0 16px 16px 0;">
+</p> 
+
 # JobsHunter
 
 Java 25 + Spring Boot 4.0.0 service that keeps a user profile (prompt, CV, phone, time interval), searches for new jobs with ChatGPT, and can push results to WhatsApp via Twilio.
-![Jobshunter logo](application/src/main/resources/static/images/JobsHunterLogo.svg)
 
 # What it does
 - JWT auth flow: `/api/auth/register`, `/api/auth/login`, `/api/auth/verify`.

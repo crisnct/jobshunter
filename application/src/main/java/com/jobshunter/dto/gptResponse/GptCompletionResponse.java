@@ -1,9 +1,9 @@
-package com.jobshunter.dto;
+package com.jobshunter.dto.gptResponse;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.util.List;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public record OutputItem(String id, String type, String status, List<ContentItem> content) {
+public record GptCompletionResponse(List<OutputItem> output) {
 
 }

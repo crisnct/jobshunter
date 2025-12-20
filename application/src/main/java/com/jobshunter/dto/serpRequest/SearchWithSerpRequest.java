@@ -1,4 +1,4 @@
-package com.jobshunter.dto;
+package com.jobshunter.dto.serpRequest;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;

@@ -4,13 +4,13 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.jobshunter.config.ApplicationProperties;
 import com.jobshunter.config.ApplicationProperties.Gpt;
-import com.jobshunter.dto.ContentItem;
-import com.jobshunter.dto.Gpt4ScorePayload;
-import com.jobshunter.dto.GptCompletionResponse;
-import com.jobshunter.dto.Input;
-import com.jobshunter.dto.InputFile;
-import com.jobshunter.dto.InputMessage;
-import com.jobshunter.dto.OutputItem;
+import com.jobshunter.dto.gptResponse.ContentItem;
+import com.jobshunter.dto.gptRequest.Gpt4ScorePayload;
+import com.jobshunter.dto.gptResponse.GptCompletionResponse;
+import com.jobshunter.dto.gptRequest.Input;
+import com.jobshunter.dto.gptRequest.InputFile;
+import com.jobshunter.dto.gptRequest.InputMessage;
+import com.jobshunter.dto.gptResponse.OutputItem;
 import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.clients.GptJobScoreCalculatorClient;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
@@ -71,7 +71,7 @@ public non-sealed class GptJobScoreCalculatorClientImpl implements GptJobScoreCa
 
       Gpt4ScorePayload payload = new Gpt4ScorePayload(
           config.getEconomy().getModel(),
-          config.getTemperature(),
+          0,
           config.getMaxTokens(),
           List.of(
               new Input("system",

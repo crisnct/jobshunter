@@ -2,8 +2,8 @@ package com.jobshunter.service.clients.serpapi;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jobshunter.dto.SerpApiJobHit;
-import com.jobshunter.dto.SerpApiJobsResult;
+import com.jobshunter.dto.serpResponse.SerpApiJobHit;
+import com.jobshunter.dto.serpResponse.SerpApiJobsResult;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;

@@ -1,4 +1,4 @@
-package com.jobshunter.dto;
+package com.jobshunter.dto.gptRequest;
 
 import java.util.List;
 

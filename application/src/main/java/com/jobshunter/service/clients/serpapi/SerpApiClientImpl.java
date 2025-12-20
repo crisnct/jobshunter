@@ -2,9 +2,9 @@ package com.jobshunter.service.clients.serpapi;
 
 import com.jobshunter.config.ApplicationProperties;
 import com.jobshunter.config.ApplicationProperties.SerpApi;
-import com.jobshunter.dto.SearchWithSerpRequest;
-import com.jobshunter.dto.SerpApiJobHit;
-import com.jobshunter.dto.SerpApiJobsResult;
+import com.jobshunter.dto.serpRequest.SearchWithSerpRequest;
+import com.jobshunter.dto.serpResponse.SerpApiJobHit;
+import com.jobshunter.dto.serpResponse.SerpApiJobsResult;
 import com.jobshunter.service.clients.SerpApiClient;
 import jakarta.validation.constraints.NotNull;
 import java.io.IOException;

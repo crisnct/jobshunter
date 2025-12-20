@@ -17,9 +17,7 @@ jobshunter:
 
 gpt:
   apiKey: ${CHATGPT_API_KEY:notset}
-  temperature: 0
   maxTokens: 1000
-  toolsType: "web_search"
   economy:
     model: "gpt-4o-mini"
     systemPromptFile: "jobsSystemPromptGPT4.txt"

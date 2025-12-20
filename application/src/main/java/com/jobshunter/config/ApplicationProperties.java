@@ -42,11 +42,8 @@ public class ApplicationProperties {
   @Data
   @ConfigurationProperties(prefix = "gpt")
   public static class Gpt {
-
     private String apiKey;
-    private double temperature;
     private int maxTokens;
-    private String toolsType;
     private ModelSpecific economy;
     private ModelSpecific premium;
   }

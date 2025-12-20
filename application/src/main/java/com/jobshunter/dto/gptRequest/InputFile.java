@@ -1,4 +1,4 @@
-package com.jobshunter.dto;
+package com.jobshunter.dto.gptRequest;
 
 public record InputFile(String type, String file_id) implements InputObj {
 

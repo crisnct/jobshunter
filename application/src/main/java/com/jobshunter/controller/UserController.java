@@ -11,7 +11,7 @@ import com.jobshunter.dto.ChangePasswordRequest;
 import com.jobshunter.dto.JobHuntResponse;
 import com.jobshunter.dto.JobSearchRequest;
 import com.jobshunter.dto.SearchJobsRequest;
-import com.jobshunter.dto.SearchWithSerpRequest;
+import com.jobshunter.dto.serpRequest.SearchWithSerpRequest;
 import com.jobshunter.dto.UserInfoResponse;
 import com.jobshunter.dto.UserJobResponse;
 import com.jobshunter.service.application.JobHuntService;

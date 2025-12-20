@@ -5,12 +5,10 @@ import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.jobshunter.config.ApplicationProperties;
 import com.jobshunter.config.ApplicationProperties.Gpt;
 import com.jobshunter.config.ApplicationProperties.ModelSpecific;
-import com.jobshunter.dto.GptCompletionResponse;
-import com.jobshunter.dto.GptJobSearchRequest;
-import com.jobshunter.dto.Input;
+import com.jobshunter.dto.gptResponse.GptCompletionResponse;
+import com.jobshunter.dto.gptRequest.GptJobSearchRequest;
 import com.jobshunter.dto.Job;
-import com.jobshunter.dto.OutputItem;
-import com.jobshunter.dto.Tools;
+import com.jobshunter.dto.gptResponse.OutputItem;
 import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.testdata.DummyEconomyGpt;
 import com.jobshunter.testdata.DummyPremiumGpt;
@@ -99,16 +97,5 @@ public abstract sealed class AbstractGptApiClient permits EconomyGptJobSearchImp
       return List.of();
     }
   }
-
-  protected record GptJobsPayload(
-      String model,
-      double temperature,
-      int max_output_tokens,
-      List<Tools> tools,
-      List<Input> input
-  ) {
-
-  }
-
 
 }

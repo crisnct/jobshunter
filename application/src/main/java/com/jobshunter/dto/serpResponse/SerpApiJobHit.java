@@ -1,4 +1,4 @@
-package com.jobshunter.dto;
+package com.jobshunter.dto.serpResponse;
 
 import java.util.List;
 
