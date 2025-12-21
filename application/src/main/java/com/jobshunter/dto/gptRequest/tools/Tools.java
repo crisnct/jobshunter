@@ -1,12 +1,44 @@
 package com.jobshunter.dto.gptRequest.tools;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Builder;
 
-@Data
-@AllArgsConstructor
-public class Tools {
+@Builder
+public record Tools(String type, UserLocation userLocation) {
 
-  private String type;
+  public static class ToolsBuilder {
+
+    private String type;
+
+    private UserLocation userLocation = null;
+
+    public ToolsBuilder setLightweightSearch(){
+      type = "web_search_preview";
+      return this;
+    }
+
+    public ToolsBuilder setDeepSearch(){
+      type = "web_search";
+      return this;
+    }
+
+    public ToolsBuilder setCountry(String country) {
+      userLocationCheck();
+      userLocation.setCountry(country);
+      return this;
+    }
+
+    public ToolsBuilder setCity(String city) {
+      userLocationCheck();
+      userLocation.setCity(city);
+      return this;
+    }
+
+    private void userLocationCheck() {
+      if (userLocation == null) {
+        userLocation = new UserLocation();
+      }
+    }
+
+  }
 
 }

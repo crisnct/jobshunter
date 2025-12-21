@@ -1,5 +1,11 @@
 package com.jobshunter.dto.gptRequest.tools;
 
-public record UserLocation(String type, String country, String city, String region) {
+import lombok.Data;
 
+@Data
+public class UserLocation {
+  private String type="approximate";
+  private String country;
+  private String city;
+  private String region;
 }

@@ -5,10 +5,6 @@ import com.jobshunter.config.ApplicationProperties.ModelSpecific;
 import com.jobshunter.dto.Job;
 import com.jobshunter.dto.gptRequest.GptJobSearchRequest;
 import com.jobshunter.dto.gptRequest.GptJobsPayload;
-import com.jobshunter.dto.gptRequest.Input;
-import com.jobshunter.dto.gptRequest.InputFile;
-import com.jobshunter.dto.gptRequest.InputMessage;
-import com.jobshunter.dto.gptRequest.Text;
 import com.jobshunter.dto.gptRequest.tools.Tools;
 import com.jobshunter.dto.gptResponse.GptCompletionResponse;
 import com.jobshunter.processor.PackageExpected;
@@ -45,21 +41,14 @@ public non-sealed class EconomyGptJobSearchImpl extends AbstractGptApiClient
   @Override
   public List<Job> searchWithModel(String systemPrompt, String userPrompt, ModelSpecific cfg, String fileId) {
     try {
-      GptJobsPayload payload = new GptJobsPayload(
-          cfg.getModel(),
-          null,
-          properties.getGpt().getMaxTokens(),
-          List.of(new Tools("web_search_preview")),
-          null,
-          new Text(getOutputSchema()),
-          List.of(
-              new Input("system", List.of(new InputMessage("input_text", systemPrompt))),
-              new Input("user", List.of(
-                  new InputMessage("input_text", userPrompt),
-                  new InputFile(fileId)
-              ))
-          )
-      );
+      GptJobsPayload payload = GptJobsPayload.builder()
+          .model(cfg.getModel())
+          .max_output_tokens(properties.getGpt().getMaxTokens())
+          .addTools(Tools.builder().setDeepSearch().build())
+          .setResponseSchema(getOutputSchema())
+          .addSystemPrompt(systemPrompt)
+          .addUserPrompt(userPrompt, fileId)
+          .build();
 
       GptCompletionResponse response = restClient.post()
           .uri(DEFAULT_URI)

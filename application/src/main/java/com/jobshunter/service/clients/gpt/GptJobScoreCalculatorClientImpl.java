@@ -4,12 +4,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.jobshunter.config.ApplicationProperties;
 import com.jobshunter.config.ApplicationProperties.Gpt;
-import com.jobshunter.dto.gptResponse.ContentItem;
 import com.jobshunter.dto.gptRequest.Gpt4ScorePayload;
+import com.jobshunter.dto.gptResponse.ContentItem;
 import com.jobshunter.dto.gptResponse.GptCompletionResponse;
-import com.jobshunter.dto.gptRequest.Input;
-import com.jobshunter.dto.gptRequest.InputFile;
-import com.jobshunter.dto.gptRequest.InputMessage;
 import com.jobshunter.dto.gptResponse.OutputItem;
 import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.clients.GptJobScoreCalculatorClient;
@@ -19,7 +16,6 @@ import jakarta.annotation.PostConstruct;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
@@ -68,20 +64,13 @@ public non-sealed class GptJobScoreCalculatorClientImpl implements GptJobScoreCa
   public int computeScore(String jobDescription, String fileId) {
     try {
       Gpt config = properties.getGpt();
-
-      Gpt4ScorePayload payload = new Gpt4ScorePayload(
-          config.getEconomy().getModel(),
-          0,
-          config.getMaxTokens(),
-          List.of(
-              new Input("system",
-                  List.of(new InputMessage("input_text", calculateScoreSystemPrompt))),
-              new Input("user", List.of(
-                  new InputMessage("input_text", calculateScoreUserPrompt + jobDescription),
-                  new InputFile(fileId)
-              ))
-          )
-      );
+      Gpt4ScorePayload payload = Gpt4ScorePayload.builder()
+          .model(config.getEconomy().getModel())
+          .temperature(0)
+          .max_output_tokens(config.getMaxTokens())
+          .addSystemPrompt(calculateScoreSystemPrompt)
+          .addUserPrompt(calculateScoreUserPrompt + jobDescription, fileId)
+          .build();
 
       String response = restClient.post()
           .uri(DEFAULT_URI)
