@@ -137,7 +137,6 @@ public class JobHuntService {
     CompletableFuture.allOf(enginesFutures.toArray(CompletableFuture[]::new)).join();
 
     JobHuntResponse jobHuntResponse = new JobHuntResponse(jobsSync.getJobs().stream()
-        .distinct()
         .sorted(Comparator.comparing(Job::score).reversed())
         .toList());
 
