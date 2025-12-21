@@ -2,7 +2,9 @@ package com.jobshunter.database.service;
 
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.entities.UserJobEntity;
+import com.jobshunter.database.entities.UserPromptEntity;
 import com.jobshunter.database.repository.UserJobRepository;
+import com.jobshunter.database.repository.UserPromptRepository;
 import com.jobshunter.database.repository.UserRepository;
 import com.jobshunter.dto.Job;
 import java.time.LocalDateTime;
@@ -23,6 +25,9 @@ public class UserDataService {
 
   @Autowired
   private UserJobRepository userJobRepository;
+
+  @Autowired
+  private UserPromptRepository userPromptRepository;
 
   public List<UserJobEntity> getUserJobs(String username) {
     return userJobRepository.findAllByUsernameWithUser(username);
@@ -54,6 +59,34 @@ public class UserDataService {
     jobs.forEach(job -> addJobUrl(user, job.url()));
   }
 
+  @Transactional
+  public UserPromptEntity addPrompt(UserEntity user, String engine, String prompt) {
+    String normalizedEngine = normalize(engine);
+    UserPromptEntity entity = userPromptRepository.findByUserIdAndEngine(user.getId(), engine)
+        .orElseGet(() -> {
+          UserPromptEntity newEntity = new UserPromptEntity();
+          newEntity.setUser(user);
+          newEntity.setEngine(normalizedEngine);
+          newEntity.setJobsFound(0);
+          return newEntity;
+        });
+    entity.setPrompt(prompt);
+    return userPromptRepository.save(entity);
+  }
+
+  @Transactional
+  public void incrementPromptJobsFound(UserEntity user, String engine, int amount) {
+    UserPromptEntity entity = userPromptRepository.findByUserIdAndEngine(user.getId(), engine)
+        .orElseThrow();
+    int current = entity.getJobsFound() != null ? entity.getJobsFound() : 0;
+    entity.setJobsFound(current + amount);
+    userPromptRepository.save(entity);
+  }
+
+  private String normalize(String engine) {
+    return engine != null ? engine.trim() : "";
+  }
+
   public List<String> getExistingJobUrlsForUser(String username) {
     return userJobRepository.findJobUrlsByUsernameIgnoreCase(username).stream()
         .filter(StringUtils::hasText)
@@ -70,4 +103,5 @@ public class UserDataService {
   public void deleteUserByUsername(String username) {
     userRepository.findByUsername(username).ifPresent(userRepository::delete);
   }
+
 }

@@ -100,6 +100,10 @@ public class UserEntity implements UserDetails {
   private List<UserJobEntity> jobs = new ArrayList<>();
 
   @JsonIgnore
+  @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+  private List<UserPromptEntity> prompts = new ArrayList<>();
+
+  @JsonIgnore
   @Column(name = "jwt_token", length = 64)
   private String jwtToken;
 

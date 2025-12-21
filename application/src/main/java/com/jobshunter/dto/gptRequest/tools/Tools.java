@@ -11,6 +11,8 @@ public record Tools(String type, UserLocation userLocation) {
 
     private UserLocation userLocation = null;
 
+    private FunctionDefinition function;
+
     public ToolsBuilder setLightweightSearch(){
       type = "web_search_preview";
       return this;
@@ -18,6 +20,11 @@ public record Tools(String type, UserLocation userLocation) {
 
     public ToolsBuilder setDeepSearch(){
       type = "web_search";
+      return this;
+    }
+
+    public ToolsBuilder setFunction(FunctionDefinition function) {
+      this.function = function;
       return this;
     }
 

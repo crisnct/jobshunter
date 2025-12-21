@@ -3,6 +3,7 @@ package com.jobshunter.service.application;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.jobshunter.config.ApplicationProperties;
 import com.jobshunter.database.entities.UserEntity;
+import com.jobshunter.database.entities.UserPromptEntity;
 import com.jobshunter.database.service.UserDataService;
 import com.jobshunter.dto.Job;
 import com.jobshunter.dto.JobHuntResponse;
@@ -30,7 +31,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
-import java.util.stream.IntStream;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.jsoup.Jsoup;
@@ -114,7 +114,7 @@ public class JobHuntService {
 
   public JobHuntResponse searchJobsForUser(SearchJobOrder order) {
     UserEntity user = order.user();
-    if (Strings.isEmpty(user.getPrompt()) || Strings.isEmpty(user.getCvFileId())) {
+    if (user.getPrompts().isEmpty() || Strings.isEmpty(user.getCvFileId())) {
       log.info("Skip user {} because prompt or cv is missing", user.getUsername());
       return new JobHuntResponse(Collections.emptyList());
     }
@@ -123,8 +123,7 @@ public class JobHuntService {
         new JobsSynchronizer(userDataService.getExistingJobUrlsForUser(user.getUsername()), this::isValidJob);
 
     CompletableFuture<Void> serpFuture = CompletableFuture.runAsync(() -> searchWithSerpAPi(jobsSync, user));
-    CompletableFuture<Void> gptFuture = gptSearch(jobsSync, order);
-
+    CompletableFuture<Void> gptFuture = this.gptSearch(jobsSync, order);
     CompletableFuture.allOf(serpFuture, gptFuture).join();
 
     JobHuntResponse jobHuntResponse = new JobHuntResponse(jobsSync.getJobs().stream()
@@ -153,27 +152,22 @@ public class JobHuntService {
 
   private CompletableFuture<Void> gptSearch(JobsSynchronizer jobsSync, SearchJobOrder order) {
     UserEntity user = order.user();
-    GptJobSearchRequest request = new GptJobSearchRequest(user.getPrompt(), user.getCvFileId());
+    List<CompletableFuture<Void>> futures = new ArrayList<>();
 
-    List<CompletableFuture<Void>> futures = IntStream.range(0, order.iterations())
-        .mapToObj(i -> {
+    int delayCounter = 0;
+    for (int i = 0; i < order.iterations(); i++) {
+      for (UserPromptEntity prompt : user.getPrompts()) {
+        if(prompt.getEngine().equalsIgnoreCase("GPT")) {
+          GptJobSearchRequest request = new GptJobSearchRequest(prompt.getPrompt(), user.getCvFileId());
           Executor delayedExecutor = CompletableFuture.delayedExecutor(
-              i * properties.getJobsHunter().getIterationDelay(),
+              delayCounter++ * properties.getJobsHunter().getIterationDelay(),
               TimeUnit.MILLISECONDS,
               gptSearchExecutor
           );
-          return CompletableFuture.runAsync(() -> {
-            log.info("Searching jobs for user {} iteration {} with gpt api", user.getUsername(), i);
-            List<Job> jobsFound = switch (order.gptModel()) {
-              case "gpt-4o-mini" -> gpt4Client.searchJobs(request);
-              case "gpt-5.2" -> gpt5Client.searchJobs(request);
-              default -> throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid GPT model");
-            };
-            jobsSync.addJobs(jobsFound);
-            log.info("Found {} jobs for {}. Are going to be validated.", jobsFound.size(), user.getUsername());
-          }, delayedExecutor);
-        })
-        .toList();
+          futures.add(CompletableFuture.runAsync(() -> gptSearch(jobsSync, order, request), delayedExecutor));
+        }
+      }
+    }
 
     // Combine all async iteration futures into one
     return CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new))
@@ -181,6 +175,18 @@ public class JobHuntService {
           log.error("GPT search failed for {}", user.getUsername(), ex);
           return null;
         });
+  }
+
+  private void gptSearch(JobsSynchronizer jobsSync, SearchJobOrder order, GptJobSearchRequest request) {
+    log.info("Searching jobs for user {} with gpt model {}", order.user().getUsername(), order.gptModel());
+    List<Job> jobsFound = switch (order.gptModel()) {
+      case "gpt-4o-mini" -> gpt4Client.searchJobs(request);
+      case "gpt-5.2" -> gpt5Client.searchJobs(request);
+      default -> throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid GPT model");
+    };
+    jobsSync.addJobs(jobsFound);
+    userDataService.incrementPromptJobsFound(order.user(), order.gptModel(), jobsFound.size());
+    log.info("Found {} jobs for {}. Are going to be validated.", jobsFound.size(), order.user().getUsername());
   }
 
   private void searchWithSerpAPi(JobsSynchronizer jobsSync, UserEntity user) {

@@ -9,9 +9,9 @@ import com.jobshunter.database.service.AuthService;
 import com.jobshunter.database.service.UserDataService;
 import com.jobshunter.dto.ChangePasswordRequest;
 import com.jobshunter.dto.JobHuntResponse;
-import com.jobshunter.dto.JobSearchRequest;
 import com.jobshunter.dto.SearchJobOrder;
 import com.jobshunter.dto.SearchJobsRequest;
+import com.jobshunter.dto.UserPromptRequest;
 import com.jobshunter.dto.UserInfoResponse;
 import com.jobshunter.dto.UserJobResponse;
 import com.jobshunter.dto.serpRequest.SearchWithSerpRequest;
@@ -122,16 +122,16 @@ public class UserController {
   }
 
   @PatchMapping("/prompt")
-  public ResponseEntity<?> setPrompt(@Valid @RequestBody JobSearchRequest request, Authentication authentication) {
+  public ResponseEntity<?> setPrompt(@Valid @RequestBody UserPromptRequest request, Authentication authentication) {
     String username = authentication != null ? authentication.getName() : null;
     if (username == null) {
       return ResponseEntity.status(401).body(Map.of("error", "Unauthorized"));
     }
-    if (request == null || request.prompt().isBlank()) {
-      return ResponseEntity.badRequest().body(Map.of("error", "prompt must not be blank"));
-    }
     userDataService.getUser(username).ifPresent(user -> {
-      user.setPrompt(request.prompt().trim());
+      String prompt = request.prompt().trim();
+      String engine = request.engine().trim();
+      user.setPrompt(prompt);
+      userDataService.addPrompt(user, engine, prompt);
       userDataService.updateUser(user);
     });
     return ResponseEntity.ok(Map.of("message", "Prompt updated"));

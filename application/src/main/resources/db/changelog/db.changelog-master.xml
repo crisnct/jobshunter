@@ -184,4 +184,33 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="14-create-user-prompts" author="codex">
+        <createTable tableName="user_prompts">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false" primaryKeyName="pk_user_prompts"/>
+            </column>
+            <column name="user_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="prompt" type="text">
+                <constraints nullable="false"/>
+            </column>
+            <column name="engine" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="jobs_found" type="INT" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addForeignKeyConstraint constraintName="fk_user_prompts_user"
+                                 baseTableName="user_prompts"
+                                 baseColumnNames="user_id"
+                                 referencedTableName="users"
+                                 referencedColumnNames="id"
+                                 onDelete="CASCADE"/>
+        <createIndex tableName="user_prompts" indexName="idx_user_prompts_user">
+            <column name="user_id"/>
+        </createIndex>
+    </changeSet>
+
 </databaseChangeLog>
