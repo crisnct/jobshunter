@@ -94,7 +94,7 @@ public class UserEntity implements UserDetails {
   private List<UserJobEntity> jobs = new ArrayList<>();
 
   @JsonIgnore
-  @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+  @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
   private List<UserPromptEntity> prompts = new ArrayList<>();
 
   @JsonIgnore

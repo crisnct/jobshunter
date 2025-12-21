@@ -1,14 +1,20 @@
 package com.jobshunter.dto.gptRequest.tools;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
 
 @Builder
+@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonIgnoreProperties(ignoreUnknown = true)
 public record Tools(String type, UserLocation userLocation) {
 
   public static class ToolsBuilder {
 
     private String type;
 
+    @JsonProperty("user_location")
     private UserLocation userLocation = null;
 
     private FunctionDefinition function;

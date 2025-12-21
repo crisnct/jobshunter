@@ -23,4 +23,10 @@ public interface UserRepository extends JpaRepository<UserEntity, Long> {
 
     @Query("SELECT u.email FROM UserEntity u JOIN u.roles r WHERE r.name = :roleName")
     List<String> findEmailsByRole(@Param("roleName") String roleName);
+
+    @Query("SELECT DISTINCT u FROM UserEntity u LEFT JOIN FETCH u.prompts WHERE lower(u.username) = lower(:username)")
+    Optional<UserEntity> findByUsernameWithPrompts(@Param("username") String username);
+
+    @Query("SELECT DISTINCT u FROM UserEntity u LEFT JOIN FETCH u.prompts")
+    List<UserEntity> findAllWithPrompts();
 }

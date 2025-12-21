@@ -36,11 +36,11 @@ public class UserDataService {
   }
 
   public List<UserEntity> getAllUsers() {
-    return userRepository.findAll();
+    return userRepository.findAllWithPrompts();
   }
 
   public Optional<UserEntity> getUser(String username) {
-    return userRepository.findByUsername(username);
+    return userRepository.findByUsernameWithPrompts(username);
   }
 
   @SuppressWarnings("UnusedReturnValue")
@@ -62,16 +62,16 @@ public class UserDataService {
   }
 
   @Transactional
-  public UserPromptEntity addPrompt(UserEntity user, EngineType engine, String prompt) {
+  public UserPromptEntity addPrompt(long id, UserEntity user, EngineType engine, String prompt) {
     Objects.requireNonNull(engine);
-    UserPromptEntity entity = userPromptRepository.findByUserIdAndEngine(user.getId(), engine)
+    UserPromptEntity entity = userPromptRepository.findById(id)
         .orElseGet(() -> {
           UserPromptEntity newEntity = new UserPromptEntity();
           newEntity.setUser(user);
-          newEntity.setEngine(engine);
           newEntity.setJobsFound(0);
           return newEntity;
         });
+    entity.setEngine(engine);
     entity.setPrompt(prompt);
     return userPromptRepository.save(entity);
   }

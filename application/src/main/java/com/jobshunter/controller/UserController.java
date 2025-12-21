@@ -13,9 +13,9 @@ import com.jobshunter.dto.EngineType;
 import com.jobshunter.dto.JobHuntResponse;
 import com.jobshunter.dto.SearchJobOrder;
 import com.jobshunter.dto.SearchJobsRequest;
-import com.jobshunter.dto.UserPromptRequest;
 import com.jobshunter.dto.UserInfoResponse;
 import com.jobshunter.dto.UserJobResponse;
+import com.jobshunter.dto.UserPromptRequest;
 import com.jobshunter.dto.serpRequest.SearchWithSerpRequest;
 import com.jobshunter.service.application.JobHuntService;
 import com.jobshunter.service.application.notifiers.EmailNotifierService;
@@ -134,8 +134,7 @@ public class UserController {
       return ResponseEntity.badRequest().body(Map.of("error", "Invalid engine"));
     }
     userDataService.getUser(username).ifPresent(user -> {
-      String prompt = request.prompt().trim();
-      userDataService.addPrompt(user, engineType, prompt);
+      userDataService.addPrompt(request.id(), user, engineType, request.prompt().trim());
     });
     return ResponseEntity.ok(Map.of("message", "Prompt updated"));
   }
@@ -149,7 +148,13 @@ public class UserController {
     }
     String valueString = mapper.writeValueAsString(request);
     UserEntity user = userDataService.getUser(username).orElseThrow();
-    userDataService.addPrompt(user, EngineType.SERP, valueString);
+
+    long serpId = user.getPrompts().stream()
+        .filter(p -> p.getEngine() == EngineType.SERP)
+        .map(UserPromptEntity::getId)
+        .findFirst()
+        .orElse(-1L);
+    userDataService.addPrompt(serpId, user, EngineType.SERP, valueString);
     return ResponseEntity.ok(Map.of("message", "Serp API request updated"));
   }
 
@@ -180,7 +185,7 @@ public class UserController {
         user.getCvFileId(),
         formatDateTime(user.getLastJobs()),
         user.getTimeInterval(),
-        prompts.stream().map(p->p.getEngine() + ": " + p.getPrompt()).toList(),
+        prompts.stream().map(p -> String.format("id: %d, engine: %s, prompt: %s", p.getId(), p.getEngine(), p.getPrompt())).toList(),
         formatDateTime(user.getCreatedAt()),
         roles
     );
