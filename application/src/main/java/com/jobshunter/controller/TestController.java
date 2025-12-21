@@ -43,8 +43,13 @@ public class TestController {
 
   @PostMapping(value = "/email/send", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ResponseEntity<?> send(
-      @Valid @ModelAttribute EmailRequest request,
-      @AuthenticationPrincipal UserDetails userDetails) {
+      @Valid
+      @ModelAttribute
+      EmailRequest request,
+
+      @AuthenticationPrincipal
+      UserDetails userDetails
+  ) {
     if (userDetails == null) {
       throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authentication required");
     }
@@ -54,8 +59,12 @@ public class TestController {
 
   @PostMapping(value = "/email/sendUsingTemplate", consumes = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<?> sendUsingTemplate(
-      @Valid @RequestBody JobHuntResponse jobs,
-      @AuthenticationPrincipal UserDetails userDetails
+      @Valid
+      @RequestBody
+      JobHuntResponse jobs,
+
+      @AuthenticationPrincipal
+      UserDetails userDetails
   ) {
     if (userDetails == null) {
       throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authentication required");
@@ -68,8 +77,12 @@ public class TestController {
 
   @PostMapping(value = "/searchWithSerp", consumes = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<?> searchJobsWithSERP(
-      @Valid @RequestBody SearchWithSerpRequest request,
-      @AuthenticationPrincipal UserDetails userDetails
+      @Valid
+      @RequestBody
+      SearchWithSerpRequest request,
+
+      @AuthenticationPrincipal
+      UserDetails userDetails
   ) {
     if (userDetails == null) {
       throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authentication required");

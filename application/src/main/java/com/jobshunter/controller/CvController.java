@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+import jakarta.validation.constraints.NotNull;
 
 @RestController
 @RequestMapping("/api/cv")
@@ -24,7 +25,11 @@ public class CvController {
   private UserCvService userCvService;
 
   @PostMapping(value = "/upload", consumes = "multipart/form-data")
-  public ResponseEntity<?> uploadCvToChatGpt(@RequestParam("file") MultipartFile file, Authentication authentication) throws IOException {
+  public ResponseEntity<?> uploadCvToChatGpt(
+      @RequestParam("file")
+      @NotNull MultipartFile file,
+      Authentication authentication
+  ) throws IOException {
     String username = authentication != null ? authentication.getName() : null;
     String fileId = userCvService.uploadUserCv(username, file);
     return ResponseEntity.ok(Map.of("message", "CV uploaded to ChatGPT successfully", "fileId", fileId));

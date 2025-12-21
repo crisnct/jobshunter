@@ -127,9 +127,14 @@ public class JobHuntService {
     final JobsSynchronizer jobsSync =
         new JobsSynchronizer(userDataService.getExistingJobUrlsForUser(user.getUsername()), this::isValidJob);
 
-    CompletableFuture<Void> serpFuture = CompletableFuture.runAsync(() -> searchWithSerpAPi(jobsSync, user));
-    CompletableFuture<Void> gptFuture = this.gptSearch(jobsSync, order);
-    CompletableFuture.allOf(serpFuture, gptFuture).join();
+    List<CompletableFuture<Void>> enginesFutures = new ArrayList<>();
+    if (order.engines().stream().anyMatch(p -> p == EngineType.SERP)) {
+      enginesFutures.add(CompletableFuture.runAsync(() -> searchWithSerpAPi(jobsSync, user)));
+    }
+    if (order.engines().stream().anyMatch(p -> p == EngineType.GPT4 || p == EngineType.GPT5)) {
+      enginesFutures.add(gptSearch(jobsSync, order));
+    }
+    CompletableFuture.allOf(enginesFutures.toArray(CompletableFuture[]::new)).join();
 
     JobHuntResponse jobHuntResponse = new JobHuntResponse(jobsSync.getJobs().stream()
         .distinct()
@@ -196,7 +201,7 @@ public class JobHuntService {
     };
     jobsSync.addJobs(jobsFound);
     userDataService.incrementPromptJobsFound(request.prompt().getId(), jobsFound.size());
-    log.info("Found {} jobs for {}. Are going to be validated.", jobsFound.size(),  request.username());
+    log.info("Found {} jobs for {}. Are going to be validated.", jobsFound.size(), request.username());
   }
 
   private void searchWithSerpAPi(JobsSynchronizer jobsSync, UserEntity user) {

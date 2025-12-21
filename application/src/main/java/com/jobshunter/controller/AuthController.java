@@ -8,6 +8,8 @@ import com.jobshunter.dto.RegisterRequest;
 import com.jobshunter.dto.RegistrationResponse;
 import com.jobshunter.service.application.notifiers.EmailNotifierService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,7 +35,11 @@ public class AuthController {
   private EmailNotifierService emailService;
 
   @PostMapping("/register")
-  public RegistrationResponse register(@Valid @RequestBody RegisterRequest request) {
+  public RegistrationResponse register(
+      @Valid
+      @RequestBody
+      RegisterRequest request
+  ) {
     UserEntity user = authService.register(request);
     emailService.sendVerificationToken(user);
     log.info("Verification token for {} is {}", user.getEmail(), user.getVerificationToken());
@@ -43,13 +49,22 @@ public class AuthController {
   }
 
   @PostMapping("/login")
-  public AuthResponse login(@Valid @RequestBody LoginRequest request) {
+  public AuthResponse login(
+      @Valid
+      @RequestBody
+      LoginRequest request
+  ) {
     String token = authService.login(request);
     return new AuthResponse(token);
   }
 
   @PatchMapping("/verify")
-  public ResponseEntity<Map<String, String>> verify(@RequestParam("token") String token) {
+  public ResponseEntity<Map<String, String>> verify(
+      @RequestParam("token")
+      @NotBlank
+      @Size(max = 128)
+      String token
+  ) {
     authService.verifyEmail(token);
     return ResponseEntity.ok(Map.of("message", "Email verified. Please wait up to 72h until your account is approved by an admin."));
   }

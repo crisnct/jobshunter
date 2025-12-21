@@ -20,7 +20,12 @@ import com.jobshunter.dto.serpRequest.SearchWithSerpRequest;
 import com.jobshunter.service.application.JobHuntService;
 import com.jobshunter.service.application.notifiers.EmailNotifierService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -75,15 +80,13 @@ public class UserController {
 
   @PostMapping("/search")
   @PreAuthorize("hasRole('ADMIN')")
-  public ResponseEntity<?> search(@RequestBody SearchJobsRequest request) {
-    if (Strings.isEmpty(request.username())) {
-      return ResponseEntity.badRequest().body(Map.of("Error", "Missing username"));
-    }
-    if (request.engines() == null || request.engines().isEmpty()) {
-      return ResponseEntity.badRequest().body(Map.of("Error", "Missing gpt models"));
-    }
+  public ResponseEntity<?> search(
+      @Valid
+      @RequestBody
+      SearchJobsRequest request
+  ) {
     return userDataService.getUser(request.username())
-        .map(user -> new SearchJobOrder(user, request.engines(), request.iterations()))
+        .map(user -> new SearchJobOrder(user, new ArrayList<>(request.engines()), request.iterations()))
         .map(order -> jobHuntService.searchJobsForUser(order))
         .map(ResponseEntity::ok)
         .orElseGet(() -> ResponseEntity.ok(new JobHuntResponse(Collections.emptyList())));
@@ -100,10 +103,11 @@ public class UserController {
 
   @GetMapping("/jobs")
   @PreAuthorize("hasRole('ADMIN')")
-  public ResponseEntity<?> getUserJobs(@RequestParam("username") String username) {
-    if (username == null || username.isBlank()) {
-      return ResponseEntity.badRequest().body(Map.of("error", "username must not be blank"));
-    }
+  public ResponseEntity<?> getUserJobs(
+      @RequestParam("username")
+      @NotBlank @Size(max = 255)
+      String username
+  ) {
     List<UserJobResponse> jobs = userDataService.getUserJobs(username).stream()
         .map(this::toUserJobResponse)
         .toList();
@@ -111,10 +115,14 @@ public class UserController {
   }
 
   @PatchMapping("/time-interval")
-  public ResponseEntity<?> setTimeInterval(@RequestParam("minutes") Integer minutes, Authentication authentication) {
-    if (minutes == null || minutes <= 0) {
-      return ResponseEntity.badRequest().body(Map.of("error", "minutes must be greater than zero"));
-    }
+  public ResponseEntity<?> setTimeInterval(
+      @RequestParam("minutes")
+      @NotNull
+      @Positive
+      Integer minutes,
+
+      Authentication authentication
+  ) {
     String username = authentication != null ? authentication.getName() : null;
     if (username == null) {
       return ResponseEntity.status(401).body(Map.of("error", "Unauthorized"));
@@ -127,42 +135,31 @@ public class UserController {
   }
 
   @PatchMapping("/prompt")
-  public ResponseEntity<?> setPrompt(@Valid @RequestBody UserPromptRequest request, Authentication authentication) {
+  public ResponseEntity<?> setPrompt(
+      @Valid
+      @RequestBody
+      UserPromptRequest request,
+
+      Authentication authentication
+  ) {
     String username = authentication != null ? authentication.getName() : null;
     if (username == null) {
       return ResponseEntity.status(401).body(Map.of("error", "Unauthorized"));
     }
-    EngineType engineType = EngineType.lookup(request.engine());
-    if (engineType == null) {
-      return ResponseEntity.badRequest().body(Map.of("error", "Invalid engine"));
-    }
     userDataService.getUser(username).ifPresent(user -> {
-      userDataService.addPrompt(request.id(), user, engineType, request.prompt().trim());
+      userDataService.addPrompt(request.id(), user, request.engine(), request.prompt().trim());
     });
     return ResponseEntity.ok(Map.of("message", "Prompt updated"));
   }
 
-  @PatchMapping("/serpApiRequest")
-  public ResponseEntity<?> setSerpApiRequest(@RequestBody SearchWithSerpRequest request, Authentication authentication)
-      throws JsonProcessingException {
-    String username = authentication != null ? authentication.getName() : null;
-    if (username == null) {
-      return ResponseEntity.status(401).body(Map.of("error", "Unauthorized"));
-    }
-    String valueString = mapper.writeValueAsString(request);
-    UserEntity user = userDataService.getUser(username).orElseThrow();
-
-    long serpId = user.getPrompts().stream()
-        .filter(p -> p.getEngine() == EngineType.SERP)
-        .map(UserPromptEntity::getId)
-        .findFirst()
-        .orElse(-1L);
-    userDataService.addPrompt(serpId, user, EngineType.SERP, valueString);
-    return ResponseEntity.ok(Map.of("message", "Serp API request updated"));
-  }
-
   @PatchMapping("/password")
-  public ResponseEntity<?> changePassword(@Valid @RequestBody ChangePasswordRequest request, Authentication authentication) {
+  public ResponseEntity<?> changePassword(
+      @Valid
+      @RequestBody
+      ChangePasswordRequest request,
+
+      Authentication authentication
+  ) {
     String username = authentication != null ? authentication.getName() : null;
     if (username == null) {
       return ResponseEntity.badRequest().body(Map.of("error", "Unauthorized"));
@@ -208,12 +205,15 @@ public class UserController {
   @PatchMapping("/approve")
   @PreAuthorize("hasRole('ADMIN')")
   public ResponseEntity<?> approveUser(
-      @RequestParam("username") String username,
-      @RequestParam(value = "rejectReason", required = false) String rejectReason
+      @RequestParam("username")
+      @NotBlank
+      @Size(max = 255)
+      String username,
+
+      @RequestParam(value = "rejectReason", required = false)
+      @Size(max = 255)
+      String rejectReason
   ) {
-    if (username == null || username.isBlank()) {
-      return ResponseEntity.badRequest().body(Map.of("error", "username must not be blank"));
-    }
     return userDataService.getUser(username)
         .map(user -> {
           if (Strings.isEmpty(rejectReason)) {

@@ -5,11 +5,13 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record SearchWithSerpRequest(
     @NotBlank(message = "Query must not be blank")
+    @Size(max = 2000)
     @JsonProperty("q")
     String query,
 
@@ -22,8 +24,10 @@ public record SearchWithSerpRequest(
     ///   .....
     ///}
     //See more here https://serpapi.com/google-domains
+    @Size(max = 255)
     @JsonProperty("google_domain")
-    @Nullable String googleDomain,
+    @Nullable
+    String googleDomain,
 
     /// Possible values:
     /// {@snippet :
@@ -34,17 +38,23 @@ public record SearchWithSerpRequest(
     ///   last_30_days
     ///}
     @JsonProperty("date_posted")
-    @Nullable String datePosted,
+    @Size(max = 128)
+    @Nullable
+    String datePosted,
 
     // Possible values: uk, ro, ca, us, ...
     //See more here https://serpapi.com/google-countries
     @JsonProperty("gl")
-    @Nullable String country,
+    @Size(max = 2)
+    @Nullable
+    String country,
 
     // Possible values: en, ro, de, ...
     // See more here https://serpapi.com/google-languages
     @JsonProperty("hl")
-    @Nullable String language
+    @Size(max = 2)
+    @Nullable
+    String language
 ) {
 
 }
