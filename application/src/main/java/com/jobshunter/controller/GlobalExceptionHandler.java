@@ -9,6 +9,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.server.ResponseStatusException;
+
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -36,11 +37,10 @@ public class GlobalExceptionHandler {
     return ResponseEntity.status(exception.getStatusCode()).body(Map.of("message", message));
   }
 
-  @ExceptionHandler(RuntimeException.class)
-  public ResponseEntity<Map<String, String>> handleBindException(RuntimeException exception) {
+  @ExceptionHandler(Exception.class)
+  public ResponseEntity<Map<String, String>> handleBindException(Exception exception) {
     log.error("Unexpected exception", exception);
     return ResponseEntity.internalServerError().body(Map.of("message", exception.getMessage()));
   }
-
 
 }

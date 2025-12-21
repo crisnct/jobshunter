@@ -6,6 +6,8 @@ import com.jobshunter.dto.serpRequest.SearchWithSerpRequest;
 import com.jobshunter.dto.serpResponse.SerpApiJobHit;
 import com.jobshunter.dto.serpResponse.SerpApiJobsResult;
 import com.jobshunter.service.clients.SerpApiClient;
+import io.github.resilience4j.bulkhead.annotation.Bulkhead;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import jakarta.validation.constraints.NotNull;
 import java.io.IOException;
 import java.net.URI;
@@ -42,6 +44,8 @@ public non-sealed class SerpApiClientImpl implements SerpApiClient<SearchWithSer
   }
 
   @Override
+  @CircuitBreaker(name = "serpApi", fallbackMethod = "fallbackSearch")
+  @Bulkhead(name = "serpApiBulkhead", type = Bulkhead.Type.SEMAPHORE)
   public SerpApiJobsResult searchJobs(@NotNull SearchWithSerpRequest request) {
     SerpApiJobsResult results;
     try {
@@ -57,6 +61,12 @@ public non-sealed class SerpApiClientImpl implements SerpApiClient<SearchWithSer
       throw new RuntimeException(e);
     }
     return results;
+  }
+
+  @SuppressWarnings("unused")
+  private SerpApiJobsResult fallbackSearch(@NotNull SearchWithSerpRequest request, Throwable t) {
+    log.error("SerpApi search short-circuited/bulkheaded: {}", t.getMessage());
+    return new SerpApiJobsResult(List.of(), null);
   }
 
   private SerpApiJobsResult consolidate(SerpApiJobsResult results1, SerpApiJobsResult results2) {

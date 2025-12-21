@@ -1,5 +1,6 @@
 package com.jobshunter.service.application;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.jobshunter.config.ApplicationProperties;
 import com.jobshunter.database.entities.UserEntity;
@@ -20,7 +21,6 @@ import com.jobshunter.service.clients.GptJobScoreCalculatorClient;
 import com.jobshunter.service.clients.PremiumGptClient;
 import com.jobshunter.service.clients.SerpApiClient;
 import jakarta.annotation.PostConstruct;
-import java.io.IOException;
 import java.net.InetAddress;
 import java.net.URI;
 import java.time.LocalDateTime;
@@ -225,8 +225,8 @@ public class JobHuntService {
         jobsSync.addJob(new Job(score, job.applyLinks().getFirst(), "Google"));
       }
       log.info("Serp Api found {} jobs for user {}", serpApiResult.jobs().size(), user.getUsername());
-    } catch (IOException e) {
-      log.error("Error at parsing response", e);
+    } catch (JsonProcessingException  e) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
     }
   }
 

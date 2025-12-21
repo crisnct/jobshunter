@@ -83,19 +83,28 @@ components:
           type: string
         newPassword:
           type: string
+          minLength: 8
       required: [oldPassword, newPassword]
+
+    EngineType:
+      type: string
+      enum: [GPT4, GPT5, SERP]
 
     SearchJobsRequest:
       type: object
       properties:
-        notifyOnWhatsApp:
-          type: boolean
-          description: Send job links via WhatsApp if user has WhatsApp notifications enabled.
+        username:
+          type: string
         iterations:
           type: integer
           format: int32
+          minimum: 1
           description: Number of search iterations to perform.
-      required: [notifyOnWhatsApp, iterations]
+        engines:
+          type: array
+          items:
+            $ref: '#/components/schemas/EngineType'
+      required: [username, iterations, engines]
 
     JobSearchRequest:
       type: object
@@ -155,9 +164,11 @@ components:
           type: integer
           format: int32
           nullable: true
-        prompt:
-          type: string
+        prompts:
+          type: array
           nullable: true
+          items:
+            type: string
         createdAt:
           type: string
           nullable: true
@@ -195,6 +206,7 @@ components:
         subject:
           type: string
           nullable: true
+          maxLength: 255
         message:
           type: string
         file:

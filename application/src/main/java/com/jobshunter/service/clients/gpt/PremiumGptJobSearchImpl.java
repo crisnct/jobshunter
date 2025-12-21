@@ -10,6 +10,8 @@ import com.jobshunter.dto.gptRequest.tools.Tools;
 import com.jobshunter.dto.gptResponse.GptCompletionResponse;
 import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.clients.PremiumGptClient;
+import io.github.resilience4j.bulkhead.annotation.Bulkhead;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import java.net.URI;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
@@ -40,6 +42,8 @@ public non-sealed class PremiumGptJobSearchImpl extends AbstractGptApiClient
   }
 
   @Override
+  @CircuitBreaker(name = "gptPremium", fallbackMethod = "fallbackSearch")
+  @Bulkhead(name = "gptPremiumBulkhead", type = Bulkhead.Type.SEMAPHORE)
   public List<Job> searchWithModel(String systemPrompt, String userPrompt, ModelSpecific cfg, String fileId) {
     try {
       GptJobsPayload payload = GptJobsPayload.builder()
@@ -66,6 +70,12 @@ public non-sealed class PremiumGptJobSearchImpl extends AbstractGptApiClient
       log.error("ChatGPT job API call failed: {}", e.getMessage());
       return List.of();
     }
+  }
+
+  @SuppressWarnings("unused")
+  private List<Job> fallbackSearch(String systemPrompt, String userPrompt, ModelSpecific cfg, String fileId, Throwable t) {
+    log.error("Premium GPT call short-circuited/bulkheaded: {}", t.getMessage());
+    return List.of();
   }
 
 }

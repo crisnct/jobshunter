@@ -48,3 +48,51 @@ logging:
   level:
     root: INFO
     com.jobshunter: DEBUG
+
+resilience4j.circuitbreaker:
+  instances:
+    gptPremium:
+      registerHealthIndicator: true
+      slidingWindowType: COUNT_BASED
+      slidingWindowSize: 20
+      minimumNumberOfCalls: 10
+      failureRateThreshold: 50
+      slowCallRateThreshold: 50
+      slowCallDurationThreshold: 5s
+      waitDurationInOpenState: 30s
+      permittedNumberOfCallsInHalfOpenState: 3
+    gptEconomy:
+      registerHealthIndicator: true
+      slidingWindowType: COUNT_BASED
+      slidingWindowSize: 20
+      minimumNumberOfCalls: 10
+      failureRateThreshold: 50
+      slowCallRateThreshold: 50
+      slowCallDurationThreshold: 5s
+      waitDurationInOpenState: 30s
+      permittedNumberOfCallsInHalfOpenState: 3
+    serpApi:
+      registerHealthIndicator: true
+      slidingWindowType: COUNT_BASED
+      slidingWindowSize: 20
+      minimumNumberOfCalls: 5
+      failureRateThreshold: 50
+      slowCallRateThreshold: 50
+      slowCallDurationThreshold: 5s
+      waitDurationInOpenState: 30s
+      permittedNumberOfCallsInHalfOpenState: 3
+
+resilience4j.bulkhead:
+  instances:
+    gptPremiumBulkhead:
+      maxConcurrentCalls: 5
+      maxWaitDuration: 2s
+      writableStackTraceEnabled: false
+    gptEconomyBulkhead:
+      maxConcurrentCalls: 10
+      maxWaitDuration: 2s
+      writableStackTraceEnabled: false
+    serpApiBulkhead:
+      maxConcurrentCalls: 5
+      maxWaitDuration: 2s
+      writableStackTraceEnabled: false
