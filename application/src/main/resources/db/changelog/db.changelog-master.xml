@@ -240,4 +240,13 @@
         </update>
     </changeSet>
 
+    <changeSet id="18-duplicate-gpt4-to-gpt5-user-prompts" author="codex">
+        <sql>
+            INSERT INTO user_prompts (user_id, prompt, engine, jobs_found)
+            SELECT user_id, prompt, 'GPT5', jobs_found
+            FROM user_prompts
+            WHERE engine = 'GPT4';
+        </sql>
+    </changeSet>
+
 </databaseChangeLog>
