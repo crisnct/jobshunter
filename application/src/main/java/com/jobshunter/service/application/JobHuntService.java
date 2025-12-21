@@ -5,6 +5,7 @@ import com.jobshunter.config.ApplicationProperties;
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.entities.UserPromptEntity;
 import com.jobshunter.database.service.UserDataService;
+import com.jobshunter.dto.EngineType;
 import com.jobshunter.dto.Job;
 import com.jobshunter.dto.JobHuntResponse;
 import com.jobshunter.dto.SearchJobOrder;
@@ -157,7 +158,7 @@ public class JobHuntService {
     int delayCounter = 0;
     for (int i = 0; i < order.iterations(); i++) {
       for (UserPromptEntity prompt : user.getPrompts()) {
-        if(prompt.getEngine().equalsIgnoreCase("GPT")) {
+        if (prompt.getEngine() != null && prompt.getEngine().equalsIgnoreCase(EngineType.GPT.name())) {
           GptJobSearchRequest request = new GptJobSearchRequest(prompt.getPrompt(), user.getCvFileId());
           Executor delayedExecutor = CompletableFuture.delayedExecutor(
               delayCounter++ * properties.getJobsHunter().getIterationDelay(),
@@ -185,14 +186,22 @@ public class JobHuntService {
       default -> throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid GPT model");
     };
     jobsSync.addJobs(jobsFound);
-    userDataService.incrementPromptJobsFound(order.user(), order.gptModel(), jobsFound.size());
+    userDataService.incrementPromptJobsFound(order.user(), EngineType.GPT, jobsFound.size());
     log.info("Found {} jobs for {}. Are going to be validated.", jobsFound.size(), order.user().getUsername());
   }
 
   private void searchWithSerpAPi(JobsSynchronizer jobsSync, UserEntity user) {
     try {
       log.info("Searching jobs for user {} with serp api", user.getUsername());
-      SearchWithSerpRequest request = mapper.readValue(user.getSerpApiRequest(), SearchWithSerpRequest.class);
+      String serpPayload = user.getPrompts().stream()
+          .filter(p -> EngineType.SERP.name().equalsIgnoreCase(p.getEngine()))
+          .map(UserPromptEntity::getPrompt)
+          .findFirst().orElse(null);
+      if (Strings.isEmpty(serpPayload)) {
+        log.info("Skip serp api search for {} because serp prompt is missing", user.getUsername());
+        return;
+      }
+      SearchWithSerpRequest request = mapper.readValue(serpPayload, SearchWithSerpRequest.class);
       SerpApiJobsResult serpApiResult = serpApiClient.searchJobs(request);
 
       for (SerpApiJobHit job : serpApiResult.jobs()) {

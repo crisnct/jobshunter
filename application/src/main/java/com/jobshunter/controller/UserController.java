@@ -5,9 +5,11 @@ import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.jobshunter.database.entities.RoleEntity;
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.entities.UserJobEntity;
+import com.jobshunter.database.entities.UserPromptEntity;
 import com.jobshunter.database.service.AuthService;
 import com.jobshunter.database.service.UserDataService;
 import com.jobshunter.dto.ChangePasswordRequest;
+import com.jobshunter.dto.EngineType;
 import com.jobshunter.dto.JobHuntResponse;
 import com.jobshunter.dto.SearchJobOrder;
 import com.jobshunter.dto.SearchJobsRequest;
@@ -130,9 +132,8 @@ public class UserController {
     userDataService.getUser(username).ifPresent(user -> {
       String prompt = request.prompt().trim();
       String engine = request.engine().trim();
-      user.setPrompt(prompt);
-      userDataService.addPrompt(user, engine, prompt);
-      userDataService.updateUser(user);
+      EngineType engineType = EngineType.lookup(engine);
+      userDataService.addPrompt(user, engineType, prompt);
     });
     return ResponseEntity.ok(Map.of("message", "Prompt updated"));
   }
@@ -145,11 +146,8 @@ public class UserController {
       return ResponseEntity.status(401).body(Map.of("error", "Unauthorized"));
     }
     String valueString = mapper.writeValueAsString(request);
-
-    userDataService.getUser(username).ifPresent(user -> {
-      user.setSerpApiRequest(valueString);
-      userDataService.updateUser(user);
-    });
+    UserEntity user = userDataService.getUser(username).orElseThrow();
+    userDataService.addPrompt(user, EngineType.SERP, valueString);
     return ResponseEntity.ok(Map.of("message", "Serp API request updated"));
   }
 
@@ -168,6 +166,7 @@ public class UserController {
     List<String> roles = user.getRoles().stream()
         .map(RoleEntity::getName)
         .toList();
+    List<UserPromptEntity> prompts = user.getPrompts();
     return new UserInfoResponse(
         user.getUsername(),
         user.getEmail(),
@@ -179,8 +178,7 @@ public class UserController {
         user.getCvFileId(),
         formatDateTime(user.getLastJobs()),
         user.getTimeInterval(),
-        user.getPrompt(),
-        user.getSerpApiRequest(),
+        prompts.stream().map(p->p.getEngine() + ": " + p.getPrompt()).toList(),
         formatDateTime(user.getCreatedAt()),
         roles
     );

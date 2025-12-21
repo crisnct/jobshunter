@@ -77,12 +77,6 @@ public class UserEntity implements UserDetails {
   @Column(name = "time_interval")
   private Integer timeInterval;
 
-  @Column(name = "prompt")
-  private String prompt;
-
-  @Column(name = "serp_api_request")
-  private String serpApiRequest;
-
   @Column(name = "created_at")
   private LocalDateTime createdAt;
 

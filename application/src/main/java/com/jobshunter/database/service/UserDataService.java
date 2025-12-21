@@ -6,6 +6,7 @@ import com.jobshunter.database.entities.UserPromptEntity;
 import com.jobshunter.database.repository.UserJobRepository;
 import com.jobshunter.database.repository.UserPromptRepository;
 import com.jobshunter.database.repository.UserRepository;
+import com.jobshunter.dto.EngineType;
 import com.jobshunter.dto.Job;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -60,13 +61,12 @@ public class UserDataService {
   }
 
   @Transactional
-  public UserPromptEntity addPrompt(UserEntity user, String engine, String prompt) {
-    String normalizedEngine = normalize(engine);
-    UserPromptEntity entity = userPromptRepository.findByUserIdAndEngine(user.getId(), engine)
+  public UserPromptEntity addPrompt(UserEntity user, EngineType engine, String prompt) {
+    UserPromptEntity entity = userPromptRepository.findByUserIdAndEngine(user.getId(), engine.name())
         .orElseGet(() -> {
           UserPromptEntity newEntity = new UserPromptEntity();
           newEntity.setUser(user);
-          newEntity.setEngine(normalizedEngine);
+          newEntity.setEngine(engine.name());
           newEntity.setJobsFound(0);
           return newEntity;
         });
@@ -75,16 +75,12 @@ public class UserDataService {
   }
 
   @Transactional
-  public void incrementPromptJobsFound(UserEntity user, String engine, int amount) {
-    UserPromptEntity entity = userPromptRepository.findByUserIdAndEngine(user.getId(), engine)
-        .orElseThrow();
+  public void incrementPromptJobsFound(UserEntity user, EngineType engine, int amount) {
+    //noinspection OptionalGetWithoutIsPresent
+    UserPromptEntity entity = userPromptRepository.findByUserIdAndEngine(user.getId(), engine.name()).get();
     int current = entity.getJobsFound() != null ? entity.getJobsFound() : 0;
     entity.setJobsFound(current + amount);
     userPromptRepository.save(entity);
-  }
-
-  private String normalize(String engine) {
-    return engine != null ? engine.trim() : "";
   }
 
   public List<String> getExistingJobUrlsForUser(String username) {

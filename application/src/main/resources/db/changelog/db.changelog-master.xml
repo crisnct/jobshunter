@@ -213,4 +213,24 @@
         </createIndex>
     </changeSet>
 
+    <changeSet id="15-migrate-user-prompts" author="codex">
+        <sql>
+            INSERT INTO user_prompts (user_id, prompt, engine, jobs_found)
+            SELECT id, prompt, 'GPT', 0
+            FROM users
+            WHERE prompt IS NOT NULL AND TRIM(prompt) &lt;&gt; '';
+        </sql>
+        <sql>
+            INSERT INTO user_prompts (user_id, prompt, engine, jobs_found)
+            SELECT id, serp_api_request, 'SERP', 0
+            FROM users
+            WHERE serp_api_request IS NOT NULL AND TRIM(serp_api_request) &lt;&gt; '';
+        </sql>
+    </changeSet>
+
+    <changeSet id="16-drop-legacy-prompts-columns" author="codex">
+        <dropColumn tableName="users" columnName="prompt"/>
+        <dropColumn tableName="users" columnName="serp_api_request"/>
+    </changeSet>
+
 </databaseChangeLog>
