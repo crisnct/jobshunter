@@ -71,6 +71,9 @@ public class UserDataService {
           newEntity.setJobsFound(0);
           return newEntity;
         });
+    if (!entity.getUser().getUsername().equals(user.getUsername())){
+      throw new IllegalArgumentException("Wrong id");
+    }
     entity.setEngine(engine);
     entity.setPrompt(prompt);
     return userPromptRepository.save(entity);
