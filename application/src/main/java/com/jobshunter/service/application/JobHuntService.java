@@ -167,15 +167,17 @@ public class JobHuntService {
     int delayCounter = 0;
     for (int i = 0; i < order.iterations(); i++) {
       for (EngineType engine : order.engines()) {
-        for (UserPromptEntity prompt : user.getPrompts()) {
-          if (prompt.getEngine() == engine) {
-            Executor delayedExecutor = CompletableFuture.delayedExecutor(
-                delayCounter++ * properties.getJobsHunter().getIterationDelay(),
-                TimeUnit.MILLISECONDS,
-                gptSearchExecutor
-            );
-            GptJobSearchRequest request = new GptJobSearchRequest(user.getUsername(), prompt, user.getCvFileId(), engine);
-            futures.add(CompletableFuture.runAsync(() -> gptSearch(jobsSync, request), delayedExecutor));
+        if (engine == EngineType.GPT4 || engine == EngineType.GPT5) {
+          for (UserPromptEntity prompt : user.getPrompts()) {
+            if (prompt.getEngine() == engine) {
+              Executor delayedExecutor = CompletableFuture.delayedExecutor(
+                  delayCounter++ * properties.getJobsHunter().getIterationDelay(),
+                  TimeUnit.MILLISECONDS,
+                  gptSearchExecutor
+              );
+              GptJobSearchRequest request = new GptJobSearchRequest(user.getUsername(), prompt, user.getCvFileId(), engine);
+              futures.add(CompletableFuture.runAsync(() -> gptSearch(jobsSync, request), delayedExecutor));
+            }
           }
         }
       }
@@ -225,7 +227,7 @@ public class JobHuntService {
         jobsSync.addJob(new Job(score, job.applyLinks().getFirst(), "Google"));
       }
       log.info("Serp Api found {} jobs for user {}", serpApiResult.jobs().size(), user.getUsername());
-    } catch (JsonProcessingException  e) {
+    } catch (JsonProcessingException e) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
     }
   }
