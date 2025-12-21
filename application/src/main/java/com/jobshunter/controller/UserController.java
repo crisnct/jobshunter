@@ -79,8 +79,11 @@ public class UserController {
     if (Strings.isEmpty(request.username())) {
       return ResponseEntity.badRequest().body(Map.of("Error", "Missing username"));
     }
+    if (request.engines() == null || request.engines().isEmpty()) {
+      return ResponseEntity.badRequest().body(Map.of("Error", "Missing gpt models"));
+    }
     return userDataService.getUser(request.username())
-        .map(user -> new SearchJobOrder(user, request.gptModel(), request.iterations()))
+        .map(user -> new SearchJobOrder(user, request.engines(), request.iterations()))
         .map(order -> jobHuntService.searchJobsForUser(order))
         .map(ResponseEntity::ok)
         .orElseGet(() -> ResponseEntity.ok(new JobHuntResponse(Collections.emptyList())));

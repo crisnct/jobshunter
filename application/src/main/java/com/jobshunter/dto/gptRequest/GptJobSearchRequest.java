@@ -1,5 +1,8 @@
 package com.jobshunter.dto.gptRequest;
 
-public record GptJobSearchRequest(String userPrompt, String fileId) {
+import com.jobshunter.database.entities.UserPromptEntity;
+import com.jobshunter.dto.EngineType;
+
+public record GptJobSearchRequest(String username, UserPromptEntity prompt, String fileId, EngineType engine) {
 
 }

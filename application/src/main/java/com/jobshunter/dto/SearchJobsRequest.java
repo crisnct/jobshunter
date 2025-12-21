@@ -1,4 +1,10 @@
 package com.jobshunter.dto;
 
-public record SearchJobsRequest(String username, String gptModel, int iterations) {
+import java.util.List;
+
+public record SearchJobsRequest(
+    String username,
+    int iterations,
+    List<EngineType> engines
+) {
 }

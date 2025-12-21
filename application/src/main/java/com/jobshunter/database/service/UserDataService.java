@@ -77,14 +77,11 @@ public class UserDataService {
   }
 
   @Transactional
-  public void incrementPromptJobsFound(UserEntity user, EngineType engine, int amount) {
-    Objects.requireNonNull(engine);
-    userPromptRepository.findByUserIdAndEngine(user.getId(), engine)
-        .ifPresent(entity -> {
-          int current = entity.getJobsFound() != null ? entity.getJobsFound() : 0;
-          entity.setJobsFound(current + amount);
-          userPromptRepository.save(entity);
-        });
+  public void incrementPromptJobsFound(long promptId, int amount) {
+    UserPromptEntity entity = userPromptRepository.findById(promptId).orElseThrow();
+    int current = entity.getJobsFound() != null ? entity.getJobsFound() : 0;
+    entity.setJobsFound(current + amount);
+    userPromptRepository.save(entity);
   }
 
   public List<String> getExistingJobUrlsForUser(String username) {

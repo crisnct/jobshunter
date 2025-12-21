@@ -106,7 +106,11 @@ public class JobHuntService {
             && user.getLastJobs() != null
             && user.getLastJobs().plusMinutes(user.getTimeInterval()).isBefore(LocalDateTime.now())) {
           log.info("Start searching jobs for {} ", user.getUsername());
-          this.searchJobsForUser(new SearchJobOrder(user, "gpt-4o-mini", properties.getJobsHunter().getIterationPerUser()));
+          this.searchJobsForUser(new SearchJobOrder(
+              user,
+              List.of(EngineType.GPT4),
+              properties.getJobsHunter().getIterationPerUser()
+          ));
         }
       }
     }
@@ -157,15 +161,17 @@ public class JobHuntService {
 
     int delayCounter = 0;
     for (int i = 0; i < order.iterations(); i++) {
-      for (UserPromptEntity prompt : user.getPrompts()) {
-        if (prompt.getEngine() == EngineType.GPT) {
-          GptJobSearchRequest request = new GptJobSearchRequest(prompt.getPrompt(), user.getCvFileId());
-          Executor delayedExecutor = CompletableFuture.delayedExecutor(
-              delayCounter++ * properties.getJobsHunter().getIterationDelay(),
-              TimeUnit.MILLISECONDS,
-              gptSearchExecutor
-          );
-          futures.add(CompletableFuture.runAsync(() -> gptSearch(jobsSync, order, request), delayedExecutor));
+      for (EngineType engine : order.engines()) {
+        for (UserPromptEntity prompt : user.getPrompts()) {
+          if (prompt.getEngine() == engine) {
+            Executor delayedExecutor = CompletableFuture.delayedExecutor(
+                delayCounter++ * properties.getJobsHunter().getIterationDelay(),
+                TimeUnit.MILLISECONDS,
+                gptSearchExecutor
+            );
+            GptJobSearchRequest request = new GptJobSearchRequest(user.getUsername(), prompt, user.getCvFileId(), engine);
+            futures.add(CompletableFuture.runAsync(() -> gptSearch(jobsSync, request), delayedExecutor));
+          }
         }
       }
     }
@@ -178,16 +184,19 @@ public class JobHuntService {
         });
   }
 
-  private void gptSearch(JobsSynchronizer jobsSync, SearchJobOrder order, GptJobSearchRequest request) {
-    log.info("Searching jobs for user {} with gpt model {}", order.user().getUsername(), order.gptModel());
-    List<Job> jobsFound = switch (order.gptModel()) {
-      case "gpt-4o-mini" -> gpt4Client.searchJobs(request);
-      case "gpt-5.2" -> gpt5Client.searchJobs(request);
+  private void gptSearch(
+      JobsSynchronizer jobsSync,
+      GptJobSearchRequest request
+  ) {
+    log.info("Searching jobs for user {} with gpt model {}", request.username(), request.engine());
+    List<Job> jobsFound = switch (request.engine()) {
+      case GPT4 -> gpt4Client.searchJobs(request);
+      case GPT5 -> gpt5Client.searchJobs(request);
       default -> throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid GPT model");
     };
     jobsSync.addJobs(jobsFound);
-    userDataService.incrementPromptJobsFound(order.user(), EngineType.GPT, jobsFound.size());
-    log.info("Found {} jobs for {}. Are going to be validated.", jobsFound.size(), order.user().getUsername());
+    userDataService.incrementPromptJobsFound(request.prompt().getId(), jobsFound.size());
+    log.info("Found {} jobs for {}. Are going to be validated.", jobsFound.size(),  request.username());
   }
 
   private void searchWithSerpAPi(JobsSynchronizer jobsSync, UserEntity user) {

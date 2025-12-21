@@ -72,7 +72,7 @@ public abstract sealed class AbstractGptApiClient permits EconomyGptJobSearchImp
       log.warn("ChatGPT job search enabled but CHATGPT_API_KEY missing.");
       return List.of();
     }
-    return searchWithModel(jobsSystemPrompt, request.userPrompt(), getConfig(), request.fileId());
+    return searchWithModel(jobsSystemPrompt, request.prompt().getPrompt(), getConfig(), request.fileId());
   }
 
   protected List<Job> extractJobs(GptCompletionResponse response) {

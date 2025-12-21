@@ -233,4 +233,11 @@
         <dropColumn tableName="users" columnName="serp_api_request"/>
     </changeSet>
 
+    <changeSet id="17-rename-gpt-to-gpt4-in-user-prompts" author="codex">
+        <update tableName="user_prompts">
+            <column name="engine" value="GPT4"/>
+            <where>engine = 'GPT'</where>
+        </update>
+    </changeSet>
+
 </databaseChangeLog>
