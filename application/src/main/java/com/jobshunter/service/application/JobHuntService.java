@@ -158,7 +158,7 @@ public class JobHuntService {
     int delayCounter = 0;
     for (int i = 0; i < order.iterations(); i++) {
       for (UserPromptEntity prompt : user.getPrompts()) {
-        if (prompt.getEngine() != null && prompt.getEngine().equalsIgnoreCase(EngineType.GPT.name())) {
+        if (prompt.getEngine() == EngineType.GPT) {
           GptJobSearchRequest request = new GptJobSearchRequest(prompt.getPrompt(), user.getCvFileId());
           Executor delayedExecutor = CompletableFuture.delayedExecutor(
               delayCounter++ * properties.getJobsHunter().getIterationDelay(),
@@ -194,9 +194,10 @@ public class JobHuntService {
     try {
       log.info("Searching jobs for user {} with serp api", user.getUsername());
       String serpPayload = user.getPrompts().stream()
-          .filter(p -> EngineType.SERP.name().equalsIgnoreCase(p.getEngine()))
+          .filter(p -> p.getEngine() == EngineType.SERP)
           .map(UserPromptEntity::getPrompt)
-          .findFirst().orElse(null);
+          .findFirst()
+          .orElse(null);
       if (Strings.isEmpty(serpPayload)) {
         log.info("Skip serp api search for {} because serp prompt is missing", user.getUsername());
         return;

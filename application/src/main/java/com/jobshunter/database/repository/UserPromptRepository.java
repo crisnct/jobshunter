@@ -1,6 +1,7 @@
 package com.jobshunter.database.repository;
 
 import com.jobshunter.database.entities.UserPromptEntity;
+import com.jobshunter.dto.EngineType;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -11,7 +12,7 @@ public interface UserPromptRepository extends JpaRepository<UserPromptEntity, Lo
 
   List<UserPromptEntity> findAllByUserUsernameIgnoreCase(String username);
 
-  Optional<UserPromptEntity> findByUserIdAndEngine(Long userId, String engine);
+  Optional<UserPromptEntity> findByUserIdAndEngine(Long userId, EngineType engine);
 
 }
 

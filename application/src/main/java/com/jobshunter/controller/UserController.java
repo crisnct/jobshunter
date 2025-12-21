@@ -129,10 +129,12 @@ public class UserController {
     if (username == null) {
       return ResponseEntity.status(401).body(Map.of("error", "Unauthorized"));
     }
+    EngineType engineType = EngineType.lookup(request.engine());
+    if (engineType == null) {
+      return ResponseEntity.badRequest().body(Map.of("error", "Invalid engine"));
+    }
     userDataService.getUser(username).ifPresent(user -> {
       String prompt = request.prompt().trim();
-      String engine = request.engine().trim();
-      EngineType engineType = EngineType.lookup(engine);
       userDataService.addPrompt(user, engineType, prompt);
     });
     return ResponseEntity.ok(Map.of("message", "Prompt updated"));

@@ -10,6 +10,7 @@ import com.jobshunter.dto.EngineType;
 import com.jobshunter.dto.Job;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -62,11 +63,12 @@ public class UserDataService {
 
   @Transactional
   public UserPromptEntity addPrompt(UserEntity user, EngineType engine, String prompt) {
-    UserPromptEntity entity = userPromptRepository.findByUserIdAndEngine(user.getId(), engine.name())
+    Objects.requireNonNull(engine);
+    UserPromptEntity entity = userPromptRepository.findByUserIdAndEngine(user.getId(), engine)
         .orElseGet(() -> {
           UserPromptEntity newEntity = new UserPromptEntity();
           newEntity.setUser(user);
-          newEntity.setEngine(engine.name());
+          newEntity.setEngine(engine);
           newEntity.setJobsFound(0);
           return newEntity;
         });
@@ -76,11 +78,13 @@ public class UserDataService {
 
   @Transactional
   public void incrementPromptJobsFound(UserEntity user, EngineType engine, int amount) {
-    //noinspection OptionalGetWithoutIsPresent
-    UserPromptEntity entity = userPromptRepository.findByUserIdAndEngine(user.getId(), engine.name()).get();
-    int current = entity.getJobsFound() != null ? entity.getJobsFound() : 0;
-    entity.setJobsFound(current + amount);
-    userPromptRepository.save(entity);
+    Objects.requireNonNull(engine);
+    userPromptRepository.findByUserIdAndEngine(user.getId(), engine)
+        .ifPresent(entity -> {
+          int current = entity.getJobsFound() != null ? entity.getJobsFound() : 0;
+          entity.setJobsFound(current + amount);
+          userPromptRepository.save(entity);
+        });
   }
 
   public List<String> getExistingJobUrlsForUser(String username) {
