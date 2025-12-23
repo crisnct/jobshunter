@@ -1,4 +1,4 @@
-package com.jobshunter.dto.gemini;
+package com.jobshunter.dto.geminiRequest;
 
 import com.jobshunter.database.entities.UserPromptEntity;
 import com.jobshunter.dto.AIJobSearchRequest;

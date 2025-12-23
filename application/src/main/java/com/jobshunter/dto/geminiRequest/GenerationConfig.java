@@ -1,4 +1,4 @@
-package com.jobshunter.dto.gemini;
+package com.jobshunter.dto.geminiRequest;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;

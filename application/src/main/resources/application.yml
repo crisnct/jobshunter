@@ -62,10 +62,10 @@ spring:
     properties:
       hibernate.validator.message_interpolator: org.hibernate.validator.messageinterpolation.ParameterMessageInterpolator
   liquibase:
-    change-log: classpath:db/changelog/db.changelog-master.xml
     enabled: ${LIQUIBASE_ENABLED:true}
+    change-log: classpath:db/changelog/db.changelog-master.xml
   mail:
-    enabled: false
+    enabled: true
     host: send.smtp.mailtrap.io
     port: 587
     username: ${MAILTRAP_USERNAME:notset}
