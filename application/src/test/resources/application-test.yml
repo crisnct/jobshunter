@@ -6,24 +6,30 @@ jobshunter:
   useDummyData: true
   iterationPerUser: 1
   iterationDelay: 30000
-
   scheduler:
     frequency: 3600000
 
-  whatsapp:
-    account-sid: ${TWILIO_ACCOUNT_SID:}
-    auth-token: ${TWILIO_AUTH_TOKEN:}
-    from-number: ${TWILIO_WHATSAPP_FROM:}
+twilio:
+  account-sid: ${TWILIO_ACCOUNT_SID:}
+  auth-token: ${TWILIO_AUTH_TOKEN:}
+  from-number: ${TWILIO_WHATSAPP_FROM:}
+
+gemini:
+  apiKey: ${GEMINI_API_KEY:notset}
+  economy:
+    model: "gemini-2.5-flash-lite"
+  premium:
+    model: "gemini-2.5-pro"
 
 gpt:
   apiKey: ${CHATGPT_API_KEY:notset}
   maxTokens: 1000
   economy:
     model: "gpt-4o-mini"
-    systemPromptFile: "jobsSystemPromptGPT4.txt"
+    systemPromptFile: "jobsSystemPromptEconomy.txt"
   premium:
     model: "gpt-5.2"
-    systemPromptFile: "jobsSystemPromptGPT5.txt"
+    systemPromptFile: "jobsSystemPromptPremium.txt"
 
 spring:
   datasource:

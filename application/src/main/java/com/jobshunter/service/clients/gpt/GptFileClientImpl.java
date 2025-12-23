@@ -2,11 +2,10 @@ package com.jobshunter.service.clients.gpt;
 
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.jobshunter.config.ApplicationProperties;
-import com.jobshunter.config.ApplicationProperties.Gpt;
-import com.jobshunter.dto.gptResponse.DeleteFileResponse;
 import com.jobshunter.dto.gptResponse.UploadFileResponse;
 import com.jobshunter.processor.PackageExpected;
-import com.jobshunter.service.clients.GPTFileApiClient;
+import com.jobshunter.service.clients.FileClient;
+import jakarta.validation.constraints.NotBlank;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
@@ -26,10 +25,10 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
 @Slf4j
-@Component
+@Component("Gpt")
 @PackageExpected("com.jobshunter.service.clients.gpt")
 @ConditionalOnProperty(name = "jobshunter.useDummyData", havingValue = "false")
-public final class GptFileApiClientImpl implements GPTFileApiClient {
+public final class GptFileClientImpl implements FileClient {
 
   private static final String API_URI = "https://api.openai.com/v1/files";
 
@@ -44,36 +43,9 @@ public final class GptFileApiClientImpl implements GPTFileApiClient {
 
   @Override
   public String uploadFile(Path cvPath) throws IOException {
-    Gpt cfg = properties.getGpt();
-    if (cfg == null || cfg.getApiKey() == null || cfg.getApiKey().isBlank()) {
-      log.warn("ChatGPT upload requested but configuration or apiKey missing.");
-      return null;
-    }
-    return uploadFile(cfg, cvPath);
-  }
-
-  @Override
-  public boolean deleteFile(String fileId) {
-    if (fileId == null || fileId.isBlank()) {
-      return false;
-    }
-    Gpt cfg = properties.getGpt();
-    if (cfg == null || cfg.getApiKey() == null || cfg.getApiKey().isBlank()) {
-      log.warn("ChatGPT delete requested but configuration or apiKey missing.");
-      return false;
-    }
-    try {
-      return deleteFile(cfg, fileId) != null;
-    } catch (Exception e) {
-      log.warn("Failed to delete ChatGPT file {}: {}", fileId, e.getMessage());
-      return false;
-    }
-  }
-
-  private String uploadFile(Gpt cfg, Path cvPath) throws IOException {
     try (var ignored = Files.newInputStream(cvPath)) {
       HttpHeaders headers = new HttpHeaders();
-      headers.set("Authorization", "Bearer " + cfg.getApiKey());
+      headers.set("Authorization", "Bearer " + properties.getGpt().getApiKey());
       headers.setContentType(MediaType.MULTIPART_FORM_DATA);
 
       MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
@@ -92,24 +64,16 @@ public final class GptFileApiClientImpl implements GPTFileApiClient {
     }
   }
 
-  public String deleteFile(Gpt cfg, String fileId) throws IOException {
+  @Override
+  public void deleteFile(@NotBlank String fileId) {
     HttpHeaders headers = new HttpHeaders();
-    headers.set("Authorization", "Bearer " + cfg.getApiKey());
-
-    HttpEntity<Void> entity = new HttpEntity<>(headers);
-    ResponseEntity<String> httpResponse = restTemplate.exchange(
+    headers.set("Authorization", "Bearer " + properties.getGpt().getApiKey());
+    restTemplate.exchange(
         URI.create(API_URI + "/" + fileId),
         HttpMethod.DELETE,
-        entity,
+        new HttpEntity<>(headers),
         String.class
     );
-
-    if (httpResponse.getStatusCode().value() >= 400) {
-      log.warn("ChatGPT job API returned {} - {}", httpResponse.getStatusCode(), httpResponse.getBody());
-      return null;
-    }
-    DeleteFileResponse respoanse = mapper.readValue(httpResponse.getBody(), DeleteFileResponse.class);
-    return respoanse.id();
   }
 
 }

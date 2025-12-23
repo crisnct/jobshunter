@@ -3,6 +3,9 @@ package com.jobshunter.dto;
 public enum EngineType {
   GPT4,
   GPT5,
+  GEMINI2_5_FLASH_LITE,
+  GEMINI2_5_FLASH,
+  GEMINI2_5_PRO,
   SERP;
 
   public static EngineType lookup(String engine) {

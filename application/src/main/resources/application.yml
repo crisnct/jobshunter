@@ -17,15 +17,24 @@ twilio:
   auth-token: ${TWILIO_AUTH_TOKEN:notset}
   from-number: ${TWILIO_WHATSAPP_FROM:notset}
 
+gemini:
+  apiKey: ${GEMINI_API_KEY:notset}
+  economy:
+    model: "gemini-2.5-flash-lite"
+    systemPromptFile: "jobsSystemPromptEconomy.txt"
+  premium:
+    model: "gemini-2.5-pro"
+    systemPromptFile: "jobsSystemPromptPremium.txt"
+
 gpt:
   apiKey: ${CHATGPT_API_KEY:notset}
   maxTokens: 2000
   economy:
     model: "gpt-4o-mini"
-    systemPromptFile: "jobsSystemPromptGPT4.txt"
+    systemPromptFile: "jobsSystemPromptEconomy.txt"
   premium:
     model: "gpt-5.2"
-    systemPromptFile: "jobsSystemPromptGPT5.txt"
+    systemPromptFile: "jobsSystemPromptPremium.txt"
 
 serpApi:
   apiKey: ${SERP_API_KEY:notset}

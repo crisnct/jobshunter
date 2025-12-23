@@ -2,7 +2,7 @@ package com.jobshunter.service.application;
 
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.service.UserDataService;
-import com.jobshunter.service.clients.GPTFileApiClient;
+import com.jobshunter.service.clients.FileClient;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -11,6 +11,7 @@ import java.nio.file.Path;
 import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
@@ -36,7 +37,12 @@ public class UserCvService {
   private UserDataService userDataService;
 
   @Autowired
-  private GPTFileApiClient filesClient;
+  @Qualifier("Gpt")
+  private FileClient gptFileClient;
+
+  @Autowired
+  @Qualifier("Gemini")
+  private FileClient geminiFileClient;
 
   @Transactional
   public String uploadUserCv(String username, MultipartFile file) throws IOException {
@@ -56,10 +62,15 @@ public class UserCvService {
       copyWithLimit(file.getInputStream(), tempFile, MAX_CV_BYTES);
 
       if (StringUtils.hasText(user.getCvFileId())) {
-        filesClient.deleteFile(user.getCvFileId());
+        gptFileClient.deleteFile(user.getCvFileId());
+        geminiFileClient.deleteFile(user.getCvFileId());
       }
 
-      String uploadedFileId = filesClient.uploadFile(tempFile);
+      String uploadedFileId = gptFileClient.uploadFile(tempFile);
+      if (!StringUtils.hasText(uploadedFileId)) {
+        throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Failed to upload CV to ChatGPT");
+      }
+      geminiFileClient.uploadFile(tempFile);
       if (!StringUtils.hasText(uploadedFileId)) {
         throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Failed to upload CV to ChatGPT");
       }
@@ -84,8 +95,10 @@ public class UserCvService {
     UserEntity user = userDataService.getUser(username)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
+    geminiFileClient.deleteFile("s667pbabmi0s");
+
     if (StringUtils.hasText(user.getCvFileId())) {
-      filesClient.deleteFile(user.getCvFileId());
+      gptFileClient.deleteFile(user.getCvFileId());
       user.setCvFileId(null);
       userDataService.save(user);
     }

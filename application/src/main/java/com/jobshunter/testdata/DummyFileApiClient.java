@@ -1,7 +1,7 @@
 package com.jobshunter.testdata;
 
 import com.jobshunter.processor.PackageExpected;
-import com.jobshunter.service.clients.GPTFileApiClient;
+import com.jobshunter.service.clients.FileClient;
 import java.nio.file.Path;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -11,15 +11,16 @@ import org.springframework.stereotype.Component;
 @Component
 @PackageExpected("com.jobshunter.service.clients.gpt")
 @ConditionalOnProperty(name = "jobshunter.useDummyData", havingValue = "true")
-public final class DummyGPTFileApiClient implements GPTFileApiClient {
+public final class DummyFileApiClient implements FileClient {
 
   @Override
   public String uploadFile(Path cvPath) {
-    return "File uploaded properly";
+    log.info("File {} uploaded properly", cvPath);
+    return "uploaded";
   }
 
   @Override
-  public boolean deleteFile(String fileId) {
-    return true;
+  public void deleteFile(String fileId) {
+    log.info("File {} deleted", fileId);
   }
 }
