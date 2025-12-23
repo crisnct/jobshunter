@@ -12,6 +12,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import java.time.LocalDateTime;
@@ -68,9 +69,6 @@ public class UserEntity implements UserDetails {
   @Column(name = "verification_token")
   private String verificationToken;
 
-  @Column(name = "cv_file_id")
-  private String cvFileId;
-
   @Column(name = "last_jobs")
   private LocalDateTime lastJobs;
 
@@ -96,6 +94,10 @@ public class UserEntity implements UserDetails {
   @JsonIgnore
   @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
   private List<UserPromptEntity> prompts = new ArrayList<>();
+
+  @JsonIgnore
+  @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+  private UserCvEntity cv;
 
   @JsonIgnore
   @Column(name = "jwt_token", length = 64)

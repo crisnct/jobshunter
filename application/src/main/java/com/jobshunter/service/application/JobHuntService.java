@@ -3,6 +3,7 @@ package com.jobshunter.service.application;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.jobshunter.config.ApplicationProperties;
+import com.jobshunter.database.entities.UserCvEntity;
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.entities.UserPromptEntity;
 import com.jobshunter.database.service.UserDataService;
@@ -44,6 +45,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -119,7 +121,8 @@ public class JobHuntService {
 
   public JobHuntResponse searchJobsForUser(SearchJobOrder order) {
     UserEntity user = order.user();
-    if (user.getPrompts().isEmpty() || Strings.isEmpty(user.getCvFileId())) {
+    String gptFileId = user.getCv() != null ? user.getCv().getGptFileId(): null;
+    if (user.getPrompts().isEmpty() || !StringUtils.hasText(gptFileId)) {
       log.info("Skip user {} because prompt or cv is missing", user.getUsername());
       return new JobHuntResponse(Collections.emptyList());
     }
@@ -129,10 +132,10 @@ public class JobHuntService {
 
     List<CompletableFuture<Void>> enginesFutures = new ArrayList<>();
     if (order.engines().stream().anyMatch(p -> p == EngineType.SERP)) {
-      enginesFutures.add(CompletableFuture.runAsync(() -> searchWithSerpAPi(jobsSync, user)));
+      enginesFutures.add(CompletableFuture.runAsync(() -> searchWithSerpAPi(jobsSync, user, gptFileId)));
     }
     if (order.engines().stream().anyMatch(p -> p == EngineType.GPT4 || p == EngineType.GPT5)) {
-      enginesFutures.add(gptSearch(jobsSync, order));
+      enginesFutures.add(gptSearch(jobsSync, order, gptFileId));
     }
     CompletableFuture.allOf(enginesFutures.toArray(CompletableFuture[]::new)).join();
 
@@ -159,7 +162,7 @@ public class JobHuntService {
     return jobHuntResponse;
   }
 
-  private CompletableFuture<Void> gptSearch(JobsSynchronizer jobsSync, SearchJobOrder order) {
+  private CompletableFuture<Void> gptSearch(JobsSynchronizer jobsSync, SearchJobOrder order, String gptFileId) {
     UserEntity user = order.user();
     List<CompletableFuture<Void>> futures = new ArrayList<>();
 
@@ -174,7 +177,7 @@ public class JobHuntService {
                   TimeUnit.MILLISECONDS,
                   gptSearchExecutor
               );
-              GptJobSearchRequest request = new GptJobSearchRequest(user.getUsername(), prompt, user.getCvFileId(), engine);
+              GptJobSearchRequest request = new GptJobSearchRequest(user.getUsername(), prompt, gptFileId, engine);
               futures.add(CompletableFuture.runAsync(() -> gptSearch(jobsSync, request), delayedExecutor));
             }
           }
@@ -205,7 +208,7 @@ public class JobHuntService {
     log.info("Found {} jobs for {}. Are going to be validated.", jobsFound.size(), request.username());
   }
 
-  private void searchWithSerpAPi(JobsSynchronizer jobsSync, UserEntity user) {
+  private void searchWithSerpAPi(JobsSynchronizer jobsSync, UserEntity user, String gptFileId) {
     try {
       log.info("Searching jobs for user {} with serp api", user.getUsername());
       String serpPayload = user.getPrompts().stream()
@@ -222,7 +225,7 @@ public class JobHuntService {
 
       for (SerpApiJobHit job : serpApiResult.jobs()) {
         String jobDescription = job.description() + "\n" + job.highlights();
-        int score = scoreCalculator.computeScore(jobDescription, user.getCvFileId());
+        int score = scoreCalculator.computeScore(jobDescription, gptFileId);
         jobsSync.addJob(new Job(score, job.applyLinks().getFirst(), "Google"));
       }
       log.info("Serp Api found {} jobs for user {}", serpApiResult.jobs().size(), user.getUsername());
@@ -291,6 +294,13 @@ public class JobHuntService {
     } catch (Exception ex) {
       return null;
     }
+  }
+
+  private String resolveGptCvFileId(UserEntity user) {
+    return userDataService.getUserCv(user.getUsername())
+        .map(UserCvEntity::getGptFileId)
+        .filter(StringUtils::hasText)
+        .orElse(null);
   }
 
 }

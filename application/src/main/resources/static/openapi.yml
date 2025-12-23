@@ -153,7 +153,10 @@ components:
         verificationToken:
           type: string
           nullable: true
-        cvFileId:
+        gptFileId:
+          type: string
+          nullable: true
+        geminiFileId:
           type: string
           nullable: true
         lastJobs:

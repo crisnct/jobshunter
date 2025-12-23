@@ -1,8 +1,10 @@
 package com.jobshunter.service.application;
 
+import com.jobshunter.database.entities.UserCvEntity;
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.service.UserDataService;
 import com.jobshunter.service.clients.FileClient;
+import jakarta.validation.constraints.NotNull;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -61,23 +63,23 @@ public class UserCvService {
     try {
       copyWithLimit(file.getInputStream(), tempFile, MAX_CV_BYTES);
 
-      if (StringUtils.hasText(user.getCvFileId())) {
-        gptFileClient.deleteFile(user.getCvFileId());
-        geminiFileClient.deleteFile(user.getCvFileId());
+      if (user.getCv() != null) {
+        deleteRemoteFiles(user.getCv());
       }
 
-      String uploadedFileId = gptFileClient.uploadFile(tempFile);
-      if (!StringUtils.hasText(uploadedFileId)) {
+      byte[] cvContent = Files.readAllBytes(tempFile);
+
+      String gptFileId = gptFileClient.uploadFile(tempFile);
+      if (!StringUtils.hasText(gptFileId)) {
         throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Failed to upload CV to ChatGPT");
       }
-      geminiFileClient.uploadFile(tempFile);
-      if (!StringUtils.hasText(uploadedFileId)) {
-        throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Failed to upload CV to ChatGPT");
+      String geminiFileId = geminiFileClient.uploadFile(tempFile);
+      if (!StringUtils.hasText(geminiFileId)) {
+        throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Failed to upload CV to Gemini");
       }
 
-      user.setCvFileId(uploadedFileId);
-      userDataService.save(user);
-      return uploadedFileId;
+      userDataService.replaceUserCv(user, cvContent, gptFileId, geminiFileId);
+      return gptFileId;
     } finally {
       try {
         Files.deleteIfExists(tempFile);
@@ -94,13 +96,9 @@ public class UserCvService {
     }
     UserEntity user = userDataService.getUser(username)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
-
-    geminiFileClient.deleteFile("s667pbabmi0s");
-
-    if (StringUtils.hasText(user.getCvFileId())) {
-      gptFileClient.deleteFile(user.getCvFileId());
-      user.setCvFileId(null);
-      userDataService.save(user);
+    if (user.getCv() != null) {
+      deleteRemoteFiles(user.getCv());
+      userDataService.deleteUserCv(user);
     }
   }
 
@@ -111,7 +109,7 @@ public class UserCvService {
     }
     long size = file.getSize();
     if (size > MAX_CV_BYTES) {
-      throw new ResponseStatusException(HttpStatus.PAYLOAD_TOO_LARGE, "CV file exceeds 5MB limit");
+      throw new ResponseStatusException(HttpStatus.PAYLOAD_TOO_LARGE, "CV file exceeds 10MB limit");
     }
   }
 
@@ -123,7 +121,7 @@ public class UserCvService {
       while ((read = in.read(buffer)) != -1) {
         copied += read;
         if (copied > maxBytes) {
-          throw new ResponseStatusException(HttpStatus.PAYLOAD_TOO_LARGE, "CV file exceeds 5MB limit");
+          throw new ResponseStatusException(HttpStatus.PAYLOAD_TOO_LARGE, "CV file exceeds 10MB limit");
         }
         out.write(buffer, 0, read);
       }
@@ -143,5 +141,22 @@ public class UserCvService {
       clean = clean + ".tmp";
     }
     return "-" + clean;
+  }
+
+  private void deleteRemoteFiles(@NotNull UserCvEntity cv) {
+    if (StringUtils.hasText(cv.getGptFileId())) {
+      try {
+        gptFileClient.deleteFile(cv.getGptFileId());
+      } catch (Exception e) {
+        log.error("Can not delete file from GPT: " + cv.getGptFileId(), e);
+      }
+    }
+    if (StringUtils.hasText(cv.getGeminiFileId())) {
+      try {
+        geminiFileClient.deleteFile(cv.getGeminiFileId());
+      } catch (Exception e) {
+        log.error("Can not delete file from Gemini: " + cv.getGeminiFileId(), e);
+      }
+    }
   }
 }

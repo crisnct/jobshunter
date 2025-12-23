@@ -1,6 +1,5 @@
 package com.jobshunter.controller;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.jobshunter.database.entities.RoleEntity;
 import com.jobshunter.database.entities.UserEntity;
@@ -9,14 +8,12 @@ import com.jobshunter.database.entities.UserPromptEntity;
 import com.jobshunter.database.service.AuthService;
 import com.jobshunter.database.service.UserDataService;
 import com.jobshunter.dto.ChangePasswordRequest;
-import com.jobshunter.dto.EngineType;
 import com.jobshunter.dto.JobHuntResponse;
 import com.jobshunter.dto.SearchJobOrder;
 import com.jobshunter.dto.SearchJobsRequest;
 import com.jobshunter.dto.UserInfoResponse;
 import com.jobshunter.dto.UserJobResponse;
 import com.jobshunter.dto.UserPromptRequest;
-import com.jobshunter.dto.serpRequest.SearchWithSerpRequest;
 import com.jobshunter.service.application.JobHuntService;
 import com.jobshunter.service.application.notifiers.EmailNotifierService;
 import jakarta.validation.Valid;
@@ -174,6 +171,7 @@ public class UserController {
         .map(RoleEntity::getName)
         .toList();
     List<UserPromptEntity> prompts = user.getPrompts();
+    var latestCv = user.getCv();
     return new UserInfoResponse(
         user.getUsername(),
         user.getEmail(),
@@ -182,7 +180,8 @@ public class UserController {
         user.isNotifyEmail(),
         user.isEmailVerified(),
         user.getVerificationToken(),
-        user.getCvFileId(),
+        latestCv.getGptFileId(),
+        latestCv.getGeminiFileId(),
         formatDateTime(user.getLastJobs()),
         user.getTimeInterval(),
         prompts.stream().map(p -> String.format("id: %d, engine: %s, prompt: %s", p.getId(), p.getEngine(), p.getPrompt())).toList(),

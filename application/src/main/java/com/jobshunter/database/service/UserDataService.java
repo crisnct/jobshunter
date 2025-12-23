@@ -1,8 +1,10 @@
 package com.jobshunter.database.service;
 
+import com.jobshunter.database.entities.UserCvEntity;
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.entities.UserJobEntity;
 import com.jobshunter.database.entities.UserPromptEntity;
+import com.jobshunter.database.repository.UserCvRepository;
 import com.jobshunter.database.repository.UserJobRepository;
 import com.jobshunter.database.repository.UserPromptRepository;
 import com.jobshunter.database.repository.UserRepository;
@@ -30,6 +32,9 @@ public class UserDataService {
 
   @Autowired
   private UserPromptRepository userPromptRepository;
+
+  @Autowired
+  private UserCvRepository userCvRepository;
 
   public List<UserJobEntity> getUserJobs(String username) {
     return userJobRepository.findAllByUsernameWithUser(username);
@@ -102,6 +107,27 @@ public class UserDataService {
   @Transactional
   public void deleteUserByUsername(String username) {
     userRepository.findByUsername(username).ifPresent(userRepository::delete);
+  }
+
+  public Optional<UserCvEntity> getUserCv(String username) {
+    return userCvRepository.findByUserUsernameIgnoreCase(username);
+  }
+
+  @Transactional
+  public UserCvEntity replaceUserCv(UserEntity user, byte[] cvContent, String gptFileId, String geminiFileId) {
+    UserCvEntity entity = userCvRepository.findByUserId(user.getId())
+        .orElseGet(() -> new UserCvEntity(user, cvContent, gptFileId, geminiFileId));
+    entity.setCv(cvContent);
+    entity.setGptFileId(gptFileId);
+    entity.setGeminiFileId(geminiFileId);
+    return userCvRepository.save(entity);
+  }
+
+  @Transactional
+  public void deleteUserCv(UserEntity user) {
+    user.setCv(null);
+    userCvRepository.deleteByUserId(user.getId());
+    userRepository.save(user);
   }
 
 }

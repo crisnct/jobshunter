@@ -30,7 +30,7 @@ public final class GeminiFileClientImpl implements FileClient {
 
   private static final String UPLOAD_URI = "https://generativelanguage.googleapis.com/upload/v1beta/files";
 
-  private static final String DELETE_URI = "https://generativelanguage.googleapis.com/v1beta/files";
+  private static final String DELETE_URI = "https://generativelanguage.googleapis.com/v1beta";
 
   @Autowired
   private RestClient restClient;
@@ -64,7 +64,7 @@ public final class GeminiFileClientImpl implements FileClient {
   }
 
   @Override
-  public void deleteFile(@NotBlank  String fileId) {
+  public void deleteFile(@NotBlank String fileId) {
     restClient.delete()
         .uri(DELETE_URI + "/" + fileId + "?key=" + properties.getGemini().getApiKey())
         //.attribute("key", properties.getGemini().getApiKey())
