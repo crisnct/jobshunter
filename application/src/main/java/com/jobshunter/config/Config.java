@@ -48,4 +48,11 @@ public class Config {
     return executor;
   }
 
+  @Bean(name = "geminiSearchExecutor")
+  public Executor geminiSearchExecutor() {
+    ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(3);
+    executor.setThreadFactory(Thread.ofVirtual().name("gemini-search-", 0).factory());
+    return executor;
+  }
+
 }

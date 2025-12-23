@@ -3,7 +3,6 @@ package com.jobshunter.service.application;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.jobshunter.config.ApplicationProperties;
-import com.jobshunter.database.entities.UserCvEntity;
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.entities.UserPromptEntity;
 import com.jobshunter.database.service.UserDataService;
@@ -11,21 +10,22 @@ import com.jobshunter.dto.EngineType;
 import com.jobshunter.dto.Job;
 import com.jobshunter.dto.JobHuntResponse;
 import com.jobshunter.dto.SearchJobOrder;
+import com.jobshunter.dto.gemini.GeminiJobSearchRequest;
 import com.jobshunter.dto.gptRequest.GptJobSearchRequest;
 import com.jobshunter.dto.serpRequest.SearchWithSerpRequest;
 import com.jobshunter.dto.serpResponse.SerpApiJobHit;
 import com.jobshunter.dto.serpResponse.SerpApiJobsResult;
 import com.jobshunter.service.application.notifiers.EmailNotifierService;
 import com.jobshunter.service.application.notifiers.WhatsappNotifierService;
-import com.jobshunter.service.clients.EconomyGptClient;
+import com.jobshunter.service.clients.AiJobsClient;
 import com.jobshunter.service.clients.GptJobScoreCalculatorClient;
-import com.jobshunter.service.clients.PremiumGptClient;
 import com.jobshunter.service.clients.SerpApiClient;
 import jakarta.annotation.PostConstruct;
 import java.net.InetAddress;
 import java.net.URI;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -57,10 +57,16 @@ public class JobHuntService {
   private ApplicationProperties properties;
 
   @Autowired
-  private PremiumGptClient<GptJobSearchRequest, List<Job>> gpt5Client;
+  @Qualifier("EconomyJobsClientGPT")
+  private AiJobsClient<GptJobSearchRequest, List<Job>> gptEconomy;
 
   @Autowired
-  private EconomyGptClient<GptJobSearchRequest, List<Job>> gpt4Client;
+  @Qualifier("PremiumJobsClientGPT")
+  private AiJobsClient<GptJobSearchRequest, List<Job>> gptPremium;
+
+  @Autowired
+  @Qualifier("EconomyJobsClientGemini")
+  private AiJobsClient<GeminiJobSearchRequest, List<Job>> geminiEconomy;
 
   @Autowired
   private GptJobScoreCalculatorClient scoreCalculator;
@@ -71,6 +77,10 @@ public class JobHuntService {
   @Autowired
   @Qualifier("gptSearchExecutor")
   private Executor gptSearchExecutor;
+
+  @Autowired
+  @Qualifier("geminiSearchExecutor")
+  private Executor geminiSearchExecutor;
 
   @Autowired
   private WhatsappNotifierService whatsappNotifierService;
@@ -121,7 +131,7 @@ public class JobHuntService {
 
   public JobHuntResponse searchJobsForUser(SearchJobOrder order) {
     UserEntity user = order.user();
-    String gptFileId = user.getCv() != null ? user.getCv().getGptFileId(): null;
+    String gptFileId = user.getCv() != null ? user.getCv().getGptFileId() : null;
     if (user.getPrompts().isEmpty() || !StringUtils.hasText(gptFileId)) {
       log.info("Skip user {} because prompt or cv is missing", user.getUsername());
       return new JobHuntResponse(Collections.emptyList());
@@ -134,9 +144,27 @@ public class JobHuntService {
     if (order.engines().stream().anyMatch(p -> p == EngineType.SERP)) {
       enginesFutures.add(CompletableFuture.runAsync(() -> searchWithSerpAPi(jobsSync, user, gptFileId)));
     }
-    if (order.engines().stream().anyMatch(p -> p == EngineType.GPT4 || p == EngineType.GPT5)) {
-      enginesFutures.add(gptSearch(jobsSync, order, gptFileId));
+
+    List<EngineType> gptEngines = order.engines().stream().filter(p -> p.name().startsWith("GPT")).toList();
+    if (!gptEngines.isEmpty()) {
+      SearchJobOrder orderClone = new SearchJobOrder(
+          order.user(),
+          gptEngines,
+          order.iterations()
+      );
+      enginesFutures.add(gptSearch(jobsSync, orderClone, gptFileId));
     }
+
+    List<EngineType> geminiEngines = order.engines().stream().filter(p -> p.name().startsWith("GEMINI")).toList();
+    if (!geminiEngines.isEmpty()) {
+      SearchJobOrder orderClone = new SearchJobOrder(
+          order.user(),
+          geminiEngines,
+          order.iterations()
+      );
+      enginesFutures.add(geminiSearch(jobsSync, orderClone));
+    }
+
     CompletableFuture.allOf(enginesFutures.toArray(CompletableFuture[]::new)).join();
 
     JobHuntResponse jobHuntResponse = new JobHuntResponse(jobsSync.getJobs().stream()
@@ -169,17 +197,45 @@ public class JobHuntService {
     int delayCounter = 0;
     for (int i = 0; i < order.iterations(); i++) {
       for (EngineType engine : order.engines()) {
-        if (engine == EngineType.GPT4 || engine == EngineType.GPT5) {
-          for (UserPromptEntity prompt : user.getPrompts()) {
-            if (prompt.getEngine() == engine) {
-              Executor delayedExecutor = CompletableFuture.delayedExecutor(
-                  delayCounter++ * properties.getJobsHunter().getIterationDelay(),
-                  TimeUnit.MILLISECONDS,
-                  gptSearchExecutor
-              );
-              GptJobSearchRequest request = new GptJobSearchRequest(user.getUsername(), prompt, gptFileId, engine);
-              futures.add(CompletableFuture.runAsync(() -> gptSearch(jobsSync, request), delayedExecutor));
-            }
+        for (UserPromptEntity prompt : user.getPrompts()) {
+          if (prompt.getEngine() == engine) {
+            Executor delayedExecutor = CompletableFuture.delayedExecutor(
+                (long) delayCounter++ * order.iterations(),
+                TimeUnit.MILLISECONDS,
+                gptSearchExecutor
+            );
+            GptJobSearchRequest request = new GptJobSearchRequest(user.getUsername(), prompt, engine, gptFileId);
+            futures.add(CompletableFuture.runAsync(() -> gptSearch(jobsSync, request), delayedExecutor));
+          }
+        }
+      }
+    }
+
+    // Combine all async iteration futures into one
+    return CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new))
+        .exceptionally(ex -> {
+          log.error("GPT search failed for {}", user.getUsername(), ex);
+          return null;
+        });
+  }
+
+  private CompletableFuture<Void> geminiSearch(JobsSynchronizer jobsSync, SearchJobOrder order) {
+    UserEntity user = order.user();
+    List<CompletableFuture<Void>> futures = new ArrayList<>();
+
+    String userCVBase64 = Base64.getEncoder().encodeToString(user.getCv().getCv());
+    int delayCounter = 0;
+    for (int i = 0; i < order.iterations(); i++) {
+      for (EngineType engine : order.engines()) {
+        for (UserPromptEntity prompt : user.getPrompts()) {
+          if (prompt.getEngine() == engine) {
+            Executor delayedExecutor = CompletableFuture.delayedExecutor(
+                (long) delayCounter++ * order.iterations(),
+                TimeUnit.MILLISECONDS,
+                geminiSearchExecutor
+            );
+            GeminiJobSearchRequest request = new GeminiJobSearchRequest(user.getUsername(), prompt, userCVBase64, engine);
+            futures.add(CompletableFuture.runAsync(() -> geminiSearch(jobsSync, request), delayedExecutor));
           }
         }
       }
@@ -197,15 +253,31 @@ public class JobHuntService {
       JobsSynchronizer jobsSync,
       GptJobSearchRequest request
   ) {
-    log.info("Searching jobs for user {} with gpt model {}", request.username(), request.engine());
-    List<Job> jobsFound = switch (request.engine()) {
-      case GPT4 -> gpt4Client.searchJobs(request);
-      case GPT5 -> gpt5Client.searchJobs(request);
+    log.info("Searching jobs for user {} with gpt model {}", request.getUsername(), request.getEngine());
+    List<Job> jobsFound = switch (request.getEngine()) {
+      case GPT4 -> gptEconomy.searchJobs(request);
+      case GPT5 -> gptPremium.searchJobs(request);
       default -> throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid GPT model");
     };
     jobsSync.addJobs(jobsFound);
-    userDataService.incrementPromptJobsFound(request.prompt().getId(), jobsFound.size());
-    log.info("Found {} jobs for {}. Are going to be validated.", jobsFound.size(), request.username());
+    userDataService.incrementPromptJobsFound(request.getPrompt().getId(), jobsFound.size());
+    log.info("Found {} jobs for {}. Are going to be validated.", jobsFound.size(), request.getUsername());
+  }
+
+  private void geminiSearch(
+      JobsSynchronizer jobsSync,
+      GeminiJobSearchRequest request
+  ) {
+    log.info("Searching jobs for user {} with gpt model {}", request.getUsername(), request.getEngine());
+    List<Job> jobsFound = switch (request.getEngine()) {
+      case GEMINI_2_5_FLASH -> throw new IllegalStateException("Not implemented yet");
+      case GEMINI_2_5_FLASH_LITE -> geminiEconomy.searchJobs(request);
+      case GEMINI_2_5_PRO -> throw new IllegalStateException("Not implemented yet");
+      default -> throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid GPT model");
+    };
+    jobsSync.addJobs(jobsFound);
+    userDataService.incrementPromptJobsFound(request.getPrompt().getId(), jobsFound.size());
+    log.info("{} found {} jobs for {}. Are going to be validated.", request.getEngine().name(), jobsFound.size(), request.getUsername());
   }
 
   private void searchWithSerpAPi(JobsSynchronizer jobsSync, UserEntity user, String gptFileId) {
@@ -294,13 +366,6 @@ public class JobHuntService {
     } catch (Exception ex) {
       return null;
     }
-  }
-
-  private String resolveGptCvFileId(UserEntity user) {
-    return userDataService.getUserCv(user.getUsername())
-        .map(UserCvEntity::getGptFileId)
-        .filter(StringUtils::hasText)
-        .orElse(null);
   }
 
 }

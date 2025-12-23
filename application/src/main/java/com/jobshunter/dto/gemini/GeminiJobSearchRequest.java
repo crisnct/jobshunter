@@ -1,4 +1,4 @@
-package com.jobshunter.dto.gptRequest;
+package com.jobshunter.dto.gemini;
 
 import com.jobshunter.database.entities.UserPromptEntity;
 import com.jobshunter.dto.AIJobSearchRequest;
@@ -8,13 +8,13 @@ import lombok.EqualsAndHashCode;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class GptJobSearchRequest extends AIJobSearchRequest {
+public class GeminiJobSearchRequest extends AIJobSearchRequest {
 
-  private String fileId;
+  private String base64CV;
 
-  public GptJobSearchRequest(String username, UserPromptEntity prompt, EngineType engine, String fileId) {
+  public GeminiJobSearchRequest(String username, UserPromptEntity prompt, String base64CV, EngineType engine) {
     super(username, prompt, engine);
-    this.fileId = fileId;
+    this.base64CV = base64CV;
   }
 
 }

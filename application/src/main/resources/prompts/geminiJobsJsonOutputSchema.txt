@@ -1,0 +1,25 @@
+{
+ "type": "object",
+ "properties": {
+    "results": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "score": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 100
+          },
+          "url": {
+            "type": "string"
+          }
+        },
+        "required": ["score", "url"],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": ["results"],
+  "additionalProperties": false
+}

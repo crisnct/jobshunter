@@ -9,7 +9,7 @@ import com.jobshunter.dto.gptRequest.Reasoning;
 import com.jobshunter.dto.gptRequest.tools.Tools;
 import com.jobshunter.dto.gptResponse.GptCompletionResponse;
 import com.jobshunter.processor.PackageExpected;
-import com.jobshunter.service.clients.PremiumGptClient;
+import com.jobshunter.service.clients.AiJobsClient;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import java.net.URI;
@@ -22,11 +22,11 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
 @Slf4j
-@Component
+@Component("PremiumJobsClientGPT")
 @PackageExpected("com.jobshunter.service.clients.gpt")
 @ConditionalOnProperty(name = "jobshunter.useDummyData", havingValue = "false")
 public non-sealed class PremiumGptJobSearchImpl extends AbstractGptApiClient
-    implements PremiumGptClient<GptJobSearchRequest, List<Job>> {
+    implements AiJobsClient<GptJobSearchRequest, List<Job>> {
 
   private static final URI DEFAULT_URI = URI.create("https://api.openai.com/v1/responses");
 

@@ -8,10 +8,10 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 @Slf4j
-@Component
-@PackageExpected("com.jobshunter.service.clients.gpt")
+@Component("Gemini")
+@PackageExpected("com.jobshunter.service.clients.gemini")
 @ConditionalOnProperty(name = "jobshunter.useDummyData", havingValue = "true")
-public final class DummyFileApiClient implements FileClient {
+public final class DummyGeminiFileApiClient implements FileClient {
 
   @Override
   public String uploadFile(Path cvPath) {

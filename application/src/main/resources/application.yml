@@ -19,6 +19,7 @@ twilio:
 
 gemini:
   apiKey: ${GEMINI_API_KEY:notset}
+  maxTokens: 2000
   economy:
     model: "gemini-2.5-flash-lite"
     systemPromptFile: "jobsSystemPromptEconomy.txt"
@@ -102,9 +103,34 @@ resilience4j.ratelimiter:
       limitRefreshPeriod: 30s           # Every 30 seconds
       timeoutDuration: 1m              # Wait up to 1min for a slot
       writableStackTraceEnabled: false
+    geminiLimiter:
+      limitForPeriod: 1                # Allow 1 call
+      limitRefreshPeriod: 30s           # Every 30 seconds
+      timeoutDuration: 1m              # Wait up to 1min for a slot
+      writableStackTraceEnabled: false
 
 resilience4j.circuitbreaker:
   instances:
+    geminiPremium:
+      registerHealthIndicator: true
+      slidingWindowType: COUNT_BASED
+      slidingWindowSize: 20
+      minimumNumberOfCalls: 10
+      failureRateThreshold: 50
+      slowCallRateThreshold: 50
+      slowCallDurationThreshold: 5s
+      waitDurationInOpenState: 30s
+      permittedNumberOfCallsInHalfOpenState: 3
+    geminiEconomy:
+      registerHealthIndicator: true
+      slidingWindowType: COUNT_BASED
+      slidingWindowSize: 20
+      minimumNumberOfCalls: 10
+      failureRateThreshold: 50
+      slowCallRateThreshold: 50
+      slowCallDurationThreshold: 5s
+      waitDurationInOpenState: 30s
+      permittedNumberOfCallsInHalfOpenState: 3
     gptPremium:
       registerHealthIndicator: true
       slidingWindowType: COUNT_BASED

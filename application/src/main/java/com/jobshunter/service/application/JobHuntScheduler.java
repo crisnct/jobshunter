@@ -20,6 +20,10 @@ public class JobHuntScheduler {
   private ThreadPoolExecutor gptSearchExecutor;
 
   @Autowired
+  @Qualifier("geminiSearchExecutor")
+  private ThreadPoolExecutor geminiSearchExecutor;
+
+  @Autowired
   private JobHuntService jobHuntService;
 
   private final Map<String, String> lastMonitorMessages = new ConcurrentHashMap<>();
@@ -33,6 +37,7 @@ public class JobHuntScheduler {
   @Scheduled(fixedDelay = 10000)
   public void monitorExecutors() {
     monitorExecutor("GPT executor", gptSearchExecutor);
+    monitorExecutor("Gemini executor", geminiSearchExecutor);
   }
 
   private void monitorExecutor(String executorName, ThreadPoolExecutor executor) {

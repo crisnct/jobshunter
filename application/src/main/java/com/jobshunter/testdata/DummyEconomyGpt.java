@@ -2,10 +2,10 @@ package com.jobshunter.testdata;
 
 import com.jobshunter.config.ApplicationProperties;
 import com.jobshunter.config.ApplicationProperties.ModelSpecific;
-import com.jobshunter.dto.gptRequest.GptJobSearchRequest;
 import com.jobshunter.dto.Job;
+import com.jobshunter.dto.gptRequest.GptJobSearchRequest;
 import com.jobshunter.processor.PackageExpected;
-import com.jobshunter.service.clients.EconomyGptClient;
+import com.jobshunter.service.clients.AiJobsClient;
 import com.jobshunter.service.clients.gpt.AbstractGptApiClient;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
@@ -14,11 +14,10 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 @Slf4j
-@Component
+@Component("EconomyJobsClientGPT")
 @PackageExpected("com.jobshunter.service.clients.gpt")
 @ConditionalOnProperty(name = "jobshunter.useDummyData", havingValue = "true")
-public final class DummyEconomyGpt extends AbstractGptApiClient
-    implements EconomyGptClient<GptJobSearchRequest, List<Job>> {
+public final class DummyEconomyGpt extends AbstractGptApiClient implements AiJobsClient<GptJobSearchRequest, List<Job>> {
 
   @Autowired
   private ApplicationProperties properties;

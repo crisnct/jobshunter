@@ -5,9 +5,9 @@ import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.jobshunter.config.ApplicationProperties;
 import com.jobshunter.config.ApplicationProperties.Gpt;
 import com.jobshunter.config.ApplicationProperties.ModelSpecific;
-import com.jobshunter.dto.gptResponse.GptCompletionResponse;
-import com.jobshunter.dto.gptRequest.GptJobSearchRequest;
 import com.jobshunter.dto.Job;
+import com.jobshunter.dto.gptRequest.GptJobSearchRequest;
+import com.jobshunter.dto.gptResponse.GptCompletionResponse;
 import com.jobshunter.dto.gptResponse.JobResults;
 import com.jobshunter.dto.gptResponse.OutputItem;
 import com.jobshunter.processor.PackageExpected;
@@ -29,7 +29,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 @Slf4j
 @PackageExpected("com.jobshunter.service.clients.gpt")
-public abstract sealed class AbstractGptApiClient permits EconomyGptJobSearchImpl, PremiumGptJobSearchImpl, DummyEconomyGpt, DummyPremiumGpt {
+public abstract sealed class AbstractGptApiClient
+
+    permits EconomyGptJobSearchImpl, PremiumGptJobSearchImpl, DummyEconomyGpt, DummyPremiumGpt {
 
   private JsonMapper mapper;
 
@@ -57,7 +59,7 @@ public abstract sealed class AbstractGptApiClient permits EconomyGptJobSearchImp
     } catch (Exception e) {
       throw new IllegalStateException("Cannot load system prompt file", e);
     }
-    try (var inputStream = getClass().getClassLoader().getResourceAsStream("prompts/jobsJsonOutputSchema.txt")) {
+    try (var inputStream = getClass().getClassLoader().getResourceAsStream("prompts/gptJobsJsonOutputSchema.txt")) {
       //noinspection DataFlowIssue
       String schemaJson = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
       outputSchema = mapper.readValue(schemaJson, Object.class);
@@ -72,7 +74,7 @@ public abstract sealed class AbstractGptApiClient permits EconomyGptJobSearchImp
       log.warn("ChatGPT job search enabled but CHATGPT_API_KEY missing.");
       return List.of();
     }
-    return searchWithModel(jobsSystemPrompt, request.prompt().getPrompt(), getConfig(), request.fileId());
+    return searchWithModel(jobsSystemPrompt, request.getPrompt().getPrompt(), getConfig(), request.getFileId());
   }
 
   protected List<Job> extractJobs(GptCompletionResponse response) {
