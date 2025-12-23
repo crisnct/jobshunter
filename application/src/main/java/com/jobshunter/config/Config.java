@@ -55,4 +55,11 @@ public class Config {
     return executor;
   }
 
+  @Bean(name = "serpApiExecutor")
+  public Executor serpApiExecutor() {
+    ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(3);
+    executor.setThreadFactory(Thread.ofVirtual().name("serp-search-", 0).factory());
+    return executor;
+  }
+
 }

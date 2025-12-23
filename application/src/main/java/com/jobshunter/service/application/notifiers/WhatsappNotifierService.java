@@ -5,6 +5,7 @@ import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.dto.Job;
 import com.jobshunter.service.application.UserMessagesFactory;
 import com.jobshunter.service.application.UserMessagesFactory.MessageTemplate;
+import com.jobshunter.service.clients.TwilioClient;
 import com.jobshunter.service.clients.tinyurl.TinyUrlClient;
 import com.jobshunter.service.clients.twilio.TwilioClientImpl;
 import java.time.LocalDateTime;
@@ -25,7 +26,7 @@ public final class WhatsappNotifierService implements ServiceNotifier {
   private UserMessagesFactory userMessagesFactory;
 
   @Autowired
-  private TwilioClientImpl twilioClient;
+  private TwilioClient twilioClient;
 
   @Autowired
   private TinyUrlClient tinyUrlClient;

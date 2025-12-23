@@ -23,13 +23,6 @@ public class JobsSynchronizer {
     this.jobUrlValidator = jobUrlValidator;
   }
 
-  public void addJob(Job job) {
-    if (!existingUrls.contains(job.url()) && jobUrlValidator.isValidJob(job.url())) {
-      jobs.add(job);
-      addExistingUrl(job.url());
-    }
-  }
-
   public void addJobs(Collection<Job> newJobs) {
     newJobs.stream()
         .filter(job -> !existingUrls.contains(job.url()))
@@ -38,10 +31,6 @@ public class JobsSynchronizer {
           jobs.add(job);
           existingUrls.add(job.url());
         });
-  }
-
-  public void addExistingUrl(String url) {
-    existingUrls.add(url);
   }
 
 }
