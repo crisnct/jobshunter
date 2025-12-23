@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @PackageExpected("com.jobshunter.service.clients.gpt")
-@ConditionalOnProperty(name = "jobshunter.useDummyData", havingValue = "true")
+@ConditionalOnProperty(name = "gpt.enabled", havingValue = "false")
 public final class DummyGptJobScoreCalculatorClient implements GptJobScoreCalculatorClient {
 
   @Override

@@ -20,7 +20,7 @@ import org.springframework.web.client.RestClient;
 @Slf4j
 @Component
 @PackageExpected("com.jobshunter.service.application.notifiers")
-@ConditionalOnProperty(name = "jobshunter.useDummyData", havingValue = "false")
+@ConditionalOnProperty(name = "spring.mail.enabled", havingValue = "true")
 public non-sealed class RestMailtrapClientImpl implements RestMailtrapClient {
 
   private static final URI MAILTRAP_URI = URI.create("https://send.api.mailtrap.io/api/send");

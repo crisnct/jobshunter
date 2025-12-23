@@ -28,7 +28,7 @@ import org.springframework.web.client.RestClient;
 @Slf4j
 @Component
 @PackageExpected("com.jobshunter.service.clients.gpt")
-@ConditionalOnProperty(name = "jobshunter.useDummyData", havingValue = "false")
+@ConditionalOnProperty(name = "gpt.enabled", havingValue = "true")
 public non-sealed class GptJobScoreCalculatorClientImpl implements GptJobScoreCalculatorClient {
 
   private static final URI DEFAULT_URI = URI.create("https://api.openai.com/v1/responses");
@@ -50,11 +50,11 @@ public non-sealed class GptJobScoreCalculatorClientImpl implements GptJobScoreCa
   @SuppressWarnings("DataFlowIssue")
   public void init() throws IOException {
     try (var inputStream = getClass().getClassLoader().getResourceAsStream(
-        "prompts/scoreUserPrompt.txt")) {
+        "prompts/gptScoreUserPrompt.txt")) {
       calculateScoreUserPrompt = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
     }
     try (var inputStream = getClass().getClassLoader().getResourceAsStream(
-        "prompts/scoreSystemPrompt.txt")) {
+        "prompts/gptScoreSystemPrompt.txt")) {
       calculateScoreSystemPrompt = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
     }
   }

@@ -6,7 +6,7 @@ import com.jobshunter.dto.Job;
 import com.jobshunter.service.application.UserMessagesFactory;
 import com.jobshunter.service.application.UserMessagesFactory.MessageTemplate;
 import com.jobshunter.service.clients.tinyurl.TinyUrlClient;
-import com.jobshunter.service.clients.twilio.TwilioClient;
+import com.jobshunter.service.clients.twilio.TwilioClientImpl;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -25,7 +25,7 @@ public final class WhatsappNotifierService implements ServiceNotifier {
   private UserMessagesFactory userMessagesFactory;
 
   @Autowired
-  private TwilioClient twilioClient;
+  private TwilioClientImpl twilioClient;
 
   @Autowired
   private TinyUrlClient tinyUrlClient;
@@ -47,7 +47,7 @@ public final class WhatsappNotifierService implements ServiceNotifier {
 
     List<Job> jobsToSend = jobsURLs;
     String formattedJobs = ServiceNotifier.formatJobs(jobsToSend);
-    if (formattedJobs.length() > TwilioClient.TWILLIO_MAX_LIMIT_CHARS) {
+    if (formattedJobs.length() > TwilioClientImpl.TWILLIO_MAX_LIMIT_CHARS) {
       jobsToSend = jobsURLs.stream().map(job -> {
         try {
           return new Job(job.score(), tinyUrlClient.shorten(job.url()), job.source());

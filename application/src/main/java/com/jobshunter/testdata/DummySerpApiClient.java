@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
-@ConditionalOnProperty(name = "jobshunter.useDummyData", havingValue = "true")
+@ConditionalOnProperty(name = "serpApi.enabled", havingValue = "false")
 public final class DummySerpApiClient implements SerpApiClient<SearchWithSerpRequest, SerpApiJobsResult> {
 
   @Override

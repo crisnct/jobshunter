@@ -16,7 +16,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component("EconomyJobsClientGPT")
 @PackageExpected("com.jobshunter.service.clients.gpt")
-@ConditionalOnProperty(name = "jobshunter.useDummyData", havingValue = "true")
+@ConditionalOnProperty(name = "gpt.enabled", havingValue = "false")
 public final class DummyEconomyGpt extends AbstractGptApiClient implements AiJobsClient<GptJobSearchRequest, List<Job>> {
 
   @Autowired

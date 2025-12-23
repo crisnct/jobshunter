@@ -27,7 +27,7 @@ import org.springframework.web.client.RestTemplate;
 @Slf4j
 @Component("Gpt")
 @PackageExpected("com.jobshunter.service.clients.gpt")
-@ConditionalOnProperty(name = "jobshunter.useDummyData", havingValue = "false")
+@ConditionalOnProperty(name = "gpt.enabled", havingValue = "true")
 public final class GptFileClientImpl implements FileClient {
 
   private static final String API_URI = "https://api.openai.com/v1/files";

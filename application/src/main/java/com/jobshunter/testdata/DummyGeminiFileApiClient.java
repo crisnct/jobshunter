@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component("Gemini")
 @PackageExpected("com.jobshunter.service.clients.gemini")
-@ConditionalOnProperty(name = "jobshunter.useDummyData", havingValue = "true")
+@ConditionalOnProperty(name = "gemini.enabled", havingValue = "false")
 public final class DummyGeminiFileApiClient implements FileClient {
 
   @Override

@@ -2,10 +2,19 @@ spring:
   config:
     activate:
       on-profile: local
+  mail:
+    enabled: false
 
-jobshunter:
-  useDummyData: true
+twilio:
+  enabled: false
+
+gemini:
+  enabled: false
+
+gpt:
+  enabled: false
 
 serpApi:
+  enabled: false
   apiKey: ${SERP_API_KEY:notset}
   maxPageSearch: 1

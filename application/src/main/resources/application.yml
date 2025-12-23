@@ -5,7 +5,6 @@ server:
 
 jobshunter:
   name: JobsHunter
-  useDummyData: false
   expiredExpressions: was expired,is expired,no longer exists,This job was available,is no longer active,job is no longer available,this job was removed,Job not found,Applications from candidates outside of our global target markets are currently not accepted,No longer accepting applications,The job ad is no longer active,Application not possible,This job opening is no longer available,The vacancy has expired,this position has been filled,ONLY on W2,The job you are looking for is no longer open,Oferta no disponible,This job posting is no longer available,this job has expired,this position has been filled,This job offer is not active,Applications are closed,This job offer is not available
   iterationPerUser: 10
   iterationDelay: 30000
@@ -13,11 +12,13 @@ jobshunter:
     frequency: 3600000
 
 twilio:
+  enabled: true
   account-sid: ${TWILIO_ACCOUNT_SID:notset}
   auth-token: ${TWILIO_AUTH_TOKEN:notset}
   from-number: ${TWILIO_WHATSAPP_FROM:notset}
 
 gemini:
+  enabled: true
   apiKey: ${GEMINI_API_KEY:notset}
   maxTokens: 2000
   economy:
@@ -28,6 +29,7 @@ gemini:
     systemPromptFile: "jobsSystemPromptPremium.txt"
 
 gpt:
+  enabled: true
   apiKey: ${CHATGPT_API_KEY:notset}
   maxTokens: 2000
   economy:
@@ -38,6 +40,7 @@ gpt:
     systemPromptFile: "jobsSystemPromptPremium.txt"
 
 serpApi:
+  enabled: true
   apiKey: ${SERP_API_KEY:notset}
   maxPageSearch: 3
 
@@ -62,6 +65,7 @@ spring:
     change-log: classpath:db/changelog/db.changelog-master.xml
     enabled: ${LIQUIBASE_ENABLED:true}
   mail:
+    enabled: false
     host: send.smtp.mailtrap.io
     port: 587
     username: ${MAILTRAP_USERNAME:notset}

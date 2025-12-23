@@ -29,7 +29,7 @@ import org.springframework.web.client.RestClient;
  */
 @Slf4j
 @Component
-@ConditionalOnProperty(name = "jobshunter.useDummyData", havingValue = "false")
+@ConditionalOnProperty(name = "serpApi.enabled", havingValue = "true")
 public non-sealed class SerpApiClientImpl implements SerpApiClient<SearchWithSerpRequest, SerpApiJobsResult> {
 
   private static final URI BASE = URI.create("https://serpapi.com/search");

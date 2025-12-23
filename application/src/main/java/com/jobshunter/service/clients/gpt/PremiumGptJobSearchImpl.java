@@ -24,7 +24,7 @@ import org.springframework.web.client.RestClient;
 @Slf4j
 @Component("PremiumJobsClientGPT")
 @PackageExpected("com.jobshunter.service.clients.gpt")
-@ConditionalOnProperty(name = "jobshunter.useDummyData", havingValue = "false")
+@ConditionalOnProperty(name = "gpt.enabled", havingValue = "true")
 public non-sealed class PremiumGptJobSearchImpl extends AbstractGptApiClient
     implements AiJobsClient<GptJobSearchRequest, List<Job>> {
 

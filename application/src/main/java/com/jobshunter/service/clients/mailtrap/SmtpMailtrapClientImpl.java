@@ -21,7 +21,7 @@ import org.springframework.web.multipart.MultipartFile;
 @Slf4j
 @Component
 @PackageExpected("com.jobshunter.service.application.notifiers")
-@ConditionalOnProperty(name = "jobshunter.useDummyData", havingValue = "false")
+@ConditionalOnProperty(name = "spring.mail.enabled", havingValue = "true")
 public non-sealed class SmtpMailtrapClientImpl implements SmtpMailtrapClient {
 
   private static final String DEFAULT_SUBJECT = "JobsHunter notification";

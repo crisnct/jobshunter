@@ -3,13 +3,11 @@ package com.jobshunter.service.clients.gemini;
 import com.jobshunter.config.ApplicationProperties;
 import com.jobshunter.config.ApplicationProperties.ModelSpecific;
 import com.jobshunter.dto.Job;
-import com.jobshunter.dto.gemini.FunctionCallingConfig;
 import com.jobshunter.dto.gemini.GeminiGenerateContentResponse;
 import com.jobshunter.dto.gemini.GeminiJobSearchRequest;
 import com.jobshunter.dto.gemini.GeminiJobsPayload;
 import com.jobshunter.dto.gemini.GenerationConfig;
 import com.jobshunter.dto.gemini.SafetySetting;
-import com.jobshunter.dto.gemini.ToolConfig;
 import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.clients.AiJobsClient;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
@@ -27,7 +25,7 @@ import org.springframework.web.client.RestClient;
 @Slf4j
 @Component("EconomyJobsClientGemini")
 @PackageExpected("com.jobshunter.service.clients.gpt")
-@ConditionalOnProperty(name = "jobshunter.useDummyData", havingValue = "false")
+@ConditionalOnProperty(name = "gemini.enabled", havingValue = "true")
 public non-sealed class EconomyGeminiJobSearchImpl extends AbstractGeminiApiClient
     implements AiJobsClient<GeminiJobSearchRequest, List<Job>> {
 
@@ -62,8 +60,6 @@ public non-sealed class EconomyGeminiJobSearchImpl extends AbstractGeminiApiClie
           .addUserContent(request.getPrompt().getPrompt(),  "application/pdf", request.getBase64CV())
           .generationConfig(generationConfig)
           .safetySettings(List.of(new SafetySetting("HARM_CATEGORY_DANGEROUS_CONTENT", "BLOCK_LOW_AND_ABOVE")))
-          .tools(List.of())
-          .toolConfig(new ToolConfig(new FunctionCallingConfig("AUTO")))
           .build();
 
       GeminiGenerateContentResponse response = restClient.post()

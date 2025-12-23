@@ -2,6 +2,7 @@ package com.jobshunter.service.clients.twilio;
 
 import com.jobshunter.config.ApplicationProperties;
 import com.jobshunter.processor.PackageExpected;
+import com.jobshunter.service.clients.TwilioClient;
 import com.twilio.Twilio;
 import com.twilio.exception.ApiException;
 import com.twilio.rest.api.v2010.account.Message;
@@ -9,6 +10,7 @@ import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -16,7 +18,8 @@ import org.springframework.util.StringUtils;
 @Service
 @RequiredArgsConstructor
 @PackageExpected("com.jobshunter.service.application.notifiers")
-public class TwilioClient {
+@ConditionalOnProperty(name = "twilio.enabled", havingValue = "true")
+public non-sealed class TwilioClientImpl implements TwilioClient {
 
   public static final int TWILLIO_MAX_LIMIT_CHARS = 1600;
 
@@ -30,6 +33,7 @@ public class TwilioClient {
   }
 
   @SuppressWarnings("BooleanMethodIsAlwaysInverted")
+  @Override
   public boolean trySend(String toNumber, String fromNumber, String body) {
     try {
       fromNumber = formatWhatsapp(sanitizePhone(fromNumber));

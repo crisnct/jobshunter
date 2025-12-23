@@ -13,7 +13,7 @@ import org.springframework.web.multipart.MultipartFile;
 @Slf4j
 @Component
 @PackageExpected("com.jobshunter.service.application.notifiers")
-@ConditionalOnProperty(name = "jobshunter.useDummyData", havingValue = "true")
+@ConditionalOnProperty(name = "spring.mail.enabled", havingValue = "false")
 public final class DummySmtpMailtrapClient implements SmtpMailtrapClient {
 
   @Override

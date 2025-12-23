@@ -25,7 +25,7 @@ import org.springframework.web.server.ResponseStatusException;
 @Slf4j
 @Component("Gemini")
 @PackageExpected("com.jobshunter.service.clients.gemini")
-@ConditionalOnProperty(name = "jobshunter.useDummyData", havingValue = "false")
+@ConditionalOnProperty(name = "gemini.enabled", havingValue = "true")
 public final class GeminiFileClientImpl implements FileClient {
 
   private static final String UPLOAD_URI = "https://generativelanguage.googleapis.com/upload/v1beta/files";
