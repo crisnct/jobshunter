@@ -1,5 +1,6 @@
 package com.jobshunter;
 
+import java.time.Duration;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
@@ -23,6 +24,7 @@ public class ApplicationProperties {
     private int iterationPerUser;
     private long iterationDelay;
     private Scheduler scheduler = new Scheduler();
+    private RateLimitPolicy rateLimit = new RateLimitPolicy();
   }
 
   @Data
@@ -43,6 +45,7 @@ public class ApplicationProperties {
   @Data
   @ConfigurationProperties(prefix = "gpt")
   public static class Gpt {
+
     private String apiKey;
     private int maxTokens;
     private ModelSpecific economy;
@@ -52,6 +55,7 @@ public class ApplicationProperties {
   @Data
   @ConfigurationProperties(prefix = "gemini")
   public static class Gemini {
+
     private String apiKey;
     private int maxTokens;
     private ModelSpecific economy;
@@ -72,6 +76,12 @@ public class ApplicationProperties {
     private String apiKey;
 
     private int maxPageSearch;
+  }
+
+  @Data
+  public static class RateLimitPolicy {
+    private long capacity;
+    private Duration window;
   }
 
 }

@@ -10,6 +10,9 @@ jobshunter:
   iterationDelay: 30000
   scheduler:
     frequency: 3600000
+  ratelimit:
+    capacity: 60
+    window: 1m
 
 twilio:
   enabled: true

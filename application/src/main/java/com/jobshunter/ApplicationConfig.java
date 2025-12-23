@@ -2,6 +2,7 @@ package com.jobshunter;
 
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.config.ConnectionConfig;
 import org.apache.hc.client5.http.config.RequestConfig;
