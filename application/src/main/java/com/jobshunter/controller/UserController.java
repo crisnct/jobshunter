@@ -15,6 +15,7 @@ import com.jobshunter.dto.UserInfoResponse;
 import com.jobshunter.dto.UserJobResponse;
 import com.jobshunter.dto.UserPromptRequest;
 import com.jobshunter.service.application.JobHuntService;
+import com.jobshunter.service.application.UserCvService;
 import com.jobshunter.service.application.notifiers.EmailNotifierService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -60,10 +61,7 @@ public class UserController {
   private EmailNotifierService emailService;
 
   @Autowired
-  private com.jobshunter.service.application.UserCvService userCvService;
-
-  @Autowired
-  private JsonMapper mapper;
+  private UserCvService userCvService;
 
   @GetMapping("/me")
   public ResponseEntity<?> me(Authentication authentication) {

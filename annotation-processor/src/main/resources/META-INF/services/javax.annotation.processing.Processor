@@ -1,1 +1,2 @@
 com.jobshunter.processor.PackageUsageProcessor
+com.jobshunter.processor.SqlInjectionValidatorProcessor

@@ -6,6 +6,7 @@ import com.jobshunter.dto.AuthResponse;
 import com.jobshunter.dto.LoginRequest;
 import com.jobshunter.dto.RegisterRequest;
 import com.jobshunter.dto.RegistrationResponse;
+import com.jobshunter.processor.SqlInjectionSafe;
 import com.jobshunter.service.application.notifiers.EmailNotifierService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -62,6 +63,7 @@ public class AuthController {
   public ResponseEntity<Map<String, String>> verify(
       @RequestParam("token")
       @NotBlank
+      @SqlInjectionSafe
       @Size(max = 128)
       String token
   ) {
