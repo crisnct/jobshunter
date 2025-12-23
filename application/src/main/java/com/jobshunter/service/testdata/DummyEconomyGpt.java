@@ -1,12 +1,12 @@
-package com.jobshunter.testdata;
+package com.jobshunter.service.testdata;
 
-import com.jobshunter.config.ApplicationProperties;
-import com.jobshunter.config.ApplicationProperties.ModelSpecific;
+import com.jobshunter.ApplicationProperties;
+import com.jobshunter.ApplicationProperties.ModelSpecific;
 import com.jobshunter.dto.Job;
-import com.jobshunter.dto.geminiRequest.GeminiJobSearchRequest;
+import com.jobshunter.dto.gptRequest.GptJobSearchRequest;
 import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.clients.AiJobsClient;
-import com.jobshunter.service.clients.gemini.AbstractGeminiApiClient;
+import com.jobshunter.service.clients.gpt.AbstractGptApiClient;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,21 +14,21 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 @Slf4j
-@Component("EconomyJobsClientGemini")
+@Component("EconomyJobsClientGPT")
 @PackageExpected("com.jobshunter.service.clients.gpt")
-@ConditionalOnProperty(name = "gemini.enabled", havingValue = "false")
-public final class DummyEconomyGemini extends AbstractGeminiApiClient implements AiJobsClient<GeminiJobSearchRequest, List<Job>> {
+@ConditionalOnProperty(name = "gpt.enabled", havingValue = "false")
+public final class DummyEconomyGpt extends AbstractGptApiClient implements AiJobsClient<GptJobSearchRequest, List<Job>> {
 
   @Autowired
   private ApplicationProperties properties;
 
   @Override
   public ModelSpecific getConfig() {
-    return properties.getGemini().getEconomy();
+    return properties.getGpt().getEconomy();
   }
 
   @Override
-  public List<Job> searchJobs(GeminiJobSearchRequest request) {
+  public List<Job> searchWithModel(String systemPrompt, String userPrompt, ModelSpecific cfg, String fileId) {
     String model = getConfig().getModel();
     return List.of(
         new Job(95,

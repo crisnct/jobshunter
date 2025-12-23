@@ -1,4 +1,4 @@
-package com.jobshunter.config;
+package com.jobshunter.security;
 
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;

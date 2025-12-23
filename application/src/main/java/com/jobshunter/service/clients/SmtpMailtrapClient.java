@@ -2,7 +2,7 @@ package com.jobshunter.service.clients;
 
 import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.clients.mailtrap.SmtpMailtrapClientImpl;
-import com.jobshunter.testdata.DummySmtpMailtrapClient;
+import com.jobshunter.service.testdata.DummySmtpMailtrapClient;
 import jakarta.annotation.Nullable;
 import java.util.List;
 import lombok.NonNull;

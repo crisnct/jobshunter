@@ -2,7 +2,7 @@ package com.jobshunter.service.clients;
 
 import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.clients.mailtrap.RestMailtrapClientImpl;
-import com.jobshunter.testdata.DummyRestMailtrapClient;
+import com.jobshunter.service.testdata.DummyRestMailtrapClient;
 import lombok.NonNull;
 
 @PackageExpected("com.jobshunter.service.application.notifiers")

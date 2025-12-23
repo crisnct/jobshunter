@@ -1,4 +1,4 @@
-package com.jobshunter.config;
+package com.jobshunter.security;
 
 import java.util.List;
 import org.springframework.context.annotation.Bean;

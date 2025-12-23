@@ -6,9 +6,9 @@ import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.clients.gemini.EconomyGeminiJobSearchImpl;
 import com.jobshunter.service.clients.gpt.EconomyGptJobSearchImpl;
 import com.jobshunter.service.clients.gpt.PremiumGptJobSearchImpl;
-import com.jobshunter.testdata.DummyEconomyGemini;
-import com.jobshunter.testdata.DummyEconomyGpt;
-import com.jobshunter.testdata.DummyPremiumGpt;
+import com.jobshunter.service.testdata.DummyEconomyGemini;
+import com.jobshunter.service.testdata.DummyEconomyGpt;
+import com.jobshunter.service.testdata.DummyPremiumGpt;
 import java.util.List;
 
 @PackageExpected("com.jobshunter.service.application")

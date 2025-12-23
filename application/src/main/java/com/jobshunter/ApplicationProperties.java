@@ -1,4 +1,4 @@
-package com.jobshunter.config;
+package com.jobshunter;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;

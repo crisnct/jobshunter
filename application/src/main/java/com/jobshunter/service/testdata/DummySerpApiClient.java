@@ -1,4 +1,4 @@
-package com.jobshunter.testdata;
+package com.jobshunter.service.testdata;
 
 import com.jobshunter.dto.serpRequest.SearchWithSerpRequest;
 import com.jobshunter.dto.serpResponse.SerpApiJobHit;

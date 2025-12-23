@@ -1,7 +1,7 @@
 package com.jobshunter.service.clients.gemini;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.jobshunter.config.ApplicationProperties;
+import com.jobshunter.ApplicationProperties;
 import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.clients.FileClient;
 import jakarta.validation.constraints.NotBlank;

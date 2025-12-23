@@ -1,4 +1,4 @@
-package com.jobshunter.config;
+package com.jobshunter.security;
 
 import com.jobshunter.database.service.UserDataService;
 import com.jobshunter.service.application.authentication.JwtAuthenticationFilter;

@@ -1,4 +1,4 @@
-package com.jobshunter.config;
+package com.jobshunter.database;
 
 import javax.sql.DataSource;
 import liquibase.integration.spring.SpringLiquibase;

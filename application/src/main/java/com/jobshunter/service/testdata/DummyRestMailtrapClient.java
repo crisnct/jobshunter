@@ -1,4 +1,4 @@
-package com.jobshunter.testdata;
+package com.jobshunter.service.testdata;
 
 import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.clients.RestMailtrapClient;

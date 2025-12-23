@@ -3,8 +3,8 @@ package com.jobshunter.service.clients;
 import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.clients.gemini.GeminiFileClientImpl;
 import com.jobshunter.service.clients.gpt.GptFileClientImpl;
-import com.jobshunter.testdata.DummyGeminiFileApiClient;
-import com.jobshunter.testdata.DummyGptFileApiClient;
+import com.jobshunter.service.testdata.DummyGeminiFileApiClient;
+import com.jobshunter.service.testdata.DummyGptFileApiClient;
 import java.io.IOException;
 import java.nio.file.Path;
 

@@ -1,7 +1,7 @@
-package com.jobshunter.testdata;
+package com.jobshunter.service.testdata;
 
-import com.jobshunter.config.ApplicationProperties;
-import com.jobshunter.config.ApplicationProperties.ModelSpecific;
+import com.jobshunter.ApplicationProperties;
+import com.jobshunter.ApplicationProperties.ModelSpecific;
 import com.jobshunter.dto.Job;
 import com.jobshunter.dto.gptRequest.GptJobSearchRequest;
 import com.jobshunter.processor.PackageExpected;
@@ -14,17 +14,17 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 @Slf4j
-@Component("EconomyJobsClientGPT")
+@Component("PremiumJobsClientGPT")
 @PackageExpected("com.jobshunter.service.clients.gpt")
 @ConditionalOnProperty(name = "gpt.enabled", havingValue = "false")
-public final class DummyEconomyGpt extends AbstractGptApiClient implements AiJobsClient<GptJobSearchRequest, List<Job>> {
+public final class DummyPremiumGpt extends AbstractGptApiClient implements AiJobsClient<GptJobSearchRequest, List<Job>> {
 
   @Autowired
   private ApplicationProperties properties;
 
   @Override
   public ModelSpecific getConfig() {
-    return properties.getGpt().getEconomy();
+    return properties.getGpt().getPremium();
   }
 
   @Override

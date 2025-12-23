@@ -1,7 +1,7 @@
 package com.jobshunter.service.clients.gpt;
 
 import com.fasterxml.jackson.databind.json.JsonMapper;
-import com.jobshunter.config.ApplicationProperties;
+import com.jobshunter.ApplicationProperties;
 import com.jobshunter.dto.gptResponse.UploadFileResponse;
 import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.clients.FileClient;

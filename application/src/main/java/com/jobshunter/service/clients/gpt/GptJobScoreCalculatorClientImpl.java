@@ -2,8 +2,8 @@ package com.jobshunter.service.clients.gpt;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.json.JsonMapper;
-import com.jobshunter.config.ApplicationProperties;
-import com.jobshunter.config.ApplicationProperties.Gpt;
+import com.jobshunter.ApplicationProperties;
+import com.jobshunter.ApplicationProperties.Gpt;
 import com.jobshunter.dto.gptRequest.Gpt4ScorePayload;
 import com.jobshunter.dto.gptResponse.ContentItem;
 import com.jobshunter.dto.gptResponse.GptCompletionResponse;

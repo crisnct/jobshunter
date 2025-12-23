@@ -1,7 +1,7 @@
 package com.jobshunter.service.clients.serpapi;
 
-import com.jobshunter.config.ApplicationProperties;
-import com.jobshunter.config.ApplicationProperties.SerpApi;
+import com.jobshunter.ApplicationProperties;
+import com.jobshunter.ApplicationProperties.SerpApi;
 import com.jobshunter.dto.serpRequest.SearchWithSerpRequest;
 import com.jobshunter.dto.serpResponse.SerpApiJobHit;
 import com.jobshunter.dto.serpResponse.SerpApiJobsResult;
