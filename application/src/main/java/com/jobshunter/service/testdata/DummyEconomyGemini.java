@@ -9,7 +9,6 @@ import com.jobshunter.service.clients.AiJobsClient;
 import com.jobshunter.service.clients.gemini.AbstractGeminiApiClient;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
@@ -19,8 +18,15 @@ import org.springframework.stereotype.Component;
 @ConditionalOnProperty(name = "gemini.enabled", havingValue = "false")
 public final class DummyEconomyGemini extends AbstractGeminiApiClient implements AiJobsClient<GeminiJobSearchRequest, List<Job>> {
 
-  @Autowired
-  private ApplicationProperties properties;
+  private final ApplicationProperties properties;
+
+  public DummyEconomyGemini(
+      ApplicationProperties properties,
+      com.jobshunter.service.clients.UrlExtractor urlExtractor
+  ) {
+    super(urlExtractor);
+    this.properties = properties;
+  }
 
   @Override
   public ModelSpecific getConfig() {

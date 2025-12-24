@@ -15,7 +15,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -24,17 +23,25 @@ import org.springframework.util.StringUtils;
 @Slf4j
 public class UserDataService {
 
-  @Autowired
-  private UserRepository userRepository;
+  private final UserRepository userRepository;
 
-  @Autowired
-  private UserJobRepository userJobRepository;
+  private final UserJobRepository userJobRepository;
 
-  @Autowired
-  private UserPromptRepository userPromptRepository;
+  private final UserPromptRepository userPromptRepository;
 
-  @Autowired
-  private UserCvRepository userCvRepository;
+  private final UserCvRepository userCvRepository;
+
+  public UserDataService(
+      UserRepository userRepository,
+      UserJobRepository userJobRepository,
+      UserPromptRepository userPromptRepository,
+      UserCvRepository userCvRepository
+  ) {
+    this.userRepository = userRepository;
+    this.userJobRepository = userJobRepository;
+    this.userPromptRepository = userPromptRepository;
+    this.userCvRepository = userCvRepository;
+  }
 
   public List<UserJobEntity> getUserJobs(String username) {
     return userJobRepository.findAllByUsernameWithUser(username);

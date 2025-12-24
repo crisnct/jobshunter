@@ -16,7 +16,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
@@ -24,15 +23,21 @@ import org.springframework.stereotype.Service;
 @Service
 public class JobsValidator {
 
-  @Autowired
-  @Qualifier("jobsValidatorExecutor")
-  private Executor jobsValidatorExecutor;
+  private final Executor jobsValidatorExecutor;
 
-  @Autowired
-  private ApplicationProperties properties;
+  private final ApplicationProperties properties;
 
-  @Autowired
-  private BrowserSimulator browserSimulator;
+  private final BrowserSimulator browserSimulator;
+
+  public JobsValidator(
+      @Qualifier("jobsValidatorExecutor") Executor jobsValidatorExecutor,
+      ApplicationProperties properties,
+      BrowserSimulator browserSimulator
+  ) {
+    this.jobsValidatorExecutor = jobsValidatorExecutor;
+    this.properties = properties;
+    this.browserSimulator = browserSimulator;
+  }
 
   private List<Pattern> expiredJobsPatterns;
 

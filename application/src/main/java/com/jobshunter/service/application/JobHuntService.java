@@ -19,39 +19,51 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
 public class JobHuntService {
 
-  @Autowired
-  private ApplicationProperties properties;
+  private final ApplicationProperties properties;
 
-  @Autowired
-  private WhatsappNotifierService whatsappNotifierService;
+  private final WhatsappNotifierService whatsappNotifierService;
 
-  @Autowired
-  private EmailNotifierService emailNotifierService;
+  private final EmailNotifierService emailNotifierService;
 
-  @Autowired
-  private UserDataService userDataService;
+  private final UserDataService userDataService;
 
-  @Autowired
-  private SerpJobHunting serpJobHunting;
+  private final SerpJobHunting serpJobHunting;
 
-  @Autowired
-  private GptJobHunting gptJobHunting;
+  private final GptJobHunting gptJobHunting;
 
-  @Autowired
-  private GeminiJobHunting geminiJobHunting;
+  private final GeminiJobHunting geminiJobHunting;
 
-  @Autowired
-  private JobScoring jobScoring;
+  private final JobScoring jobScoring;
 
-  @Autowired
-  private JobsValidator jobsValidator;
+  private final JobsValidator jobsValidator;
+
+  public JobHuntService(
+      ApplicationProperties properties,
+      WhatsappNotifierService whatsappNotifierService,
+      EmailNotifierService emailNotifierService,
+      UserDataService userDataService,
+      SerpJobHunting serpJobHunting,
+      GptJobHunting gptJobHunting,
+      GeminiJobHunting geminiJobHunting,
+      JobScoring jobScoring,
+      JobsValidator jobsValidator
+  ) {
+    this.properties = properties;
+    this.whatsappNotifierService = whatsappNotifierService;
+    this.emailNotifierService = emailNotifierService;
+    this.userDataService = userDataService;
+    this.serpJobHunting = serpJobHunting;
+    this.gptJobHunting = gptJobHunting;
+    this.geminiJobHunting = geminiJobHunting;
+    this.jobScoring = jobScoring;
+    this.jobsValidator = jobsValidator;
+  }
 
   public void scheduledRun() {
     log.info("Starts scheduled job hunt...");

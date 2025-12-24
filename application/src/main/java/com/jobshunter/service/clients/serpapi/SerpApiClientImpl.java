@@ -17,7 +17,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
@@ -33,13 +32,13 @@ public non-sealed class SerpApiClientImpl implements SerpApiClient<SearchWithSer
 
   private static final URI BASE = URI.create("https://serpapi.com/search");
 
-  @Autowired
-  private BrowserSimulator browserSimulator;
+  private final BrowserSimulator browserSimulator;
 
   private final SerpApi serpApiConfig;
 
-  public SerpApiClientImpl(ApplicationProperties properties) {
+  public SerpApiClientImpl(ApplicationProperties properties, BrowserSimulator browserSimulator) {
     serpApiConfig = properties.getSerpApi();
+    this.browserSimulator = browserSimulator;
   }
 
   @Override

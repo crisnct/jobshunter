@@ -7,7 +7,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hc.client5.http.protocol.HttpClientContext;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
@@ -38,8 +37,11 @@ public class BrowserSimulator {
 
   private static final String CONNECTION_HEADER = "keep-alive";
 
-  @Autowired
-  private RestClient restClient;
+  private final RestClient restClient;
+
+  public BrowserSimulator(RestClient restClient) {
+    this.restClient = restClient;
+  }
 
   public ResponseEntity<String> openPage(String url) {
     try {

@@ -15,7 +15,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -25,20 +24,25 @@ import org.springframework.web.server.ResponseStatusException;
 @Service
 public non-sealed class GptJobHunting implements JobHunting {
 
-  @Autowired
-  @Qualifier("EconomyJobsClientGPT")
-  private AiJobsClient<GptJobSearchRequest, List<Job>> gptEconomy;
+  private final AiJobsClient<GptJobSearchRequest, List<Job>> gptEconomy;
 
-  @Autowired
-  @Qualifier("PremiumJobsClientGPT")
-  private AiJobsClient<GptJobSearchRequest, List<Job>> gptPremium;
+  private final AiJobsClient<GptJobSearchRequest, List<Job>> gptPremium;
 
-  @Autowired
-  private UserDataService userDataService;
+  private final UserDataService userDataService;
 
-  @Autowired
-  @Qualifier("gptSearchExecutor")
-  private Executor gptSearchExecutor;
+  private final Executor gptSearchExecutor;
+
+  public GptJobHunting(
+      @Qualifier("EconomyJobsClientGPT") AiJobsClient<GptJobSearchRequest, List<Job>> gptEconomy,
+      @Qualifier("PremiumJobsClientGPT") AiJobsClient<GptJobSearchRequest, List<Job>> gptPremium,
+      UserDataService userDataService,
+      @Qualifier("gptSearchExecutor") Executor gptSearchExecutor
+  ) {
+    this.gptEconomy = gptEconomy;
+    this.gptPremium = gptPremium;
+    this.userDataService = userDataService;
+    this.gptSearchExecutor = gptSearchExecutor;
+  }
 
   @Override
   public CompletableFuture<Void> searchJobs(JobsSynchronizer jobsSync, SearchJobOrder order) {

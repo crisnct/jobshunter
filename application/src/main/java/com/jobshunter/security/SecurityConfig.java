@@ -5,7 +5,6 @@ import com.jobshunter.service.application.authentication.JwtAuthenticationFilter
 import com.jobshunter.service.application.authentication.JwtService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -35,11 +34,8 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-  @Autowired
-  private UserDataService userDataService;
-
-  @Autowired
-  private JwtService jwtService;
+  private final UserDataService userDataService;
+  private final JwtService jwtService;
 
   @Bean
   public CookieCsrfTokenRepository cookieCsrfTokenRepository() {

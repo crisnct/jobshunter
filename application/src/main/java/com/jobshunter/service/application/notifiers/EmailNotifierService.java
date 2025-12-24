@@ -10,7 +10,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -18,14 +17,19 @@ import org.springframework.web.multipart.MultipartFile;
 @Service
 public final class EmailNotifierService implements ServiceNotifier {
 
-  @Autowired
-  private SmtpMailtrapClient emailClient;
+  private final SmtpMailtrapClient emailClient;
+  private final RestMailtrapClient restMailtrapClient;
+  private final UserMessagesFactory userMessagesFactory;
 
-  @Autowired
-  private RestMailtrapClient restMailtrapClient;
-
-  @Autowired
-  private UserMessagesFactory userMessagesFactory;
+  public EmailNotifierService(
+      SmtpMailtrapClient emailClient,
+      RestMailtrapClient restMailtrapClient,
+      UserMessagesFactory userMessagesFactory
+  ) {
+    this.emailClient = emailClient;
+    this.restMailtrapClient = restMailtrapClient;
+    this.userMessagesFactory = userMessagesFactory;
+  }
 
   public void sendCustomEmail(String to, String subject, String body, MultipartFile attachment) {
     emailClient.sendEmail(List.of(to), subject, body, attachment);

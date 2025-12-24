@@ -8,7 +8,6 @@ import jakarta.mail.internet.MimeMessage;
 import java.util.List;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.mail.MailException;
@@ -26,11 +25,14 @@ public non-sealed class SmtpMailtrapClientImpl implements SmtpMailtrapClient {
 
   private static final String DEFAULT_SUBJECT = "JobsHunter notification";
 
-  @Autowired
-  private JavaMailSender mailSender;
+  private final JavaMailSender mailSender;
 
   @Value("${spring.mail.from:}")
   private String configuredFrom;
+
+  public SmtpMailtrapClientImpl(JavaMailSender mailSender) {
+    this.mailSender = mailSender;
+  }
 
   @Override
   public void sendEmail(

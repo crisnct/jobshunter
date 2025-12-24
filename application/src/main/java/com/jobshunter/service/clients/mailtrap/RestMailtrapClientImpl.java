@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.Map;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpStatusCode;
@@ -25,8 +24,7 @@ public non-sealed class RestMailtrapClientImpl implements RestMailtrapClient {
 
   private static final URI MAILTRAP_URI = URI.create("https://send.api.mailtrap.io/api/send");
 
-  @Autowired
-  private RestClient restClient;
+  private final RestClient restClient;
 
   @Value("${jobshunter.name:}")
   private String appName;
@@ -39,6 +37,10 @@ public non-sealed class RestMailtrapClientImpl implements RestMailtrapClient {
 
   @Value("${spring.mail.templateUUID:}")
   private String templateUUID;
+
+  public RestMailtrapClientImpl(RestClient restClient) {
+    this.restClient = restClient;
+  }
 
   @Override
   public void sendEmailWithNewJobs(

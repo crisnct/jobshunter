@@ -9,7 +9,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.Duration;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -21,17 +20,22 @@ public class RateLimitingFilter extends OncePerRequestFilter {
 
   private static final Duration BLOCK_48_HOURS = Duration.ofHours(48);
 
-  @Autowired
-  private InMemoryRateLimiter rateLimiter;
+  private final InMemoryRateLimiter rateLimiter;
+  private final ViolationRegistry violationRegistry;
+  private final BlockRegistry blockRegistry;
+  private final ApplicationProperties properties;
 
-  @Autowired
-  private ViolationRegistry violationRegistry;
-
-  @Autowired
-  private BlockRegistry blockRegistry;
-
-  @Autowired
-  private ApplicationProperties properties;
+  public RateLimitingFilter(
+      InMemoryRateLimiter rateLimiter,
+      ViolationRegistry violationRegistry,
+      BlockRegistry blockRegistry,
+      ApplicationProperties properties
+  ) {
+    this.rateLimiter = rateLimiter;
+    this.violationRegistry = violationRegistry;
+    this.blockRegistry = blockRegistry;
+    this.properties = properties;
+  }
 
   @Override
   protected void doFilterInternal(

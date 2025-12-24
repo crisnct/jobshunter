@@ -16,7 +16,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -26,16 +25,21 @@ import org.springframework.web.server.ResponseStatusException;
 @Service
 public non-sealed class GeminiJobHunting implements JobHunting {
 
-  @Autowired
-  @Qualifier("geminiSearchExecutor")
-  private Executor geminiSearchExecutor;
+  private final Executor geminiSearchExecutor;
 
-  @Autowired
-  @Qualifier("EconomyJobsClientGemini")
-  private AiJobsClient<GeminiJobSearchRequest, List<Job>> geminiEconomy;
+  private final AiJobsClient<GeminiJobSearchRequest, List<Job>> geminiEconomy;
 
-  @Autowired
-  private UserDataService userDataService;
+  private final UserDataService userDataService;
+
+  public GeminiJobHunting(
+      @Qualifier("geminiSearchExecutor") Executor geminiSearchExecutor,
+      @Qualifier("EconomyJobsClientGemini") AiJobsClient<GeminiJobSearchRequest, List<Job>> geminiEconomy,
+      UserDataService userDataService
+  ) {
+    this.geminiSearchExecutor = geminiSearchExecutor;
+    this.geminiEconomy = geminiEconomy;
+    this.userDataService = userDataService;
+  }
 
   @Override
   public CompletableFuture<Void> searchJobs(JobsSynchronizer jobsSync, SearchJobOrder order) {

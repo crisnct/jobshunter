@@ -9,7 +9,6 @@ import com.jobshunter.service.clients.AiJobsClient;
 import com.jobshunter.service.clients.gpt.AbstractGptApiClient;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
@@ -19,8 +18,9 @@ import org.springframework.stereotype.Component;
 @ConditionalOnProperty(name = "gpt.enabled", havingValue = "false")
 public final class DummyPremiumGpt extends AbstractGptApiClient implements AiJobsClient<GptJobSearchRequest, List<Job>> {
 
-  @Autowired
-  private ApplicationProperties properties;
+  public DummyPremiumGpt(ApplicationProperties properties, com.jobshunter.service.clients.UrlExtractor urlExtractor) {
+    super(properties, urlExtractor);
+  }
 
   @Override
   public ModelSpecific getConfig() {

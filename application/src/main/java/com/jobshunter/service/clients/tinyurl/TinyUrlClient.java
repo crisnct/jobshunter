@@ -2,7 +2,6 @@ package com.jobshunter.service.clients.tinyurl;
 
 import com.jobshunter.processor.PackageExpected;
 import java.net.URI;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
@@ -12,8 +11,11 @@ import org.springframework.web.util.UriComponentsBuilder;
 @PackageExpected("com.jobshunter.service.application.notifiers")
 public class TinyUrlClient {
 
-  @Autowired
-  private RestTemplate restTemplate;
+  private final RestTemplate restTemplate;
+
+  public TinyUrlClient(RestTemplate restTemplate) {
+    this.restTemplate = restTemplate;
+  }
 
   public String shorten(String longUrl) {
     String apiUrl = UriComponentsBuilder

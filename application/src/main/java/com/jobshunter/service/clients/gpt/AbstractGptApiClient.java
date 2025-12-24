@@ -22,15 +22,13 @@ import java.util.Objects;
 import java.util.Optional;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 
 @Slf4j
 @PackageExpected("com.jobshunter.service.clients.gpt")
 public abstract sealed class AbstractGptApiClient
     permits EconomyGptJobSearchImpl, PremiumGptJobSearchImpl, DummyEconomyGpt, DummyPremiumGpt {
 
-  @Autowired
-  private ApplicationProperties properties;
+  protected final ApplicationProperties properties;
 
   @Getter
   private String jobsSystemPrompt;
@@ -38,8 +36,12 @@ public abstract sealed class AbstractGptApiClient
   @Getter
   private Object outputSchema;
 
-  @Autowired
-  private UrlExtractor urlExtractor;
+  private final UrlExtractor urlExtractor;
+
+  protected AbstractGptApiClient(ApplicationProperties properties, UrlExtractor urlExtractor) {
+    this.properties = properties;
+    this.urlExtractor = urlExtractor;
+  }
 
   public abstract ModelSpecific getConfig();
 

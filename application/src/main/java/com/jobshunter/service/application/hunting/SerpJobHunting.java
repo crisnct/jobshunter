@@ -19,7 +19,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -29,18 +28,25 @@ import org.springframework.web.server.ResponseStatusException;
 @Service
 public non-sealed class SerpJobHunting implements JobHunting {
 
-  @Autowired
-  private SerpApiClient<SearchWithSerpRequest, SerpApiJobsResult> serpApiClient;
+  private final SerpApiClient<SearchWithSerpRequest, SerpApiJobsResult> serpApiClient;
 
-  @Autowired
-  private GptJobScoreCalculatorClient scoreCalculator;
+  private final GptJobScoreCalculatorClient scoreCalculator;
 
-  @Autowired
-  @Qualifier("serpApiExecutor")
-  private Executor serpApiExecutor;
+  private final Executor serpApiExecutor;
 
-  @Autowired
-  private JsonMapper mapper;
+  private final JsonMapper mapper;
+
+  public SerpJobHunting(
+      SerpApiClient<SearchWithSerpRequest, SerpApiJobsResult> serpApiClient,
+      GptJobScoreCalculatorClient scoreCalculator,
+      @Qualifier("serpApiExecutor") Executor serpApiExecutor,
+      JsonMapper mapper
+  ) {
+    this.serpApiClient = serpApiClient;
+    this.scoreCalculator = scoreCalculator;
+    this.serpApiExecutor = serpApiExecutor;
+    this.mapper = mapper;
+  }
 
   @Override
   public CompletableFuture<Void> searchJobs(JobsSynchronizer jobsSync, SearchJobOrder order) {

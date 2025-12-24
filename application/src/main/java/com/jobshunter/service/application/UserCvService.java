@@ -14,7 +14,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -30,7 +29,7 @@ public class UserCvService {
 
   private static final long MAX_CV_BYTES = 10 * 1024 * 1024;
 
-  private AtomicBoolean FIRST_TIME = new AtomicBoolean(false);
+  private final AtomicBoolean FIRST_TIME = new AtomicBoolean(false);
 
   private static final Set<String> ALLOWED_CONTENT_TYPES = Set.of(
       MediaType.APPLICATION_PDF_VALUE,
@@ -39,16 +38,21 @@ public class UserCvService {
       MediaType.TEXT_PLAIN_VALUE
   );
 
-  @Autowired
-  private UserDataService userDataService;
+  private final UserDataService userDataService;
 
-  @Autowired
-  @Qualifier("Gpt")
-  private FileClient gptFileClient;
+  private final FileClient gptFileClient;
 
-  @Autowired
-  @Qualifier("Gemini")
-  private FileClient geminiFileClient;
+  private final FileClient geminiFileClient;
+
+  public UserCvService(
+      UserDataService userDataService,
+      @Qualifier("Gpt") FileClient gptFileClient,
+      @Qualifier("Gemini") FileClient geminiFileClient
+  ) {
+    this.userDataService = userDataService;
+    this.gptFileClient = gptFileClient;
+    this.geminiFileClient = geminiFileClient;
+  }
 
   @Transactional
   public String uploadUserCv(String username, MultipartFile file) throws IOException {

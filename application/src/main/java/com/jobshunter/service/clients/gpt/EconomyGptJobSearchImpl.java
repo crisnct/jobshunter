@@ -14,7 +14,6 @@ import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import java.net.URI;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
@@ -29,11 +28,19 @@ public non-sealed class EconomyGptJobSearchImpl extends AbstractGptApiClient
 
   private static final URI DEFAULT_URI = URI.create("https://api.openai.com/v1/responses");
 
-  @Autowired
-  private ApplicationProperties properties;
+  private final ApplicationProperties properties;
 
-  @Autowired
-  private RestClient restClient;
+  private final RestClient restClient;
+
+  public EconomyGptJobSearchImpl(
+      ApplicationProperties properties,
+      RestClient restClient,
+      com.jobshunter.service.clients.UrlExtractor urlExtractor
+  ) {
+    super(properties, urlExtractor);
+    this.properties = properties;
+    this.restClient = restClient;
+  }
 
   @Override
   public ModelSpecific getConfig() {

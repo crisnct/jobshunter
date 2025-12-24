@@ -14,7 +14,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.HttpEntity;
@@ -36,17 +35,22 @@ public final class GptFileClientImpl implements FileClient {
 
   private static final String API_URI = "https://api.openai.com/v1/files";
 
-  @Autowired
-  private RestTemplate restTemplate;
+  private final RestTemplate restTemplate;
+  private final RestClient restClient;
+  private final ApplicationProperties properties;
+  private final JsonMapper mapper;
 
-  @Autowired
-  private RestClient restClient;
-
-  @Autowired
-  private ApplicationProperties properties;
-
-  @Autowired
-  private JsonMapper mapper;
+  public GptFileClientImpl(
+      RestTemplate restTemplate,
+      RestClient restClient,
+      ApplicationProperties properties,
+      JsonMapper mapper
+  ) {
+    this.restTemplate = restTemplate;
+    this.restClient = restClient;
+    this.properties = properties;
+    this.mapper = mapper;
+  }
 
   @Override
   public String uploadFile(Path cvPath) throws IOException {

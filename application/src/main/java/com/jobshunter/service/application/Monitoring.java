@@ -4,7 +4,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadPoolExecutor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -15,21 +14,25 @@ public class Monitoring {
 
   private final Map<String, String> lastMonitorMessages = new ConcurrentHashMap<>();
 
-  @Autowired
-  @Qualifier("gptSearchExecutor")
-  private ThreadPoolExecutor gptSearchExecutor;
+  private final ThreadPoolExecutor gptSearchExecutor;
 
-  @Autowired
-  @Qualifier("geminiSearchExecutor")
-  private ThreadPoolExecutor geminiSearchExecutor;
+  private final ThreadPoolExecutor geminiSearchExecutor;
 
-  @Autowired
-  @Qualifier("serpApiExecutor")
-  private ThreadPoolExecutor serpApiExecutor;
+  private final ThreadPoolExecutor serpApiExecutor;
 
-  @Autowired
-  @Qualifier("jobsValidatorExecutor")
-  private ThreadPoolExecutor jobsValidatorExecutor;
+  private final ThreadPoolExecutor jobsValidatorExecutor;
+
+  public Monitoring(
+      @Qualifier("gptSearchExecutor") ThreadPoolExecutor gptSearchExecutor,
+      @Qualifier("geminiSearchExecutor") ThreadPoolExecutor geminiSearchExecutor,
+      @Qualifier("serpApiExecutor") ThreadPoolExecutor serpApiExecutor,
+      @Qualifier("jobsValidatorExecutor") ThreadPoolExecutor jobsValidatorExecutor
+  ) {
+    this.gptSearchExecutor = gptSearchExecutor;
+    this.geminiSearchExecutor = geminiSearchExecutor;
+    this.serpApiExecutor = serpApiExecutor;
+    this.jobsValidatorExecutor = jobsValidatorExecutor;
+  }
 
   @Scheduled(fixedDelay = 10000)
   public void monitorExecutors() {

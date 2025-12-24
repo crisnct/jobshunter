@@ -9,7 +9,6 @@ import com.twilio.rest.api.v2010.account.Message;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -23,8 +22,7 @@ public non-sealed class TwilioClientImpl implements TwilioClient {
 
   public static final int TWILLIO_MAX_LIMIT_CHARS = 1600;
 
-  @Autowired
-  private ApplicationProperties properties;
+  private final ApplicationProperties properties;
 
   @PostConstruct
   private void initializeTwilio() {

@@ -10,7 +10,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.HttpEntity;
@@ -33,11 +32,14 @@ public final class GeminiFileClientImpl implements FileClient {
 
   private static final String DELETE_URI = "https://generativelanguage.googleapis.com/v1beta";
 
-  @Autowired
-  private RestClient restClient;
+  private final RestClient restClient;
 
-  @Autowired
-  private ApplicationProperties properties;
+  private final ApplicationProperties properties;
+
+  public GeminiFileClientImpl(RestClient restClient, ApplicationProperties properties) {
+    this.restClient = restClient;
+    this.properties = properties;
+  }
 
   @Override
   public String uploadFile(Path cvPath) throws IOException {

@@ -15,7 +15,6 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 
 @Slf4j
 @PackageExpected("com.jobshunter.service.clients.gpt")
@@ -27,8 +26,11 @@ public abstract class AbstractGeminiApiClient {
   @Getter
   private Object outputSchema;
 
-  @Autowired
-  private UrlExtractor urlExtractor;
+  private final UrlExtractor urlExtractor;
+
+  protected AbstractGeminiApiClient(UrlExtractor urlExtractor) {
+    this.urlExtractor = urlExtractor;
+  }
 
   public abstract ModelSpecific getConfig();
 

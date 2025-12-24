@@ -11,7 +11,6 @@ import java.security.MessageDigest;
 import java.util.Date;
 import java.util.HexFormat;
 import java.util.Map;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
@@ -20,8 +19,11 @@ import org.springframework.util.StringUtils;
 @Service
 public class JwtService {
 
-  @Autowired
-  private JwtProperties jwtProperties;
+  private final JwtProperties jwtProperties;
+
+  public JwtService(JwtProperties jwtProperties) {
+    this.jwtProperties = jwtProperties;
+  }
 
   public String extractUsername(String token) {
     return extractAllClaims(token).getSubject();

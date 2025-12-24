@@ -19,7 +19,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
@@ -33,18 +32,25 @@ public non-sealed class GptJobScoreCalculatorClientImpl implements GptJobScoreCa
 
   private static final URI DEFAULT_URI = URI.create("https://api.openai.com/v1/responses");
 
-  @Autowired
-  private ApplicationProperties properties;
+  private final ApplicationProperties properties;
 
-  @Autowired
-  private RestClient restClient;
+  private final RestClient restClient;
 
   private String calculateScoreSystemPrompt;
 
   private String calculateScoreUserPrompt;
 
-  @Autowired
-  private JsonMapper mapper;
+  private final JsonMapper mapper;
+
+  public GptJobScoreCalculatorClientImpl(
+      ApplicationProperties properties,
+      RestClient restClient,
+      JsonMapper mapper
+  ) {
+    this.properties = properties;
+    this.restClient = restClient;
+    this.mapper = mapper;
+  }
 
   @PostConstruct
   @SuppressWarnings("DataFlowIssue")
