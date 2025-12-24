@@ -1,6 +1,5 @@
 package com.jobshunter.service.clients.gpt;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.jobshunter.ApplicationProperties;
 import com.jobshunter.ApplicationProperties.Gpt;
@@ -8,9 +7,9 @@ import com.jobshunter.ApplicationProperties.ModelSpecific;
 import com.jobshunter.dto.Job;
 import com.jobshunter.dto.gptRequest.GptJobSearchRequest;
 import com.jobshunter.dto.gptResponse.GptCompletionResponse;
-import com.jobshunter.dto.gptResponse.JobResults;
 import com.jobshunter.dto.gptResponse.OutputItem;
 import com.jobshunter.processor.PackageExpected;
+import com.jobshunter.service.clients.UrlExtractor;
 import com.jobshunter.service.testdata.DummyEconomyGpt;
 import com.jobshunter.service.testdata.DummyPremiumGpt;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
@@ -18,22 +17,17 @@ import io.jsonwebtoken.lang.Collections;
 import jakarta.annotation.PostConstruct;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
 
 @Slf4j
 @PackageExpected("com.jobshunter.service.clients.gpt")
 public abstract sealed class AbstractGptApiClient
-
     permits EconomyGptJobSearchImpl, PremiumGptJobSearchImpl, DummyEconomyGpt, DummyPremiumGpt {
-
-  private JsonMapper mapper;
 
   @Autowired
   private ApplicationProperties properties;
@@ -44,6 +38,9 @@ public abstract sealed class AbstractGptApiClient
   @Getter
   private Object outputSchema;
 
+  @Autowired
+  private UrlExtractor urlExtractor;
+
   public abstract ModelSpecific getConfig();
 
   @RateLimiter(name = "openaiLimiter")
@@ -51,7 +48,7 @@ public abstract sealed class AbstractGptApiClient
 
   @PostConstruct
   protected void init() {
-    mapper = JsonMapper.builder().findAndAddModules().build();
+    JsonMapper mapper = JsonMapper.builder().findAndAddModules().build();
     try (var inputStream = getClass().getClassLoader().getResourceAsStream(
         "prompts/" + getConfig().getSystemPromptFile())) {
       //noinspection DataFlowIssue
@@ -89,25 +86,10 @@ public abstract sealed class AbstractGptApiClient
       item.get().content().stream()
           .filter(c -> c.text().length() > 2)
           .filter(c -> Objects.equals("output_text", c.type()))
-          .forEach(o -> jobs.addAll(parseJobs(o.text())));
+          .forEach(o -> jobs.addAll(urlExtractor.parseJobs(o.text())));
       return jobs;
     } else {
       return java.util.Collections.emptyList();
-    }
-  }
-
-  private List<Job> parseJobs(String text) {
-    if (Strings.isBlank(text)) {
-      return List.of();
-    }
-    try {
-      text = text.replaceFirst("```json", "");
-      text = text.replace("```", "");
-      JobResults parsed = mapper.readValue(text, JobResults.class);
-      return Arrays.stream(parsed.results()).map(job -> new Job(job.score(), job.url(), getConfig().getModel())).toList();
-    } catch (JsonProcessingException e) {
-      log.error("Failed to parse jobs from ChatGPT response: {}", e.getMessage());
-      return List.of();
     }
   }
 

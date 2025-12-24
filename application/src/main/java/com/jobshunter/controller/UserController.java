@@ -28,6 +28,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -42,6 +43,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/user")
 @RequiredArgsConstructor
@@ -68,6 +70,7 @@ public class UserController {
     if (authentication == null || authentication.getName() == null) {
       return ResponseEntity.status(401).body(Map.of("error", "Unauthorized"));
     }
+    log.info("Get user info for {}",authentication.getName());
     return userDataService.getUser(authentication.getName())
         .<ResponseEntity<?>>map(user -> ResponseEntity.ok(toResponse(user)))
         .orElseGet(() -> ResponseEntity.status(404).body(Map.of("error", "User not found")));

@@ -18,6 +18,7 @@ public record GenerationConfig(
     Double frequencyPenalty,
     List<String> stopSequences,
     String responseMimeType,
-    Object responseJsonSchema
+    Object responseJsonSchema,
+    ThinkingConfig thinkingConfig
 ) {
 }

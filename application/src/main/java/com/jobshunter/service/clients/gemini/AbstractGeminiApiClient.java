@@ -1,29 +1,25 @@
 package com.jobshunter.service.clients.gemini;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.jobshunter.ApplicationProperties.ModelSpecific;
 import com.jobshunter.dto.Job;
+import com.jobshunter.dto.geminiRequest.Part;
 import com.jobshunter.dto.geminiResponse.GeminiGenerateContentResponse;
 import com.jobshunter.dto.geminiResponse.GeminiGenerateContentResponse.Candidate;
-import com.jobshunter.dto.geminiRequest.Part;
-import com.jobshunter.dto.gptResponse.JobResults;
 import com.jobshunter.processor.PackageExpected;
+import com.jobshunter.service.clients.UrlExtractor;
 import jakarta.annotation.PostConstruct;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Stream;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.logging.log4j.util.Strings;
+import org.springframework.beans.factory.annotation.Autowired;
 
 @Slf4j
 @PackageExpected("com.jobshunter.service.clients.gpt")
 public abstract class AbstractGeminiApiClient {
-
-  private JsonMapper mapper;
 
   @Getter
   private String jobsSystemPrompt;
@@ -31,11 +27,14 @@ public abstract class AbstractGeminiApiClient {
   @Getter
   private Object outputSchema;
 
+  @Autowired
+  private UrlExtractor urlExtractor;
+
   public abstract ModelSpecific getConfig();
 
   @PostConstruct
   protected void init() {
-    mapper = JsonMapper.builder().findAndAddModules().build();
+    JsonMapper mapper = JsonMapper.builder().findAndAddModules().build();
     try (var inputStream = getClass().getClassLoader().getResourceAsStream(
         "prompts/" + getConfig().getSystemPromptFile())) {
       //noinspection DataFlowIssue
@@ -62,23 +61,8 @@ public abstract class AbstractGeminiApiClient {
         .flatMap(c -> c.parts().stream())
         .map(Part::text)
         .filter(text -> text != null && text.length() > 2)
-        .flatMap((Function<String, Stream<Job>>) s -> parseJobs(s).stream())
+        .flatMap((Function<String, Stream<Job>>) s -> urlExtractor.parseJobs(s).stream())
         .toList();
-  }
-
-  private List<Job> parseJobs(String text) {
-    if (Strings.isBlank(text)) {
-      return List.of();
-    }
-    try {
-      text = text.replaceFirst("```json", "");
-      text = text.replace("```", "");
-      JobResults parsed = mapper.readValue(text, JobResults.class);
-      return Arrays.stream(parsed.results()).map(job -> new Job(job.score(), job.url(), getConfig().getModel())).toList();
-    } catch (JsonProcessingException e) {
-      log.error("Failed to parse jobs from Gemini response: {}", e.getMessage());
-      return List.of();
-    }
   }
 
 }

@@ -29,4 +29,12 @@ public class ExecutorsConfig {
     executor.setThreadFactory(Thread.ofVirtual().name("serp-search-", 0).factory());
     return executor;
   }
+
+  @Bean(name = "jobsValidatorExecutor")
+  public Executor jobsValidatorExecutor() {
+    ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(10);
+    executor.setThreadFactory(Thread.ofVirtual().name("jobs-validator-", 0).factory());
+    return executor;
+  }
+
 }

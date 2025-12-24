@@ -1,14 +1,17 @@
 package com.jobshunter;
 
+import static com.jobshunter.service.application.JobsValidator.HTTP_CONTEXT;
+
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import java.nio.charset.StandardCharsets;
-import java.time.Duration;
 import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.config.ConnectionConfig;
 import org.apache.hc.client5.http.config.RequestConfig;
+import org.apache.hc.client5.http.impl.LaxRedirectStrategy;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
 import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager;
 import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuilder;
+import org.apache.hc.client5.http.protocol.HttpClientContext;
 import org.apache.hc.core5.util.Timeout;
 import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
@@ -48,11 +51,18 @@ public class ApplicationConfig {
     HttpClient httpClient = HttpClients.custom()
         .setConnectionManager(connectionManager)
         .setDefaultRequestConfig(requestConfig)
+        .setRedirectStrategy(new LaxRedirectStrategy())
         .evictIdleConnections(Timeout.ofMinutes(5))
         .evictExpiredConnections()
         .build();
 
-    HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory(httpClient);
+    HttpComponentsClientHttpRequestFactory requestFactory =
+        new HttpComponentsClientHttpRequestFactory(httpClient);
+    requestFactory.setHttpContextFactory((_, _) -> {
+      HttpClientContext context = HttpClientContext.create();
+      HTTP_CONTEXT.set(context);
+      return context;
+    });
 
     return RestClient.builder()
         .requestFactory(requestFactory)

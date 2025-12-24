@@ -8,14 +8,26 @@ import com.jobshunter.dto.RegisterRequest;
 import com.jobshunter.dto.RegistrationResponse;
 import com.jobshunter.processor.SqlInjectionSafe;
 import com.jobshunter.service.application.notifiers.EmailNotifierService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import java.util.HashMap;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfToken;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -34,6 +46,9 @@ public class AuthController {
 
   @Autowired
   private EmailNotifierService emailService;
+
+  @Autowired
+  private CookieCsrfTokenRepository csrfTokenRepository;
 
   @PostMapping("/register")
   public RegistrationResponse register(
@@ -71,4 +86,29 @@ public class AuthController {
     return ResponseEntity.ok(Map.of("message", "Email verified. Please wait up to 72h until your account is approved by an admin."));
   }
 
+  /**
+   * Get CSRF token for frontend requests. Provides the CSRF token needed for secure state-changing API calls.
+   *
+   * @return ResponseEntity containing the CSRF token metadata
+   */
+  @GetMapping("/csrf-token")
+  @Operation(
+      summary = "Get CSRF token",
+      description = "Retrieves the CSRF token required for secure API requests"
+  )
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "CSRF token retrieved successfully",
+          content = @Content(schema = @Schema(implementation = Map.class)))
+  })
+  public ResponseEntity<Map<String, String>> getCsrfToken(HttpServletRequest request, HttpServletResponse response) {
+    CsrfToken csrfToken = csrfTokenRepository.generateToken(request);
+    csrfTokenRepository.saveToken(csrfToken, request, response);
+
+    Map<String, String> tokenMap = new HashMap<>();
+    tokenMap.put("token", csrfToken.getToken());
+    tokenMap.put("headerName", csrfToken.getHeaderName());
+    tokenMap.put("parameterName", csrfToken.getParameterName());
+
+    return new ResponseEntity<>(tokenMap, HttpStatus.OK);
+  }
 }

@@ -4,18 +4,22 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 
+@Data
 @JsonIgnoreProperties(ignoreUnknown = true)
-public record Job(
-    @Max(100)
-    int score,
+@AllArgsConstructor
+public class Job {
 
-    @Size(max = 255)
-    @NotNull
-    String url,
+  @Max(100)
+  private int score;
 
-    @Size(max = 255)
-    String source
-) {
+  @Size(max = 255)
+  @NotNull
+  private String url;
+
+  @Size(max = 255)
+  private String source;
 
 }

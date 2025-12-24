@@ -13,27 +13,14 @@ import com.jobshunter.service.application.hunting.JobHunting;
 import com.jobshunter.service.application.hunting.SerpJobHunting;
 import com.jobshunter.service.application.notifiers.EmailNotifierService;
 import com.jobshunter.service.application.notifiers.WhatsappNotifierService;
-import jakarta.annotation.PostConstruct;
-import java.net.InetAddress;
-import java.net.URI;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
-import org.jsoup.Jsoup;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
 @Slf4j
 @Service
@@ -60,20 +47,11 @@ public class JobHuntService {
   @Autowired
   private GeminiJobHunting geminiJobHunting;
 
-  private List<Pattern> expiredJobsPatterns;
+  @Autowired
+  private JobScoring jobScoring;
 
   @Autowired
-  private RestTemplate restTemplate;
-
-  @PostConstruct
-  public void init() {
-    expiredJobsPatterns = new ArrayList<>();
-    for (String keyword : properties.getJobsHunter().getExpiredExpressions().split(",")) {
-      expiredJobsPatterns.add(Pattern.compile(">[^<]{0,500}" + Pattern.quote(keyword) + "[^<]{0,500}<",
-          Pattern.CASE_INSENSITIVE | Pattern.DOTALL));
-    }
-    expiredJobsPatterns = Collections.unmodifiableList(expiredJobsPatterns);
-  }
+  private JobsValidator jobsValidator;
 
   public void scheduledRun() {
     log.info("Starts scheduled job hunt...");
@@ -98,7 +76,7 @@ public class JobHuntService {
   public JobHuntResponse searchJobsForUser(SearchJobOrder order) {
     UserEntity user = order.user();
     final JobsSynchronizer jobsSync =
-        new JobsSynchronizer(userDataService.getExistingJobUrlsForUser(user.getUsername()), this::isValidJob);
+        new JobsSynchronizer(userDataService.getExistingJobUrlsForUser(user.getUsername()));
 
     List<CompletableFuture<Void>> enginesFutures = new ArrayList<>();
     this.searchJobs("SERP", serpJobHunting, jobsSync, order, enginesFutures);
@@ -107,8 +85,16 @@ public class JobHuntService {
 
     CompletableFuture.allOf(enginesFutures.toArray(CompletableFuture[]::new)).join();
 
-    JobHuntResponse jobHuntResponse = new JobHuntResponse(jobsSync.getJobs().stream()
-        .sorted(Comparator.comparing(Job::score).reversed())
+    //Follow redirects and validate url's
+    List<Job> validatedJobs = jobsValidator.validateJobs(jobsSync.getJobs());
+
+    //TODO scoring
+    for (Job job : validatedJobs) {
+      jobScoring.calculateScore(job, order.user());
+    }
+
+    JobHuntResponse jobHuntResponse = new JobHuntResponse(validatedJobs.stream()
+        .sorted(Comparator.comparing(Job::getScore).reversed())
         .toList());
 
     List<Job> jobs = jobHuntResponse.jobsFound();
@@ -143,66 +129,5 @@ public class JobHuntService {
     }
   }
 
-  private boolean isValidJob(String jobURL) {
-    URI uri = toSafeHttpUri(jobURL);
-    if (uri == null) {
-      log.warn("Skipping URL {} because it is not a permitted HTTP/HTTPS target", jobURL);
-      return false;
-    }
-    log.info("Testing URL {} ", uri);
-    HttpHeaders headers = new HttpHeaders();
-    headers.set("User-Agent", "Mozilla/5.0");
-    headers.setAccept(List.of(MediaType.TEXT_HTML));
-    HttpEntity<Void> entity = new HttpEntity<>(headers);
-    try {
-      ResponseEntity<String> response = restTemplate.exchange(
-          uri,
-          HttpMethod.GET,
-          entity,
-          String.class
-      );
-
-      if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
-        String html = Jsoup.parse(response.getBody()).text().toLowerCase();
-        boolean isExpired = expiredJobsPatterns.stream().anyMatch(pattern -> pattern.matcher(html).find());
-        log.info("Expired: {} {}", isExpired, jobURL);
-        return !isExpired;
-      } else {
-        log.info("Expired: true {}", jobURL);
-        return false;
-      }
-    } catch (Exception e) {
-      log.info("Expired: true {} {}", jobURL, e.getMessage());
-      return false;
-    }
-  }
-
-  private URI toSafeHttpUri(String jobURL) {
-    if (jobURL == null || jobURL.isBlank()) {
-      return null;
-    }
-    try {
-      URI uri = URI.create(jobURL.trim());
-      String scheme = uri.getScheme();
-      if (scheme == null || !(scheme.equalsIgnoreCase("http") || scheme.equalsIgnoreCase("https"))) {
-        return null;
-      }
-      String host = uri.getHost();
-      if (host == null || host.isBlank()) {
-        return null;
-      }
-      InetAddress address = InetAddress.getByName(host);
-      if (address.isAnyLocalAddress()
-          || address.isLoopbackAddress()
-          || address.isLinkLocalAddress()
-          || address.isSiteLocalAddress()
-          || address.isMulticastAddress()) {
-        return null;
-      }
-      return uri;
-    } catch (Exception ex) {
-      return null;
-    }
-  }
 
 }

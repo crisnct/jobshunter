@@ -80,7 +80,7 @@ public non-sealed class GptJobHunting implements JobHunting {
       case GPT5 -> gptPremium.searchJobs(request);
       default -> throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid GPT model");
     };
-    jobsSync.addJobs(jobsFound);
+    jobsSync.addJobs(jobsFound, request.getEngine());
     userDataService.incrementPromptJobsFound(request.getPrompt().getId(), jobsFound.size());
     log.info("Found {} jobs for {}. Are going to be validated.", jobsFound.size(), request.getUsername());
   }

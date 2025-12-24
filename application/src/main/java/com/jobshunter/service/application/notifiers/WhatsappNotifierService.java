@@ -46,18 +46,16 @@ public final class WhatsappNotifierService implements ServiceNotifier {
       return;
     }
 
-    List<Job> jobsToSend = jobsURLs;
-    String formattedJobs = ServiceNotifier.formatJobs(jobsToSend);
+    String formattedJobs = ServiceNotifier.formatJobs(jobsURLs);
     if (formattedJobs.length() > TwilioClientImpl.TWILLIO_MAX_LIMIT_CHARS) {
-      jobsToSend = jobsURLs.stream().map(job -> {
+      jobsURLs.forEach(job -> {
         try {
-          return new Job(job.score(), tinyUrlClient.shorten(job.url()), job.source());
+          job.setUrl(tinyUrlClient.shorten(job.getUrl()));
         } catch (Exception e) {
           log.error("Can not shorten url " + job);
-          return job;
         }
-      }).toList();
-      formattedJobs = ServiceNotifier.formatJobs(jobsToSend);
+      });
+      formattedJobs = ServiceNotifier.formatJobs(jobsURLs);
     }
 
     String timestamp = LocalDateTime.now().format(JOB_TIMESTAMP_FORMAT);

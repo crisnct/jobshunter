@@ -57,5 +57,6 @@ open module com.jobshunter.application {
   requires static lombok;
   requires static com.jobshunter.processor;
   requires io.github.bucket4j.core;
+  requires io.swagger.v3.oas.annotations;
 
 }

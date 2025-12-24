@@ -1,5 +1,6 @@
 package com.jobshunter.service.application;
 
+import com.jobshunter.dto.EngineType;
 import com.jobshunter.dto.Job;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -16,20 +17,17 @@ public class JobsSynchronizer {
 
   private final Set<String> existingUrls = new ConcurrentSkipListSet<>();
 
-  private final ValidateJobUrl jobUrlValidator;
-
-  public JobsSynchronizer(Collection<String> existingUrls, ValidateJobUrl jobUrlValidator) {
+  public JobsSynchronizer(Collection<String> existingUrls) {
     this.existingUrls.addAll(existingUrls);
-    this.jobUrlValidator = jobUrlValidator;
   }
 
-  public void addJobs(Collection<Job> newJobs) {
+  public void addJobs(Collection<Job> newJobs, EngineType engine) {
     newJobs.stream()
-        .filter(job -> !existingUrls.contains(job.url()))
-        .filter(job -> jobUrlValidator.isValidJob(job.url()))
+        .filter(job -> !existingUrls.contains(job.getUrl()))
         .forEach(job -> {
+          job.setSource(engine.name());
           jobs.add(job);
-          existingUrls.add(job.url());
+          existingUrls.add(job.getUrl());
         });
   }
 

@@ -63,7 +63,7 @@ public class UserDataService {
   public void updateUser(UserEntity user, List<Job> jobs) {
     user.setLastJobs(LocalDateTime.now());
     updateUser(user);
-    jobs.forEach(job -> addJobUrl(user, job.url()));
+    jobs.forEach(job -> addJobUrl(user, job.getUrl()));
   }
 
   @Transactional

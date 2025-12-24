@@ -74,12 +74,12 @@ public non-sealed class GeminiJobHunting implements JobHunting {
   ) {
     log.info("Searching jobs for user {} with gpt model {}", request.getUsername(), request.getEngine());
     List<Job> jobsFound = switch (request.getEngine()) {
-      case GEMINI_2_5_FLASH -> throw new IllegalStateException("Not implemented yet");
-      case GEMINI_2_5_FLASH_LITE -> geminiEconomy.searchJobs(request);
+      case GEMINI_2_5_FLASH -> geminiEconomy.searchJobs(request);
+      case GEMINI_2_5_FLASH_LITE -> throw new IllegalStateException("Not implemented yet");
       case GEMINI_2_5_PRO -> throw new IllegalStateException("Not implemented yet");
       default -> throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid GPT model");
     };
-    jobsSync.addJobs(jobsFound);
+    jobsSync.addJobs(jobsFound, request.getEngine());
     userDataService.incrementPromptJobsFound(request.getPrompt().getId(), jobsFound.size());
     log.info("{} found {} jobs for {}. Are going to be validated.", request.getEngine().name(), jobsFound.size(), request.getUsername());
   }
