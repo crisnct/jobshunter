@@ -1,5 +1,6 @@
 package com.jobshunter.security.rateLimit;
 
+import com.jobshunter.ApplicationProperties;
 import io.github.bucket4j.Bucket;
 import io.github.bucket4j.ConsumptionProbe;
 import jakarta.servlet.FilterChain;
@@ -8,23 +9,29 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.Duration;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 @Component
 public class RateLimitingFilter extends OncePerRequestFilter {
 
-  private static final Duration COOLDOWN = Duration.ofHours(8);
+  private static final Duration BLOCK_4_HOURS = Duration.ofHours(4);
 
-  private final InMemoryRateLimiter rateLimiter;
-  private final CooldownRegistry cooldownRegistry;
+  private static final Duration BLOCK_48_HOURS = Duration.ofHours(48);
 
-  public RateLimitingFilter(
-      InMemoryRateLimiter rateLimiter,
-      CooldownRegistry cooldownRegistry) {
-    this.rateLimiter = rateLimiter;
-    this.cooldownRegistry = cooldownRegistry;
-  }
+  @Autowired
+  private InMemoryRateLimiter rateLimiter;
+
+  @Autowired
+  private ViolationRegistry violationRegistry;
+
+  @Autowired
+  private BlockRegistry blockRegistry;
+
+  @Autowired
+  private ApplicationProperties properties;
 
   @Override
   protected void doFilterInternal(
@@ -34,43 +41,53 @@ public class RateLimitingFilter extends OncePerRequestFilter {
 
     String clientKey = resolveClientKey(request);
 
-    // 1️⃣ Cooldown check
-    if (cooldownRegistry.isBlocked(clientKey)) {
-      reject(response, cooldownRegistry.secondsLeft(clientKey));
+    // 🔴 1. Check hard blocks
+    if (blockRegistry.isBlocked(clientKey)) {
+      reject(response, blockRegistry.secondsLeft(clientKey));
       return;
     }
 
-    // 2️⃣ Rate limit check
+    // 🟢 2. Normal rate limiting
     Bucket bucket = rateLimiter.resolveBucket(clientKey);
     ConsumptionProbe probe = bucket.tryConsumeAndReturnRemaining(1);
 
     if (probe.isConsumed()) {
-      response.setHeader(
-          "X-Rate-Limit-Remaining",
-          String.valueOf(probe.getRemainingTokens())
-      );
       filterChain.doFilter(request, response);
       return;
     }
 
-    // 3️⃣ Activate cooldown
-    cooldownRegistry.block(clientKey, COOLDOWN);
-    reject(response, COOLDOWN.getSeconds());
+    // 🔥 3. Violation detected
+    int violations = violationRegistry.increment(clientKey);
+
+    if (violations == 2) {
+      blockRegistry.block(clientKey, BLOCK_4_HOURS);
+      reject(response, BLOCK_4_HOURS.getSeconds());
+      return;
+    }
+
+    if (violations >= 3) {
+      blockRegistry.block(clientKey, BLOCK_48_HOURS);
+      reject(response, BLOCK_48_HOURS.getSeconds());
+      return;
+    }
+
+    // Prima încălcare → doar rate limit normal
+    reject(response, properties.getJobsHunter().getRateLimit().getCapacity());
   }
 
   private void reject(HttpServletResponse response, long retryAfterSeconds) throws IOException {
-    response.setStatus(429);
+    response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
     response.setHeader("Retry-After", String.valueOf(retryAfterSeconds));
     response.setContentType("application/json");
     response.getWriter().write(
-        "{\"message\":\"Too many requests. Try again later.\"}"
+        "{\"message\":\"Rate LLimit Exceeded. Access temporarily restricted.\"}"
     );
   }
 
   private String resolveClientKey(HttpServletRequest request) {
-    String apiKey = request.getHeader("X-API-Key");
-    if (apiKey != null && !apiKey.isBlank()) {
-      return "apiKey:" + apiKey.trim();
+    String xff = request.getHeader("X-Forwarded-For");
+    if (xff != null && !xff.isBlank()) {
+      return "ip:" + xff.split(",")[0].trim();
     }
     return "ip:" + request.getRemoteAddr();
   }
