@@ -2,6 +2,7 @@ package com.jobshunter.service.application;
 
 import com.jobshunter.ApplicationProperties;
 import com.jobshunter.dto.Job;
+import com.jobshunter.service.clients.BrowserSimulator;
 import jakarta.annotation.PostConstruct;
 import jakarta.validation.constraints.NotNull;
 import java.net.InetAddress;
@@ -15,26 +16,13 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hc.client5.http.protocol.HttpClientContext;
-import org.jsoup.Jsoup;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestClient;
-import org.springframework.web.client.RestTemplate;
 
 @Slf4j
 @Service
 public class JobsValidator {
-
-  public static final ThreadLocal<HttpClientContext> HTTP_CONTEXT =
-      new ThreadLocal<>();
 
   @Autowired
   @Qualifier("jobsValidatorExecutor")
@@ -44,10 +32,7 @@ public class JobsValidator {
   private ApplicationProperties properties;
 
   @Autowired
-  private RestTemplate restTemplate;
-
-  @Autowired
-  private RestClient restClient;
+  private BrowserSimulator browserSimulator;
 
   private List<Pattern> expiredJobsPatterns;
 
@@ -63,33 +48,27 @@ public class JobsValidator {
 
   public List<Job> validateJobs(List<Job> jobs) {
     Set<String> invalidURL = ConcurrentHashMap.newKeySet(50);
+
+    //In case of redirects get the last redirect URL
     List<CompletableFuture<Void>> redirectionFutures = new ArrayList<>();
     for (Job job : jobs) {
       redirectionFutures.add(CompletableFuture.runAsync(() -> updateURL(job), jobsValidatorExecutor));
     }
+    CompletableFuture.allOf(redirectionFutures.toArray(CompletableFuture[]::new)).join();
+
+    //Validate URL's
+    redirectionFutures = new ArrayList<>();
     for (Job job : jobs) {
       redirectionFutures.add(CompletableFuture.runAsync(() -> validateURL(job, invalidURL), jobsValidatorExecutor));
     }
     CompletableFuture.allOf(redirectionFutures.toArray(CompletableFuture[]::new)).join();
+
     return jobs.stream().filter(job -> !invalidURL.contains(job.getUrl())).toList();
   }
 
   private void updateURL(@NotNull Job job) {
-    try {
-      restClient.get()
-          .uri(job.getUrl())
-          .retrieve()
-          .toBodilessEntity();
-      HttpClientContext context = HTTP_CONTEXT.get();
-      URI finalUri =
-          context.getRedirectLocations() == null || context.getRedirectLocations().size() == 0
-              ? context.getRequest().getUri()
-              : context.getRedirectLocations().get(context.getRedirectLocations().size() - 1);
-      job.setUrl(finalUri.toString());
-    } catch (Exception e) {
-      e.printStackTrace();
-      //
-    }
+    String newURL = browserSimulator.getFinalRedirectedURL(job.getUrl());
+    job.setUrl(newURL);
   }
 
   private void validateURL(@NotNull Job job, Set<String> invalidURLs) {
@@ -101,33 +80,21 @@ public class JobsValidator {
   private boolean isValidJob(String jobURL) {
     URI uri = toSafeHttpUri(jobURL);
     if (uri == null) {
-      log.warn("Skipping URL {} because it is not a permitted HTTP/HTTPS target", jobURL);
+      log.error("Skipping URL {} because it is not a permitted HTTP/HTTPS target", jobURL);
       return false;
     }
-    log.info("Testing URL {} ", uri);
-    HttpHeaders headers = new HttpHeaders();
-    headers.set("User-Agent", "Mozilla/5.0");
-    headers.setAccept(List.of(MediaType.TEXT_HTML));
-    HttpEntity<Void> entity = new HttpEntity<>(headers);
     try {
-      ResponseEntity<String> response = restTemplate.exchange(
-          uri,
-          HttpMethod.GET,
-          entity,
-          String.class
-      );
-
-      if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
-        String html = Jsoup.parse(response.getBody()).text().toLowerCase();
-        boolean isExpired = expiredJobsPatterns.stream().anyMatch(pattern -> pattern.matcher(html).find());
-        log.info("Expired: {} {}", isExpired, jobURL);
-        return !isExpired;
+      String body = browserSimulator.openPage(uri.toString()).getBody();
+      String html = body.toLowerCase();
+      boolean isExpired = expiredJobsPatterns.stream().anyMatch(pattern -> pattern.matcher(html).find());
+      if (isExpired) {
+        log.warn("Invalid URL: {}", jobURL);
       } else {
-        log.info("Expired: true {}", jobURL);
-        return false;
+        log.info("Valid URL: {}", jobURL);
       }
-    } catch (Exception e) {
-      log.info("Expired: true {} {}", jobURL, e.getMessage());
+      return !isExpired;
+    } catch (Throwable e) {
+      log.error("Invalid URL: {}", jobURL);
       return false;
     }
   }
@@ -156,6 +123,7 @@ public class JobsValidator {
       }
       return uri;
     } catch (Exception ex) {
+      log.error("Error at validating url:\n{}", jobURL, ex);
       return null;
     }
   }

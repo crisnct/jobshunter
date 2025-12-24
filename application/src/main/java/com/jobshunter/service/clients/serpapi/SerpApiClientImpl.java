@@ -5,6 +5,7 @@ import com.jobshunter.ApplicationProperties.SerpApi;
 import com.jobshunter.dto.serpRequest.SearchWithSerpRequest;
 import com.jobshunter.dto.serpResponse.SerpApiJobHit;
 import com.jobshunter.dto.serpResponse.SerpApiJobsResult;
+import com.jobshunter.service.clients.BrowserSimulator;
 import com.jobshunter.service.clients.SerpApiClient;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
@@ -18,10 +19,8 @@ import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestClient;
 
 /**
  * Read documentation here
@@ -35,7 +34,7 @@ public non-sealed class SerpApiClientImpl implements SerpApiClient<SearchWithSer
   private static final URI BASE = URI.create("https://serpapi.com/search");
 
   @Autowired
-  private RestClient restClient;
+  private BrowserSimulator browserSimulator;
 
   private final SerpApi serpApiConfig;
 
@@ -78,18 +77,13 @@ public non-sealed class SerpApiClientImpl implements SerpApiClient<SearchWithSer
   private SerpApiJobsResult searchJobsPagination(SearchWithSerpRequest request, String nextPageToken) throws IOException {
     log.info("Searching jobs with Serp Api, query: {}", request.query());
     URI uri = this.buildUri(request, nextPageToken);
-    ResponseEntity<String> response = restClient.get()
-        .uri(uri)
-        .retrieve()
-        .onStatus(HttpStatusCode::is2xxSuccessful, (req, res) -> {
-          log.info("SERP API request executed successfully");
-        })
-        .onStatus(HttpStatusCode::isError, (req, res) -> {
-          String error = new String(res.getBody().readAllBytes());
-          throw new IllegalStateException("SERP API failed: " + res.getStatusCode() + " " + error);
-        })
-        .toEntity(String.class);
-
+    ResponseEntity<String> response = browserSimulator.openPage(uri.toString());
+    if (response.getStatusCode().is2xxSuccessful()) {
+      log.info("SERP API request executed successfully");
+    }
+    if (response.getStatusCode().isError()) {
+      throw new IllegalStateException("SERP API failed: " + response.getStatusCode().value() + " " + response.getBody());
+    }
     return new SerpApiJobsResponseParser().parse(response.getBody());
   }
 

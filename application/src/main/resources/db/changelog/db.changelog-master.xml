@@ -285,4 +285,35 @@
         <dropColumn tableName="users" columnName="cv_file_id"/>
     </changeSet>
 
+    <changeSet id="21-fix-user-jobs-unique-index-length" author="assistant">
+        <!--
+          On MySQL with utf8mb4, indexes are limited to 3072 bytes.
+          The unique index on (user_id, job_url) breaks when job_url length exceeds limit.
+          We keep column length (for full data) but constrain the indexed prefix to 512 chars,
+          avoiding data loss while keeping uniqueness enforcement.
+        -->
+        <preConditions onFail="MARK_RAN" onError="HALT">
+            <dbms type="mysql"/>
+        </preConditions>
+
+        <!-- Drop the existing unique index/constraint -->
+        <sql>
+            ALTER TABLE user_jobs DROP INDEX uc_user_jobs_user_url;
+        </sql>
+    </changeSet>
+
+    <changeSet id="22-alter-user-jobs-job-url-length" author="assistant">
+        <!--
+          Expand job_url to handle long URLs while keeping index/unique constraints valid.
+          TEXT breaks indexed columns in MySQL without prefix length, so we use a larger VARCHAR.
+        -->
+        <modifyDataType tableName="user_jobs"
+                        columnName="job_url"
+                        newDataType="VARCHAR(2048)"/>
+        <!-- Recreate unique index with prefix length -->
+        <sql>
+            CREATE UNIQUE INDEX uc_user_jobs_user_url ON user_jobs (user_id, job_url(512));
+        </sql>
+    </changeSet>
+
 </databaseChangeLog>

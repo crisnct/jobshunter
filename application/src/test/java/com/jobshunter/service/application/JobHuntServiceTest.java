@@ -63,8 +63,6 @@ class JobHuntServiceTest {
     ReflectionTestUtils.setField(jobHuntService, "whatsAppNotifier", new NoOpNotifier());
     ReflectionTestUtils.setField(jobHuntService, "userDataService", new NoOpUserDataService());
 
-    jobHuntService.init();
-
     isValidJobMethod = JobHuntService.class.getDeclaredMethod("isValidJob", String.class);
     isValidJobMethod.setAccessible(true);
   }

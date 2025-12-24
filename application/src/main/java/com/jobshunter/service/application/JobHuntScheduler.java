@@ -28,6 +28,10 @@ public class JobHuntScheduler {
   private ThreadPoolExecutor serpApiExecutor;
 
   @Autowired
+  @Qualifier("jobsValidatorExecutor")
+  private ThreadPoolExecutor jobsValidatorExecutor;
+
+  @Autowired
   private JobHuntService jobHuntService;
 
   private final Map<String, String> lastMonitorMessages = new ConcurrentHashMap<>();
@@ -43,6 +47,7 @@ public class JobHuntScheduler {
     monitorExecutor("GPT executor", gptSearchExecutor);
     monitorExecutor("GEMINI executor", geminiSearchExecutor);
     monitorExecutor("SERP executor", serpApiExecutor);
+    monitorExecutor("URL validator executor", jobsValidatorExecutor);
   }
 
   private void monitorExecutor(String executorName, ThreadPoolExecutor executor) {

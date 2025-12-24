@@ -1,9 +1,9 @@
 package com.jobshunter;
 
-import static com.jobshunter.service.application.JobsValidator.HTTP_CONTEXT;
-
 import com.fasterxml.jackson.databind.json.JsonMapper;
+import com.jobshunter.service.clients.BrowserSimulator;
 import java.nio.charset.StandardCharsets;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.config.ConnectionConfig;
 import org.apache.hc.client5.http.config.RequestConfig;
@@ -29,6 +29,7 @@ import org.springframework.web.client.RestTemplate;
  */
 //@formatter:on
 @Configuration
+@Slf4j
 public class ApplicationConfig {
 
   @Bean
@@ -59,9 +60,12 @@ public class ApplicationConfig {
     HttpComponentsClientHttpRequestFactory requestFactory =
         new HttpComponentsClientHttpRequestFactory(httpClient);
     requestFactory.setHttpContextFactory((_, _) -> {
-      HttpClientContext context = HttpClientContext.create();
-      HTTP_CONTEXT.set(context);
-      return context;
+      // Reuse a scoped HttpClientContext if present, otherwise create a fresh one.
+      if (BrowserSimulator.HTTP_CONTEXT.isBound()) {
+        return BrowserSimulator.HTTP_CONTEXT.get();
+      } else {
+        return HttpClientContext.create();
+      }
     });
 
     return RestClient.builder()

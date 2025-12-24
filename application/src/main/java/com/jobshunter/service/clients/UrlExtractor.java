@@ -14,10 +14,7 @@ import org.springframework.stereotype.Component;
 public class UrlExtractor {
 
   private static final Pattern URL_PATTERN = Pattern.compile(
-      "\\b((?:https?://|www\\.)" +
-          "[\\w\\-]+(\\.[\\w\\-]+)+" +
-          "(?:[/?#][^\\s\"'<>]*)?)",
-      Pattern.CASE_INSENSITIVE
+      "(?i)\\bhttps?://[^\\s\\]\\[\\(\\)<>'\"`]+"
   );
 
   public List<Job> parseJobs(String text) {
@@ -27,7 +24,7 @@ public class UrlExtractor {
     List<Job> results = new ArrayList<>();
     Matcher matcher = URL_PATTERN.matcher(text);
     while (matcher.find()) {
-      String url = normalize(matcher.group(1));
+      String url = normalize(matcher.group());
       results.add(new Job(-1, url, ""));
     }
     return results;
@@ -36,7 +33,10 @@ public class UrlExtractor {
   private String normalize(String url) {
     // normalize www.* → https://www.*
     if (url.startsWith("www.")) {
-      return "https://" + url;
+      url = "https://" + url;
+    }
+    if (url.endsWith(")")) {
+      url = url.substring(0, url.length() - 1);
     }
     return url;
   }
