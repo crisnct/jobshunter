@@ -82,7 +82,6 @@ public non-sealed class GptJobHunting implements JobHunting {
     };
     jobsSync.addJobs(jobsFound, request.getEngine());
     userDataService.incrementPromptJobsFound(request.getPrompt().getId(), jobsFound.size());
-    log.info("Found {} jobs for {}. Are going to be validated.", jobsFound.size(), request.getUsername());
   }
 
 }

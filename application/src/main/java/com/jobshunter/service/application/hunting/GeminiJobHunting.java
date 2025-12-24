@@ -81,7 +81,6 @@ public non-sealed class GeminiJobHunting implements JobHunting {
     };
     jobsSync.addJobs(jobsFound, request.getEngine());
     userDataService.incrementPromptJobsFound(request.getPrompt().getId(), jobsFound.size());
-    log.info("{} found {} jobs for {}. Are going to be validated.", request.getEngine().name(), jobsFound.size(), request.getUsername());
   }
 
 }

@@ -69,7 +69,6 @@ public non-sealed class SerpJobHunting implements JobHunting {
         jobs.add(new Job(score, job.applyLinks().getFirst(), "Google"));
       }
       jobsSync.addJobs(jobs, EngineType.SERP);
-      log.info("Serp Api found {} jobs for user {}", serpApiResult.jobs().size(), user.getUsername());
     } catch (JsonProcessingException e) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
     }

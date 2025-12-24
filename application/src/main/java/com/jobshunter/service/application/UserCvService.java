@@ -84,12 +84,7 @@ public class UserCvService {
       if (!StringUtils.hasText(gptFileId)) {
         throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Failed to upload CV to ChatGPT");
       }
-      String geminiFileId = geminiFileClient.uploadFile(tempFile);
-      if (!StringUtils.hasText(geminiFileId)) {
-        throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Failed to upload CV to Gemini");
-      }
-
-      userDataService.replaceUserCv(user, cvContent, gptFileId, geminiFileId);
+      userDataService.replaceUserCv(user, cvContent, gptFileId);
       return gptFileId;
     } finally {
       try {
@@ -160,13 +155,6 @@ public class UserCvService {
         gptFileClient.deleteFile(cv.getGptFileId());
       } catch (Exception e) {
         log.error("Can not delete file from GPT: " + cv.getGptFileId(), e);
-      }
-    }
-    if (StringUtils.hasText(cv.getGeminiFileId())) {
-      try {
-        geminiFileClient.deleteFile(cv.getGeminiFileId());
-      } catch (Exception e) {
-        log.error("Can not delete file from Gemini: " + cv.getGeminiFileId(), e);
       }
     }
   }

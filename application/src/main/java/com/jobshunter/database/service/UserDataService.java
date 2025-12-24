@@ -114,12 +114,11 @@ public class UserDataService {
   }
 
   @Transactional
-  public UserCvEntity replaceUserCv(UserEntity user, byte[] cvContent, String gptFileId, String geminiFileId) {
+  public UserCvEntity replaceUserCv(UserEntity user, byte[] cvContent, String gptFileId) {
     UserCvEntity entity = userCvRepository.findByUserId(user.getId())
-        .orElseGet(() -> new UserCvEntity(user, cvContent, gptFileId, geminiFileId));
+        .orElseGet(() -> new UserCvEntity(user, cvContent, gptFileId, null));
     entity.setCv(cvContent);
     entity.setGptFileId(gptFileId);
-    entity.setGeminiFileId(geminiFileId);
     return userCvRepository.save(entity);
   }
 

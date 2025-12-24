@@ -83,6 +83,7 @@ public final class GptFileClientImpl implements FileClient {
     );
   }
 
+  @Override
   public void deleteAllFilesExcept(@NotBlank List<String> fileIds) {
     FileListResponse response = restClient.get()
         .uri(API_URI)

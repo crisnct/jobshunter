@@ -49,7 +49,6 @@ public non-sealed class EconomyGptJobSearchImpl extends AbstractGptApiClient
           .model(cfg.getModel())
           .max_output_tokens(properties.getGpt().getMaxTokens())
           .addTools(Tools.builder().setDeepSearch().build())
-          .setResponseSchema(getOutputSchema())
           .addSystemPrompt(systemPrompt)
           .addUserPrompt(userPrompt, fileId)
           .build();

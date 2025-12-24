@@ -47,6 +47,7 @@ public class JobsValidator {
   }
 
   public List<Job> validateJobs(List<Job> jobs) {
+    log.info("JobsValidator will validate {} url's", jobs.size());
     Set<String> invalidURL = ConcurrentHashMap.newKeySet(50);
 
     //In case of redirects get the last redirect URL
@@ -63,7 +64,9 @@ public class JobsValidator {
     }
     CompletableFuture.allOf(redirectionFutures.toArray(CompletableFuture[]::new)).join();
 
-    return jobs.stream().filter(job -> !invalidURL.contains(job.getUrl())).toList();
+    List<Job> result = jobs.stream().filter(job -> !invalidURL.contains(job.getUrl())).toList();
+    log.info("JobsValidator detected that only {} url's are valid", result.size());
+    return result;
   }
 
   private void updateURL(@NotNull Job job) {
