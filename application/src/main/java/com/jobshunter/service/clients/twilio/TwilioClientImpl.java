@@ -7,6 +7,7 @@ import com.twilio.Twilio;
 import com.twilio.exception.ApiException;
 import com.twilio.rest.api.v2010.account.Message;
 import jakarta.annotation.PostConstruct;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -32,6 +33,7 @@ public non-sealed class TwilioClientImpl implements TwilioClient {
 
   @SuppressWarnings("BooleanMethodIsAlwaysInverted")
   @Override
+  @CircuitBreaker(name = "twilio", fallbackMethod = "fallbackSend")
   public boolean trySend(String toNumber, String fromNumber, String body) {
     try {
       fromNumber = formatWhatsapp(sanitizePhone(fromNumber));
@@ -49,6 +51,12 @@ public non-sealed class TwilioClientImpl implements TwilioClient {
       log.error("Failed to send WhatsApp message via Twilio from {} to {}: {}", fromNumber, toNumber, ex.getMessage());
       return false;
     }
+  }
+
+  @SuppressWarnings("unused")
+  private boolean fallbackSend(String toNumber, String fromNumber, String body, Throwable throwable) {
+    log.error("Twilio send failed (circuit open/fallback): {}", throwable.getMessage());
+    return false;
   }
 
   private String formatWhatsapp(String raw) {

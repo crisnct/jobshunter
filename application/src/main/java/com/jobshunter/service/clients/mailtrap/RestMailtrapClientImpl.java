@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpStatusCode;
@@ -43,6 +44,7 @@ public non-sealed class RestMailtrapClientImpl implements RestMailtrapClient {
   }
 
   @Override
+  @CircuitBreaker(name = "mailtrapRest", fallbackMethod = "fallbackSendEmail")
   public void sendEmailWithNewJobs(
       @NonNull String username,
       @NonNull String email,
@@ -71,6 +73,11 @@ public non-sealed class RestMailtrapClientImpl implements RestMailtrapClient {
           log.info("Email send successfully to {}", email);
         })
         .toBodilessEntity();
+  }
+
+  @SuppressWarnings("unused")
+  private void fallbackSendEmail(String username, String email, String body, Throwable throwable) {
+    log.error("Mailtrap REST send failed for {}: {}", email, throwable.getMessage());
   }
 
   public record MailtrapTemplateRequest(

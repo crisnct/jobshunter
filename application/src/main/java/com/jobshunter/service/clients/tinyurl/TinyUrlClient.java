@@ -1,8 +1,8 @@
 package com.jobshunter.service.clients.tinyurl;
 
 import com.jobshunter.processor.PackageExpected;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import java.net.URI;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -17,6 +17,7 @@ public class TinyUrlClient {
     this.restTemplate = restTemplate;
   }
 
+  @CircuitBreaker(name = "tinyurl", fallbackMethod = "fallbackShorten")
   public String shorten(String longUrl) {
     String apiUrl = UriComponentsBuilder
         .fromUri(URI.create("https://tinyurl.com/api-create.php"))
@@ -24,6 +25,11 @@ public class TinyUrlClient {
         .toUriString();
 
     return restTemplate.getForObject(apiUrl, String.class);
+  }
+
+  @SuppressWarnings("unused")
+  private String fallbackShorten(String longUrl, Throwable throwable) {
+    return longUrl;
   }
 
 }

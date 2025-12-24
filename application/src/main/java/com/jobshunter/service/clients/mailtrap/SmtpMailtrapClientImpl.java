@@ -8,6 +8,7 @@ import jakarta.mail.internet.MimeMessage;
 import java.util.List;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.mail.MailException;
@@ -35,6 +36,7 @@ public non-sealed class SmtpMailtrapClientImpl implements SmtpMailtrapClient {
   }
 
   @Override
+  @CircuitBreaker(name = "mailtrapSmtp", fallbackMethod = "fallbackSendEmail")
   public void sendEmail(
       @NonNull String to,
       @Nullable String subject,
@@ -44,6 +46,7 @@ public non-sealed class SmtpMailtrapClientImpl implements SmtpMailtrapClient {
   }
 
   @Override
+  @CircuitBreaker(name = "mailtrapSmtp", fallbackMethod = "fallbackSendEmailWithAttachment")
   public void sendEmail(
       @NonNull List<String> to,
       @Nullable String subject,
@@ -69,6 +72,17 @@ public non-sealed class SmtpMailtrapClientImpl implements SmtpMailtrapClient {
       log.error("Failed to send email with attachment to {}: {}", to, e.getMessage());
       throw new IllegalStateException("Failed to send email", e);
     }
+  }
+
+  @SuppressWarnings("unused")
+  private void fallbackSendEmail(String to, String subject, String body, Throwable throwable) {
+    log.error("Mailtrap SMTP send failed for {}: {}", to, throwable.getMessage());
+  }
+
+  @SuppressWarnings("unused")
+  private void fallbackSendEmailWithAttachment(List<String> to, String subject, String body,
+                                               MultipartFile attachment, Throwable throwable) {
+    log.error("Mailtrap SMTP send (with attachment) failed for {}: {}", to, throwable.getMessage());
   }
 
 }
