@@ -2,6 +2,8 @@ package com.jobshunter.service.clients.gpt;
 
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.jobshunter.ApplicationProperties;
+import com.jobshunter.dto.gptResponse.FileInfo;
+import com.jobshunter.dto.gptResponse.FileListResponse;
 import com.jobshunter.dto.gptResponse.UploadFileResponse;
 import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.clients.FileClient;
@@ -10,6 +12,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -22,6 +25,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestTemplate;
 
 @Slf4j
@@ -34,6 +38,9 @@ public final class GptFileClientImpl implements FileClient {
 
   @Autowired
   private RestTemplate restTemplate;
+
+  @Autowired
+  private RestClient restClient;
 
   @Autowired
   private ApplicationProperties properties;
@@ -74,6 +81,20 @@ public final class GptFileClientImpl implements FileClient {
         new HttpEntity<>(headers),
         String.class
     );
+  }
+
+  public void deleteAllFilesExcept(@NotBlank List<String> fileIds) {
+    FileListResponse response = restClient.get()
+        .uri(API_URI)
+        .header("Authorization", "Bearer " + properties.getGpt().getApiKey())
+        .retrieve()
+        .body(FileListResponse.class);
+    if (response != null && response.data() != null) {
+      List<FileInfo> toDelete = response.data().stream().filter(f -> !fileIds.contains(f.id())).toList();
+      for (FileInfo file : toDelete) {
+        deleteFile(file.id());
+      }
+    }
   }
 
 }

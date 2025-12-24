@@ -4,12 +4,14 @@ import com.jobshunter.database.entities.UserCvEntity;
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.service.UserDataService;
 import com.jobshunter.service.clients.FileClient;
+import jakarta.annotation.PostConstruct;
 import jakarta.validation.constraints.NotNull;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,6 +47,15 @@ public class UserCvService {
   @Autowired
   @Qualifier("Gemini")
   private FileClient geminiFileClient;
+
+  @PostConstruct
+  private void init() {
+    List<String> gptFileIdUsed = userDataService.getAllUsers().stream()
+        .filter(user -> user.getCv() != null)
+        .map(user -> user.getCv().getGptFileId())
+        .toList();
+    gptFileClient.deleteAllFilesExcept(gptFileIdUsed);
+  }
 
   @Transactional
   public String uploadUserCv(String username, MultipartFile file) throws IOException {

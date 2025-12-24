@@ -8,6 +8,7 @@ import jakarta.validation.constraints.NotBlank;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -70,6 +71,11 @@ public final class GeminiFileClientImpl implements FileClient {
         //.attribute("key", properties.getGemini().getApiKey())
         .retrieve()
         .body(Void.class);
+  }
+
+  @Override
+  public void deleteAllFilesExcept(List<String> fileIds) {
+    throw new IllegalStateException();
   }
 
   @JsonIgnoreProperties(ignoreUnknown = true)
