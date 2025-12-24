@@ -61,7 +61,9 @@ public class SecurityConfig {
       HttpSecurity http,
       JwtAuthenticationFilter jwtAuthenticationFilter,
       SecurityHeadersFilter securityHeadersFilter,
-      CookieCsrfTokenRepository csrfTokenRepository
+      CookieCsrfTokenRepository csrfTokenRepository,
+      UserDetailsService userDetailsService,
+      PasswordEncoder passwordEncoder
   ) {
     // SECURITY FIX: Configure CSRF for stateless JWT authentication
     // Use custom CSRF token repository that works with stateless sessions
@@ -85,7 +87,7 @@ public class SecurityConfig {
             .requestMatchers("/actuator/health", "/actuator/info").permitAll()
             .anyRequest().authenticated()
         )
-        .authenticationProvider(authenticationProvider())
+        .authenticationProvider(daoAuthenticationProvider(userDetailsService, passwordEncoder))
         .addFilterBefore(securityHeadersFilter, AnonymousAuthenticationFilter.class)
         .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
     return http.build();
@@ -115,11 +117,11 @@ public class SecurityConfig {
     return new JwtAuthenticationFilter(jwtService, userDetailsService);
   }
 
-  @Bean
-  public AuthenticationProvider authenticationProvider() {
-    DaoAuthenticationProvider daoAuthenticationProvider = new DaoAuthenticationProvider(userDetailsService());
-    daoAuthenticationProvider.setPasswordEncoder(passwordEncoder());
-    return daoAuthenticationProvider;
+  private AuthenticationProvider daoAuthenticationProvider(
+      UserDetailsService userDetailsService, PasswordEncoder passwordEncoder) {
+    DaoAuthenticationProvider provider = new DaoAuthenticationProvider(userDetailsService);
+    provider.setPasswordEncoder(passwordEncoder);
+    return provider;
   }
 
   @Bean

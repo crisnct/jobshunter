@@ -95,6 +95,7 @@ public final class GptFileClientImpl implements FileClient {
       for (FileInfo file : toDelete) {
         deleteFile(file.id());
       }
+      log.info("Deleted {} files", toDelete.size());
     }
   }
 

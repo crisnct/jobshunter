@@ -4,7 +4,6 @@ import com.jobshunter.database.entities.UserCvEntity;
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.service.UserDataService;
 import com.jobshunter.service.clients.FileClient;
-import jakarta.annotation.PostConstruct;
 import jakarta.validation.constraints.NotNull;
 import java.io.IOException;
 import java.io.InputStream;
@@ -13,6 +12,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -29,6 +29,8 @@ import org.springframework.web.server.ResponseStatusException;
 public class UserCvService {
 
   private static final long MAX_CV_BYTES = 10 * 1024 * 1024;
+
+  private AtomicBoolean FIRST_TIME = new AtomicBoolean(false);
 
   private static final Set<String> ALLOWED_CONTENT_TYPES = Set.of(
       MediaType.APPLICATION_PDF_VALUE,
@@ -48,17 +50,11 @@ public class UserCvService {
   @Qualifier("Gemini")
   private FileClient geminiFileClient;
 
-  @PostConstruct
-  private void init() {
-    List<String> gptFileIdUsed = userDataService.getAllUsers().stream()
-        .filter(user -> user.getCv() != null)
-        .map(user -> user.getCv().getGptFileId())
-        .toList();
-    gptFileClient.deleteAllFilesExcept(gptFileIdUsed);
-  }
-
   @Transactional
   public String uploadUserCv(String username, MultipartFile file) throws IOException {
+    if (FIRST_TIME.compareAndExchange(false, true)) {
+      cleanupOldCVs();
+    }
     if (!StringUtils.hasText(username)) {
       throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not authenticated");
     }
@@ -156,6 +152,18 @@ public class UserCvService {
       } catch (Exception e) {
         log.error("Can not delete file from GPT: " + cv.getGptFileId(), e);
       }
+    }
+  }
+
+  private void cleanupOldCVs() {
+    log.info("Cleanup old cv's from gpt which are not used...");
+    List<String> gptFileIdUsed = userDataService.getAllUsers().stream()
+        .filter(user -> user.getCv() != null)
+        .map(user -> user.getCv().getGptFileId())
+        .toList();
+    if (!gptFileIdUsed.isEmpty()) {
+      gptFileClient.deleteAllFilesExcept(gptFileIdUsed);
+
     }
   }
 }

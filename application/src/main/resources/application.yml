@@ -62,11 +62,15 @@ spring:
     hibernate:
       ddl-auto: none
     open-in-view: false
+    defer-datasource-initialization: true
     properties:
       hibernate.validator.message_interpolator: org.hibernate.validator.messageinterpolation.ParameterMessageInterpolator
   liquibase:
     enabled: ${LIQUIBASE_ENABLED:true}
     change-log: classpath:db/changelog/db.changelog-master.xml
+  main:
+    banner-mode: off
+    lazy-initialization: true
   mail:
     enabled: true
     host: send.smtp.mailtrap.io
