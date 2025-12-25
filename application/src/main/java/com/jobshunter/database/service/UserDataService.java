@@ -1,13 +1,17 @@
 package com.jobshunter.database.service;
 
+import com.jobshunter.database.entities.EngineConfigurationEntity;
 import com.jobshunter.database.entities.UserCvEntity;
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.entities.UserJobEntity;
 import com.jobshunter.database.entities.UserPromptEntity;
+import com.jobshunter.database.repository.EngineConfigurationRepository;
 import com.jobshunter.database.repository.UserCvRepository;
 import com.jobshunter.database.repository.UserJobRepository;
 import com.jobshunter.database.repository.UserPromptRepository;
 import com.jobshunter.database.repository.UserRepository;
+import com.jobshunter.model.EngineSelection;
+import com.jobshunter.model.EngineTier;
 import com.jobshunter.model.EngineType;
 import com.jobshunter.model.Job;
 import com.jobshunter.service.application.JobsSynchronizer;
@@ -17,9 +21,11 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import org.springframework.web.server.ResponseStatusException;
 
 @Service
 @Slf4j
@@ -31,6 +37,8 @@ public class UserDataService {
   private final UserJobRepository userJobRepository;
 
   private final UserPromptRepository userPromptRepository;
+
+  private final EngineConfigurationRepository engineRepository;
 
   private final UserCvRepository userCvRepository;
 
@@ -64,12 +72,15 @@ public class UserDataService {
     jobs.forEach(job -> addJobUrl(user, job.getUrl()));
   }
 
-  public UserPromptEntity updatePrompt(UserEntity user, EngineType engine, String prompt) {
-    UserPromptEntity entity = userPromptRepository.findByUserIdAndPromptIgnoreCaseAndEngine(user.getId(), prompt, engine)
+  public UserPromptEntity updatePrompt(UserEntity user, EngineType engine, EngineTier tier, String prompt) {
+    EngineConfigurationEntity engineConfig = engineRepository.findByEngineTypeAndTier(engine, tier)
+        .orElseThrow(()-> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid combination of engineType and tier"));
+
+    UserPromptEntity entity = userPromptRepository.findByUserIdAndPromptIgnoreCaseAndEngineConfigurationId(user.getId(), prompt, engineConfig.getId())
         .orElseGet(() -> {
           UserPromptEntity newEntity = new UserPromptEntity();
           newEntity.setUser(user);
-          newEntity.setEngine(engine);
+          newEntity.setEngineConfiguration(engineConfig);
           newEntity.setJobsFound(0);
           return newEntity;
         });
@@ -136,4 +147,9 @@ public class UserDataService {
   public void deleteUserPrompts(List<Long> prompts) {
     userPromptRepository.deleteAllByIdInBatch(prompts);
   }
+
+  public List<UserPromptEntity> getPromptsFor(UserEntity user, List<EngineSelection> engines) {
+    return userPromptRepository.findByUserIdAndEngineSelections(user.getId(), engines);
+  }
+
 }

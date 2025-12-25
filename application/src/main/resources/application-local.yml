@@ -16,5 +16,4 @@ gpt:
 
 serpApi:
   enabled: false
-  apiKey: ${SERP_API_KEY:notset}
   maxPageSearch: 1

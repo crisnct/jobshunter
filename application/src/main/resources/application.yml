@@ -6,8 +6,6 @@ server:
 jobshunter:
   name: JobsHunter
   expiredExpressions: was expired,is expired,no longer exists,This job was available,is no longer active,job is no longer available,this job was removed,Job not found,Applications from candidates outside of our global target markets are currently not accepted,No longer accepting applications,The job ad is no longer active,Application not possible,This job opening is no longer available,The vacancy has expired,this position has been filled,ONLY on W2,The job you are looking for is no longer open,Oferta no disponible,This job posting is no longer available,this job has expired,this position has been filled,This job offer is not active,Applications are closed,This job offer is not available
-  iterationPerUser: 10
-  iterationDelay: 30000
   scheduler:
     frequency: 3600000
   ratelimit:
@@ -24,6 +22,7 @@ gemini:
   enabled: true
   apiKey: ${GEMINI_API_KEY:notset}
   maxTokens: 2000
+  delay: 10000
   economy:
     model: "gemini-2.5-flash"
     systemPromptFile: "jobsSystemPromptEconomy.txt"
@@ -35,6 +34,7 @@ gpt:
   enabled: true
   apiKey: ${CHATGPT_API_KEY:notset}
   maxTokens: 2000
+  delay: 30000
   economy:
     model: "gpt-4o-mini"
     systemPromptFile: "jobsSystemPromptEconomy.txt"
@@ -46,6 +46,7 @@ serpApi:
   enabled: true
   apiKey: ${SERP_API_KEY:notset}
   maxPageSearch: 3
+  delay: 10000
 
 spring:
   profiles:

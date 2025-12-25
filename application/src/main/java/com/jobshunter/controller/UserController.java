@@ -14,6 +14,7 @@ import com.jobshunter.dto.SearchJobsRequest;
 import com.jobshunter.dto.UserInfoResponse;
 import com.jobshunter.dto.UserJobResponse;
 import com.jobshunter.dto.UserUpdateRequest;
+import com.jobshunter.model.EngineTier;
 import com.jobshunter.model.EngineType;
 import com.jobshunter.model.SearchJobOrder;
 import com.jobshunter.service.application.JobHuntService;
@@ -21,8 +22,6 @@ import com.jobshunter.service.application.UserCvService;
 import com.jobshunter.service.application.notifiers.EmailNotifierService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -85,7 +84,7 @@ public class UserController {
       SearchJobsRequest request
   ) {
     return userDataService.getUser(request.username())
-        .map(user -> new SearchJobOrder(user, new ArrayList<>(request.engines()), request.iterations()))
+        .map(user -> new SearchJobOrder(user, new ArrayList<>(request.engines())))
         .map(jobHuntService::searchJobsForUser)
         .map(ResponseEntity::ok)
         .orElseGet(() -> ResponseEntity.ok(new JobHuntResponse(Collections.emptyList())));
@@ -148,7 +147,7 @@ public class UserController {
         latestCv.getGeminiFileId(),
         formatDateTime(user.getLastJobs()),
         user.getTimeInterval(),
-        prompts.stream().map(p -> String.format("id: %d, engine: %s, prompt: %s", p.getId(), p.getEngine(), p.getPrompt())).toList(),
+        prompts.stream().map(p -> String.format("id: %d, engine: %s, prompt: %s", p.getId(), p.getEngineConfiguration(), p.getPrompt())).toList(),
         formatDateTime(user.getCreatedAt()),
         roles
     );
@@ -224,7 +223,7 @@ public class UserController {
       request.serpPrompts().forEach(serpPrompt -> {
         try {
           String promptJson = objectMapper.writeValueAsString(serpPrompt);
-          UserPromptEntity prompt = userDataService.updatePrompt(user, EngineType.SERP, promptJson);
+          UserPromptEntity prompt = userDataService.updatePrompt(user, EngineType.SERP, EngineTier.ECONOMY, promptJson);
           promptsToDelete.remove(prompt.getId());
         } catch (JsonProcessingException e) {
           throw new IllegalArgumentException("Invalid SERP prompt payload", e);
@@ -237,7 +236,7 @@ public class UserController {
         if (aiPrompt.engineType() != EngineType.GPT && aiPrompt.engineType() != EngineType.GEMINI) {
           throw new IllegalArgumentException("engine_type must be GPT or GEMINI");
         }
-        UserPromptEntity prompt = userDataService.updatePrompt(user, aiPrompt.engineType(), aiPrompt.prompt());
+        UserPromptEntity prompt = userDataService.updatePrompt(user, aiPrompt.engineType(), aiPrompt.engineTier(), aiPrompt.prompt());
         promptsToDelete.remove(prompt.getId());
       });
     }

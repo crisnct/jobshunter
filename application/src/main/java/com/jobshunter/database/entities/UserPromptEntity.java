@@ -33,14 +33,14 @@ public class UserPromptEntity {
   @JoinColumn(name = "user_id", nullable = false)
   private UserEntity user;
 
-  @Column(name = "prompt", nullable = false, columnDefinition = "text")
+  @Column(name = "prompt", nullable = false, length = 3000)
   private String prompt;
-
-  @Enumerated(EnumType.STRING)
-  @Column(name = "engine", nullable = false, length = 255)
-  private EngineType engine;
 
   @Column(name = "jobs_found", nullable = false)
   private Integer jobsFound = 0;
+
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "engine_id")
+  private EngineConfigurationEntity engineConfiguration;
 
 }

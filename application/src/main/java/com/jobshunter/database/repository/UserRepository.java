@@ -29,13 +29,24 @@ public interface UserRepository extends JpaRepository<UserEntity, Long> {
         String roleName
     );
 
-    @Query("SELECT DISTINCT u FROM UserEntity u LEFT JOIN FETCH u.prompts WHERE lower(u.username) = lower(:username)")
+    @Query("""
+        SELECT DISTINCT u
+        FROM UserEntity u
+        LEFT JOIN FETCH u.prompts p
+        LEFT JOIN FETCH p.engineConfiguration
+        WHERE lower(u.username) = lower(:username)
+        """)
     Optional<UserEntity> findByUsernameWithPrompts(
         @Param("username")
         @SqlInjectionSafe
         String username
     );
 
-    @Query("SELECT DISTINCT u FROM UserEntity u LEFT JOIN FETCH u.prompts")
+    @Query("""
+        SELECT DISTINCT u
+        FROM UserEntity u
+        LEFT JOIN FETCH u.prompts p
+        LEFT JOIN FETCH p.engineConfiguration
+        """)
     List<UserEntity> findAllWithPrompts();
 }

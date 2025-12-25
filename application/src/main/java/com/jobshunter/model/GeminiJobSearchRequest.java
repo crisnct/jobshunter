@@ -14,11 +14,9 @@ public class GeminiJobSearchRequest extends AIJobSearchRequest {
   public GeminiJobSearchRequest(
       String username,
       UserPromptEntity prompt,
-      String base64CV,
-      EngineType engineType,
-      EngineTier engineTier
+      String base64CV
   ) {
-    super(username, prompt, engineType, engineTier);
+    super(username, prompt, prompt.getEngineConfiguration().getEngineType(), prompt.getEngineConfiguration().getTier());
     this.base64CV = base64CV;
   }
 

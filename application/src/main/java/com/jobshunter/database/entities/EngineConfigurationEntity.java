@@ -14,6 +14,7 @@ import jakarta.persistence.UniqueConstraint;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 
 @Getter
 @Setter
@@ -23,6 +24,7 @@ import lombok.Setter;
     name = "engine_configuration",
     uniqueConstraints = @UniqueConstraint(name = "uc_engine_configuration_type_tier", columnNames = {"engine_type", "tier"})
 )
+@ToString
 public class EngineConfigurationEntity {
 
   @Id

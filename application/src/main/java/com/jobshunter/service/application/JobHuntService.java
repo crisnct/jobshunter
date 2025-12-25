@@ -1,6 +1,5 @@
 package com.jobshunter.service.application;
 
-import com.jobshunter.ApplicationProperties;
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.service.UserDataService;
 import com.jobshunter.dto.JobHuntResponse;
@@ -32,8 +31,6 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class JobHuntService {
 
-  private final ApplicationProperties properties;
-
   private final WhatsappNotifierService whatsappNotifierService;
 
   private final EmailNotifierService emailNotifierService;
@@ -62,8 +59,7 @@ public class JobHuntService {
           this.searchJobsForUser(
               new SearchJobOrder(
                   user,
-                  List.of(new EngineSelection(EngineType.GPT, EngineTier.ECONOMY)),
-                  properties.getJobsHunter().getIterationPerUser()
+                  List.of(new EngineSelection(EngineType.GPT, EngineTier.ECONOMY))
               )
           );
         }
@@ -128,11 +124,7 @@ public class JobHuntService {
     if (enginesFiltered.isEmpty()) {
       return;
     }
-    SearchJobOrder orderClone = new SearchJobOrder(
-        order.user(),
-        enginesFiltered,
-        order.iterations()
-    );
+    SearchJobOrder orderClone = new SearchJobOrder(order.user(), enginesFiltered);
     enginesFutures.add(jobHunting.searchJobs(jobsSync, orderClone));
   }
 

@@ -21,8 +21,6 @@ public class ApplicationProperties {
     private String name;
     private String expiredExpressions;
     private Boolean useDummyData;
-    private int iterationPerUser;
-    private long iterationDelay;
     private Scheduler scheduler = new Scheduler();
     private RateLimitPolicy rateLimit = new RateLimitPolicy();
   }
@@ -48,6 +46,7 @@ public class ApplicationProperties {
 
     private String apiKey;
     private int maxTokens;
+    private int delay;
     private ModelSpecific economy;
     private ModelSpecific premium;
   }
@@ -58,6 +57,7 @@ public class ApplicationProperties {
 
     private String apiKey;
     private int maxTokens;
+    private int delay;
     private ModelSpecific economy;
     private ModelSpecific premium;
   }
@@ -74,8 +74,8 @@ public class ApplicationProperties {
   public static class SerpApi {
 
     private String apiKey;
-
     private int maxPageSearch;
+    private int delay;
   }
 
   @Data

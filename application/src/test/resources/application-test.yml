@@ -16,6 +16,7 @@ twilio:
 
 gemini:
   apiKey: ${GEMINI_API_KEY:notset}
+  delay: 10000
   economy:
     model: "gemini-2.5-flash-lite"
   premium:
@@ -24,12 +25,19 @@ gemini:
 gpt:
   apiKey: ${CHATGPT_API_KEY:notset}
   maxTokens: 1000
+  delay: 10000
   economy:
     model: "gpt-4o-mini"
     systemPromptFile: "jobsSystemPromptEconomy.txt"
   premium:
     model: "gpt-5.2"
     systemPromptFile: "jobsSystemPromptPremium.txt"
+
+serpApi:
+  enabled: true
+  apiKey: ${SERP_API_KEY:notset}
+  maxPageSearch: 1
+  delay: 10000
 
 spring:
   datasource:
