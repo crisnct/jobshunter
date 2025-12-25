@@ -1,7 +1,8 @@
 package com.jobshunter.service.application;
 
-import com.jobshunter.dto.EngineType;
-import com.jobshunter.dto.Job;
+import com.jobshunter.model.EngineTier;
+import com.jobshunter.model.EngineType;
+import com.jobshunter.model.Job;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -27,7 +28,7 @@ public class JobsSynchronizer {
     this.existingUrls.addAll(existingUrls);
   }
 
-  public void addJobs(Collection<Job> newJobs, EngineType engine, Long promptId) {
+  public void addJobs(Collection<Job> newJobs, EngineType engine, EngineTier tier, Long promptId) {
     AtomicInteger counter = new AtomicInteger(0);
     newJobs.stream()
         .filter(job -> !existingUrls.contains(job.getUrl()))
@@ -38,7 +39,8 @@ public class JobsSynchronizer {
           existingUrls.add(job.getUrl());
           counter.addAndGet(1);
         });
-    log.info("{} found {} url's and are going to be validated", engine.name(), counter.get());
+    String engineLabel = tier != null ? engine.name() + "-" + tier.name() : engine.name();
+    log.info("{} found {} url's and are going to be validated", engineLabel, counter.get());
   }
 
 }

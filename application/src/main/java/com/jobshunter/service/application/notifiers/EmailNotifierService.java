@@ -1,7 +1,7 @@
 package com.jobshunter.service.application.notifiers;
 
 import com.jobshunter.database.entities.UserEntity;
-import com.jobshunter.dto.Job;
+import com.jobshunter.model.Job;
 import com.jobshunter.service.application.UserMessagesFactory;
 import com.jobshunter.service.application.UserMessagesFactory.MessageTemplate;
 import com.jobshunter.service.clients.RestMailtrapClient;

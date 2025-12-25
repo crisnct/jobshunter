@@ -1,8 +1,11 @@
 package com.jobshunter.dto;
 
+import com.jobshunter.model.EngineSelection;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import java.util.Set;
@@ -18,6 +21,6 @@ public record SearchJobsRequest(
 
     @NotEmpty(message = "engines must not be empty")
     @Size(max = 20)
-    Set<EngineType> engines
+    Set<@Valid @NotNull EngineSelection> engines
 ) {
 }

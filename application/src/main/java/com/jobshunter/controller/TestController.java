@@ -3,7 +3,7 @@ package com.jobshunter.controller;
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.service.UserDataService;
 import com.jobshunter.dto.EmailRequest;
-import com.jobshunter.dto.Job;
+import com.jobshunter.model.Job;
 import com.jobshunter.dto.JobHuntResponse;
 import com.jobshunter.dto.serpRequest.SearchWithSerpRequest;
 import com.jobshunter.dto.serpResponse.SerpApiJobsResult;

@@ -1,5 +1,6 @@
 package com.jobshunter.dto;
 
+import com.jobshunter.model.EngineType;
 import com.jobshunter.processor.SqlInjectionSafe;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

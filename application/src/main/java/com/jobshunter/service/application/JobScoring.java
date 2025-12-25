@@ -1,7 +1,7 @@
 package com.jobshunter.service.application;
 
 import com.jobshunter.database.entities.UserEntity;
-import com.jobshunter.dto.Job;
+import com.jobshunter.model.Job;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 

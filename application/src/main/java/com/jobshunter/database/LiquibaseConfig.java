@@ -4,12 +4,14 @@ import javax.sql.DataSource;
 import liquibase.integration.spring.SpringLiquibase;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.core.env.Environment;
 
 @Configuration
 public class LiquibaseConfig {
 
   @Bean
+  @Lazy(false)
   public SpringLiquibase liquibase(DataSource dataSource, Environment env) {
     SpringLiquibase liquibase = new SpringLiquibase();
     liquibase.setDataSource(dataSource);

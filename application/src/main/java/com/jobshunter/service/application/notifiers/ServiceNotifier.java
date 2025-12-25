@@ -1,7 +1,7 @@
 package com.jobshunter.service.application.notifiers;
 
 import com.jobshunter.database.entities.UserEntity;
-import com.jobshunter.dto.Job;
+import com.jobshunter.model.Job;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Locale;

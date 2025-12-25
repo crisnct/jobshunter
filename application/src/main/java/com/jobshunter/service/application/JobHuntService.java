@@ -3,10 +3,12 @@ package com.jobshunter.service.application;
 import com.jobshunter.ApplicationProperties;
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.service.UserDataService;
-import com.jobshunter.dto.EngineType;
-import com.jobshunter.dto.Job;
+import com.jobshunter.model.EngineSelection;
+import com.jobshunter.model.EngineTier;
+import com.jobshunter.model.EngineType;
+import com.jobshunter.model.Job;
 import com.jobshunter.dto.JobHuntResponse;
-import com.jobshunter.dto.SearchJobOrder;
+import com.jobshunter.model.SearchJobOrder;
 import com.jobshunter.service.application.hunting.GeminiJobHunting;
 import com.jobshunter.service.application.hunting.GptJobHunting;
 import com.jobshunter.service.application.hunting.JobHunting;
@@ -77,11 +79,13 @@ public class JobHuntService {
             && user.getLastJobs() != null
             && user.getLastJobs().plusMinutes(user.getTimeInterval()).isBefore(LocalDateTime.now())) {
           log.info("Start searching jobs for {} ", user.getUsername());
-          this.searchJobsForUser(new SearchJobOrder(
-              user,
-              List.of(EngineType.GPT4),
-              properties.getJobsHunter().getIterationPerUser()
-          ));
+          this.searchJobsForUser(
+              new SearchJobOrder(
+                  user,
+                  List.of(new EngineSelection(EngineType.GPT, EngineTier.ECONOMY)),
+                  properties.getJobsHunter().getIterationPerUser()
+              )
+          );
         }
       }
     }
@@ -94,9 +98,9 @@ public class JobHuntService {
         new JobsSynchronizer(userDataService.getExistingJobUrlsForUser(user.getUsername()));
 
     List<CompletableFuture<Void>> enginesFutures = new ArrayList<>();
-    this.searchJobs("SERP", serpJobHunting, synchronizer, order, enginesFutures);
-    this.searchJobs("GPT", gptJobHunting, synchronizer, order, enginesFutures);
-    this.searchJobs("GEMINI", geminiJobHunting, synchronizer, order, enginesFutures);
+    this.searchJobs(EngineType.SERP, serpJobHunting, synchronizer, order, enginesFutures);
+    this.searchJobs(EngineType.GPT, gptJobHunting, synchronizer, order, enginesFutures);
+    this.searchJobs(EngineType.GEMINI, geminiJobHunting, synchronizer, order, enginesFutures);
 
     CompletableFuture.allOf(enginesFutures.toArray(CompletableFuture[]::new)).join();
 
@@ -131,17 +135,25 @@ public class JobHuntService {
     return jobHuntResponse;
   }
 
-  private void searchJobs(String enginePrefix, JobHunting jobHunting, JobsSynchronizer jobsSync, SearchJobOrder order,
-      List<CompletableFuture<Void>> enginesFutures) {
-    List<EngineType> enginesFiltered = order.engines().stream().filter(p -> p.name().startsWith(enginePrefix)).toList();
-    if (!enginesFiltered.isEmpty()) {
-      SearchJobOrder orderClone = new SearchJobOrder(
-          order.user(),
-          enginesFiltered,
-          order.iterations()
-      );
-      enginesFutures.add(jobHunting.searchJobs(jobsSync, orderClone));
+  private void searchJobs(
+      EngineType engineType,
+      JobHunting jobHunting,
+      JobsSynchronizer jobsSync,
+      SearchJobOrder order,
+      List<CompletableFuture<Void>> enginesFutures
+  ) {
+    List<EngineSelection> enginesFiltered = order.engines().stream()
+        .filter(selection -> selection.type() == engineType)
+        .toList();
+    if (enginesFiltered.isEmpty()) {
+      return;
     }
+    SearchJobOrder orderClone = new SearchJobOrder(
+        order.user(),
+        enginesFiltered,
+        order.iterations()
+    );
+    enginesFutures.add(jobHunting.searchJobs(jobsSync, orderClone));
   }
 
 

@@ -2,8 +2,8 @@ package com.jobshunter.service.clients.gemini;
 
 import com.jobshunter.ApplicationProperties;
 import com.jobshunter.ApplicationProperties.ModelSpecific;
-import com.jobshunter.dto.Job;
-import com.jobshunter.dto.geminiRequest.GeminiJobSearchRequest;
+import com.jobshunter.model.Job;
+import com.jobshunter.model.GeminiJobSearchRequest;
 import com.jobshunter.dto.geminiRequest.GeminiJobsPayload;
 import com.jobshunter.dto.geminiRequest.GenerationConfig;
 import com.jobshunter.dto.geminiRequest.GoogleSearchTool;

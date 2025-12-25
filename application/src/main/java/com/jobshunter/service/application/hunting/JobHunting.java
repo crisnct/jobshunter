@@ -1,6 +1,6 @@
 package com.jobshunter.service.application.hunting;
 
-import com.jobshunter.dto.SearchJobOrder;
+import com.jobshunter.model.SearchJobOrder;
 import com.jobshunter.service.application.JobsSynchronizer;
 import java.util.concurrent.CompletableFuture;
 

@@ -1,6 +1,5 @@
 package com.jobshunter.controller;
 
-import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.jobshunter.database.entities.RoleEntity;
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.entities.UserJobEntity;
@@ -9,7 +8,7 @@ import com.jobshunter.database.service.AuthService;
 import com.jobshunter.database.service.UserDataService;
 import com.jobshunter.dto.ChangePasswordRequest;
 import com.jobshunter.dto.JobHuntResponse;
-import com.jobshunter.dto.SearchJobOrder;
+import com.jobshunter.model.SearchJobOrder;
 import com.jobshunter.dto.SearchJobsRequest;
 import com.jobshunter.dto.UserInfoResponse;
 import com.jobshunter.dto.UserJobResponse;

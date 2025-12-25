@@ -1,8 +1,7 @@
-package com.jobshunter.dto.gptRequest;
+package com.jobshunter.model;
 
 import com.jobshunter.database.entities.UserPromptEntity;
 import com.jobshunter.dto.AIJobSearchRequest;
-import com.jobshunter.dto.EngineType;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -12,8 +11,14 @@ public class GptJobSearchRequest extends AIJobSearchRequest {
 
   private String fileId;
 
-  public GptJobSearchRequest(String username, UserPromptEntity prompt, EngineType engine, String fileId) {
-    super(username, prompt, engine);
+  public GptJobSearchRequest(
+      String username,
+      UserPromptEntity prompt,
+      EngineType engineType,
+      EngineTier engineTier,
+      String fileId
+  ) {
+    super(username, prompt, engineType, engineTier);
     this.fileId = fileId;
   }
 

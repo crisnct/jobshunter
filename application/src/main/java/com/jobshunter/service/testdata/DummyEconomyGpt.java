@@ -2,8 +2,8 @@ package com.jobshunter.service.testdata;
 
 import com.jobshunter.ApplicationProperties;
 import com.jobshunter.ApplicationProperties.ModelSpecific;
-import com.jobshunter.dto.Job;
-import com.jobshunter.dto.gptRequest.GptJobSearchRequest;
+import com.jobshunter.model.Job;
+import com.jobshunter.model.GptJobSearchRequest;
 import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.clients.AiJobsClient;
 import com.jobshunter.service.clients.gpt.AbstractGptApiClient;

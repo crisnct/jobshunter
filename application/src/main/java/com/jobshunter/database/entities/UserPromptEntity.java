@@ -1,7 +1,7 @@
 package com.jobshunter.database.entities;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.jobshunter.dto.EngineType;
+import com.jobshunter.model.EngineType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

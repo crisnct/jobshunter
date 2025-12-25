@@ -2,10 +2,11 @@ package com.jobshunter.service.application.hunting;
 
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.entities.UserPromptEntity;
-import com.jobshunter.dto.EngineType;
-import com.jobshunter.dto.Job;
-import com.jobshunter.dto.SearchJobOrder;
-import com.jobshunter.dto.gptRequest.GptJobSearchRequest;
+import com.jobshunter.model.EngineSelection;
+import com.jobshunter.model.EngineType;
+import com.jobshunter.model.GptJobSearchRequest;
+import com.jobshunter.model.Job;
+import com.jobshunter.model.SearchJobOrder;
 import com.jobshunter.service.application.JobsSynchronizer;
 import com.jobshunter.service.clients.AiJobsClient;
 import java.util.ArrayList;
@@ -45,16 +46,24 @@ public non-sealed class GptJobHunting implements JobHunting {
     List<CompletableFuture<Void>> futures = new ArrayList<>();
 
     int delayCounter = 0;
+    String gptFileId = order.user().getCv().getGptFileId();
     for (int i = 0; i < order.iterations(); i++) {
-      for (EngineType engine : order.engines()) {
+      for (EngineSelection selection : order.engines()) {
         for (UserPromptEntity prompt : user.getPrompts()) {
-          if (prompt.getEngine() == engine) {
+          if (prompt.getEngine() == EngineType.GPT) {
             Executor delayedExecutor = CompletableFuture.delayedExecutor(
                 (long) delayCounter++ * order.iterations(),
                 TimeUnit.MILLISECONDS,
                 gptSearchExecutor
             );
-            GptJobSearchRequest request = new GptJobSearchRequest(user.getUsername(), prompt, engine, order.user().getCv().getGptFileId());
+
+            GptJobSearchRequest request = new GptJobSearchRequest(
+                user.getUsername(),
+                prompt,
+                selection.type(),
+                selection.tier(),
+                gptFileId
+            );
             futures.add(CompletableFuture.runAsync(() -> gptSearch(jobsSync, request), delayedExecutor));
           }
         }
@@ -73,13 +82,14 @@ public non-sealed class GptJobHunting implements JobHunting {
       JobsSynchronizer jobsSync,
       GptJobSearchRequest request
   ) {
-    log.info("Searching jobs for user {} with gpt model {}", request.getUsername(), request.getEngine());
-    List<Job> jobsFound = switch (request.getEngine()) {
-      case GPT4 -> gptEconomy.searchJobs(request);
-      case GPT5 -> gptPremium.searchJobs(request);
-      default -> throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid GPT model");
+    log.info("Searching jobs for user {} with gpt model {}-{}", request.getUsername(), request.getEngineType(),
+        request.getEngineTier());
+    List<Job> jobsFound = switch (request.getEngineTier()) {
+      case ECONOMY -> gptEconomy.searchJobs(request);
+      case PREMIUM -> gptPremium.searchJobs(request);
+      default -> throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid GPT tier");
     };
-    jobsSync.addJobs(jobsFound, request.getEngine(), request.getPrompt().getId());
+    jobsSync.addJobs(jobsFound, request.getEngineType(), request.getEngineTier(), request.getPrompt().getId());
   }
 
 }

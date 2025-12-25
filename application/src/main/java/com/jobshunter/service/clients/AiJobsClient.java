@@ -1,7 +1,7 @@
 package com.jobshunter.service.clients;
 
 import com.jobshunter.dto.AIJobSearchRequest;
-import com.jobshunter.dto.Job;
+import com.jobshunter.model.Job;
 import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.clients.gemini.EconomyGeminiJobSearchImpl;
 import com.jobshunter.service.clients.gpt.EconomyGptJobSearchImpl;

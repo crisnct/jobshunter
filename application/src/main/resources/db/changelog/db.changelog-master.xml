@@ -316,4 +316,65 @@
         </sql>
     </changeSet>
 
+    <changeSet id="23-create-engine-configuration" author="assistant">
+        <createTable tableName="engine_configuration">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false" primaryKeyName="pk_engine_configuration"/>
+            </column>
+            <column name="engine_type" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="tier" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="model" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addUniqueConstraint tableName="engine_configuration"
+                             columnNames="engine_type, tier"
+                             constraintName="uc_engine_configuration_type_tier"/>
+    </changeSet>
+
+    <changeSet id="24-seed-engine-configuration" author="assistant">
+        <insert tableName="engine_configuration">
+            <column name="engine_type" value="GPT"/>
+            <column name="tier" value="ECONOMY"/>
+            <column name="model" value="gpt-4o-mini"/>
+        </insert>
+        <insert tableName="engine_configuration">
+            <column name="engine_type" value="GPT"/>
+            <column name="tier" value="PREMIUM"/>
+            <column name="model" value="gpt-5.2"/>
+        </insert>
+        <insert tableName="engine_configuration">
+            <column name="engine_type" value="GEMINI"/>
+            <column name="tier" value="ECONOMY"/>
+            <column name="model" value="gemini-2.5-flash"/>
+        </insert>
+        <insert tableName="engine_configuration">
+            <column name="engine_type" value="GEMINI"/>
+            <column name="tier" value="PREMIUM"/>
+            <column name="model" value="gemini-2.5-pro"/>
+        </insert>
+        <insert tableName="engine_configuration">
+            <column name="engine_type" value="SERP"/>
+            <column name="tier" value="ECONOMY"/>
+            <column name="model" value="google_jobs"/>
+        </insert>
+    </changeSet>
+
+    <changeSet id="25-normalize-user-prompts-engine" author="assistant">
+        <comment>Normalize legacy engine values to the new enum set GPT/GEMINI/SERP</comment>
+        <sql>
+            UPDATE user_prompts SET engine = 'GPT' WHERE UPPER(engine) LIKE 'GPT%';
+        </sql>
+        <sql>
+            UPDATE user_prompts SET engine = 'GEMINI' WHERE UPPER(engine) LIKE 'GEMINI%';
+        </sql>
+        <sql>
+            UPDATE user_prompts SET engine = 'SERP' WHERE UPPER(engine) LIKE 'SERP%';
+        </sql>
+    </changeSet>
+
 </databaseChangeLog>

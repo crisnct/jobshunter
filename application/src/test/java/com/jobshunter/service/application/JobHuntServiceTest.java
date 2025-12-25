@@ -5,7 +5,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.jobshunter.ApplicationProperties;
-import com.jobshunter.dto.Job;
+import com.jobshunter.model.Job;
 import com.jobshunter.service.clients.BrowserSimulator;
 import java.util.List;
 import java.util.concurrent.Executor;

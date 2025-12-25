@@ -4,9 +4,10 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.entities.UserPromptEntity;
-import com.jobshunter.dto.EngineType;
-import com.jobshunter.dto.Job;
-import com.jobshunter.dto.SearchJobOrder;
+import com.jobshunter.model.EngineSelection;
+import com.jobshunter.model.EngineType;
+import com.jobshunter.model.Job;
+import com.jobshunter.model.SearchJobOrder;
 import com.jobshunter.dto.serpRequest.SearchWithSerpRequest;
 import com.jobshunter.dto.serpResponse.SerpApiJobHit;
 import com.jobshunter.dto.serpResponse.SerpApiJobsResult;
@@ -55,16 +56,16 @@ public non-sealed class SerpJobHunting implements JobHunting {
     long delayCounter = 0;
     List<CompletableFuture<Void>> futures = new ArrayList<>();
     for (int i = 0; i < order.iterations(); i++) {
-      for (EngineType engine : order.engines()) {
+      for (EngineSelection selection : order.engines()) {
         for (UserPromptEntity prompt : user.getPrompts()) {
-          if (prompt.getEngine() == engine && Strings.isNotBlank(prompt.getPrompt())) {
+          if (prompt.getEngine() == EngineType.SERP && Strings.isNotBlank(prompt.getPrompt())) {
             Executor delayedExecutor = CompletableFuture.delayedExecutor(
                 //TODO implement rate limiter for sepa and read rate limiter and use it here
                 delayCounter++ * 10000,
                 TimeUnit.MILLISECONDS,
                 serpApiExecutor
             );
-            futures.add(CompletableFuture.runAsync(() -> searchWithSerpAPi(jobsSync, prompt, user), delayedExecutor));
+            futures.add(CompletableFuture.runAsync(() -> searchWithSerpAPi(jobsSync, prompt, user, selection), delayedExecutor));
           }
         }
       }
@@ -78,7 +79,12 @@ public non-sealed class SerpJobHunting implements JobHunting {
         });
   }
 
-  private void searchWithSerpAPi(JobsSynchronizer jobsSync, UserPromptEntity prompt, UserEntity user) {
+  private void searchWithSerpAPi(
+      JobsSynchronizer jobsSync,
+      UserPromptEntity prompt,
+      UserEntity user,
+      EngineSelection selection
+  ) {
     try {
       log.info("Searching jobs for user {} with serp api", user.getUsername());
       SearchWithSerpRequest request = mapper.readValue(prompt.getPrompt(), SearchWithSerpRequest.class);
@@ -90,7 +96,7 @@ public non-sealed class SerpJobHunting implements JobHunting {
         int score = scoreCalculator.computeScore(jobDescription, user.getCv().getGptFileId());
         jobs.add(new Job(score, job.applyLinks().getFirst(), "serp"));
       }
-      jobsSync.addJobs(jobs, EngineType.SERP, prompt.getId());
+      jobsSync.addJobs(jobs, EngineType.SERP, selection.tier(), prompt.getId());
     } catch (JsonProcessingException e) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
     }

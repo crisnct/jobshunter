@@ -2,10 +2,11 @@ package com.jobshunter.service.application.hunting;
 
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.entities.UserPromptEntity;
-import com.jobshunter.dto.EngineType;
-import com.jobshunter.dto.Job;
-import com.jobshunter.dto.SearchJobOrder;
-import com.jobshunter.dto.geminiRequest.GeminiJobSearchRequest;
+import com.jobshunter.model.EngineSelection;
+import com.jobshunter.model.EngineType;
+import com.jobshunter.model.GeminiJobSearchRequest;
+import com.jobshunter.model.Job;
+import com.jobshunter.model.SearchJobOrder;
 import com.jobshunter.service.application.JobsSynchronizer;
 import com.jobshunter.service.clients.AiJobsClient;
 import java.util.ArrayList;
@@ -44,15 +45,21 @@ public non-sealed class GeminiJobHunting implements JobHunting {
     String userCVBase64 = Base64.getEncoder().encodeToString(user.getCv().getCv());
     int delayCounter = 0;
     for (int i = 0; i < order.iterations(); i++) {
-      for (EngineType engine : order.engines()) {
+      for (EngineSelection selection : order.engines()) {
         for (UserPromptEntity prompt : user.getPrompts()) {
-          if (prompt.getEngine() == engine) {
+          if (prompt.getEngine() == EngineType.GEMINI) {
             Executor delayedExecutor = CompletableFuture.delayedExecutor(
                 (long) delayCounter++ * order.iterations(),
                 TimeUnit.MILLISECONDS,
                 geminiSearchExecutor
             );
-            GeminiJobSearchRequest request = new GeminiJobSearchRequest(user.getUsername(), prompt, userCVBase64, engine);
+            GeminiJobSearchRequest request = new GeminiJobSearchRequest(
+                user.getUsername(),
+                prompt,
+                userCVBase64,
+                selection.type(),
+                selection.tier()
+            );
             futures.add(CompletableFuture.runAsync(() -> geminiSearch(jobsSync, request), delayedExecutor));
           }
         }
@@ -62,7 +69,7 @@ public non-sealed class GeminiJobHunting implements JobHunting {
     // Combine all async iteration futures into one
     return CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new))
         .exceptionally(ex -> {
-          log.error("GPT search failed for {}", user.getUsername(), ex);
+          log.error("Gemini search failed for {}", user.getUsername(), ex);
           return null;
         });
   }
@@ -71,14 +78,14 @@ public non-sealed class GeminiJobHunting implements JobHunting {
       JobsSynchronizer jobsSync,
       GeminiJobSearchRequest request
   ) {
-    log.info("Searching jobs for user {} with gpt model {}", request.getUsername(), request.getEngine());
-    List<Job> jobsFound = switch (request.getEngine()) {
-      case GEMINI_2_5_FLASH -> geminiEconomy.searchJobs(request);
-      case GEMINI_2_5_FLASH_LITE -> throw new IllegalStateException("Not implemented yet");
-      case GEMINI_2_5_PRO -> throw new IllegalStateException("Not implemented yet");
-      default -> throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid GPT model");
+    log.info("Searching jobs for user {} with gemini model {}-{}", request.getUsername(), request.getEngineType(),
+        request.getEngineTier());
+    List<Job> jobsFound = switch (request.getEngineTier()) {
+      case ECONOMY -> geminiEconomy.searchJobs(request);
+      case PREMIUM -> throw new IllegalStateException("Not implemented yet");
+      default -> throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid engine");
     };
-    jobsSync.addJobs(jobsFound, request.getEngine(), request.getPrompt().getId());
+    jobsSync.addJobs(jobsFound, request.getEngineType(), request.getEngineTier(), request.getPrompt().getId());
   }
 
 }

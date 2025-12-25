@@ -1,4 +1,4 @@
-package com.jobshunter.dto;
+package com.jobshunter.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.validation.constraints.Max;

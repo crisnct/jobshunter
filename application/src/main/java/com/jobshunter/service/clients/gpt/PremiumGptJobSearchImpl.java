@@ -2,8 +2,8 @@ package com.jobshunter.service.clients.gpt;
 
 import com.jobshunter.ApplicationProperties;
 import com.jobshunter.ApplicationProperties.ModelSpecific;
-import com.jobshunter.dto.Job;
-import com.jobshunter.dto.gptRequest.GptJobSearchRequest;
+import com.jobshunter.model.Job;
+import com.jobshunter.model.GptJobSearchRequest;
 import com.jobshunter.dto.gptRequest.GptJobsPayload;
 import com.jobshunter.dto.gptRequest.Reasoning;
 import com.jobshunter.dto.gptRequest.tools.Tools;

@@ -1,7 +1,7 @@
 package com.jobshunter.service.application;
 
 import com.jobshunter.ApplicationProperties;
-import com.jobshunter.dto.Job;
+import com.jobshunter.model.Job;
 import com.jobshunter.service.clients.BrowserSimulator;
 import jakarta.annotation.PostConstruct;
 import jakarta.validation.constraints.NotNull;
