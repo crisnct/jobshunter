@@ -48,10 +48,8 @@ public class BrowserSimulator {
       return restClient.get()
           .uri(url)
           .accept(MediaType.ALL)
-          .header("Referer", extractHost(url))
           .header("User-Agent", BROWSER_UA)
           .header("Accept-Language", ACCEPT_LANGUAGE_HEADER)
-          .header("Connection", CONNECTION_HEADER)
           .retrieve()
           .toEntity(String.class);
     } catch (HttpClientErrorException.MethodNotAllowed | HttpClientErrorException.NotAcceptable ex) {

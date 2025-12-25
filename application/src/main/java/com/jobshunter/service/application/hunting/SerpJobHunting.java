@@ -4,16 +4,13 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.entities.UserPromptEntity;
+import com.jobshunter.dto.serpRequest.SearchWithSerpRequest;
 import com.jobshunter.model.EngineSelection;
 import com.jobshunter.model.EngineType;
 import com.jobshunter.model.Job;
 import com.jobshunter.model.SearchJobOrder;
-import com.jobshunter.dto.serpRequest.SearchWithSerpRequest;
-import com.jobshunter.dto.serpResponse.SerpApiJobHit;
-import com.jobshunter.dto.serpResponse.SerpApiJobsResult;
 import com.jobshunter.service.application.JobsSynchronizer;
-import com.jobshunter.service.clients.GptJobScoreCalculatorClient;
-import com.jobshunter.service.clients.SerpApiClient;
+import com.jobshunter.service.clients.AiJobsClient;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -30,22 +27,18 @@ import org.springframework.web.server.ResponseStatusException;
 @Service
 public non-sealed class SerpJobHunting implements JobHunting {
 
-  private final SerpApiClient<SearchWithSerpRequest, SerpApiJobsResult> serpApiClient;
-
-  private final GptJobScoreCalculatorClient scoreCalculator;
+  private final AiJobsClient<SearchWithSerpRequest, List<Job>> serpApiClient;
 
   private final Executor serpApiExecutor;
 
   private final JsonMapper mapper;
 
   public SerpJobHunting(
-      SerpApiClient<SearchWithSerpRequest, SerpApiJobsResult> serpApiClient,
-      GptJobScoreCalculatorClient scoreCalculator,
+      @Qualifier("EconomyJobsClientSerp") AiJobsClient<SearchWithSerpRequest, List<Job>> serpApiClient,
       @Qualifier("serpApiExecutor") Executor serpApiExecutor,
       JsonMapper mapper
   ) {
     this.serpApiClient = serpApiClient;
-    this.scoreCalculator = scoreCalculator;
     this.serpApiExecutor = serpApiExecutor;
     this.mapper = mapper;
   }
@@ -65,7 +58,17 @@ public non-sealed class SerpJobHunting implements JobHunting {
                 TimeUnit.MILLISECONDS,
                 serpApiExecutor
             );
-            futures.add(CompletableFuture.runAsync(() -> searchWithSerpAPi(jobsSync, prompt, user, selection), delayedExecutor));
+            try {
+              SearchWithSerpRequest request = mapper.readValue(prompt.getPrompt(), SearchWithSerpRequest.class);
+              request.setEngineTier(selection.tier());
+              request.setEngineType(selection.type());
+              request.setUsername(user.getUsername());
+              request.setPrompt(prompt);
+
+              futures.add(CompletableFuture.runAsync(() -> searchWithSerpAPi(jobsSync, request), delayedExecutor));
+            } catch (JsonProcessingException e) {
+              throw new RuntimeException(e);
+            }
           }
         }
       }
@@ -79,26 +82,13 @@ public non-sealed class SerpJobHunting implements JobHunting {
         });
   }
 
-  private void searchWithSerpAPi(
-      JobsSynchronizer jobsSync,
-      UserPromptEntity prompt,
-      UserEntity user,
-      EngineSelection selection
-  ) {
-    try {
-      log.info("Searching jobs for user {} with serp api", user.getUsername());
-      SearchWithSerpRequest request = mapper.readValue(prompt.getPrompt(), SearchWithSerpRequest.class);
-      SerpApiJobsResult serpApiResult = serpApiClient.searchJobs(request);
-
-      final List<Job> jobs = new ArrayList<>();
-      for (SerpApiJobHit job : serpApiResult.jobs()) {
-        String jobDescription = job.description() + "\n" + job.highlights();
-        int score = scoreCalculator.computeScore(jobDescription, user.getCv().getGptFileId());
-        jobs.add(new Job(score, job.applyLinks().getFirst(), "serp"));
-      }
-      jobsSync.addJobs(jobs, EngineType.SERP, selection.tier(), prompt.getId());
-    } catch (JsonProcessingException e) {
-      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
-    }
+  private void searchWithSerpAPi(JobsSynchronizer jobsSync, SearchWithSerpRequest request) {
+    log.info("Searching jobs for user {} with serp api", request.getUsername());
+    List<Job> jobsFound = switch (request.getEngineTier()) {
+      case ECONOMY -> serpApiClient.searchJobs(request);
+      case PREMIUM -> throw new IllegalStateException("Not implemented yet");
+      default -> throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid engine tier");
+    };
+    jobsSync.addJobs(jobsFound, EngineType.SERP, request.getEngineTier(), request.getPrompt().getId());
   }
 }

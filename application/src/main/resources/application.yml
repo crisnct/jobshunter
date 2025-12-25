@@ -107,6 +107,8 @@ springdoc:
     url: /openapi.yml
     disable-swagger-default-url: true
 
+# RATE LIMITER  ---------------------------------------------------------------------------
+
 resilience4j.ratelimiter:
   instances:
     openaiLimiter:
@@ -120,6 +122,17 @@ resilience4j.ratelimiter:
       timeoutDuration: 1m              # Wait up to 1min for a slot
       writableStackTraceEnabled: false
 
+# CIRCUIT BREAKER ---------------------------------------------------------------------------
+
+#registerHealthIndicator: expose a health indicator for this circuit breaker via actuator.
+#slidingWindowType: use a COUNT_BASED window (by number of calls) for metrics.
+#slidingWindowSize: track the last slidingWindowSize calls in the sliding window.
+#minimumNumberOfCalls: start calculating failure stats only after at least minimumNumberOfCalls calls.
+#failureRateThreshold: open the breaker if the failure rate exceeds failureRateThreshold %.
+#slowCallRateThreshold: treat slow calls as a problem when more than slowCallRateThreshold % are slow.
+#slowCallDurationThreshold: any call slower than slowCallDurationThreshold sec is counted as “slow.”
+#waitDurationInOpenState: keep the breaker open for waitDurationInOpenState sec before trying again (half-open).
+#permittedNumberOfCallsInHalfOpenState: allow that number of trial calls while half-open.
 resilience4j.circuitbreaker:
   instances:
     geminiPremium:
@@ -166,7 +179,7 @@ resilience4j.circuitbreaker:
       registerHealthIndicator: true
       slidingWindowType: COUNT_BASED
       slidingWindowSize: 20
-      minimumNumberOfCalls: 5
+      minimumNumberOfCalls: 10
       failureRateThreshold: 50
       slowCallRateThreshold: 50
       slowCallDurationThreshold: 5s
@@ -212,6 +225,8 @@ resilience4j.circuitbreaker:
       slowCallDurationThreshold: 5s
       waitDurationInOpenState: 30s
       permittedNumberOfCallsInHalfOpenState: 3
+
+# BULK HEAD  ---------------------------------------------------------------------------
 
 resilience4j.bulkhead:
   instances:

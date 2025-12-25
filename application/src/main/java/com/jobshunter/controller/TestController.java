@@ -3,19 +3,18 @@ package com.jobshunter.controller;
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.service.UserDataService;
 import com.jobshunter.dto.EmailRequest;
-import com.jobshunter.model.Job;
 import com.jobshunter.dto.JobHuntResponse;
 import com.jobshunter.dto.serpRequest.SearchWithSerpRequest;
-import com.jobshunter.dto.serpResponse.SerpApiJobsResult;
+import com.jobshunter.model.Job;
 import com.jobshunter.service.application.JobsValidator;
 import com.jobshunter.service.application.notifiers.EmailNotifierService;
-import com.jobshunter.service.clients.SerpApiClient;
-import io.jsonwebtoken.lang.Collections;
+import com.jobshunter.service.clients.AiJobsClient;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -46,7 +45,8 @@ public class TestController {
   private JobsValidator jobValidator;
 
   @Autowired
-  private SerpApiClient<SearchWithSerpRequest, SerpApiJobsResult> serpApi;
+  @Qualifier("EconomyJobsClientSerp")
+  private AiJobsClient<SearchWithSerpRequest, List<Job>> serpApi;
 
   @PostMapping(value = "/email/send", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ResponseEntity<?> send(
@@ -97,14 +97,9 @@ public class TestController {
     UserEntity user = userDataService.getUser(userDetails.getUsername())
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
     log.info("Searching jobs for {}", user.getUsername());
-    SerpApiJobsResult jobs = serpApi.searchJobs(request);
-    if (Collections.isEmpty(jobs.jobs())) {
-      return ResponseEntity.badRequest().body(Map.of("error", jobs));
-    } else {
-      return ResponseEntity.ok(jobs);
-    }
+    List<Job> jobs = serpApi.searchJobs(request);
+    return ResponseEntity.ok(jobs);
   }
-
 
   @GetMapping(value = "/redirection")
   public void testRedirection() {
@@ -112,6 +107,5 @@ public class TestController {
         "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGjbjtvw3uNWIamk-Oa7putwLsxAOk49Fk9NctPvXtzsw5ubVitrV5BsNerHcy_Z8FX7k_L99wjefDIy3ZUqEZ09Bh_YLXLbaxuY-BRQ41fg0vHzoDC3BSfBoUrdanAtm2OyivQ6NoHzFzlcKRXukz6Yhbt2iyjAwz_TJbGNq5m1Nmg1mu6xJey",
         "Google")));
   }
-
 
 }
