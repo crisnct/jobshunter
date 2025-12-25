@@ -1,7 +1,6 @@
 package com.jobshunter.service.clients.serpapi;
 
 import com.jobshunter.ApplicationProperties;
-import com.jobshunter.ApplicationProperties.SerpApi;
 import com.jobshunter.dto.serpRequest.SearchWithSerpRequest;
 import com.jobshunter.dto.serpResponse.SerpApiJobHit;
 import com.jobshunter.dto.serpResponse.SerpApiJobsResult;
@@ -44,7 +43,7 @@ public non-sealed class SerpApiClientImpl implements AiJobsClient<SearchWithSerp
 
   private final BrowserSimulator browserSimulator;
 
-  private final SerpApi serpApiConfig;
+  private final ApplicationProperties applicationProperties;
 
   @Override
   @CircuitBreaker(name = "serpApi", fallbackMethod = "fallbackSearch")
@@ -53,7 +52,7 @@ public non-sealed class SerpApiClientImpl implements AiJobsClient<SearchWithSerp
     SerpApiJobsResult results;
     try {
       results = searchJobsPagination(request, null);
-      for (int i = 0; i < serpApiConfig.getMaxPageSearch(); i++) {
+      for (int i = 0; i < applicationProperties.getSerpApi().getMaxPageSearch(); i++) {
         if (results.nextPageToken() == null) {
           break;
         } else {
@@ -107,7 +106,7 @@ public non-sealed class SerpApiClientImpl implements AiJobsClient<SearchWithSerp
   private URI buildUri(SearchWithSerpRequest request, String nextPageToken) {
     List<String> parameters = new ArrayList<>();
     parameters.add("api_key");
-    parameters.add(serpApiConfig.getApiKey());
+    parameters.add(applicationProperties.getSerpApi().getApiKey());
     parameters.add("engine");
     parameters.add("google_jobs");
     parameters.add("q");

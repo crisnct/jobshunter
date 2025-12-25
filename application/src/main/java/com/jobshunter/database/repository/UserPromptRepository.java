@@ -13,7 +13,7 @@ public interface UserPromptRepository extends JpaRepository<UserPromptEntity, Lo
 
   List<UserPromptEntity> findAllByUserUsernameIgnoreCase(@SqlInjectionSafe String username);
 
-  Optional<UserPromptEntity> findByUserIdAndEngine(Long userId, EngineType engine);
+  Optional<UserPromptEntity> findByUserIdAndPromptIgnoreCaseAndEngine(Long userId, String prompt, EngineType engine);
 
 }
 

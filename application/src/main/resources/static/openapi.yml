@@ -88,7 +88,20 @@ components:
 
     EngineType:
       type: string
-      enum: [GPT4, GPT5, SERP]
+      enum: [GPT, GEMINI, SERP]
+
+    EngineTier:
+      type: string
+      enum: [ECONOMY, PREMIUM]
+
+    EngineSelection:
+      type: object
+      properties:
+        type:
+          $ref: '#/components/schemas/EngineType'
+        tier:
+          $ref: '#/components/schemas/EngineTier'
+      required: [type, tier]
 
     SearchJobsRequest:
       type: object
@@ -103,7 +116,7 @@ components:
         engines:
           type: array
           items:
-            $ref: '#/components/schemas/EngineType'
+            $ref: '#/components/schemas/EngineSelection'
       required: [username, iterations, engines]
 
     JobSearchRequest:
@@ -227,31 +240,83 @@ components:
           type: string
       required: [message, fileId]
 
-    SearchWithSerpRequest:
+    SerpPrompt:
       type: object
       properties:
-        query:
+        q:
           type: string
-          description: Job search query string
-        googleDomain:
+          maxLength: 2000
+          description: SERP query.
+        google_domain:
           type: string
-          description: See more here https://serpapi.com/google-domains
-        datePosted:
+          maxLength: 255
+          description: Google domain (e.g., google.ro). See https://serpapi.com/google-domains
+        date_posted:
           type: string
-          description: Date when job was posted
-          enum:
-            - today
-            - last_3_days
-            - last_7_days
-            - last_14_days
-            - last_30_days
-        country:
+          maxLength: 128
+          description: Date filter (today, last_3_days, last_7_days, last_14_days, last_30_days).
+        gl:
           type: string
-          description: Country code for location filtering. See more here https://serpapi.com/google-countries
-        language:
+          maxLength: 2
+          description: Country code. See https://serpapi.com/google-countries
+        location:
           type: string
-          description: Language code (e.g., "en"). See more here https://serpapi.com/google-languages
-      required: [query]
+        workType:
+          type: string
+          enum: [REMOTE, ONSITE, HYBRID]
+        radius:
+          type: integer
+          format: int32
+          description: Radius in km.
+        hl:
+          type: string
+          maxLength: 2
+          description: Language code. See https://serpapi.com/google-languages
+        engine_tier:
+          $ref: '#/components/schemas/EngineTier'
+      required: [q, engine_tier]
+
+    AiPrompt:
+      type: object
+      properties:
+        prompt:
+          type: string
+          maxLength: 3000
+        engine_type:
+          $ref: '#/components/schemas/EngineType'
+        engine_tier:
+          $ref: '#/components/schemas/EngineTier'
+      required: [prompt, engine_type, engine_tier]
+
+    UserUpdateRequest:
+      type: object
+      properties:
+        username:
+          type: string
+          maxLength: 50
+        phone_number:
+          type: string
+          maxLength: 30
+        time_interval:
+          type: integer
+          format: int32
+          minimum: 1
+        notify_whatsapp:
+          type: boolean
+        notify_email:
+          type: boolean
+        serp_prompts:
+          type: array
+          items:
+            $ref: '#/components/schemas/SerpPrompt'
+        ai_prompts:
+          type: array
+          items:
+            $ref: '#/components/schemas/AiPrompt'
+      required:
+        - username
+        - phone_number
+        - time_interval
 
     JobHit:
       type: object
@@ -586,43 +651,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
-  /api/user/time-interval:
-    patch:
-      summary: Update job search time interval (minutes)
-      tags: [User]
-      security:
-        - bearerAuth: []
-      parameters:
-        - in: query
-          name: minutes
-          required: true
-          schema:
-            type: integer
-            format: int32
-            minimum: 1
-      responses:
-        '200':
-          description: Updated.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/MessageResponse'
-        '400':
-          description: Invalid minutes.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '401':
-          description: Unauthorized.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
-  /api/user/prompt:
-    post:
-      summary: Set user job search prompt
+  /api/user/update:
+    put:
+      summary: Update user profile, notification flags, and prompts
       tags: [User]
       security:
         - bearerAuth: []
@@ -631,22 +662,28 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/JobSearchRequest'
+              $ref: '#/components/schemas/UserUpdateRequest'
       responses:
         '200':
-          description: Prompt updated.
+          description: User updated successfully.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/MessageResponse'
         '400':
-          description: Invalid prompt.
+          description: Validation error.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '401':
           description: Unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: User not found.
           content:
             application/json:
               schema:

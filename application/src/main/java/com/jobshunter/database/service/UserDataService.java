@@ -14,7 +14,6 @@ import com.jobshunter.service.application.JobsSynchronizer;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map.Entry;
-import java.util.Objects;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -65,20 +64,15 @@ public class UserDataService {
     jobs.forEach(job -> addJobUrl(user, job.getUrl()));
   }
 
-  @Transactional
-  public UserPromptEntity addPrompt(long id, UserEntity user, EngineType engine, String prompt) {
-    Objects.requireNonNull(engine);
-    UserPromptEntity entity = userPromptRepository.findById(id)
+  public UserPromptEntity updatePrompt(UserEntity user, EngineType engine, String prompt) {
+    UserPromptEntity entity = userPromptRepository.findByUserIdAndPromptIgnoreCaseAndEngine(user.getId(), prompt, engine)
         .orElseGet(() -> {
           UserPromptEntity newEntity = new UserPromptEntity();
           newEntity.setUser(user);
+          newEntity.setEngine(engine);
           newEntity.setJobsFound(0);
           return newEntity;
         });
-    if (!entity.getUser().getUsername().equals(user.getUsername())) {
-      throw new IllegalArgumentException("Wrong id");
-    }
-    entity.setEngine(engine);
     entity.setPrompt(prompt);
     return userPromptRepository.save(entity);
   }
@@ -139,4 +133,7 @@ public class UserDataService {
     userRepository.save(user);
   }
 
+  public void deleteUserPrompts(List<Long> prompts) {
+    userPromptRepository.deleteAllByIdInBatch(prompts);
+  }
 }
