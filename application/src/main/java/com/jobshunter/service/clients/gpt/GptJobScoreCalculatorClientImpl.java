@@ -18,6 +18,7 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 import java.util.Optional;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.MediaType;
@@ -28,6 +29,7 @@ import org.springframework.web.client.RestClient;
 @Component
 @PackageExpected("com.jobshunter.service.clients.gpt")
 @ConditionalOnProperty(name = "gpt.enabled", havingValue = "true")
+@RequiredArgsConstructor
 public non-sealed class GptJobScoreCalculatorClientImpl implements GptJobScoreCalculatorClient {
 
   private static final URI DEFAULT_URI = URI.create("https://api.openai.com/v1/responses");
@@ -41,16 +43,6 @@ public non-sealed class GptJobScoreCalculatorClientImpl implements GptJobScoreCa
   private String calculateScoreUserPrompt;
 
   private final JsonMapper mapper;
-
-  public GptJobScoreCalculatorClientImpl(
-      ApplicationProperties properties,
-      RestClient restClient,
-      JsonMapper mapper
-  ) {
-    this.properties = properties;
-    this.restClient = restClient;
-    this.mapper = mapper;
-  }
 
   @PostConstruct
   @SuppressWarnings("DataFlowIssue")

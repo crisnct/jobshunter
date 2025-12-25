@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.io.FileSystemResource;
@@ -26,6 +27,7 @@ import org.springframework.web.server.ResponseStatusException;
 @Component("Gemini")
 @PackageExpected("com.jobshunter.service.clients.gemini")
 @ConditionalOnProperty(name = "gemini.enabled", havingValue = "true")
+@RequiredArgsConstructor
 public final class GeminiFileClientImpl implements FileClient {
 
   private static final String UPLOAD_URI = "https://generativelanguage.googleapis.com/upload/v1beta/files";
@@ -35,11 +37,6 @@ public final class GeminiFileClientImpl implements FileClient {
   private final RestClient restClient;
 
   private final ApplicationProperties properties;
-
-  public GeminiFileClientImpl(RestClient restClient, ApplicationProperties properties) {
-    this.restClient = restClient;
-    this.properties = properties;
-  }
 
   @Override
   public String uploadFile(Path cvPath) throws IOException {

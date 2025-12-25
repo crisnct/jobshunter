@@ -13,6 +13,7 @@ import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.io.FileSystemResource;
@@ -31,6 +32,7 @@ import org.springframework.web.client.RestTemplate;
 @Component("Gpt")
 @PackageExpected("com.jobshunter.service.clients.gpt")
 @ConditionalOnProperty(name = "gpt.enabled", havingValue = "true")
+@RequiredArgsConstructor
 public final class GptFileClientImpl implements FileClient {
 
   private static final String API_URI = "https://api.openai.com/v1/files";
@@ -39,18 +41,6 @@ public final class GptFileClientImpl implements FileClient {
   private final RestClient restClient;
   private final ApplicationProperties properties;
   private final JsonMapper mapper;
-
-  public GptFileClientImpl(
-      RestTemplate restTemplate,
-      RestClient restClient,
-      ApplicationProperties properties,
-      JsonMapper mapper
-  ) {
-    this.restTemplate = restTemplate;
-    this.restClient = restClient;
-    this.properties = properties;
-    this.mapper = mapper;
-  }
 
   @Override
   public String uploadFile(Path cvPath) throws IOException {

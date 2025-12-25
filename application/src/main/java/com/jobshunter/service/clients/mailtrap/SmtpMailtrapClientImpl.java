@@ -7,6 +7,7 @@ import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import java.util.List;
 import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import org.springframework.beans.factory.annotation.Value;
@@ -22,6 +23,7 @@ import org.springframework.web.multipart.MultipartFile;
 @Component
 @PackageExpected("com.jobshunter.service.application.notifiers")
 @ConditionalOnProperty(name = "spring.mail.enabled", havingValue = "true")
+@RequiredArgsConstructor
 public non-sealed class SmtpMailtrapClientImpl implements SmtpMailtrapClient {
 
   private static final String DEFAULT_SUBJECT = "JobsHunter notification";
@@ -30,10 +32,6 @@ public non-sealed class SmtpMailtrapClientImpl implements SmtpMailtrapClient {
 
   @Value("${spring.mail.from:}")
   private String configuredFrom;
-
-  public SmtpMailtrapClientImpl(JavaMailSender mailSender) {
-    this.mailSender = mailSender;
-  }
 
   @Override
   @CircuitBreaker(name = "mailtrapSmtp", fallbackMethod = "fallbackSendEmail")

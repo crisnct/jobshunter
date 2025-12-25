@@ -3,11 +3,11 @@ package com.jobshunter.service.application;
 import com.jobshunter.ApplicationProperties;
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.service.UserDataService;
+import com.jobshunter.dto.JobHuntResponse;
 import com.jobshunter.model.EngineSelection;
 import com.jobshunter.model.EngineTier;
 import com.jobshunter.model.EngineType;
 import com.jobshunter.model.Job;
-import com.jobshunter.dto.JobHuntResponse;
 import com.jobshunter.model.SearchJobOrder;
 import com.jobshunter.service.application.hunting.GeminiJobHunting;
 import com.jobshunter.service.application.hunting.GptJobHunting;
@@ -23,11 +23,13 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Stream;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class JobHuntService {
 
   private final ApplicationProperties properties;
@@ -47,28 +49,6 @@ public class JobHuntService {
   private final JobScoring jobScoring;
 
   private final JobsValidator jobsValidator;
-
-  public JobHuntService(
-      ApplicationProperties properties,
-      WhatsappNotifierService whatsappNotifierService,
-      EmailNotifierService emailNotifierService,
-      UserDataService userDataService,
-      SerpJobHunting serpJobHunting,
-      GptJobHunting gptJobHunting,
-      GeminiJobHunting geminiJobHunting,
-      JobScoring jobScoring,
-      JobsValidator jobsValidator
-  ) {
-    this.properties = properties;
-    this.whatsappNotifierService = whatsappNotifierService;
-    this.emailNotifierService = emailNotifierService;
-    this.userDataService = userDataService;
-    this.serpJobHunting = serpJobHunting;
-    this.gptJobHunting = gptJobHunting;
-    this.geminiJobHunting = geminiJobHunting;
-    this.jobScoring = jobScoring;
-    this.jobsValidator = jobsValidator;
-  }
 
   public void scheduledRun() {
     log.info("Starts scheduled job hunt...");

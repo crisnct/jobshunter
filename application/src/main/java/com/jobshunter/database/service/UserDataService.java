@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +24,7 @@ import org.springframework.util.StringUtils;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class UserDataService {
 
   private final UserRepository userRepository;
@@ -32,18 +34,6 @@ public class UserDataService {
   private final UserPromptRepository userPromptRepository;
 
   private final UserCvRepository userCvRepository;
-
-  public UserDataService(
-      UserRepository userRepository,
-      UserJobRepository userJobRepository,
-      UserPromptRepository userPromptRepository,
-      UserCvRepository userCvRepository
-  ) {
-    this.userRepository = userRepository;
-    this.userJobRepository = userJobRepository;
-    this.userPromptRepository = userPromptRepository;
-    this.userCvRepository = userCvRepository;
-  }
 
   public List<UserJobEntity> getUserJobs(String username) {
     return userJobRepository.findAllByUsernameWithUser(username);
@@ -85,7 +75,7 @@ public class UserDataService {
           newEntity.setJobsFound(0);
           return newEntity;
         });
-    if (!entity.getUser().getUsername().equals(user.getUsername())){
+    if (!entity.getUser().getUsername().equals(user.getUsername())) {
       throw new IllegalArgumentException("Wrong id");
     }
     entity.setEngine(engine);

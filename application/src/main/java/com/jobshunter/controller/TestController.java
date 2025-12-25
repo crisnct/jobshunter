@@ -12,8 +12,8 @@ import com.jobshunter.service.clients.AiJobsClient;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.Map;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -33,20 +33,17 @@ import org.springframework.web.server.ResponseStatusException;
 @RestController
 @RequestMapping("/api/test")
 @PreAuthorize("hasRole('TEST')")
+@RequiredArgsConstructor
 public class TestController {
 
-  @Autowired
-  private EmailNotifierService emailNotifierService;
+  private final EmailNotifierService emailNotifierService;
 
-  @Autowired
-  private UserDataService userDataService;
+  private final UserDataService userDataService;
 
-  @Autowired
-  private JobsValidator jobValidator;
+  private final JobsValidator jobValidator;
 
-  @Autowired
   @Qualifier("EconomyJobsClientSerp")
-  private AiJobsClient<SearchWithSerpRequest, List<Job>> serpApi;
+  private final AiJobsClient<SearchWithSerpRequest, List<Job>> serpApi;
 
   @PostMapping(value = "/email/send", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ResponseEntity<?> send(

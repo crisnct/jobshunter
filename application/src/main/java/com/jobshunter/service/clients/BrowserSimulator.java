@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotNull;
 import java.net.URI;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hc.client5.http.protocol.HttpClientContext;
 import org.springframework.http.MediaType;
@@ -15,6 +16,7 @@ import org.springframework.web.client.RestClient;
 
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class BrowserSimulator {
 
   public static final ScopedValue<HttpClientContext> HTTP_CONTEXT = ScopedValue.newInstance();
@@ -38,10 +40,6 @@ public class BrowserSimulator {
   private static final String CONNECTION_HEADER = "keep-alive";
 
   private final RestClient restClient;
-
-  public BrowserSimulator(RestClient restClient) {
-    this.restClient = restClient;
-  }
 
   public ResponseEntity<String> openPage(String url) {
     try {

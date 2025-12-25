@@ -11,29 +11,19 @@ import com.jobshunter.service.clients.twilio.TwilioClientImpl;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public final class WhatsappNotifierService implements ServiceNotifier {
 
   private final ApplicationProperties properties;
   private final UserMessagesFactory userMessagesFactory;
   private final TwilioClient twilioClient;
   private final TinyUrlClient tinyUrlClient;
-
-  public WhatsappNotifierService(
-      ApplicationProperties properties,
-      UserMessagesFactory userMessagesFactory,
-      TwilioClient twilioClient,
-      TinyUrlClient tinyUrlClient
-  ) {
-    this.properties = properties;
-    this.userMessagesFactory = userMessagesFactory;
-    this.twilioClient = twilioClient;
-    this.tinyUrlClient = tinyUrlClient;
-  }
 
   @Override
   public void send(List<Job> jobsURLs, UserEntity user) {

@@ -22,7 +22,6 @@ import java.util.HashMap;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
@@ -41,14 +40,11 @@ import org.springframework.web.bind.annotation.RestController;
 @Slf4j
 public class AuthController {
 
-  @Autowired
-  private AuthService authService;
+  private final AuthService authService;
 
-  @Autowired
-  private EmailNotifierService emailService;
+  private final EmailNotifierService emailService;
 
-  @Autowired
-  private CookieCsrfTokenRepository csrfTokenRepository;
+  private final CookieCsrfTokenRepository csrfTokenRepository;
 
   @PostMapping("/register")
   public RegistrationResponse register(

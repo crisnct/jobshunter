@@ -21,10 +21,12 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @PackageExpected("com.jobshunter.service.clients.gpt")
+@RequiredArgsConstructor
 public abstract sealed class AbstractGptApiClient
     permits EconomyGptJobSearchImpl, PremiumGptJobSearchImpl, DummyEconomyGpt, DummyPremiumGpt {
 
@@ -37,11 +39,6 @@ public abstract sealed class AbstractGptApiClient
   private Object outputSchema;
 
   private final UrlExtractor urlExtractor;
-
-  protected AbstractGptApiClient(ApplicationProperties properties, UrlExtractor urlExtractor) {
-    this.properties = properties;
-    this.urlExtractor = urlExtractor;
-  }
 
   public abstract ModelSpecific getConfig();
 

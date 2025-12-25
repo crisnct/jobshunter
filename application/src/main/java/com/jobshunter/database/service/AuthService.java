@@ -10,10 +10,10 @@ import com.jobshunter.dto.RegisterRequest;
 import com.jobshunter.service.application.authentication.JwtService;
 import com.jobshunter.service.application.notifiers.EmailNotifierService;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -26,6 +26,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class AuthService {
 
   private final UserRepository userRepository;
@@ -39,22 +40,6 @@ public class AuthService {
   private final AuthenticationManager authenticationManager;
 
   private final EmailNotifierService emailService;
-
-  public AuthService(
-      UserRepository userRepository,
-      RoleRepository roleRepository,
-      PasswordEncoder passwordEncoder,
-      JwtService jwtService,
-      AuthenticationManager authenticationManager,
-      EmailNotifierService emailService
-  ) {
-    this.userRepository = userRepository;
-    this.roleRepository = roleRepository;
-    this.passwordEncoder = passwordEncoder;
-    this.jwtService = jwtService;
-    this.authenticationManager = authenticationManager;
-    this.emailService = emailService;
-  }
 
   @Transactional
   public UserEntity register(RegisterRequest request) {
@@ -126,7 +111,7 @@ public class AuthService {
   public UserEntity changePassword(String username, ChangePasswordRequest request) {
     UserEntity user = userRepository.findByUsername(username)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid username"));
-    if (!passwordEncoder.matches(request.oldPassword(), user.getPassword())){
+    if (!passwordEncoder.matches(request.oldPassword(), user.getPassword())) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Password doesn't match");
     }
     user.setPassword(passwordEncoder.encode(request.newPassword()));

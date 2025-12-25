@@ -3,19 +3,17 @@ package com.jobshunter.service.clients.tinyurl;
 import com.jobshunter.processor.PackageExpected;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import java.net.URI;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 @Component
 @PackageExpected("com.jobshunter.service.application.notifiers")
+@RequiredArgsConstructor
 public class TinyUrlClient {
 
   private final RestTemplate restTemplate;
-
-  public TinyUrlClient(RestTemplate restTemplate) {
-    this.restTemplate = restTemplate;
-  }
 
   @CircuitBreaker(name = "tinyurl", fallbackMethod = "fallbackShorten")
   public String shorten(String longUrl) {

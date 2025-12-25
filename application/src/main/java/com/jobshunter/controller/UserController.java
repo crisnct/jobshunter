@@ -29,7 +29,6 @@ import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -49,20 +48,15 @@ import org.springframework.web.bind.annotation.RestController;
 @PreAuthorize("isAuthenticated()")
 public class UserController {
 
-  @Autowired
-  private UserDataService userDataService;
+  private final UserDataService userDataService;
 
-  @Autowired
-  private AuthService authService;
+  private final AuthService authService;
 
-  @Autowired
-  private JobHuntService jobHuntService;
+  private final JobHuntService jobHuntService;
 
-  @Autowired
-  private EmailNotifierService emailService;
+  private final EmailNotifierService emailService;
 
-  @Autowired
-  private UserCvService userCvService;
+  private final UserCvService userCvService;
 
   @GetMapping("/me")
   public ResponseEntity<?> me(Authentication authentication) {

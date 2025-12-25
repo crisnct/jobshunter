@@ -35,6 +35,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 public class SecurityConfig {
 
   private final UserDataService userDataService;
+
   private final JwtService jwtService;
 
   @Bean

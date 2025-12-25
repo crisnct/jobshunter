@@ -9,11 +9,13 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.Duration;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 @Component
+@RequiredArgsConstructor
 public class RateLimitingFilter extends OncePerRequestFilter {
 
   private static final Duration BLOCK_4_HOURS = Duration.ofHours(4);
@@ -24,18 +26,6 @@ public class RateLimitingFilter extends OncePerRequestFilter {
   private final ViolationRegistry violationRegistry;
   private final BlockRegistry blockRegistry;
   private final ApplicationProperties properties;
-
-  public RateLimitingFilter(
-      InMemoryRateLimiter rateLimiter,
-      ViolationRegistry violationRegistry,
-      BlockRegistry blockRegistry,
-      ApplicationProperties properties
-  ) {
-    this.rateLimiter = rateLimiter;
-    this.violationRegistry = violationRegistry;
-    this.blockRegistry = blockRegistry;
-    this.properties = properties;
-  }
 
   @Override
   protected void doFilterInternal(

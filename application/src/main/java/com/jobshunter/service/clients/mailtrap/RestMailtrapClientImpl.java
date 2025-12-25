@@ -4,10 +4,12 @@ import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.clients.RestMailtrapClient;
 import com.jobshunter.service.clients.mailtrap.RestMailtrapClientImpl.MailtrapTemplateRequest.From;
 import com.jobshunter.service.clients.mailtrap.RestMailtrapClientImpl.MailtrapTemplateRequest.To;
+import jakarta.annotation.PostConstruct;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
 import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,6 +23,7 @@ import org.springframework.web.client.RestClient;
 @Component
 @PackageExpected("com.jobshunter.service.application.notifiers")
 @ConditionalOnProperty(name = "spring.mail.enabled", havingValue = "true")
+@RequiredArgsConstructor
 public non-sealed class RestMailtrapClientImpl implements RestMailtrapClient {
 
   private static final URI MAILTRAP_URI = URI.create("https://send.api.mailtrap.io/api/send");
@@ -38,10 +41,6 @@ public non-sealed class RestMailtrapClientImpl implements RestMailtrapClient {
 
   @Value("${spring.mail.templateUUID:}")
   private String templateUUID;
-
-  public RestMailtrapClientImpl(RestClient restClient) {
-    this.restClient = restClient;
-  }
 
   @Override
   @CircuitBreaker(name = "mailtrapRest", fallbackMethod = "fallbackSendEmail")

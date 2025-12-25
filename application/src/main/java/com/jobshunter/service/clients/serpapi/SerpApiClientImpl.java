@@ -19,6 +19,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.ResponseEntity;
@@ -31,6 +32,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component("EconomyJobsClientSerp")
 @ConditionalOnProperty(name = "serpApi.enabled", havingValue = "true")
+@RequiredArgsConstructor
 public non-sealed class SerpApiClientImpl implements AiJobsClient<SearchWithSerpRequest, List<Job>> {
 
   private static final URI BASE = URI.create("https://serpapi.com/search");
@@ -43,11 +45,6 @@ public non-sealed class SerpApiClientImpl implements AiJobsClient<SearchWithSerp
   private final BrowserSimulator browserSimulator;
 
   private final SerpApi serpApiConfig;
-
-  public SerpApiClientImpl(ApplicationProperties properties, BrowserSimulator browserSimulator) {
-    this.serpApiConfig = properties.getSerpApi();
-    this.browserSimulator = browserSimulator;
-  }
 
   @Override
   @CircuitBreaker(name = "serpApi", fallbackMethod = "fallbackSearch")
