@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -50,31 +51,46 @@ public non-sealed class SerpJobHunting implements JobHunting {
 
   @Override
   public CompletableFuture<Void> searchJobs(JobsSynchronizer jobsSync, SearchJobOrder order) {
-    return CompletableFuture.runAsync(() -> searchWithSerpAPi(jobsSync, order.user()), serpApiExecutor);
+    UserEntity user = order.user();
+    long delayCounter = 0;
+    List<CompletableFuture<Void>> futures = new ArrayList<>();
+    for (int i = 0; i < order.iterations(); i++) {
+      for (EngineType engine : order.engines()) {
+        for (UserPromptEntity prompt : user.getPrompts()) {
+          if (prompt.getEngine() == engine && Strings.isNotBlank(prompt.getPrompt())) {
+            Executor delayedExecutor = CompletableFuture.delayedExecutor(
+                //TODO implement rate limiter for sepa and read rate limiter and use it here
+                delayCounter++ * 10000,
+                TimeUnit.MILLISECONDS,
+                serpApiExecutor
+            );
+            futures.add(CompletableFuture.runAsync(() -> searchWithSerpAPi(jobsSync, prompt, user), delayedExecutor));
+          }
+        }
+      }
+    }
+
+    // Combine all async iteration futures into one
+    return CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new))
+        .exceptionally(ex -> {
+          log.error("SERP search failed for {}", user.getUsername(), ex);
+          return null;
+        });
   }
 
-  private void searchWithSerpAPi(JobsSynchronizer jobsSync, UserEntity user) {
+  private void searchWithSerpAPi(JobsSynchronizer jobsSync, UserPromptEntity prompt, UserEntity user) {
     try {
       log.info("Searching jobs for user {} with serp api", user.getUsername());
-      String serpPayload = user.getPrompts().stream()
-          .filter(p -> p.getEngine() == EngineType.SERP)
-          .map(UserPromptEntity::getPrompt)
-          .findFirst()
-          .orElse(null);
-      if (Strings.isEmpty(serpPayload)) {
-        log.info("Skip serp api search for {} because serp prompt is missing", user.getUsername());
-        return;
-      }
-      SearchWithSerpRequest request = mapper.readValue(serpPayload, SearchWithSerpRequest.class);
+      SearchWithSerpRequest request = mapper.readValue(prompt.getPrompt(), SearchWithSerpRequest.class);
       SerpApiJobsResult serpApiResult = serpApiClient.searchJobs(request);
 
       final List<Job> jobs = new ArrayList<>();
       for (SerpApiJobHit job : serpApiResult.jobs()) {
         String jobDescription = job.description() + "\n" + job.highlights();
         int score = scoreCalculator.computeScore(jobDescription, user.getCv().getGptFileId());
-        jobs.add(new Job(score, job.applyLinks().getFirst(), "Google"));
+        jobs.add(new Job(score, job.applyLinks().getFirst(), "serp"));
       }
-      jobsSync.addJobs(jobs, EngineType.SERP);
+      jobsSync.addJobs(jobs, EngineType.SERP, prompt.getId());
     } catch (JsonProcessingException e) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
     }

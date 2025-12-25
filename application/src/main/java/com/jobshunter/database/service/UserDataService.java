@@ -10,8 +10,10 @@ import com.jobshunter.database.repository.UserPromptRepository;
 import com.jobshunter.database.repository.UserRepository;
 import com.jobshunter.dto.EngineType;
 import com.jobshunter.dto.Job;
+import com.jobshunter.service.application.JobsSynchronizer;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
@@ -97,6 +99,17 @@ public class UserDataService {
     int current = entity.getJobsFound() != null ? entity.getJobsFound() : 0;
     entity.setJobsFound(current + amount);
     userPromptRepository.save(entity);
+  }
+
+  @Transactional
+  public void saveJobsToDB(JobsSynchronizer jobsSync, UserEntity user, List<Job> validatedJobs) {
+    log.info("Found {} jobs for {} ", validatedJobs.size(), user.getEmail());
+    validatedJobs.forEach(v -> log.info(v.getUrl()));
+    for (Entry<Long, List<Job>> entry : jobsSync.getJobs().entrySet()) {
+      int count = (int) entry.getValue().stream().filter(validatedJobs::contains).count();
+      this.incrementPromptJobsFound(entry.getKey(), count);
+    }
+    this.updateUser(user, validatedJobs);
   }
 
   public List<String> getExistingJobUrlsForUser(String username) {

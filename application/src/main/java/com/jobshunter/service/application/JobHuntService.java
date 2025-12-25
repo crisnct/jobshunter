@@ -15,9 +15,12 @@ import com.jobshunter.service.application.notifiers.EmailNotifierService;
 import com.jobshunter.service.application.notifiers.WhatsappNotifierService;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
+import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -87,18 +90,21 @@ public class JobHuntService {
 
   public JobHuntResponse searchJobsForUser(SearchJobOrder order) {
     UserEntity user = order.user();
-    final JobsSynchronizer jobsSync =
+    final JobsSynchronizer synchronizer =
         new JobsSynchronizer(userDataService.getExistingJobUrlsForUser(user.getUsername()));
 
     List<CompletableFuture<Void>> enginesFutures = new ArrayList<>();
-    this.searchJobs("SERP", serpJobHunting, jobsSync, order, enginesFutures);
-    this.searchJobs("GPT", gptJobHunting, jobsSync, order, enginesFutures);
-    this.searchJobs("GEMINI", geminiJobHunting, jobsSync, order, enginesFutures);
+    this.searchJobs("SERP", serpJobHunting, synchronizer, order, enginesFutures);
+    this.searchJobs("GPT", gptJobHunting, synchronizer, order, enginesFutures);
+    this.searchJobs("GEMINI", geminiJobHunting, synchronizer, order, enginesFutures);
 
     CompletableFuture.allOf(enginesFutures.toArray(CompletableFuture[]::new)).join();
 
     //Follow redirects and validate url's
-    List<Job> validatedJobs = jobsValidator.validateJobs(jobsSync.getJobs());
+    List<Job> jobsFromHunters = synchronizer.getJobs().values().stream()
+        .flatMap((Function<List<Job>, Stream<Job>>) Collection::stream)
+        .toList();
+    List<Job> validatedJobs = jobsValidator.validateJobs(jobsFromHunters);
 
     //TODO scoring
     for (Job job : validatedJobs) {
@@ -112,11 +118,8 @@ public class JobHuntService {
     List<Job> jobs = jobHuntResponse.jobsFound();
     if (jobs.isEmpty()) {
       log.info("No jobs found for user {} ", user.getUsername());
-    } else if (user.isNotifyEmail() || user.isNotifyWhatsapp()) {
-      userDataService.updateUser(user, jobs);
-      log.info("Found {} jobs for {} ", jobs.size(), user.getEmail());
-      jobs.forEach(System.out::println);
-
+    } else {
+      this.userDataService.saveJobsToDB(synchronizer, user, jobs);
       if (user.isNotifyWhatsapp()) {
         whatsappNotifierService.send(jobs, user);
       }

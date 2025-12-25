@@ -2,7 +2,6 @@ package com.jobshunter.service.application.hunting;
 
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.entities.UserPromptEntity;
-import com.jobshunter.database.service.UserDataService;
 import com.jobshunter.dto.EngineType;
 import com.jobshunter.dto.Job;
 import com.jobshunter.dto.SearchJobOrder;
@@ -29,16 +28,12 @@ public non-sealed class GeminiJobHunting implements JobHunting {
 
   private final AiJobsClient<GeminiJobSearchRequest, List<Job>> geminiEconomy;
 
-  private final UserDataService userDataService;
-
   public GeminiJobHunting(
       @Qualifier("geminiSearchExecutor") Executor geminiSearchExecutor,
-      @Qualifier("EconomyJobsClientGemini") AiJobsClient<GeminiJobSearchRequest, List<Job>> geminiEconomy,
-      UserDataService userDataService
+      @Qualifier("EconomyJobsClientGemini") AiJobsClient<GeminiJobSearchRequest, List<Job>> geminiEconomy
   ) {
     this.geminiSearchExecutor = geminiSearchExecutor;
     this.geminiEconomy = geminiEconomy;
-    this.userDataService = userDataService;
   }
 
   @Override
@@ -83,8 +78,7 @@ public non-sealed class GeminiJobHunting implements JobHunting {
       case GEMINI_2_5_PRO -> throw new IllegalStateException("Not implemented yet");
       default -> throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid GPT model");
     };
-    jobsSync.addJobs(jobsFound, request.getEngine());
-    userDataService.incrementPromptJobsFound(request.getPrompt().getId(), jobsFound.size());
+    jobsSync.addJobs(jobsFound, request.getEngine(), request.getPrompt().getId());
   }
 
 }

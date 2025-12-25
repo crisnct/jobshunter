@@ -25,7 +25,7 @@ public class UrlExtractor {
     Matcher matcher = URL_PATTERN.matcher(text);
     while (matcher.find()) {
       String url = normalize(matcher.group());
-      results.add(new Job(-1, url, ""));
+      results.add(new Job(-1, url, null));
     }
     return results;
   }

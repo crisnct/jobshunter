@@ -6,7 +6,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.atomic.AtomicInteger;
 import lombok.Data;
@@ -16,7 +18,8 @@ import lombok.extern.slf4j.Slf4j;
 @Data
 public class JobsSynchronizer {
 
-  private final List<Job> jobs = Collections.synchronizedList(new ArrayList<>());
+  // key = prompt id
+  private final Map<Long, List<Job>> jobs = new ConcurrentHashMap<>();
 
   private final Set<String> existingUrls = new ConcurrentSkipListSet<>();
 
@@ -24,13 +27,14 @@ public class JobsSynchronizer {
     this.existingUrls.addAll(existingUrls);
   }
 
-  public void addJobs(Collection<Job> newJobs, EngineType engine) {
+  public void addJobs(Collection<Job> newJobs, EngineType engine, Long promptId) {
     AtomicInteger counter = new AtomicInteger(0);
     newJobs.stream()
         .filter(job -> !existingUrls.contains(job.getUrl()))
         .forEach(job -> {
-          job.setSource(engine.name());
-          jobs.add(job);
+          job.setPromptId(promptId);
+          jobs.putIfAbsent(promptId, Collections.synchronizedList(new ArrayList<>()));
+          jobs.get(promptId).add(job);
           existingUrls.add(job.getUrl());
           counter.addAndGet(1);
         });

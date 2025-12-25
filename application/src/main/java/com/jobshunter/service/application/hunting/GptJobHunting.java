@@ -2,7 +2,6 @@ package com.jobshunter.service.application.hunting;
 
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.entities.UserPromptEntity;
-import com.jobshunter.database.service.UserDataService;
 import com.jobshunter.dto.EngineType;
 import com.jobshunter.dto.Job;
 import com.jobshunter.dto.SearchJobOrder;
@@ -28,19 +27,15 @@ public non-sealed class GptJobHunting implements JobHunting {
 
   private final AiJobsClient<GptJobSearchRequest, List<Job>> gptPremium;
 
-  private final UserDataService userDataService;
-
   private final Executor gptSearchExecutor;
 
   public GptJobHunting(
       @Qualifier("EconomyJobsClientGPT") AiJobsClient<GptJobSearchRequest, List<Job>> gptEconomy,
       @Qualifier("PremiumJobsClientGPT") AiJobsClient<GptJobSearchRequest, List<Job>> gptPremium,
-      UserDataService userDataService,
       @Qualifier("gptSearchExecutor") Executor gptSearchExecutor
   ) {
     this.gptEconomy = gptEconomy;
     this.gptPremium = gptPremium;
-    this.userDataService = userDataService;
     this.gptSearchExecutor = gptSearchExecutor;
   }
 
@@ -84,8 +79,7 @@ public non-sealed class GptJobHunting implements JobHunting {
       case GPT5 -> gptPremium.searchJobs(request);
       default -> throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid GPT model");
     };
-    jobsSync.addJobs(jobsFound, request.getEngine());
-    userDataService.incrementPromptJobsFound(request.getPrompt().getId(), jobsFound.size());
+    jobsSync.addJobs(jobsFound, request.getEngine(), request.getPrompt().getId());
   }
 
 }
