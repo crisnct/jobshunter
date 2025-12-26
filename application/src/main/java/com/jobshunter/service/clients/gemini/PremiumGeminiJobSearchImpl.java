@@ -23,10 +23,10 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
 @Slf4j
-@Component("EconomyJobsClientGemini")
+@Component("PremiumJobsClientGemini")
 @PackageExpected("com.jobshunter.service.clients.gpt")
 @ConditionalOnProperty(name = "gemini.enabled", havingValue = "true")
-public non-sealed class EconomyGeminiJobSearchImpl extends AbstractGeminiApiClient
+public non-sealed class PremiumGeminiJobSearchImpl extends AbstractGeminiApiClient
     implements AiJobsClient<GeminiJobSearchRequest, List<Job>> {
 
   private static final String GEMINI_URI = "https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent?key=%s";
@@ -35,7 +35,7 @@ public non-sealed class EconomyGeminiJobSearchImpl extends AbstractGeminiApiClie
 
   private final RestClient restClient;
 
-  public EconomyGeminiJobSearchImpl(
+  public PremiumGeminiJobSearchImpl(
       ApplicationProperties properties,
       RestClient restClient,
       com.jobshunter.service.clients.UrlExtractor urlExtractor
@@ -84,13 +84,13 @@ public non-sealed class EconomyGeminiJobSearchImpl extends AbstractGeminiApiClie
 
   @SuppressWarnings("unused")
   private List<Job> fallbackSearch(GeminiJobSearchRequest request, Throwable t) {
-    log.error("Economy Gemini call short-circuited/bulkheaded: {}", t.getMessage());
+    log.error("Premium Gemini call short-circuited/bulkheaded: {}", t.getMessage());
     return List.of();
   }
 
   @Override
   public String getSystemPromptFilename() {
-    return "jobsSystemPromptEconomy.txt";
+    return "jobsSystemPromptPremium.txt";
   }
 
 }

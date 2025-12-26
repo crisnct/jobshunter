@@ -8,6 +8,7 @@ import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.config.ConnectionConfig;
 import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.client5.http.impl.LaxRedirectStrategy;
+import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
 import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager;
 import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuilder;
@@ -33,7 +34,7 @@ import org.springframework.web.client.RestTemplate;
 public class ApplicationConfig {
 
   @Bean
-  public RestClient restClient() {
+  public RestClient restClient(ApplicationProperties properties) {
     ConnectionConfig connectionConfig = ConnectionConfig.custom()
         .setConnectTimeout(Timeout.ofSeconds(20))
         .build();
@@ -49,29 +50,32 @@ public class ApplicationConfig {
         .setResponseTimeout(Timeout.ofMinutes(5))
         .build();
 
-    HttpClient httpClient = HttpClients.custom()
+    HttpClientBuilder builder = HttpClients.custom()
         .setConnectionManager(connectionManager)
-        .setDefaultRequestConfig(requestConfig)
-        .setRedirectStrategy(new LaxRedirectStrategy())
-        .evictIdleConnections(Timeout.ofMinutes(5))
+        .setDefaultRequestConfig(requestConfig);
+    if (properties.getJobsHunter().getAllowRedirection()) {
+      builder.setRedirectStrategy(new LaxRedirectStrategy());
+    }
+    HttpClient httpClient = builder.evictIdleConnections(Timeout.ofMinutes(5))
         .evictExpiredConnections()
         .build();
 
-    HttpComponentsClientHttpRequestFactory requestFactory =
-        new HttpComponentsClientHttpRequestFactory(httpClient);
-    requestFactory.setHttpContextFactory((_, _) -> {
-      // Reuse a scoped HttpClientContext if present, otherwise create a fresh one.
-      if (BrowserSimulator.HTTP_CONTEXT.isBound()) {
-        return BrowserSimulator.HTTP_CONTEXT.get();
-      } else {
-        return HttpClientContext.create();
-      }
-    });
+    RestClient.Builder restBuilder = RestClient.builder();
+    if (properties.getJobsHunter().getAllowRedirection()) {
+      HttpComponentsClientHttpRequestFactory requestFactory =
+          new HttpComponentsClientHttpRequestFactory(httpClient);
+      requestFactory.setHttpContextFactory((_, _) -> {
+        // Reuse a scoped HttpClientContext if present, otherwise create a fresh one.
+        if (BrowserSimulator.HTTP_CONTEXT.isBound()) {
+          return BrowserSimulator.HTTP_CONTEXT.get();
+        } else {
+          return HttpClientContext.create();
+        }
+      });
+      restBuilder.requestFactory(requestFactory);
+    }
 
-    return RestClient.builder()
-        .requestFactory(requestFactory)
-        .defaultHeader("Accept", "application/json")
-        .build();
+    return restBuilder.defaultHeader("Accept", "application/json").build();
   }
 
   @Bean

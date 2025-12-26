@@ -20,9 +20,11 @@ public class ApplicationProperties {
 
     private String name;
     private String expiredExpressions;
-    private Boolean useDummyData;
     private Scheduler scheduler = new Scheduler();
     private RateLimitPolicy rateLimit = new RateLimitPolicy();
+    private Boolean allowRedirection;
+    private String blacklist;
+
   }
 
   @Data

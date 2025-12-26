@@ -66,7 +66,7 @@ public abstract non-sealed class GenericJobHunting<T extends AIJobSearchRequest>
 
   private void search(JobsSynchronizer jobsSync, T request) {
     EngineConfigurationEntity engineConfig = request.getPrompt().getEngineConfiguration();
-    log.info("Searching jobs for user {} with model {}-{}", request.getUsername(), engineConfig.getEngineType(), engineConfig.getTier());
+    log.info("Searching jobs for user {} with model {}", request.getUsername(), request.getPrompt().getEngineConfiguration().getModel());
     List<Job> jobsFound = switch (engineConfig.getTier()) {
       case ECONOMY -> economyModel.searchJobs(request);
       case PREMIUM -> premiumModel.searchJobs(request);

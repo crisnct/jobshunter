@@ -22,8 +22,9 @@ public class GeminiJobHunting extends GenericJobHunting<GeminiJobSearchRequest> 
   public GeminiJobHunting(
       @Qualifier("geminiSearchExecutor") Executor geminiSearchExecutor,
       @Qualifier("EconomyJobsClientGemini") AiJobsClient<GeminiJobSearchRequest, List<Job>> geminiEconomy,
+      @Qualifier("PremiumJobsClientGemini") AiJobsClient<GeminiJobSearchRequest, List<Job>> geminiPremium,
       ApplicationProperties properties) {
-    super(geminiSearchExecutor, geminiEconomy, null);
+    super(geminiSearchExecutor, geminiEconomy, geminiPremium);
     this.properties = properties;
   }
 

@@ -8,6 +8,7 @@ import jakarta.validation.constraints.NotNull;
 import java.net.InetAddress;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -15,6 +16,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -32,6 +34,8 @@ public class JobsValidator {
 
   private final BrowserSimulator browserSimulator;
 
+  private final Set<String> blacklistDomains;
+
   public JobsValidator(
       @Qualifier("jobsValidatorExecutor") Executor jobsValidatorExecutor,
       ApplicationProperties properties,
@@ -40,6 +44,10 @@ public class JobsValidator {
     this.jobsValidatorExecutor = jobsValidatorExecutor;
     this.properties = properties;
     this.browserSimulator = browserSimulator;
+    this.blacklistDomains = Arrays.stream(properties.getJobsHunter().getBlacklist().split(","))
+        .map(String::trim)
+        .map(String::toLowerCase)
+        .collect(Collectors.toUnmodifiableSet());
   }
 
   private List<Pattern> expiredJobsPatterns;
@@ -101,11 +109,21 @@ public class JobsValidator {
   }
 
   private Pair<Boolean, String> isValidJob(String jobURL) {
+    log.info("Validating URL: {}", jobURL);
     URI uri = toSafeHttpUri(jobURL);
     if (uri == null) {
       log.error("Skipping URL {} because it is not a permitted HTTP/HTTPS target", jobURL);
       return Pair.of(false, "");
     }
+    String domain = uri.getHost();
+    if (domain.startsWith("www.")) {
+      domain = domain.substring(4);
+    }
+    if (blacklistDomains.contains(domain)) {
+      log.error("URL is blacklisted {}", jobURL);
+      return Pair.of(false, "");
+    }
+    log.info("Getting body from URL {}", jobURL);
     try {
       String body = browserSimulator.openPage(uri.toString()).getBody();
       String html = body.toLowerCase();
@@ -113,7 +131,7 @@ public class JobsValidator {
       if (isExpired) {
         log.warn("Invalid URL: {}", jobURL);
       } else {
-        log.info("Valid URL: {}", jobURL);
+        log.info("URL is valid: {}", jobURL);
       }
       return Pair.of(!isExpired, isExpired ? "" : body);
     } catch (Throwable e) {

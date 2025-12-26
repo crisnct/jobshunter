@@ -66,7 +66,7 @@ public non-sealed class SerpApiClientImpl implements AiJobsClient<SearchWithSerp
 
     final List<Job> jobs = new ArrayList<>();
     for (SerpApiJobHit serpJob : results.jobs()) {
-      Job job = new Job(-1, serpJob.applyLinks().getFirst(), null);
+      Job job = new Job(-1, serpJob.applyLinks().getFirst(), request.getPrompt().getEngineConfiguration().getModel());
       job.setDescription(serpJob.description() + "\n" + serpJob.highlights());
       jobs.add(job);
     }
@@ -109,7 +109,7 @@ public non-sealed class SerpApiClientImpl implements AiJobsClient<SearchWithSerp
     parameters.add("api_key");
     parameters.add(applicationProperties.getSerpApi().getApiKey());
     parameters.add("engine");
-    parameters.add("google_jobs");
+    parameters.add(request.getPrompt().getEngineConfiguration().getModel());
     parameters.add("q");
     parameters.add(encode(request.getQuery()));
 

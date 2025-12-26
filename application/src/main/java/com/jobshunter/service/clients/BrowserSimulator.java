@@ -1,5 +1,6 @@
 package com.jobshunter.service.clients;
 
+import com.jobshunter.ApplicationProperties;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.net.URI;
@@ -39,6 +40,8 @@ public class BrowserSimulator {
 
   private static final String CONNECTION_HEADER = "keep-alive";
 
+  private final ApplicationProperties properties;
+
   private final RestClient restClient;
 
   public ResponseEntity<String> openPage(String url) {
@@ -74,23 +77,27 @@ public class BrowserSimulator {
   }
 
   public String getFinalRedirectedURL(@NotNull String url) {
-    return ScopedValue.where(HTTP_CONTEXT, HttpClientContext.create())
-        .call(() -> {
-          try {
-            this.openPage(url);
+    if (properties.getJobsHunter().getAllowRedirection()) {
+      return ScopedValue.where(HTTP_CONTEXT, HttpClientContext.create())
+          .call(() -> {
+            try {
+              this.openPage(url);
 
-            HttpClientContext context = HTTP_CONTEXT.get();
-            URI finalUri =
-                context.getRedirectLocations() == null || context.getRedirectLocations().size() == 0
-                    ? context.getRequest().getUri()
-                    : context.getRedirectLocations().get(context.getRedirectLocations().size() - 1);
+              HttpClientContext context = HTTP_CONTEXT.get();
+              URI finalUri =
+                  context.getRedirectLocations() == null || context.getRedirectLocations().size() == 0
+                      ? context.getRequest().getUri()
+                      : context.getRedirectLocations().get(context.getRedirectLocations().size() - 1);
 
-            return finalUri.toString();
-          } catch (Exception e) {
-            log.error("Redirection error for url {}", url);
-            return url;
-          }
-        });
+              return finalUri.toString();
+            } catch (Exception e) {
+              log.error("Redirection error for url {}", url);
+              return url;
+            }
+          });
+    } else {
+      return url;
+    }
   }
 
 }
