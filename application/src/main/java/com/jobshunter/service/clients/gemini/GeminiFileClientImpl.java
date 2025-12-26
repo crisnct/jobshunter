@@ -30,7 +30,7 @@ import org.springframework.web.server.ResponseStatusException;
 @RequiredArgsConstructor
 public final class GeminiFileClientImpl implements FileClient {
 
-  private static final String UPLOAD_URI = "https://generativelanguage.googleapis.com/upload/v1beta/files";
+  public static final String UPLOAD_URI = "https://generativelanguage.googleapis.com/upload/v1beta/files";
 
   private static final String DELETE_URI = "https://generativelanguage.googleapis.com/v1beta";
 
@@ -45,7 +45,25 @@ public final class GeminiFileClientImpl implements FileClient {
 
       HttpHeaders jsonHeaders = new HttpHeaders();
       jsonHeaders.setContentType(MediaType.APPLICATION_JSON);
-      body.add("metadata", new HttpEntity<>("{}", jsonHeaders));
+
+      final String mimeType;
+      if (cvPath.endsWith("pdf")) {
+        mimeType = MediaType.APPLICATION_PDF_VALUE;
+      } else if (cvPath.endsWith("txt") || cvPath.endsWith("html") || cvPath.endsWith("htm")) {
+        mimeType = MediaType.TEXT_HTML_VALUE;
+      } else {
+        mimeType = MediaType.ALL_VALUE;
+      }
+
+      String metadata = String.format("""
+          {
+              "file": {
+                "displayName": "%s",
+                "mimeType": "%s"
+              }
+           }
+          """, cvPath.getFileName(), mimeType);
+      body.add("metadata", new HttpEntity<>(metadata, jsonHeaders));
       body.add("file", new FileSystemResource(cvPath));
 
       UploadFileResponse response = restClient.post()

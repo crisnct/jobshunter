@@ -14,6 +14,7 @@ import com.jobshunter.service.application.hunting.JobHunting;
 import com.jobshunter.service.application.hunting.SerpJobHunting;
 import com.jobshunter.service.application.notifiers.EmailNotifierService;
 import com.jobshunter.service.application.notifiers.WhatsappNotifierService;
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -86,9 +87,16 @@ public class JobHuntService {
         .toList();
     List<Job> validatedJobs = jobsValidator.validateJobs(jobsFromHunters);
 
-    //TODO scoring
-    for (Job job : validatedJobs) {
-      jobScoring.calculateScore(job, order.user());
+    try {
+      String resumeFileId = jobScoring.uploadUserCv(user.getCv());
+      List<CompletableFuture<Void>> scoreFutures = new ArrayList<>();
+      for (Job job : validatedJobs) {
+        scoreFutures.add(jobScoring.calculateScore(job, order.user(), resumeFileId));
+      }
+      CompletableFuture.allOf(scoreFutures.toArray(CompletableFuture[]::new)).join();
+      jobScoring.cleanup(resumeFileId);
+    } catch (IOException e) {
+      log.error("Scoring can not be done due to exception:{}", e.getMessage());
     }
 
     JobHuntResponse jobHuntResponse = new JobHuntResponse(validatedJobs.stream()

@@ -17,8 +17,8 @@ public record Part(
     return Part.builder().text(value).build();
   }
 
-  public static Part file(String fileUri) {
-    return Part.builder().fileData(new FileData(fileUri)).build();
+  public static Part file(String fileUri, String mimeType) {
+    return Part.builder().fileData(new FileData(fileUri, mimeType)).build();
   }
 
   public static Part inlineData(String mimeType, String base64Data) {

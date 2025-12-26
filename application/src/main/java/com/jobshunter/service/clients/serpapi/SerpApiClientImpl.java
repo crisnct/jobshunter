@@ -65,9 +65,10 @@ public non-sealed class SerpApiClientImpl implements AiJobsClient<SearchWithSerp
     }
 
     final List<Job> jobs = new ArrayList<>();
-    for (SerpApiJobHit job : results.jobs()) {
-      String jobDescription = job.description() + "\n" + job.highlights();
-      jobs.add(new Job(-1, job.applyLinks().getFirst(), null));
+    for (SerpApiJobHit serpJob : results.jobs()) {
+      Job job = new Job(-1, serpJob.applyLinks().getFirst(), null);
+      job.setDescription(serpJob.description() + "\n" + serpJob.highlights());
+      jobs.add(job);
     }
 
     return jobs;

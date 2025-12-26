@@ -16,7 +16,7 @@ public class GptJobSearchRequest extends AIJobSearchRequest {
       UserPromptEntity prompt,
       String fileId
   ) {
-    super(username, prompt, prompt.getEngineConfiguration().getEngineType(), prompt.getEngineConfiguration().getTier());
+    super(username, prompt);
     this.fileId = fileId;
   }
 

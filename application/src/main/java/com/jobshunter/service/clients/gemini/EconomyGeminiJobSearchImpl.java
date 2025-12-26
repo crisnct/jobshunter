@@ -1,15 +1,14 @@
 package com.jobshunter.service.clients.gemini;
 
 import com.jobshunter.ApplicationProperties;
-import com.jobshunter.ApplicationProperties.ModelSpecific;
-import com.jobshunter.model.Job;
-import com.jobshunter.model.GeminiJobSearchRequest;
 import com.jobshunter.dto.geminiRequest.GeminiJobsPayload;
 import com.jobshunter.dto.geminiRequest.GenerationConfig;
 import com.jobshunter.dto.geminiRequest.GoogleSearchTool;
 import com.jobshunter.dto.geminiRequest.SafetySetting;
 import com.jobshunter.dto.geminiRequest.ThinkingConfig;
 import com.jobshunter.dto.geminiResponse.GeminiGenerateContentResponse;
+import com.jobshunter.model.GeminiJobSearchRequest;
+import com.jobshunter.model.Job;
 import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.clients.AiJobsClient;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
@@ -47,11 +46,6 @@ public non-sealed class EconomyGeminiJobSearchImpl extends AbstractGeminiApiClie
   }
 
   @Override
-  public ModelSpecific getConfig() {
-    return properties.getGemini().getEconomy();
-  }
-
-  @Override
   @CircuitBreaker(name = "geminiEconomy", fallbackMethod = "fallbackSearch")
   @Bulkhead(name = "geminiEconomyBulkhead", type = Bulkhead.Type.SEMAPHORE)
   @RateLimiter(name = "geminiLimiter")
@@ -72,7 +66,8 @@ public non-sealed class EconomyGeminiJobSearchImpl extends AbstractGeminiApiClie
           .build();
 
       GeminiGenerateContentResponse response = restClient.post()
-          .uri(URI.create(String.format(GEMINI_URI, getConfig().getModel(), properties.getGemini().getApiKey())))
+          .uri(URI.create(String.format(GEMINI_URI, request.getPrompt().getEngineConfiguration().getModel(),
+              properties.getGemini().getApiKey())))
           .contentType(MediaType.APPLICATION_JSON)
           .body(payload)
           .retrieve()
@@ -89,6 +84,11 @@ public non-sealed class EconomyGeminiJobSearchImpl extends AbstractGeminiApiClie
   private List<Job> fallbackSearch(GeminiJobSearchRequest request, Throwable t) {
     log.error("Economy Gemini call short-circuited/bulkheaded: {}", t.getMessage());
     return List.of();
+  }
+
+  @Override
+  public String getSystemPromptFilename() {
+    return "jobsSystemPromptEconomy.txt";
   }
 
 }

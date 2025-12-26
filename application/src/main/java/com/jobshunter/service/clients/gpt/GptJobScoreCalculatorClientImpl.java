@@ -9,7 +9,7 @@ import com.jobshunter.dto.gptResponse.ContentItem;
 import com.jobshunter.dto.gptResponse.GptCompletionResponse;
 import com.jobshunter.dto.gptResponse.OutputItem;
 import com.jobshunter.processor.PackageExpected;
-import com.jobshunter.service.clients.GptJobScoreCalculatorClient;
+import com.jobshunter.service.clients.JobScoreCalculatorClient;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import io.jsonwebtoken.lang.Collections;
 import jakarta.annotation.PostConstruct;
@@ -26,11 +26,13 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
 @Slf4j
-@Component
+@Component("GPTScoreCalculator")
 @PackageExpected("com.jobshunter.service.clients.gpt")
 @ConditionalOnProperty(name = "gpt.enabled", havingValue = "true")
 @RequiredArgsConstructor
-public non-sealed class GptJobScoreCalculatorClientImpl implements GptJobScoreCalculatorClient {
+public non-sealed class GptJobScoreCalculatorClientImpl implements JobScoreCalculatorClient<GptJobScoreRequest> {
+
+  private static final String AI_MODEL = "gpt-4o-mini";
 
   private static final URI DEFAULT_URI = URI.create("https://api.openai.com/v1/responses");
 
@@ -59,15 +61,15 @@ public non-sealed class GptJobScoreCalculatorClientImpl implements GptJobScoreCa
 
   @Override
   @RateLimiter(name = "openaiLimiter")
-  public int computeScore(String jobDescription, String fileId) {
+  public int computeScore(GptJobScoreRequest request) {
     try {
       Gpt config = properties.getGpt();
       Gpt4ScorePayload payload = Gpt4ScorePayload.builder()
-          .model(config.getEconomy().getModel())
+          .model(AI_MODEL)
           .temperature(0)
           .max_output_tokens(config.getMaxTokens())
           .addSystemPrompt(calculateScoreSystemPrompt)
-          .addUserPrompt(calculateScoreUserPrompt + jobDescription, fileId)
+          .addUserPrompt(calculateScoreUserPrompt + request.getJobDescription(), request.getUserCV().getGptFileId())
           .build();
 
       String response = restClient.post()

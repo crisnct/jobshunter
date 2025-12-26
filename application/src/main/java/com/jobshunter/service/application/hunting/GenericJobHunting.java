@@ -1,5 +1,6 @@
 package com.jobshunter.service.application.hunting;
 
+import com.jobshunter.database.entities.EngineConfigurationEntity;
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.entities.UserPromptEntity;
 import com.jobshunter.dto.AIJobSearchRequest;
@@ -64,13 +65,14 @@ public abstract non-sealed class GenericJobHunting<T extends AIJobSearchRequest>
   }
 
   private void search(JobsSynchronizer jobsSync, T request) {
-    log.info("Searching jobs for user {} with model {}-{}", request.getUsername(), request.getEngineType(), request.getEngineTier());
-    List<Job> jobsFound = switch (request.getEngineTier()) {
+    EngineConfigurationEntity engineConfig = request.getPrompt().getEngineConfiguration();
+    log.info("Searching jobs for user {} with model {}-{}", request.getUsername(), engineConfig.getEngineType(), engineConfig.getTier());
+    List<Job> jobsFound = switch (engineConfig.getTier()) {
       case ECONOMY -> economyModel.searchJobs(request);
       case PREMIUM -> premiumModel.searchJobs(request);
       default -> throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid engine");
     };
-    jobsSync.addJobs(jobsFound, request.getEngineType(), request.getEngineTier(), request.getPrompt().getId());
+    jobsSync.addJobs(jobsFound, engineConfig.getEngineType(), engineConfig.getTier(), request.getPrompt().getId());
   }
 
   private boolean contains(SearchJobOrder order, UserPromptEntity prompt) {

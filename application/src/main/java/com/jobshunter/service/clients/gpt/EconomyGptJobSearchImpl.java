@@ -1,14 +1,14 @@
 package com.jobshunter.service.clients.gpt;
 
 import com.jobshunter.ApplicationProperties;
-import com.jobshunter.ApplicationProperties.ModelSpecific;
-import com.jobshunter.model.Job;
-import com.jobshunter.model.GptJobSearchRequest;
 import com.jobshunter.dto.gptRequest.GptJobsPayload;
 import com.jobshunter.dto.gptRequest.tools.Tools;
 import com.jobshunter.dto.gptResponse.GptCompletionResponse;
+import com.jobshunter.model.GptJobSearchRequest;
+import com.jobshunter.model.Job;
 import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.clients.AiJobsClient;
+import com.jobshunter.service.clients.UrlExtractor;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import java.net.URI;
@@ -35,7 +35,7 @@ public non-sealed class EconomyGptJobSearchImpl extends AbstractGptApiClient
   public EconomyGptJobSearchImpl(
       ApplicationProperties properties,
       RestClient restClient,
-      com.jobshunter.service.clients.UrlExtractor urlExtractor
+      UrlExtractor urlExtractor
   ) {
     super(properties, urlExtractor);
     this.properties = properties;
@@ -43,21 +43,16 @@ public non-sealed class EconomyGptJobSearchImpl extends AbstractGptApiClient
   }
 
   @Override
-  public ModelSpecific getConfig() {
-    return properties.getGpt().getEconomy();
-  }
-
-  @Override
   @CircuitBreaker(name = "gptEconomy", fallbackMethod = "fallbackSearch")
   @Bulkhead(name = "gptEconomyBulkhead", type = Bulkhead.Type.SEMAPHORE)
-  public List<Job> searchWithModel(String systemPrompt, String userPrompt, ModelSpecific cfg, String fileId) {
+  public List<Job> searchWithModel(String systemPrompt, GptJobSearchRequest request) {
     try {
       GptJobsPayload payload = GptJobsPayload.builder()
-          .model(cfg.getModel())
+          .model(request.getPrompt().getEngineConfiguration().getModel())
           .max_output_tokens(properties.getGpt().getMaxTokens())
           .addTools(Tools.builder().setDeepSearch().build())
           .addSystemPrompt(systemPrompt)
-          .addUserPrompt(userPrompt, fileId)
+          .addUserPrompt(request.getPrompt().getPrompt(), request.getFileId())
           .build();
 
       GptCompletionResponse response = restClient.post()
@@ -76,8 +71,13 @@ public non-sealed class EconomyGptJobSearchImpl extends AbstractGptApiClient
     }
   }
 
+  @Override
+  public String getSystemPromptFilename() {
+    return "jobsSystemPromptEconomy.txt";
+  }
+
   @SuppressWarnings("unused")
-  private List<Job> fallbackSearch(String systemPrompt, String userPrompt, ModelSpecific cfg, String fileId, Throwable t) {
+  private List<Job> fallbackSearch(String systemPrompt, GptJobSearchRequest request, Throwable t) {
     log.error("Economy GPT call short-circuited/bulkheaded: {}", t.getMessage());
     return List.of();
   }

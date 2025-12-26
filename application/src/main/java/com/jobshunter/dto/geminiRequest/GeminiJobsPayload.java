@@ -42,6 +42,22 @@ public record GeminiJobsPayload(
       }
       return this;
     }
+
+    public GeminiJobsPayloadBuilder addUserContent(String text, List<FileData> files) {
+      List<Part> parts = new ArrayList<>();
+      if (text != null && !text.isBlank()) {
+        parts.add(Part.text(text));
+      }
+      for (FileData fileData: files){
+        parts.add(Part.file(fileData.fileUri(), fileData.mimeType()));
+      }
+      if (!parts.isEmpty()) {
+        this.contents.add(new Content("user", parts));
+      }
+      return this;
+    }
+
+
   }
 
 }

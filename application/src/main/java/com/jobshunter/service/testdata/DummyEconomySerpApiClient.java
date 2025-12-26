@@ -31,4 +31,5 @@ public final class DummyEconomySerpApiClient implements AiJobsClient<SearchWithS
         )
     );
   }
+
 }

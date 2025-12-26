@@ -1,11 +1,10 @@
 package com.jobshunter.service.testdata;
 
-import com.jobshunter.ApplicationProperties;
-import com.jobshunter.ApplicationProperties.ModelSpecific;
-import com.jobshunter.model.Job;
 import com.jobshunter.model.GeminiJobSearchRequest;
+import com.jobshunter.model.Job;
 import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.clients.AiJobsClient;
+import com.jobshunter.service.clients.UrlExtractor;
 import com.jobshunter.service.clients.gemini.AbstractGeminiApiClient;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
@@ -18,24 +17,19 @@ import org.springframework.stereotype.Component;
 @ConditionalOnProperty(name = "gemini.enabled", havingValue = "false")
 public final class DummyEconomyGemini extends AbstractGeminiApiClient implements AiJobsClient<GeminiJobSearchRequest, List<Job>> {
 
-  private final ApplicationProperties properties;
-
-  public DummyEconomyGemini(
-      ApplicationProperties properties,
-      com.jobshunter.service.clients.UrlExtractor urlExtractor
-  ) {
+  public DummyEconomyGemini(UrlExtractor urlExtractor) {
     super(urlExtractor);
-    this.properties = properties;
   }
 
+
   @Override
-  public ModelSpecific getConfig() {
-    return properties.getGemini().getEconomy();
+  public String getSystemPromptFilename() {
+    return "jobsSystemPromptEconomy.txt";
   }
 
   @Override
   public List<Job> searchJobs(GeminiJobSearchRequest request) {
-    String model = getConfig().getModel();
+    String model = request.getPrompt().getEngineConfiguration().getModel();
     return List.of(
         new Job(95,
             "https://jobs.digitalhire.com/job-listing/opening/6W2b0Y7QrlHiOrwemePL8C?utm_campaign=google_jobs_apply&utm_source=google_jobs_apply&utm_medium=organic",

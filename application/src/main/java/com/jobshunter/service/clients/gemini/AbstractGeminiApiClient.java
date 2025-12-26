@@ -1,11 +1,10 @@
 package com.jobshunter.service.clients.gemini;
 
 import com.fasterxml.jackson.databind.json.JsonMapper;
-import com.jobshunter.ApplicationProperties.ModelSpecific;
-import com.jobshunter.model.Job;
 import com.jobshunter.dto.geminiRequest.Part;
 import com.jobshunter.dto.geminiResponse.GeminiGenerateContentResponse;
 import com.jobshunter.dto.geminiResponse.GeminiGenerateContentResponse.Candidate;
+import com.jobshunter.model.Job;
 import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.clients.UrlExtractor;
 import jakarta.annotation.PostConstruct;
@@ -14,7 +13,6 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Stream;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -33,13 +31,13 @@ public abstract class AbstractGeminiApiClient {
     this.urlExtractor = urlExtractor;
   }
 
-  public abstract ModelSpecific getConfig();
+  public abstract String getSystemPromptFilename();
 
   @PostConstruct
   protected void init() {
     JsonMapper mapper = JsonMapper.builder().findAndAddModules().build();
     try (var inputStream = getClass().getClassLoader().getResourceAsStream(
-        "prompts/" + getConfig().getSystemPromptFile())) {
+        "prompts/" + getSystemPromptFilename())) {
       //noinspection DataFlowIssue
       jobsSystemPrompt = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
     } catch (Exception e) {

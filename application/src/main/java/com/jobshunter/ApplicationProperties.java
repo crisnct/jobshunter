@@ -47,8 +47,6 @@ public class ApplicationProperties {
     private String apiKey;
     private int maxTokens;
     private int delay;
-    private ModelSpecific economy;
-    private ModelSpecific premium;
   }
 
   @Data
@@ -58,15 +56,6 @@ public class ApplicationProperties {
     private String apiKey;
     private int maxTokens;
     private int delay;
-    private ModelSpecific economy;
-    private ModelSpecific premium;
-  }
-
-  @Data
-  public static class ModelSpecific {
-
-    private String model;
-    private String systemPromptFile;
   }
 
   @Data

@@ -3,7 +3,6 @@ package com.jobshunter.service.application.hunting;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.jobshunter.ApplicationProperties;
-import com.jobshunter.database.entities.EngineConfigurationEntity;
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.entities.UserPromptEntity;
 import com.jobshunter.dto.serpRequest.SearchWithSerpRequest;
@@ -38,9 +37,6 @@ public class SerpJobHunting extends GenericJobHunting<SearchWithSerpRequest> {
   public SearchWithSerpRequest createRequest(UserEntity user, UserPromptEntity prompt) {
     try {
       SearchWithSerpRequest request = mapper.readValue(prompt.getPrompt(), SearchWithSerpRequest.class);
-      EngineConfigurationEntity engineConfig = prompt.getEngineConfiguration();
-      request.setEngineTier(engineConfig.getTier());
-      request.setEngineType(engineConfig.getEngineType());
       request.setUsername(user.getUsername());
       request.setPrompt(prompt);
       return request;

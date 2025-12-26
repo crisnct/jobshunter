@@ -16,7 +16,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -80,16 +83,28 @@ public class JobsValidator {
   }
 
   private void validateURL(@NotNull Job job, Set<String> invalidURLs) {
-    if (!isValidJob(job.getUrl())) {
+    Pair<Boolean, String> validJob = isValidJob(job.getUrl());
+    if (validJob.getFirst()) {
+      String desc = job.getDescription() != null ? job.getDescription() : "";
+      desc += "\n" + cleanupHTML(validJob.getSecond());
+      job.setDescription(desc);
+    } else {
       invalidURLs.add(job.getUrl());
     }
   }
 
-  private boolean isValidJob(String jobURL) {
+  private String cleanupHTML(String body) {
+    Document document = Jsoup.parse(body);
+    document.select("script, style, nav, footer, header, aside").remove();
+    document.select("button, a").remove();
+    return document.text();
+  }
+
+  private Pair<Boolean, String> isValidJob(String jobURL) {
     URI uri = toSafeHttpUri(jobURL);
     if (uri == null) {
       log.error("Skipping URL {} because it is not a permitted HTTP/HTTPS target", jobURL);
-      return false;
+      return Pair.of(false, "");
     }
     try {
       String body = browserSimulator.openPage(uri.toString()).getBody();
@@ -100,10 +115,10 @@ public class JobsValidator {
       } else {
         log.info("Valid URL: {}", jobURL);
       }
-      return !isExpired;
+      return Pair.of(!isExpired, isExpired ? "" : body);
     } catch (Throwable e) {
       log.error("Invalid URL: {}", jobURL);
-      return false;
+      return Pair.of(false, "");
     }
   }
 

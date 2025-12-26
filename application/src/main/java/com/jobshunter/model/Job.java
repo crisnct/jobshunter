@@ -1,5 +1,6 @@
 package com.jobshunter.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.NotNull;
@@ -17,6 +18,9 @@ public class Job {
   @Size(max = 255)
   @NotNull
   private String url;
+
+  @JsonIgnore
+  private String description;
 
   private String source;
 

@@ -29,7 +29,7 @@ public class SearchWithSerpRequest extends AIJobSearchRequest {
   /// {@snippet :
   ///   google.cl
   ///   google.ro
-  ///   google.com.
+  ///   google.com
   ///   .....
   ///}
   //See more here https://serpapi.com/google-domains

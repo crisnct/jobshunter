@@ -1,9 +1,8 @@
 package com.jobshunter.service.testdata;
 
 import com.jobshunter.ApplicationProperties;
-import com.jobshunter.ApplicationProperties.ModelSpecific;
-import com.jobshunter.model.Job;
 import com.jobshunter.model.GptJobSearchRequest;
+import com.jobshunter.model.Job;
 import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.clients.AiJobsClient;
 import com.jobshunter.service.clients.gpt.AbstractGptApiClient;
@@ -23,13 +22,13 @@ public final class DummyPremiumGpt extends AbstractGptApiClient implements AiJob
   }
 
   @Override
-  public ModelSpecific getConfig() {
-    return properties.getGpt().getPremium();
+  public String getSystemPromptFilename() {
+    return "jobsSystemPromptPremium.txt";
   }
 
   @Override
-  public List<Job> searchWithModel(String systemPrompt, String userPrompt, ModelSpecific cfg, String fileId) {
-    String model = getConfig().getModel();
+  public List<Job> searchWithModel(String systemPrompt, GptJobSearchRequest request) {
+    String model = request.getPrompt().getEngineConfiguration().getModel();
     return List.of(
         new Job(95,
             "https://jobs.digitalhire.com/job-listing/opening/6W2b0Y7QrlHiOrwemePL8C?utm_campaign=google_jobs_apply&utm_source=google_jobs_apply&utm_medium=organic",

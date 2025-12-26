@@ -1,13 +1,12 @@
 package com.jobshunter.service.clients.gpt;
 
 import com.jobshunter.ApplicationProperties;
-import com.jobshunter.ApplicationProperties.ModelSpecific;
-import com.jobshunter.model.Job;
-import com.jobshunter.model.GptJobSearchRequest;
 import com.jobshunter.dto.gptRequest.GptJobsPayload;
 import com.jobshunter.dto.gptRequest.Reasoning;
 import com.jobshunter.dto.gptRequest.tools.Tools;
 import com.jobshunter.dto.gptResponse.GptCompletionResponse;
+import com.jobshunter.model.GptJobSearchRequest;
+import com.jobshunter.model.Job;
 import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.clients.AiJobsClient;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
@@ -44,22 +43,17 @@ public non-sealed class PremiumGptJobSearchImpl extends AbstractGptApiClient
   }
 
   @Override
-  public ModelSpecific getConfig() {
-    return properties.getGpt().getPremium();
-  }
-
-  @Override
   @CircuitBreaker(name = "gptPremium", fallbackMethod = "fallbackSearch")
   @Bulkhead(name = "gptPremiumBulkhead", type = Bulkhead.Type.SEMAPHORE)
-  public List<Job> searchWithModel(String systemPrompt, String userPrompt, ModelSpecific cfg, String fileId) {
+  public List<Job> searchWithModel(String systemPrompt, GptJobSearchRequest request) {
     try {
       GptJobsPayload payload = GptJobsPayload.builder()
-          .model(cfg.getModel())
+          .model(request.getPrompt().getEngineConfiguration().getModel())
           .reasoning(new Reasoning("high"))
           .max_output_tokens(properties.getGpt().getMaxTokens())
           .addTools(Tools.builder().setDeepSearch().build())
           .addSystemPrompt(systemPrompt)
-          .addUserPrompt(userPrompt, fileId)
+          .addUserPrompt(request.getPrompt().getPrompt(), request.getFileId())
           .build();
 
       GptCompletionResponse response = restClient.post()
@@ -79,9 +73,13 @@ public non-sealed class PremiumGptJobSearchImpl extends AbstractGptApiClient
   }
 
   @SuppressWarnings("unused")
-  private List<Job> fallbackSearch(String systemPrompt, String userPrompt, ModelSpecific cfg, String fileId, Throwable t) {
+  private List<Job> fallbackSearch(String systemPrompt, GptJobSearchRequest request, Throwable t) {
     log.error("Premium GPT call short-circuited/bulkheaded: {}", t.getMessage());
     return List.of();
   }
 
+  @Override
+  public String getSystemPromptFilename() {
+    return "jobsSystemPromptPremium.txt";
+  }
 }

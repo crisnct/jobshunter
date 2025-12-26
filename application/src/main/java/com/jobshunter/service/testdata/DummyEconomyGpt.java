@@ -1,11 +1,11 @@
 package com.jobshunter.service.testdata;
 
 import com.jobshunter.ApplicationProperties;
-import com.jobshunter.ApplicationProperties.ModelSpecific;
-import com.jobshunter.model.Job;
 import com.jobshunter.model.GptJobSearchRequest;
+import com.jobshunter.model.Job;
 import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.clients.AiJobsClient;
+import com.jobshunter.service.clients.UrlExtractor;
 import com.jobshunter.service.clients.gpt.AbstractGptApiClient;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
@@ -18,18 +18,13 @@ import org.springframework.stereotype.Component;
 @ConditionalOnProperty(name = "gpt.enabled", havingValue = "false")
 public final class DummyEconomyGpt extends AbstractGptApiClient implements AiJobsClient<GptJobSearchRequest, List<Job>> {
 
-  public DummyEconomyGpt(ApplicationProperties properties, com.jobshunter.service.clients.UrlExtractor urlExtractor) {
+  public DummyEconomyGpt(ApplicationProperties properties, UrlExtractor urlExtractor) {
     super(properties, urlExtractor);
   }
 
   @Override
-  public ModelSpecific getConfig() {
-    return properties.getGpt().getEconomy();
-  }
-
-  @Override
-  public List<Job> searchWithModel(String systemPrompt, String userPrompt, ModelSpecific cfg, String fileId) {
-    String model = getConfig().getModel();
+  public List<Job> searchWithModel(String systemPrompt, GptJobSearchRequest request) {
+    String model = request.getPrompt().getEngineConfiguration().getModel();
     return List.of(
         new Job(95,
             "https://jobs.digitalhire.com/job-listing/opening/6W2b0Y7QrlHiOrwemePL8C?utm_campaign=google_jobs_apply&utm_source=google_jobs_apply&utm_medium=organic",
@@ -44,5 +39,10 @@ public final class DummyEconomyGpt extends AbstractGptApiClient implements AiJob
             model
         )
     );
+  }
+
+  @Override
+  public String getSystemPromptFilename() {
+    return "jobsSystemPromptEconomy.txt";
   }
 }

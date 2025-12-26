@@ -1,1 +1,1 @@
-Calculate a matching score for the following job description based on the attached resume.
+Calculate a matching score for the attached job description and attached resume.
