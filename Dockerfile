@@ -40,6 +40,6 @@ RUN chmod +x /app/docker-entrypoint.sh
 ENV JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=75"
 ENV SPRING_PROFILES_ACTIVE=prod
 
-EXPOSE 8081
+EXPOSE 8443
 
 ENTRYPOINT ["/app/docker-entrypoint.sh"]

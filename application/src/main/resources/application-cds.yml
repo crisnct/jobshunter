@@ -1,3 +1,9 @@
+# Avoid port conflicts during image build
+server:
+  port: 0
+  ssl:
+    enabled: false
+
 spring:
   config:
     activate:
@@ -36,10 +42,6 @@ gpt:
 
 serpApi:
   enabled: false
-
-# Avoid port conflicts during image build
-server:
-  port: 0
 
 logging:
   level:

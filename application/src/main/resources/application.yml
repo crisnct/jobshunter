@@ -1,5 +1,20 @@
 server:
-  port: 8081
+  port: ${SSL_PORT:8443}
+  ssl:
+    enabled: true
+    key-store: ${SSL_KEY_STORE:classpath:keystore.p12}
+    key-store-password: ${SSL_KEY_STORE_PASSWORD:changeit}
+    key-store-type: ${SSL_KEY_STORE_TYPE:PKCS12}
+    key-alias: ${SSL_KEY_ALIAS:tomcat}
+    enabled-protocols: TLSv1.3,TLSv1.2
+    ciphers: >
+      TLS_AES_256_GCM_SHA384,
+      TLS_AES_128_GCM_SHA256
+  servlet:
+    session:
+      cookie:
+        secure: true
+        http-only: false
   http2:
     enabled: true
 

@@ -82,6 +82,11 @@ public class SecurityConfig {
             .requestMatchers("/actuator/health", "/actuator/info").permitAll()
             .anyRequest().authenticated()
         )
+        .headers(h -> h
+            .httpStrictTransportSecurity(hsts ->
+                hsts.includeSubDomains(true).maxAgeInSeconds(31536000)
+            )
+        )
         .authenticationProvider(daoAuthenticationProvider(userDetailsService, passwordEncoder))
         .addFilterBefore(securityHeadersFilter, AnonymousAuthenticationFilter.class)
         .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
@@ -120,7 +125,7 @@ public class SecurityConfig {
   }
 
   @Bean
-  public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
+  public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) {
     return configuration.getAuthenticationManager();
   }
 
