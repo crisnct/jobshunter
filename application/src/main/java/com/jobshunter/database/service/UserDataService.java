@@ -10,7 +10,6 @@ import com.jobshunter.database.repository.UserCvRepository;
 import com.jobshunter.database.repository.UserJobRepository;
 import com.jobshunter.database.repository.UserPromptRepository;
 import com.jobshunter.database.repository.UserRepository;
-import com.jobshunter.model.EngineSelection;
 import com.jobshunter.model.EngineTier;
 import com.jobshunter.model.EngineType;
 import com.jobshunter.model.Job;
@@ -21,6 +20,7 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.Hibernate;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -46,12 +46,32 @@ public class UserDataService {
     return userJobRepository.findAllByUsernameWithUser(username);
   }
 
+  @Transactional(readOnly = true)
   public List<UserEntity> getAllUsers() {
-    return userRepository.findAllWithPrompts();
+    List<UserEntity> all = userRepository.findAll();
+    for (UserEntity user : all) {
+      Hibernate.initialize(user.getPrompts());
+      Hibernate.initialize(user.getRoles());
+      user.getPrompts().forEach(p -> Hibernate.initialize(p.getEngineConfiguration()));
+      Hibernate.initialize(user.getCv());
+    }
+    return all;
   }
 
   public Optional<UserEntity> getUser(String username) {
-    return userRepository.findByUsernameWithPrompts(username);
+    return userRepository.findByUsername(username);
+  }
+
+  @Transactional(readOnly = true)
+  public Optional<UserEntity> getUserCompleteInfo(String username) {
+    Optional<UserEntity> userop = userRepository.findByUsername(username);
+    if (userop.isPresent()) {
+      UserEntity entity = userop.get();
+      Hibernate.initialize(entity.getPrompts());
+      entity.getPrompts().forEach(p -> Hibernate.initialize(p.getEngineConfiguration()));
+      Hibernate.initialize(entity.getCv());
+    }
+    return userop;
   }
 
   @SuppressWarnings("UnusedReturnValue")
@@ -72,11 +92,11 @@ public class UserDataService {
     jobs.forEach(job -> addJobUrl(user, job.getUrl()));
   }
 
-  public UserPromptEntity updatePrompt(UserEntity user, EngineType engine, EngineTier tier, String prompt) {
+  public UserPromptEntity updatePrompt(UserEntity user, EngineType engine, EngineTier tier, Long promptId, String prompt) {
     EngineConfigurationEntity engineConfig = engineRepository.findByEngineTypeAndTier(engine, tier)
-        .orElseThrow(()-> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid combination of engineType and tier"));
-
-    UserPromptEntity entity = userPromptRepository.findByUserIdAndPromptIgnoreCaseAndEngineConfigurationId(user.getId(), prompt, engineConfig.getId())
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid combination of engineType and tier"));
+    UserPromptEntity entity = userPromptRepository
+        .findByIdAndUserIdAndEngineConfigurationId(promptId == null ? -1 : promptId, user.getId(), engineConfig.getId())
         .orElseGet(() -> {
           UserPromptEntity newEntity = new UserPromptEntity();
           newEntity.setUser(user);
@@ -146,10 +166,6 @@ public class UserDataService {
 
   public void deleteUserPrompts(List<Long> prompts) {
     userPromptRepository.deleteAllByIdInBatch(prompts);
-  }
-
-  public List<UserPromptEntity> getPromptsFor(UserEntity user, List<EngineSelection> engines) {
-    return userPromptRepository.findByUserIdAndEngineSelections(user.getId(), engines);
   }
 
 }

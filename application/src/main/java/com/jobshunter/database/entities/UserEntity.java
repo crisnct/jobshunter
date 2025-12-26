@@ -88,7 +88,7 @@ public class UserEntity implements UserDetails {
   private Set<RoleEntity> roles = new HashSet<>();
 
   @JsonIgnore
-  @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+  @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
   private List<UserJobEntity> jobs = new ArrayList<>();
 
   @JsonIgnore

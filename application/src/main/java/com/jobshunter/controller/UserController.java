@@ -66,6 +66,7 @@ public class UserController {
   private final ObjectMapper objectMapper;
 
   @GetMapping("/me")
+  @Transactional(readOnly = true)
   public ResponseEntity<?> me(Authentication authentication) {
     if (authentication == null || authentication.getName() == null) {
       return ResponseEntity.status(401).body(Map.of("error", "Unauthorized"));
@@ -83,7 +84,7 @@ public class UserController {
       @RequestBody
       SearchJobsRequest request
   ) {
-    return userDataService.getUser(request.username())
+    return userDataService.getUserCompleteInfo(request.username())
         .map(user -> new SearchJobOrder(user, new ArrayList<>(request.engines())))
         .map(jobHuntService::searchJobsForUser)
         .map(ResponseEntity::ok)
@@ -143,11 +144,13 @@ public class UserController {
         user.isNotifyEmail(),
         user.isEmailVerified(),
         user.getVerificationToken(),
-        latestCv.getGptFileId(),
-        latestCv.getGeminiFileId(),
+        latestCv == null ? "" : latestCv.getGptFileId(),
+        latestCv == null ? "" : latestCv.getGeminiFileId(),
         formatDateTime(user.getLastJobs()),
         user.getTimeInterval(),
-        prompts.stream().map(p -> String.format("id: %d, engine: %s, prompt: %s", p.getId(), p.getEngineConfiguration(), p.getPrompt())).toList(),
+        prompts.stream()
+            .map(p -> String.format("id: %d, engine: %s, prompt: %s", p.getId(), p.getEngineConfiguration(), p.getPrompt()))
+            .toList(),
         formatDateTime(user.getCreatedAt()),
         roles
     );
@@ -204,8 +207,8 @@ public class UserController {
     return ResponseEntity.ok(Map.of("message", "Account deleted successfully"));
   }
 
-  @PutMapping("/update")
   @Transactional
+  @PutMapping("/update")
   public ResponseEntity<?> updateUser(@Valid @RequestBody UserUpdateRequest request) {
     Optional<UserEntity> optionalUser = userDataService.getUser(request.username());
     if (optionalUser.isEmpty()) {
@@ -223,7 +226,7 @@ public class UserController {
       request.serpPrompts().forEach(serpPrompt -> {
         try {
           String promptJson = objectMapper.writeValueAsString(serpPrompt);
-          UserPromptEntity prompt = userDataService.updatePrompt(user, EngineType.SERP, EngineTier.ECONOMY, promptJson);
+          UserPromptEntity prompt = userDataService.updatePrompt(user, EngineType.SERP, EngineTier.ECONOMY, serpPrompt.id(), promptJson);
           promptsToDelete.remove(prompt.getId());
         } catch (JsonProcessingException e) {
           throw new IllegalArgumentException("Invalid SERP prompt payload", e);
@@ -236,7 +239,7 @@ public class UserController {
         if (aiPrompt.engineType() != EngineType.GPT && aiPrompt.engineType() != EngineType.GEMINI) {
           throw new IllegalArgumentException("engine_type must be GPT or GEMINI");
         }
-        UserPromptEntity prompt = userDataService.updatePrompt(user, aiPrompt.engineType(), aiPrompt.engineTier(), aiPrompt.prompt());
+        UserPromptEntity prompt = userDataService.updatePrompt(user, aiPrompt.engineType(), aiPrompt.engineTier(), aiPrompt.id(), aiPrompt.prompt());
         promptsToDelete.remove(prompt.getId());
       });
     }

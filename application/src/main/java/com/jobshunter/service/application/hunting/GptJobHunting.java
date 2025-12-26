@@ -3,7 +3,6 @@ package com.jobshunter.service.application.hunting;
 import com.jobshunter.ApplicationProperties;
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.entities.UserPromptEntity;
-import com.jobshunter.database.service.UserDataService;
 import com.jobshunter.model.GptJobSearchRequest;
 import com.jobshunter.model.Job;
 import com.jobshunter.service.clients.AiJobsClient;
@@ -23,10 +22,9 @@ public class GptJobHunting extends GenericJobHunting<GptJobSearchRequest> {
       @Qualifier("gptSearchExecutor") Executor gptSearchExecutor,
       @Qualifier("EconomyJobsClientGPT") AiJobsClient<GptJobSearchRequest, List<Job>> gptEconomy,
       @Qualifier("PremiumJobsClientGPT") AiJobsClient<GptJobSearchRequest, List<Job>> gptPremium,
-      UserDataService userDataService,
       ApplicationProperties properties
   ) {
-    super(gptSearchExecutor, gptEconomy, gptPremium, userDataService);
+    super(gptSearchExecutor, gptEconomy, gptPremium);
     this.properties = properties;
   }
 

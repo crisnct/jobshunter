@@ -6,7 +6,6 @@ import com.jobshunter.ApplicationProperties;
 import com.jobshunter.database.entities.EngineConfigurationEntity;
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.entities.UserPromptEntity;
-import com.jobshunter.database.service.UserDataService;
 import com.jobshunter.dto.serpRequest.SearchWithSerpRequest;
 import com.jobshunter.model.Job;
 import com.jobshunter.service.clients.AiJobsClient;
@@ -28,10 +27,9 @@ public class SerpJobHunting extends GenericJobHunting<SearchWithSerpRequest> {
       @Qualifier("EconomyJobsClientSerp") AiJobsClient<SearchWithSerpRequest, List<Job>> serpApiClient,
       @Qualifier("serpApiExecutor") Executor serpApiExecutor,
       JsonMapper mapper,
-      UserDataService userDataService,
       ApplicationProperties properties
   ) {
-    super(serpApiExecutor, serpApiClient, null, userDataService);
+    super(serpApiExecutor, serpApiClient, null);
     this.mapper = mapper;
     this.properties = properties;
   }

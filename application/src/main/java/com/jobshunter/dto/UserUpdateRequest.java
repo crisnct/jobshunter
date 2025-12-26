@@ -7,6 +7,7 @@ import com.jobshunter.dto.serpRequest.WorkType;
 import com.jobshunter.model.EngineTier;
 import com.jobshunter.model.EngineType;
 import com.jobshunter.processor.SqlInjectionSafe;
+import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -28,6 +29,10 @@ public record UserUpdateRequest(
   @JsonInclude(JsonInclude.Include.NON_NULL)
   @JsonIgnoreProperties(ignoreUnknown = true)
   public record SerpPromptUpdate(
+      @Nullable
+      @Positive
+      Long id,
+
       @NotBlank(message = "Query must not be blank")
       @Size(max = 2000)
       @JsonProperty("q")
@@ -54,6 +59,8 @@ public record UserUpdateRequest(
 
       WorkType workType,
 
+      @Nullable
+      @Positive
       Integer radius,
 
       @Size(max = 2)
@@ -70,6 +77,10 @@ public record UserUpdateRequest(
   @JsonInclude(JsonInclude.Include.NON_NULL)
   @JsonIgnoreProperties(ignoreUnknown = true)
   public record AiPromptUpdate(
+      @Nullable
+      @Positive
+      Long id,
+
       @SqlInjectionSafe
       @NotBlank
       @Size(max = 3000)

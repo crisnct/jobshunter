@@ -3,7 +3,6 @@ package com.jobshunter.service.application.hunting;
 import com.jobshunter.ApplicationProperties;
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.entities.UserPromptEntity;
-import com.jobshunter.database.service.UserDataService;
 import com.jobshunter.model.GeminiJobSearchRequest;
 import com.jobshunter.model.Job;
 import com.jobshunter.service.clients.AiJobsClient;
@@ -23,9 +22,8 @@ public class GeminiJobHunting extends GenericJobHunting<GeminiJobSearchRequest> 
   public GeminiJobHunting(
       @Qualifier("geminiSearchExecutor") Executor geminiSearchExecutor,
       @Qualifier("EconomyJobsClientGemini") AiJobsClient<GeminiJobSearchRequest, List<Job>> geminiEconomy,
-      ApplicationProperties properties,
-      UserDataService userDataService) {
-    super(geminiSearchExecutor, geminiEconomy, null, userDataService);
+      ApplicationProperties properties) {
+    super(geminiSearchExecutor, geminiEconomy, null);
     this.properties = properties;
   }
 

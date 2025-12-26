@@ -2,7 +2,6 @@ package com.jobshunter.service.application.hunting;
 
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.entities.UserPromptEntity;
-import com.jobshunter.database.service.UserDataService;
 import com.jobshunter.dto.AIJobSearchRequest;
 import com.jobshunter.model.Job;
 import com.jobshunter.model.SearchJobOrder;
@@ -22,8 +21,6 @@ public abstract non-sealed class GenericJobHunting<T extends AIJobSearchRequest>
 
   private final Executor geminiSearchExecutor;
 
-  private final UserDataService userDataService;
-
   private final AiJobsClient<T, List<Job>> economyModel;
 
   private final AiJobsClient<T, List<Job>> premiumModel;
@@ -31,13 +28,11 @@ public abstract non-sealed class GenericJobHunting<T extends AIJobSearchRequest>
   public GenericJobHunting(
       Executor executor,
       AiJobsClient<T, List<Job>> economyModel,
-      AiJobsClient<T, List<Job>> premiumModel,
-      UserDataService userDataService
+      AiJobsClient<T, List<Job>> premiumModel
   ) {
     this.geminiSearchExecutor = executor;
     this.economyModel = economyModel;
     this.premiumModel = premiumModel;
-    this.userDataService = userDataService;
   }
 
   public abstract T createRequest(UserEntity user, UserPromptEntity prompt);
@@ -49,7 +44,7 @@ public abstract non-sealed class GenericJobHunting<T extends AIJobSearchRequest>
     UserEntity user = order.user();
     List<CompletableFuture<Void>> futures = new ArrayList<>();
     int delayCounter = 0;
-    List<UserPromptEntity> prompts = userDataService.getPromptsFor(user, order.engines());
+    List<UserPromptEntity> prompts = user.getPrompts().stream().filter(p -> contains(order, p)).toList();
     for (UserPromptEntity prompt : prompts) {
       Executor delayedExecutor = CompletableFuture.delayedExecutor(
           (long) delayCounter++ * getDelayTaskExecution(),
@@ -76,5 +71,11 @@ public abstract non-sealed class GenericJobHunting<T extends AIJobSearchRequest>
       default -> throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid engine");
     };
     jobsSync.addJobs(jobsFound, request.getEngineType(), request.getEngineTier(), request.getPrompt().getId());
+  }
+
+  private boolean contains(SearchJobOrder order, UserPromptEntity prompt) {
+    return order.engines().stream()
+        .anyMatch(p -> p.type() == prompt.getEngineConfiguration().getEngineType() &&
+            p.tier() == prompt.getEngineConfiguration().getTier());
   }
 }

@@ -12,41 +12,21 @@ import org.springframework.data.repository.query.Param;
 @PackageExpected("com.jobshunter.database.service")
 public interface UserRepository extends JpaRepository<UserEntity, Long> {
 
-    Optional<UserEntity> findByUsername(@SqlInjectionSafe String username);
+  Optional<UserEntity> findByUsername(@SqlInjectionSafe String username);
 
-    Optional<UserEntity> findByVerificationToken(@SqlInjectionSafe String verificationToken);
+  Optional<UserEntity> findByVerificationToken(@SqlInjectionSafe String verificationToken);
 
-    boolean existsByUsernameIgnoreCase(@SqlInjectionSafe String username);
+  boolean existsByUsernameIgnoreCase(@SqlInjectionSafe String username);
 
-    boolean existsByEmailIgnoreCase(@SqlInjectionSafe String email);
+  boolean existsByEmailIgnoreCase(@SqlInjectionSafe String email);
 
-    boolean existsByPhoneNumberIgnoreCase(@SqlInjectionSafe String phonedNumber);
+  boolean existsByPhoneNumberIgnoreCase(@SqlInjectionSafe String phonedNumber);
 
-    @Query("SELECT u.email FROM UserEntity u JOIN u.roles r WHERE r.name = :roleName")
-    List<String> findEmailsByRole(
-        @Param("roleName")
-        @SqlInjectionSafe
-        String roleName
-    );
+  @Query("SELECT u.email FROM UserEntity u JOIN u.roles r WHERE r.name = :roleName")
+  List<String> findEmailsByRole(
+      @Param("roleName")
+      @SqlInjectionSafe
+      String roleName
+  );
 
-    @Query("""
-        SELECT DISTINCT u
-        FROM UserEntity u
-        LEFT JOIN FETCH u.prompts p
-        LEFT JOIN FETCH p.engineConfiguration
-        WHERE lower(u.username) = lower(:username)
-        """)
-    Optional<UserEntity> findByUsernameWithPrompts(
-        @Param("username")
-        @SqlInjectionSafe
-        String username
-    );
-
-    @Query("""
-        SELECT DISTINCT u
-        FROM UserEntity u
-        LEFT JOIN FETCH u.prompts p
-        LEFT JOIN FETCH p.engineConfiguration
-        """)
-    List<UserEntity> findAllWithPrompts();
 }

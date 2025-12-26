@@ -62,8 +62,6 @@ public class SecurityConfig {
       UserDetailsService userDetailsService,
       PasswordEncoder passwordEncoder
   ) {
-    // SECURITY FIX: Configure CSRF for stateless JWT authentication
-    // Use custom CSRF token repository that works with stateless sessions
     CsrfTokenRequestAttributeHandler requestHandler = new CsrfTokenRequestAttributeHandler();
     requestHandler.setCsrfRequestAttributeName("_csrf");
 
