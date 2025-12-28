@@ -125,6 +125,15 @@ resilience4j.ratelimiter:
       timeoutDuration: 5m              # Wait up to 5min for a slot
       writableStackTraceEnabled: false
 
+# TIME LIMITER ---------------------------------------------------------------------------
+
+resilience4j.timelimiter:
+  instances:
+    browserSimulatorLimiter:
+      timeoutDuration: 30s             # Timeout for browser page opening operations
+      cancelRunningFuture: true        # Cancel the future if timeout occurs
+      writableStackTraceEnabled: false
+
 # CIRCUIT BREAKER ---------------------------------------------------------------------------
 
 #registerHealthIndicator: expose a health indicator for this circuit breaker via actuator.

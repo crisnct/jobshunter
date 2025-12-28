@@ -60,3 +60,4 @@ open module com.jobshunter.application {
   requires io.swagger.v3.oas.annotations;
 
 }
+

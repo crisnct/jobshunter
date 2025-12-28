@@ -75,7 +75,7 @@ public class JobHuntService {
       JobsValidator jobsValidator,
       JobRedirection jobRedirection,
       ApplicationProperties properties,
-      @Qualifier("browseURLExecutor") Executor miscExecutor,
+      @Qualifier("miscellaneousExecutor") Executor miscExecutor,
       @Qualifier("geminiSearchExecutor") Executor geminiExecutor
   ) {
     this.whatsappNotifierService = whatsappNotifierService;

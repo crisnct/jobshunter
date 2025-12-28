@@ -20,18 +20,18 @@ public class Monitoring {
 
   private final ThreadPoolExecutor serpApiExecutor;
 
-  private final ThreadPoolExecutor browseURLExecutor;
+  private final ThreadPoolExecutor miscellaneousExecutor;
 
   public Monitoring(
       @Qualifier("gptSearchExecutor") ThreadPoolExecutor gptSearchExecutor,
       @Qualifier("geminiSearchExecutor") ThreadPoolExecutor geminiSearchExecutor,
       @Qualifier("serpApiExecutor") ThreadPoolExecutor serpApiExecutor,
-      @Qualifier("browseURLExecutor") ThreadPoolExecutor browseURLExecutor
+      @Qualifier("miscellaneousExecutor") ThreadPoolExecutor miscellaneousExecutor
   ) {
     this.gptSearchExecutor = gptSearchExecutor;
     this.geminiSearchExecutor = geminiSearchExecutor;
     this.serpApiExecutor = serpApiExecutor;
-    this.browseURLExecutor = browseURLExecutor;
+    this.miscellaneousExecutor = miscellaneousExecutor;
   }
 
   @Scheduled(fixedDelay = 10000)
@@ -39,7 +39,7 @@ public class Monitoring {
     monitorExecutor("Gpt executor", gptSearchExecutor);
     monitorExecutor("Gemini executor", geminiSearchExecutor);
     monitorExecutor("Serp executor", serpApiExecutor);
-    monitorExecutor("Miscellaneous executor", browseURLExecutor);
+    monitorExecutor("MiscellaneousExecutor executor", miscellaneousExecutor);
   }
 
   private void monitorExecutor(String executorName, ThreadPoolExecutor executor) {

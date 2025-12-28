@@ -90,7 +90,7 @@ public non-sealed class SerpApiClientImpl implements AiJobsClient<SearchWithSerp
     log.info("Searching jobs with Serp Api, query: {}", request.getQuery());
     final URI uri = this.buildUri(request, nextPageToken);
     try {
-      ResponseEntity<String> response = browserSimulator.openPage(uri.toString());
+      ResponseEntity<String> response = browserSimulator.openPage(uri.toString()).toCompletableFuture().get();
       if (response.getStatusCode().is2xxSuccessful()) {
         log.info("SERP API request executed successfully");
       }

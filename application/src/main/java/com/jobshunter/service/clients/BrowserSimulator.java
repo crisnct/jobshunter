@@ -1,9 +1,11 @@
 package com.jobshunter.service.clients;
 
 import com.jobshunter.ApplicationProperties;
+import io.github.resilience4j.timelimiter.annotation.TimeLimiter;
 import jakarta.validation.constraints.NotNull;
 import java.net.URI;
-import java.util.regex.Pattern;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hc.client5.http.protocol.HttpClientContext;
@@ -18,8 +20,6 @@ import org.springframework.web.client.RestClient;
 public class BrowserSimulator {
 
   public static final ScopedValue<HttpClientContext> HTTP_CONTEXT = ScopedValue.newInstance();
-
-  private static final Pattern HOST_PATTERN = Pattern.compile("(?i)^(?:https?://)?([^/:?#]+)");
 
   private static final MediaType[] BROWSER_ACCEPT = {
       MediaType.TEXT_HTML,
@@ -36,35 +36,38 @@ public class BrowserSimulator {
 
   private final RestClient restClient;
 
-  public ResponseEntity<String> openPage(String url) {
-    try {
-      return restClient.get()
-          .uri(url)
-          .accept(MediaType.ALL)
-          .header("User-Agent", "JobsHunter" + System.currentTimeMillis() + "in64; x64)")
-          .header("Accept-Language", ACCEPT_LANGUAGE_HEADER)
-          .retrieve()
-          .toEntity(String.class);
-    } catch (Throwable ex) {
-      log.error(
-          """
-              First time failure about getting the html
-          """
-      );
-      return restClient.get()
-          .uri(url)
-          .accept(BROWSER_ACCEPT)
-          .header("Referer", "JobsHunter" + System.currentTimeMillis())
-          .header("Accept-Language", ACCEPT_LANGUAGE_HEADER)
-          .header("Connection", CONNECTION_HEADER)
-          .header("User-Agent", "JobsHunter" + System.currentTimeMillis() + "in64; x64)")//This is mandatory hack
-          .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
-          .header("Accept-Language", "en-US,en;q=0.5")
-          .header("Accept-Encoding", "gzip, deflate")
-          .header("Connection", "keep-alive")
-          .retrieve()
-          .toEntity(String.class);
-    }
+  @TimeLimiter(name = "browserSimulatorLimiter")
+  public CompletionStage<ResponseEntity<String>> openPage(String url) {
+    return CompletableFuture.supplyAsync(() -> {
+      try {
+        return restClient.get()
+            .uri(url)
+            .accept(MediaType.ALL)
+            .header("User-Agent", "JobsHunter" + System.currentTimeMillis() + "in64; x64)")
+            .header("Accept-Language", ACCEPT_LANGUAGE_HEADER)
+            .retrieve()
+            .toEntity(String.class);
+      } catch (Throwable ex) {
+        log.error(
+            """
+                First time failure about getting the html
+            """
+        );
+        return restClient.get()
+            .uri(url)
+            .accept(BROWSER_ACCEPT)
+            .header("Referer", "JobsHunter" + System.currentTimeMillis())
+            .header("Accept-Language", ACCEPT_LANGUAGE_HEADER)
+            .header("Connection", CONNECTION_HEADER)
+            .header("User-Agent", "JobsHunter" + System.currentTimeMillis() + "in64; x64)")//This is mandatory hack
+            .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
+            .header("Accept-Language", "en-US,en;q=0.5")
+            .header("Accept-Encoding", "gzip, deflate")
+            .header("Connection", "keep-alive")
+            .retrieve()
+            .toEntity(String.class);
+      }
+    });
   }
 
   public String getFinalRedirectedURL(@NotNull String url) {
@@ -72,7 +75,7 @@ public class BrowserSimulator {
       return ScopedValue.where(HTTP_CONTEXT, HttpClientContext.create())
           .call(() -> {
             try {
-              this.openPage(url);
+              this.openPage(url).toCompletableFuture().get();
 
               HttpClientContext context = HTTP_CONTEXT.get();
               URI finalUri =

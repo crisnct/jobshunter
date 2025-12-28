@@ -17,3 +17,7 @@ gpt:
 serpApi:
   enabled: false
   maxPageSearch: 1
+
+security:
+  httpsOnly:
+    enabled: false

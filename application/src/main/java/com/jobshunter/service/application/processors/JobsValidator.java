@@ -18,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.springframework.data.util.Pair;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -88,7 +89,8 @@ public class JobsValidator implements JobProcessor {
     }
     log.info("Getting body from URL {}", jobURL);
     try {
-      String body = browserSimulator.openPage(uri.toString()).getBody();
+      ResponseEntity<String> response = browserSimulator.openPage(uri.toString()).toCompletableFuture().get();
+      String body = response.getBody();
       String html = body.toLowerCase();
       boolean isExpired = expiredJobsPatterns.stream().anyMatch(pattern -> pattern.matcher(html).find());
       if (isExpired) {
@@ -98,7 +100,7 @@ public class JobsValidator implements JobProcessor {
       }
       return Pair.of(!isExpired, isExpired ? "" : body);
     } catch (Throwable e) {
-      log.error("Invalid URL: {}", jobURL);
+      log.error("Invalid URL: {}-{}", jobURL,e.getMessage());
       return Pair.of(false, "");
     }
   }

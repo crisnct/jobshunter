@@ -8,3 +8,4 @@ target/
 /node/*
 /node/
 /logs/
+/application/logs/
