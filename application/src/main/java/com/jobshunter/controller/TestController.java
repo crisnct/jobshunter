@@ -4,6 +4,7 @@ import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.service.UserDataService;
 import com.jobshunter.dto.EmailRequest;
 import com.jobshunter.dto.JobHuntResponse;
+import com.jobshunter.dto.exceptions.BusinessException;
 import com.jobshunter.dto.serpRequest.SearchWithSerpRequest;
 import com.jobshunter.model.Job;
 import com.jobshunter.service.application.notifiers.EmailNotifierService;
@@ -54,7 +55,7 @@ public class TestController {
       UserDetails userDetails
   ) {
     if (userDetails == null) {
-      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authentication required");
+      throw new BusinessException(HttpStatus.UNAUTHORIZED, "Authentication required");
     }
     emailNotifierService.sendCustomEmail(request.getEmail(), request.getSubject(), request.getMessage(), request.getFile());
     return ResponseEntity.ok(Map.of("message", "Email sent successfully"));
@@ -70,10 +71,10 @@ public class TestController {
       UserDetails userDetails
   ) {
     if (userDetails == null) {
-      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authentication required");
+      throw new BusinessException(HttpStatus.UNAUTHORIZED, "Authentication required");
     }
     UserEntity user = userDataService.getUser(userDetails.getUsername())
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+        .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "User not found"));
     emailNotifierService.sendUsingTemplate(jobs.jobsFound(), user);
     return ResponseEntity.ok(Map.of("message", "Email sent successfully"));
   }
@@ -88,10 +89,10 @@ public class TestController {
       UserDetails userDetails
   ) {
     if (userDetails == null) {
-      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authentication required");
+      throw new BusinessException(HttpStatus.UNAUTHORIZED, "Authentication required");
     }
     UserEntity user = userDataService.getUser(userDetails.getUsername())
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+        .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "User not found"));
     log.info("Searching jobs for {}", user.getUsername());
     List<Job> jobs = serpApi.searchJobs(request);
     return ResponseEntity.ok(jobs);

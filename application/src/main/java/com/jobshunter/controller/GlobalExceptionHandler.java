@@ -1,5 +1,7 @@
 package com.jobshunter.controller;
 
+import com.jobshunter.dto.exceptions.BusinessException;
+import jakarta.annotation.Nonnull;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -25,6 +27,15 @@ public class GlobalExceptionHandler {
       message = ExceptionUtils.getMessage(exception);
     }
     return ResponseEntity.status(exception.getStatusCode()).body(Map.of("message", message));
+  }
+
+  @ExceptionHandler(BusinessException.class)
+  public ResponseEntity<Map<String, String>> handleBusinessException(BusinessException exception) {
+    String message = exception.getMessage();
+    if (message == null || message.isBlank()) {
+      message = ExceptionUtils.getMessage(exception);
+    }
+    return ResponseEntity.status(exception.getStatus()).body(Map.of("errorMessage", message));
   }
 
   @SuppressWarnings("DataFlowIssue")

@@ -4,6 +4,7 @@ import com.jobshunter.ApplicationProperties;
 import com.jobshunter.model.GptJobSearchRequest;
 import com.jobshunter.model.Job;
 import com.jobshunter.processor.PackageExpected;
+import com.jobshunter.service.application.UrlExtractor;
 import com.jobshunter.service.clients.AiJobsClient;
 import com.jobshunter.service.clients.gpt.AbstractGptApiClient;
 import java.util.List;
@@ -17,7 +18,7 @@ import org.springframework.stereotype.Component;
 @ConditionalOnProperty(name = "gpt.enabled", havingValue = "false")
 public final class FakeGptPremium extends AbstractGptApiClient implements AiJobsClient<GptJobSearchRequest, List<Job>> {
 
-  public FakeGptPremium(ApplicationProperties properties, com.jobshunter.service.clients.UrlExtractor urlExtractor) {
+  public FakeGptPremium(ApplicationProperties properties, UrlExtractor urlExtractor) {
     super(properties, urlExtractor);
   }
 

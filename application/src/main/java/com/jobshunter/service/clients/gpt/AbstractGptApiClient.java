@@ -8,7 +8,7 @@ import com.jobshunter.dto.gptResponse.OutputItem;
 import com.jobshunter.model.GptJobSearchRequest;
 import com.jobshunter.model.Job;
 import com.jobshunter.processor.PackageExpected;
-import com.jobshunter.service.clients.UrlExtractor;
+import com.jobshunter.service.application.UrlExtractor;
 import com.jobshunter.service.testdata.FakeGptEconomy;
 import com.jobshunter.service.testdata.FakeGptPremium;
 import io.jsonwebtoken.lang.Collections;

@@ -1,7 +1,7 @@
-package com.jobshunter.service.application;
+package com.jobshunter.model;
 
 import com.jobshunter.database.entities.UserEntity;
-import com.jobshunter.model.Job;
+import com.jobshunter.service.application.JobPhase;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
@@ -18,7 +18,7 @@ public class JobContext {
   private boolean failed;
   private String failureMessage;
 
-  protected JobContext(Job job, UserEntity user, String resumeFileId) {
+  public JobContext(Job job, UserEntity user, String resumeFileId) {
     this.job = job;
     this.user = user;
     this.resumeFileId = resumeFileId;

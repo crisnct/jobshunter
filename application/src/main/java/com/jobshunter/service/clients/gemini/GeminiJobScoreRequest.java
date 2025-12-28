@@ -1,6 +1,6 @@
 package com.jobshunter.service.clients.gemini;
 
-import com.jobshunter.service.clients.JobScoreRequest;
+import com.jobshunter.model.JobScoreRequest;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 

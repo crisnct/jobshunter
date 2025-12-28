@@ -1,4 +1,4 @@
-package com.jobshunter.service.clients;
+package com.jobshunter.model;
 
 import com.jobshunter.processor.PackageExpected;
 

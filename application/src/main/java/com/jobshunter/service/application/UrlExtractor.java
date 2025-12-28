@@ -1,4 +1,4 @@
-package com.jobshunter.service.clients;
+package com.jobshunter.service.application;
 
 import com.jobshunter.model.Job;
 import java.util.ArrayList;

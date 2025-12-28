@@ -1,6 +1,6 @@
 package com.jobshunter.service.application.processors;
 
-import com.jobshunter.service.application.JobContext;
+import com.jobshunter.model.JobContext;
 
 public interface JobProcessor {
 

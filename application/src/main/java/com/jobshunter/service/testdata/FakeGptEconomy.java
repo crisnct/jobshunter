@@ -5,7 +5,7 @@ import com.jobshunter.model.GptJobSearchRequest;
 import com.jobshunter.model.Job;
 import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.clients.AiJobsClient;
-import com.jobshunter.service.clients.UrlExtractor;
+import com.jobshunter.service.application.UrlExtractor;
 import com.jobshunter.service.clients.gpt.AbstractGptApiClient;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;

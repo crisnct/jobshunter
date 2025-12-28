@@ -8,6 +8,7 @@ import com.jobshunter.dto.gptResponse.GptCompletionResponse;
 import com.jobshunter.model.GptJobSearchRequest;
 import com.jobshunter.model.Job;
 import com.jobshunter.processor.PackageExpected;
+import com.jobshunter.service.application.UrlExtractor;
 import com.jobshunter.service.clients.AiJobsClient;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
@@ -36,7 +37,7 @@ public non-sealed class PremiumGptJobSearchImpl extends AbstractGptApiClient
   public PremiumGptJobSearchImpl(
       RestClient restClient,
       ApplicationProperties properties,
-      com.jobshunter.service.clients.UrlExtractor urlExtractor
+      UrlExtractor urlExtractor
   ) {
     super(properties, urlExtractor);
     this.restClient = restClient;

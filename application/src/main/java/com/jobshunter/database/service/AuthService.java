@@ -7,6 +7,7 @@ import com.jobshunter.database.repository.UserRepository;
 import com.jobshunter.dto.ChangePasswordRequest;
 import com.jobshunter.dto.LoginRequest;
 import com.jobshunter.dto.RegisterRequest;
+import com.jobshunter.dto.exceptions.BusinessException;
 import com.jobshunter.service.application.authentication.JwtService;
 import com.jobshunter.service.application.notifiers.EmailNotifierService;
 import java.time.LocalDateTime;
@@ -44,17 +45,17 @@ public class AuthService {
   @Transactional
   public UserEntity register(RegisterRequest request) {
     if (userRepository.existsByUsernameIgnoreCase(request.username())) {
-      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Username already in use");
+      throw new BusinessException(HttpStatus.BAD_REQUEST, "Username already in use");
     }
     if (userRepository.existsByEmailIgnoreCase(request.email())) {
-      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email already in use");
+      throw new BusinessException(HttpStatus.BAD_REQUEST, "Email already in use");
     }
     if (userRepository.existsByPhoneNumberIgnoreCase(request.phoneNumber())) {
-      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Phone number already in use");
+      throw new BusinessException(HttpStatus.BAD_REQUEST, "Phone number already in use");
     }
 
     RoleEntity userRole = roleRepository.findByName("USER")
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Default role USER not configured"));
+        .orElseThrow(() -> new BusinessException(HttpStatus.INTERNAL_SERVER_ERROR, "Default role USER not configured"));
 
     UserEntity user = new UserEntity();
     user.setUsername(request.username());
@@ -77,17 +78,17 @@ public class AuthService {
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials"));
 
     if (!user.isEmailVerified()) {
-      throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Email not verified");
+      throw new BusinessException(HttpStatus.FORBIDDEN, "Email not verified");
     }
     if (!user.isApproved()) {
-      throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Account was not approved yet. Approval process might takes 72h!");
+      throw new BusinessException(HttpStatus.FORBIDDEN, "Account was not approved yet. Approval process might takes 72h!");
     }
 
     try {
       authenticationManager.authenticate(
           new UsernamePasswordAuthenticationToken(request.username(), request.password()));
     } catch (BadCredentialsException ex) {
-      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
+      throw new BusinessException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
     }
 
     String token = jwtService.generateToken(user);

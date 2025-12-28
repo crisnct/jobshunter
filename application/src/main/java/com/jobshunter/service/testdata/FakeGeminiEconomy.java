@@ -4,7 +4,7 @@ import com.jobshunter.model.GeminiJobSearchRequest;
 import com.jobshunter.model.Job;
 import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.clients.AiJobsClient;
-import com.jobshunter.service.clients.UrlExtractor;
+import com.jobshunter.service.application.UrlExtractor;
 import com.jobshunter.service.clients.gemini.AbstractGeminiApiClient;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;

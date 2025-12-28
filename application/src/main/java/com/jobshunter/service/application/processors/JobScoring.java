@@ -2,7 +2,7 @@ package com.jobshunter.service.application.processors;
 
 import com.jobshunter.database.entities.UserCvEntity;
 import com.jobshunter.model.Job;
-import com.jobshunter.service.application.JobContext;
+import com.jobshunter.model.JobContext;
 import com.jobshunter.service.application.JobPhase;
 import com.jobshunter.service.clients.FileClient;
 import com.jobshunter.service.clients.JobScoreCalculatorClient;
@@ -12,6 +12,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
@@ -20,6 +21,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class JobScoring implements JobProcessor {
 
+  @Getter
   private final FileClient fileClient;
 
   private final JobScoreCalculatorClient<GeminiJobScoreRequest> calculator;
@@ -43,11 +45,9 @@ public class JobScoring implements JobProcessor {
       try {
         Path path = createPathFromByteArray(job.getDescription().getBytes(StandardCharsets.UTF_8),
             "jd-user-" + context.getUser().getUsername(), ".txt");
-        String jdFileId = fileClient.uploadFile(path);
-        try {
-          score = calculator.computeScore(new GeminiJobScoreRequest(context.getResumeFileId(), jdFileId));
-        } finally {
-          fileClient.deleteFile(jdFileId);
+        try (var uploadedFile = new UploadedFile(fileClient, path)) {
+          score = calculator.computeScore(
+              new GeminiJobScoreRequest(context.getResumeFileId(), uploadedFile.getFileId()));
         }
       } catch (IOException e) {
         throw new RuntimeException("Error at scoring job  " + job, e);

@@ -14,6 +14,7 @@ import com.jobshunter.dto.SearchJobsRequest;
 import com.jobshunter.dto.UserInfoResponse;
 import com.jobshunter.dto.UserJobResponse;
 import com.jobshunter.dto.UserUpdateRequest;
+import com.jobshunter.dto.exceptions.BusinessException;
 import com.jobshunter.model.EngineTier;
 import com.jobshunter.model.EngineType;
 import com.jobshunter.model.SearchJobOrder;
@@ -32,6 +33,7 @@ import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -229,7 +231,7 @@ public class UserController {
           UserPromptEntity prompt = userDataService.updatePrompt(user, EngineType.SERP, EngineTier.ECONOMY, serpPrompt.id(), promptJson);
           promptsToDelete.remove(prompt.getId());
         } catch (JsonProcessingException e) {
-          throw new IllegalArgumentException("Invalid SERP prompt payload", e);
+          throw new BusinessException(HttpStatus.BAD_REQUEST, "Invalid SERP prompt payload", e);
         }
       });
     }
@@ -237,7 +239,7 @@ public class UserController {
     if (request.aiPrompts() != null) {
       request.aiPrompts().forEach(aiPrompt -> {
         if (aiPrompt.engineType() != EngineType.GPT && aiPrompt.engineType() != EngineType.GEMINI) {
-          throw new IllegalArgumentException("engine_type must be GPT or GEMINI");
+          throw new BusinessException(HttpStatus.BAD_REQUEST, "engine_type must be GPT or GEMINI");
         }
         UserPromptEntity prompt = userDataService.updatePrompt(user, aiPrompt.engineType(), aiPrompt.engineTier(), aiPrompt.id(), aiPrompt.prompt());
         promptsToDelete.remove(prompt.getId());

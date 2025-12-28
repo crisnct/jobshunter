@@ -10,6 +10,7 @@ import com.jobshunter.dto.geminiResponse.GeminiGenerateContentResponse;
 import com.jobshunter.model.GeminiJobSearchRequest;
 import com.jobshunter.model.Job;
 import com.jobshunter.processor.PackageExpected;
+import com.jobshunter.service.application.UrlExtractor;
 import com.jobshunter.service.clients.AiJobsClient;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
@@ -38,7 +39,7 @@ public non-sealed class EconomyGeminiJobSearchImpl extends AbstractGeminiApiClie
   public EconomyGeminiJobSearchImpl(
       ApplicationProperties properties,
       RestClient restClient,
-      com.jobshunter.service.clients.UrlExtractor urlExtractor
+      UrlExtractor urlExtractor
   ) {
     super(urlExtractor);
     this.properties = properties;

@@ -4,10 +4,12 @@ import com.jobshunter.ApplicationProperties;
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.service.UserDataService;
 import com.jobshunter.dto.JobHuntResponse;
+import com.jobshunter.dto.exceptions.BusinessException;
 import com.jobshunter.model.EngineSelection;
 import com.jobshunter.model.EngineTier;
 import com.jobshunter.model.EngineType;
 import com.jobshunter.model.Job;
+import com.jobshunter.model.JobContext;
 import com.jobshunter.model.SearchJobOrder;
 import com.jobshunter.service.application.hunting.GeminiJobHunting;
 import com.jobshunter.service.application.hunting.GptJobHunting;
@@ -18,6 +20,7 @@ import com.jobshunter.service.application.notifiers.WhatsappNotifierService;
 import com.jobshunter.service.application.processors.JobRedirection;
 import com.jobshunter.service.application.processors.JobScoring;
 import com.jobshunter.service.application.processors.JobsValidator;
+import com.jobshunter.service.application.processors.UploadedFile;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -182,7 +185,8 @@ public class JobHuntService {
       }
       return jobHuntResponse;
     } catch (IOException e) {
-      throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+      log.error(e.getMessage(), e);
+      throw new BusinessException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     } finally {
       if (resumeFileIdCleanup != null) {
         jobScoring.cleanup(resumeFileIdCleanup);

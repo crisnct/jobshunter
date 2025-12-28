@@ -1,5 +1,6 @@
 package com.jobshunter.service.clients.mailtrap;
 
+import com.jobshunter.dto.exceptions.BusinessException;
 import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.clients.SmtpMailtrapClient;
 import jakarta.annotation.Nullable;
@@ -14,6 +15,7 @@ import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.http.HttpStatus;
 import org.springframework.mail.MailException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -74,7 +76,7 @@ public non-sealed class SmtpMailtrapClientImpl implements SmtpMailtrapClient {
       log.info("Email sent successfully to {}", (Object) to.toArray(String[]::new));
     } catch (MessagingException | MailException e) {
       log.error("Failed to send email with attachment to {}: {}", to, e.getMessage());
-      throw new IllegalStateException("Failed to send email", e);
+      throw new BusinessException(HttpStatus.BAD_REQUEST, "Failed to send email", e);
     }
   }
 

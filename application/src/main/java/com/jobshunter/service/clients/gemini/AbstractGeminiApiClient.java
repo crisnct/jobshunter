@@ -6,7 +6,7 @@ import com.jobshunter.dto.geminiResponse.GeminiGenerateContentResponse;
 import com.jobshunter.dto.geminiResponse.GeminiGenerateContentResponse.Candidate;
 import com.jobshunter.model.Job;
 import com.jobshunter.processor.PackageExpected;
-import com.jobshunter.service.clients.UrlExtractor;
+import com.jobshunter.service.application.UrlExtractor;
 import jakarta.annotation.PostConstruct;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
