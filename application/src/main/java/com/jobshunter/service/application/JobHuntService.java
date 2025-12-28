@@ -4,12 +4,12 @@ import com.jobshunter.ApplicationProperties;
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.service.UserDataService;
 import com.jobshunter.dto.JobHuntResponse;
-import com.jobshunter.dto.exceptions.BusinessException;
 import com.jobshunter.model.EngineSelection;
 import com.jobshunter.model.EngineTier;
 import com.jobshunter.model.EngineType;
 import com.jobshunter.model.Job;
 import com.jobshunter.model.JobContext;
+import com.jobshunter.model.JobPhase;
 import com.jobshunter.model.SearchJobOrder;
 import com.jobshunter.service.application.hunting.GeminiJobHunting;
 import com.jobshunter.service.application.hunting.GptJobHunting;
@@ -20,7 +20,6 @@ import com.jobshunter.service.application.notifiers.WhatsappNotifierService;
 import com.jobshunter.service.application.processors.JobRedirection;
 import com.jobshunter.service.application.processors.JobScoring;
 import com.jobshunter.service.application.processors.JobsValidator;
-import com.jobshunter.service.application.processors.UploadedFile;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -32,12 +31,9 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 @Slf4j
 @Service
@@ -274,45 +270,19 @@ public class JobHuntService {
     });
 
     log.info("""
-        \n---Job search results for {} -----------------------------------------
+        \n--- Job search results for {} -----------------------------------------
         Total jobs found: {}
-        Valid links: {}
-        Rejected: {}
-        Errors: {}
+        ✅Valid links: {}
+        🔍Rejected: {}
+        ❌Errors: {}
         
-        Valid links:
+        ✅Valid links:
         {}
         
         Errors:
-        {}
+        {}---
         """, username, result.size(), acceptedUrls, rejected, errors, validLinksBuilder, errorBuilder
     );
-  }
-
-  private CompletableFuture<List<JobContext>> flattenAndWaitForAllFutures(
-      CompletableFuture<List<CompletableFuture<JobContext>>> serpPipelinedJobs,
-      CompletableFuture<List<CompletableFuture<JobContext>>> gptPipelineJobs,
-      CompletableFuture<List<CompletableFuture<JobContext>>> geminiPipelineJobs) {
-
-    List<CompletableFuture<JobContext>> allFutures = collectAllFutures(
-        serpPipelinedJobs, gptPipelineJobs, geminiPipelineJobs);
-
-    return CompletableFuture.allOf(allFutures.toArray(CompletableFuture[]::new))
-        .thenApply(v -> joinAllFutures(allFutures));
-  }
-
-  private List<CompletableFuture<JobContext>> collectAllFutures(
-      CompletableFuture<List<CompletableFuture<JobContext>>>... pipelinedJobs) {
-
-    return Stream.of(pipelinedJobs)
-        .flatMap(f -> f.join().stream())
-        .toList();
-  }
-
-  private List<JobContext> joinAllFutures(List<CompletableFuture<JobContext>> futures) {
-    return futures.stream()
-        .map(CompletableFuture::join)
-        .toList();
   }
 
   private CompletableFuture<JobContext> applyJobPipeline(Job job, UserEntity user, String resumeFileId) {

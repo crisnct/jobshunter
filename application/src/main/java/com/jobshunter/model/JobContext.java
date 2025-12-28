@@ -1,7 +1,6 @@
 package com.jobshunter.model;
 
 import com.jobshunter.database.entities.UserEntity;
-import com.jobshunter.service.application.JobPhase;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 

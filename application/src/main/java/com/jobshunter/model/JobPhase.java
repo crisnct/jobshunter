@@ -1,4 +1,4 @@
-package com.jobshunter.service.application;
+package com.jobshunter.model;
 
 public enum JobPhase {
     NEW,

@@ -1,15 +1,14 @@
-package com.jobshunter.security.rateLimit;
+package com.jobshunter.security.rateLimitBucket4J;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import org.springframework.stereotype.Component;
 
 @Component
-public class BlockRegistry {
+public class CooldownRegistry {
 
-  private final Map<String, Instant> blockedUntil = new ConcurrentHashMap<>();
+  private final ConcurrentHashMap<String, Instant> blockedUntil = new ConcurrentHashMap<>();
 
   public void block(String key, Duration duration) {
     blockedUntil.put(key, Instant.now().plus(duration));
@@ -20,10 +19,12 @@ public class BlockRegistry {
     if (until == null) {
       return false;
     }
+
     if (Instant.now().isAfter(until)) {
       blockedUntil.remove(key);
       return false;
     }
+
     return true;
   }
 

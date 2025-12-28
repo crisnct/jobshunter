@@ -1,4 +1,4 @@
-package com.jobshunter.security.rateLimit;
+package com.jobshunter.security.rateLimitBucket4J;
 
 import java.util.concurrent.ConcurrentHashMap;
 import org.springframework.stereotype.Component;

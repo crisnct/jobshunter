@@ -3,7 +3,7 @@ package com.jobshunter.service.application.processors;
 import com.jobshunter.database.entities.UserCvEntity;
 import com.jobshunter.model.Job;
 import com.jobshunter.model.JobContext;
-import com.jobshunter.service.application.JobPhase;
+import com.jobshunter.model.JobPhase;
 import com.jobshunter.service.clients.FileClient;
 import com.jobshunter.service.clients.JobScoreCalculatorClient;
 import com.jobshunter.service.clients.gemini.GeminiJobScoreRequest;

@@ -1,4 +1,4 @@
-package com.jobshunter.security.rateLimit;
+package com.jobshunter.security.rateLimitBucket4J;
 
 import com.jobshunter.ApplicationProperties;
 import com.jobshunter.ApplicationProperties.RateLimitPolicy;

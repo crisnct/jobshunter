@@ -1,4 +1,4 @@
-package com.jobshunter.security.rateLimit;
+package com.jobshunter.security.rateLimitBucket4J;
 
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;

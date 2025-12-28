@@ -1,7 +1,7 @@
 package com.jobshunter.service.application.processors;
 
 import com.jobshunter.model.JobContext;
-import com.jobshunter.service.application.JobPhase;
+import com.jobshunter.model.JobPhase;
 import com.jobshunter.service.clients.BrowserSimulator;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
