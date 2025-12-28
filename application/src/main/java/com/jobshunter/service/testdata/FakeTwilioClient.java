@@ -3,7 +3,9 @@ package com.jobshunter.service.testdata;
 import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.clients.TwilioClient;
 import com.twilio.exception.ApiException;
+import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -21,7 +23,9 @@ public non-sealed class FakeTwilioClient implements TwilioClient {
 
   @SuppressWarnings("BooleanMethodIsAlwaysInverted")
   @Override
+  @RateLimiter(name = "twilioLimiter")
   @CircuitBreaker(name = "twilio", fallbackMethod = "fallbackSend")
+  @Bulkhead(name = "twilioBulkhead")
   public boolean trySend(String toNumber, String fromNumber, String body) {
     try {
       fromNumber = formatWhatsapp(sanitizePhone(fromNumber));

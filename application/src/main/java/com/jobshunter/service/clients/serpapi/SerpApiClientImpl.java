@@ -49,7 +49,7 @@ public non-sealed class SerpApiClientImpl implements AiJobsClient<SearchWithSerp
   @Override
   @RateLimiter(name = "serpApiLimiter")
   @CircuitBreaker(name = "serpApi", fallbackMethod = "fallbackSearch")
-  @Bulkhead(name = "serpApiBulkhead", type = Bulkhead.Type.SEMAPHORE)
+  @Bulkhead(name = "serpApiBulkhead")
   public List<Job> searchJobs(@NotNull SearchWithSerpRequest request) {
     SerpApiJobsResult results;
     try {

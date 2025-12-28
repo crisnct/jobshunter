@@ -39,7 +39,7 @@ public non-sealed class SmtpMailtrapClientImpl implements SmtpMailtrapClient {
 
   @Override
   @RateLimiter(name = "mailtrapLimiter")
-  @Bulkhead(name = "mailtrapBulkhead", type = Bulkhead.Type.SEMAPHORE)
+  @Bulkhead(name = "mailtrapBulkhead")
   @CircuitBreaker(name = "mailtrap", fallbackMethod = "fallbackSendEmail")
   public void sendEmail(
       @NonNull String to,
@@ -51,7 +51,7 @@ public non-sealed class SmtpMailtrapClientImpl implements SmtpMailtrapClient {
 
   @Override
   @RateLimiter(name = "mailtrapLimiter")
-  @Bulkhead(name = "mailtrapBulkhead", type = Bulkhead.Type.SEMAPHORE)
+  @Bulkhead(name = "mailtrapBulkhead")
   @CircuitBreaker(name = "mailtrap", fallbackMethod = "fallbackSendEmailWithAttachment")
   public void sendEmail(
       @NonNull List<String> to,

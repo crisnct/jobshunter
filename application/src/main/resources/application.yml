@@ -236,24 +236,60 @@ resilience4j.circuitbreaker:
       permittedNumberOfCallsInHalfOpenState: 1
 
 # BULK HEAD  ---------------------------------------------------------------------------
+# Purpose: Limit CONCURRENT requests
 # Isolates thread pools to limit concurrent requests to external services,
 # preventing resource exhaustion and ensuring one failing service doesn't impact others.
+#  maxConcurrentCalls: 3              # 3 concurrent GPT calls
+#  maxThreadPoolSize: 5               # Pool of 5 threads
+#  coreThreadPoolSize: 1              # Keep 1 warm
+#  queueCapacity: 20                  # Max 20 waiting
+#  maxWaitDuration: 20m               # Wait max 20 minutes
+#  keepAliveDuration: 30s             # Cleanup idle threads after 30s
 
 resilience4j.bulkhead:
   instances:
     gptBulkhead:
+      bulkheadType: THREADPOOL
       maxConcurrentCalls: 3
-      maxWaitDuration: 2m
+      maxThreadPoolSize: 5
+      coreThreadPoolSize: 1
+      queueCapacity: 20
+      maxWaitDuration: 20m
+      keepAliveDuration: 30s
       writableStackTraceEnabled: false
     geminiBulkhead:
+      bulkheadType: THREADPOOL
       maxConcurrentCalls: 3
-      maxWaitDuration: 2m
+      maxThreadPoolSize: 5
+      coreThreadPoolSize: 1
+      queueCapacity: 20
+      maxWaitDuration: 20m
+      keepAliveDuration: 30s
       writableStackTraceEnabled: false
     serpApiBulkhead:
+      bulkheadType: THREADPOOL
       maxConcurrentCalls: 3
-      maxWaitDuration: 2m
+      maxThreadPoolSize: 5
+      coreThreadPoolSize: 1
+      queueCapacity: 20
+      maxWaitDuration: 20m
+      keepAliveDuration: 30s
       writableStackTraceEnabled: false
     mailtrapBulkhead:
-      maxConcurrentCalls: 5
-      maxWaitDuration: 30s
+      bulkheadType: THREADPOOL
+      maxConcurrentCalls: 3
+      maxThreadPoolSize: 5
+      coreThreadPoolSize: 1
+      queueCapacity: 20
+      maxWaitDuration: 20m
+      keepAliveDuration: 30s
+      writableStackTraceEnabled: false
+    twilioBulkhead:
+      bulkheadType: THREADPOOL
+      maxConcurrentCalls: 3
+      maxThreadPoolSize: 5
+      coreThreadPoolSize: 1
+      queueCapacity: 20
+      maxWaitDuration: 20m
+      keepAliveDuration: 30s
       writableStackTraceEnabled: false

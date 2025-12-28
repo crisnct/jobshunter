@@ -4,7 +4,9 @@ import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.clients.RestMailtrapClient;
 import com.jobshunter.service.clients.mailtrap.RestMailtrapClientImpl.MailtrapTemplateRequest.From;
 import com.jobshunter.service.clients.mailtrap.RestMailtrapClientImpl.MailtrapTemplateRequest.To;
+import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
@@ -42,7 +44,9 @@ public non-sealed class RestMailtrapClientImpl implements RestMailtrapClient {
   private String templateUUID;
 
   @Override
+  @RateLimiter(name = "mailtrapLimiter")
   @CircuitBreaker(name = "mailtrap", fallbackMethod = "fallbackSendEmail")
+  @Bulkhead(name = "mailtrapBulkhead")
   public void sendEmailWithNewJobs(
       @NonNull String username,
       @NonNull String email,

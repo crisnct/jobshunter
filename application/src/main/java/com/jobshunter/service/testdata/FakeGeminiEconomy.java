@@ -6,6 +6,7 @@ import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.application.UrlExtractor;
 import com.jobshunter.service.clients.AiJobsClient;
 import com.jobshunter.service.clients.gemini.AbstractGeminiApiClient;
+import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import java.util.List;
@@ -31,6 +32,7 @@ public non-sealed class FakeGeminiEconomy extends AbstractGeminiApiClient implem
   @Override
   @RateLimiter(name = "geminiLimiter")
   @CircuitBreaker(name = "geminiCircuitBreaker", fallbackMethod = "fallbackSearch")
+  @Bulkhead(name = "geminiBulkhead")
   public List<Job> searchJobs(GeminiJobSearchRequest request) {
     return List.of(
         new Job(-1,

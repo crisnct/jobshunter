@@ -5,8 +5,12 @@ import com.jobshunter.ApplicationProperties;
 import com.jobshunter.dto.gptResponse.FileInfo;
 import com.jobshunter.dto.gptResponse.FileListResponse;
 import com.jobshunter.dto.gptResponse.UploadFileResponse;
+import com.jobshunter.model.GptJobSearchRequest;
+import com.jobshunter.model.Job;
 import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.clients.FileClient;
+import io.github.resilience4j.bulkhead.annotation.Bulkhead;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import jakarta.validation.constraints.NotBlank;
 import java.io.IOException;
 import java.net.URI;
@@ -43,6 +47,8 @@ public final class GptFileClientImpl implements FileClient {
   private final JsonMapper mapper;
 
   @Override
+  @CircuitBreaker(name = "gptCircuitBreaker", fallbackMethod = "fallbackUploadFile")
+  @Bulkhead(name = "gptBulkhead")
   public String uploadFile(Path cvPath) throws IOException {
     try (var ignored = Files.newInputStream(cvPath)) {
       HttpHeaders headers = new HttpHeaders();
@@ -91,6 +97,12 @@ public final class GptFileClientImpl implements FileClient {
       }
       log.info("Deleted {} files", toDelete.size());
     }
+  }
+
+  @SuppressWarnings("unused")
+  private String fallbackUploadFile(Path cvPath, Throwable t) {
+    log.error("{} call short-circuited/bulkheaded: {}", getClass().getSimpleName(), t.getMessage());
+    return "";
   }
 
 }

@@ -9,8 +9,11 @@ import com.jobshunter.dto.gptResponse.ContentItem;
 import com.jobshunter.dto.gptResponse.GptCompletionResponse;
 import com.jobshunter.dto.gptResponse.OutputItem;
 import com.jobshunter.model.GptJobScoreRequest;
+import com.jobshunter.model.GptJobSearchRequest;
 import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.clients.JobScoreCalculatorClient;
+import io.github.resilience4j.bulkhead.annotation.Bulkhead;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import io.jsonwebtoken.lang.Collections;
 import jakarta.annotation.PostConstruct;
@@ -62,6 +65,8 @@ public non-sealed class GptJobScoreCalculatorClientImpl implements JobScoreCalcu
 
   @Override
   @RateLimiter(name = "gptLimiter")
+  @CircuitBreaker(name = "gptCircuitBreaker", fallbackMethod = "fallbackComputeScore")
+  @Bulkhead(name = "gptBulkhead")
   public int computeScore(GptJobScoreRequest request) {
     try {
       Gpt config = properties.getGpt();
@@ -106,6 +111,12 @@ public non-sealed class GptJobScoreCalculatorClientImpl implements JobScoreCalcu
     } else {
       return 0;
     }
+  }
+
+  @SuppressWarnings("unused")
+  private int fallbackComputeScore(GptJobScoreRequest request, Throwable t) {
+    log.error("{} call short-circuited/bulkheaded: {}", getClass().getSimpleName(), t.getMessage());
+    return -1;
   }
 
 }

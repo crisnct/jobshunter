@@ -48,7 +48,7 @@ public non-sealed class EconomyGeminiJobSearchImpl extends AbstractGeminiApiClie
 
   @Override
   @CircuitBreaker(name = "geminiCircuitBreaker", fallbackMethod = "fallbackSearch")
-  @Bulkhead(name = "geminiBulkhead", type = Bulkhead.Type.SEMAPHORE)
+  @Bulkhead(name = "geminiBulkhead")
   @RateLimiter(name = "geminiLimiter")
   public List<Job> searchJobs(GeminiJobSearchRequest request) {
     try {

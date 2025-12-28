@@ -2,7 +2,9 @@ package com.jobshunter.service.testdata;
 
 import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.clients.SmtpMailtrapClient;
+import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import jakarta.annotation.Nullable;
 import java.util.List;
 import lombok.NonNull;
@@ -19,6 +21,8 @@ public non-sealed class FakeMailtrapSmtpClient implements SmtpMailtrapClient {
 
   @Override
   @CircuitBreaker(name = "mailtrap", fallbackMethod = "fallbackSendEmail")
+  @RateLimiter(name = "mailtrapLimiter")
+  @Bulkhead(name = "mailtrapBulkhead")
   public void sendEmail(
       @NonNull String to,
       @Nullable String subject,
@@ -30,6 +34,8 @@ public non-sealed class FakeMailtrapSmtpClient implements SmtpMailtrapClient {
 
   @Override
   @CircuitBreaker(name = "mailtrap", fallbackMethod = "fallbackSendEmailWithAttachment")
+  @RateLimiter(name = "mailtrapLimiter")
+  @Bulkhead(name = "mailtrapBulkhead")
   public void sendEmail(
       @NonNull List<String> to,
       @Nullable String subject,

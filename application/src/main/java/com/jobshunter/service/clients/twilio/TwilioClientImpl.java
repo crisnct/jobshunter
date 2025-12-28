@@ -6,6 +6,7 @@ import com.jobshunter.service.clients.TwilioClient;
 import com.twilio.Twilio;
 import com.twilio.exception.ApiException;
 import com.twilio.rest.api.v2010.account.Message;
+import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import jakarta.annotation.PostConstruct;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
@@ -36,6 +37,7 @@ public non-sealed class TwilioClientImpl implements TwilioClient {
   @Override
   @RateLimiter(name = "twilioLimiter")
   @CircuitBreaker(name = "twilio", fallbackMethod = "fallbackSend")
+  @Bulkhead(name = "twilioBulkhead")
   public boolean trySend(String toNumber, String fromNumber, String body) {
     try {
       fromNumber = formatWhatsapp(sanitizePhone(fromNumber));

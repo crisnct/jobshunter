@@ -46,7 +46,7 @@ public non-sealed class PremiumGptJobSearchImpl extends AbstractGptApiClient
 
   @Override
   @CircuitBreaker(name = "gptCircuitBreaker", fallbackMethod = "fallbackSearch")
-  @Bulkhead(name = "gptBulkhead", type = Bulkhead.Type.SEMAPHORE)
+  @Bulkhead(name = "gptBulkhead")
   @RateLimiter(name = "gptLimiter")
   public List<Job> searchJobs(GptJobSearchRequest request) {
     try {

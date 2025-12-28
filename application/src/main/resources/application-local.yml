@@ -154,18 +154,47 @@ resilience4j.circuitbreaker:
 resilience4j.bulkhead:
   instances:
     gptBulkhead:
+      bulkheadType: THREADPOOL
       maxConcurrentCalls: 3
-      maxWaitDuration: 2m
+      maxThreadPoolSize: 5
+      coreThreadPoolSize: 1
+      queueCapacity: 20
+      maxWaitDuration: 20m
+      keepAliveDuration: 30s
       writableStackTraceEnabled: false
     geminiBulkhead:
+      bulkheadType: THREADPOOL
       maxConcurrentCalls: 3
-      maxWaitDuration: 2m
+      maxThreadPoolSize: 5
+      coreThreadPoolSize: 1
+      queueCapacity: 20
+      maxWaitDuration: 20m
+      keepAliveDuration: 30s
       writableStackTraceEnabled: false
     serpApiBulkhead:
+      bulkheadType: THREADPOOL
       maxConcurrentCalls: 3
-      maxWaitDuration: 2m
+      maxThreadPoolSize: 5
+      coreThreadPoolSize: 1
+      queueCapacity: 20
+      maxWaitDuration: 20m
+      keepAliveDuration: 30s
       writableStackTraceEnabled: false
     mailtrapBulkhead:
-      maxConcurrentCalls: 5
-      maxWaitDuration: 30s
+      bulkheadType: THREADPOOL
+      maxConcurrentCalls: 3
+      maxThreadPoolSize: 5
+      coreThreadPoolSize: 1
+      queueCapacity: 20
+      maxWaitDuration: 20m
+      keepAliveDuration: 30s
+      writableStackTraceEnabled: false
+    twilioBulkhead:
+      bulkheadType: THREADPOOL
+      maxConcurrentCalls: 3
+      maxThreadPoolSize: 5
+      coreThreadPoolSize: 1
+      queueCapacity: 20
+      maxWaitDuration: 20m
+      keepAliveDuration: 30s
       writableStackTraceEnabled: false

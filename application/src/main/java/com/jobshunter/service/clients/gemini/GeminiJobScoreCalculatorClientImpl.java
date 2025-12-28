@@ -69,7 +69,7 @@ public non-sealed class GeminiJobScoreCalculatorClientImpl implements JobScoreCa
 
   @Override
   @RateLimiter(name = "geminiLimiter")
-  @Bulkhead(name = "geminiBulkhead", type = Bulkhead.Type.SEMAPHORE)
+  @Bulkhead(name = "geminiBulkhead")
   @CircuitBreaker(name = "geminiCircuitBreaker", fallbackMethod = "fallbackComputeScore")
   public int computeScore(GeminiJobScoreRequest request) {
     try {

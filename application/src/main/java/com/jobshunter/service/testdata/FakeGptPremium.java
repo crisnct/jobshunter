@@ -7,6 +7,7 @@ import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.application.UrlExtractor;
 import com.jobshunter.service.clients.AiJobsClient;
 import com.jobshunter.service.clients.gpt.AbstractGptApiClient;
+import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import java.util.List;
@@ -32,6 +33,7 @@ public non-sealed class FakeGptPremium extends AbstractGptApiClient implements A
   @Override
   @RateLimiter(name = "gptLimiter")
   @CircuitBreaker(name = "gptCircuitBreaker", fallbackMethod = "fallbackSearch")
+  @Bulkhead(name = "gptBulkhead")
   public List<Job> searchJobs(GptJobSearchRequest request) {
     String model = request.getPrompt().getEngineConfiguration().getModel();
     return List.of(

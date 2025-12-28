@@ -4,6 +4,9 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.jobshunter.ApplicationProperties;
 import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.clients.FileClient;
+import io.github.resilience4j.bulkhead.annotation.Bulkhead;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import jakarta.validation.constraints.NotBlank;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -39,6 +42,9 @@ public final class GeminiFileClientImpl implements FileClient {
   private final ApplicationProperties properties;
 
   @Override
+  @CircuitBreaker(name = "geminiCircuitBreaker", fallbackMethod = "fallbackUploadFile")
+  @Bulkhead(name = "geminiBulkhead")
+  @RateLimiter(name = "geminiLimiter")
   public String uploadFile(Path cvPath) throws IOException {
     try (var ignored = Files.newInputStream(cvPath)) {
       MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
@@ -104,4 +110,9 @@ public final class GeminiFileClientImpl implements FileClient {
 
   }
 
+  @SuppressWarnings("unused")
+  private String fallbackUploadFile(Path cvPath, Throwable t) {
+    log.error("{} call short-circuited/bulkheaded: {}", getClass().getSimpleName(), t.getMessage());
+    return "";
+  }
 }

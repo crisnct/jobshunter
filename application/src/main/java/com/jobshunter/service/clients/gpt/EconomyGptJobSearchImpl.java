@@ -7,8 +7,8 @@ import com.jobshunter.dto.gptResponse.GptCompletionResponse;
 import com.jobshunter.model.GptJobSearchRequest;
 import com.jobshunter.model.Job;
 import com.jobshunter.processor.PackageExpected;
-import com.jobshunter.service.clients.AiJobsClient;
 import com.jobshunter.service.application.UrlExtractor;
+import com.jobshunter.service.clients.AiJobsClient;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
@@ -45,8 +45,8 @@ public non-sealed class EconomyGptJobSearchImpl extends AbstractGptApiClient
 
   @Override
   @CircuitBreaker(name = "gptCircuitBreaker", fallbackMethod = "fallbackSearch")
-  @Bulkhead(name = "gptBulkhead", type = Bulkhead.Type.SEMAPHORE)
   @RateLimiter(name = "gptLimiter")
+  @Bulkhead(name = "gptBulkhead")
   public List<Job> searchJobs(GptJobSearchRequest request) {
     try {
       GptJobsPayload payload = GptJobsPayload.builder()
@@ -80,7 +80,7 @@ public non-sealed class EconomyGptJobSearchImpl extends AbstractGptApiClient
 
   @SuppressWarnings("unused")
   private List<Job> fallbackSearch(GptJobSearchRequest request, Throwable t) {
-    log.error("Economy GPT call short-circuited/bulkheaded: {}", t.getMessage());
+    log.error("{} call short-circuited/bulkheaded: {}", getClass().getSimpleName(), t.getMessage());
     return List.of();
   }
 
