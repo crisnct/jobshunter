@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 @Component("Gemini")
 @PackageExpected("com.jobshunter.service.clients.gemini")
 @ConditionalOnProperty(name = "gemini.enabled", havingValue = "false")
-public final class DummyGeminiFileApiClient implements FileClient {
+public final class FakeGeminiFileApiClient implements FileClient {
 
   @Override
   public String uploadFile(Path cvPath) {

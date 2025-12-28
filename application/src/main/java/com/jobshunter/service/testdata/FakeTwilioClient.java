@@ -14,7 +14,7 @@ import org.springframework.util.StringUtils;
 @RequiredArgsConstructor
 @PackageExpected("com.jobshunter.service.application.notifiers")
 @ConditionalOnProperty(name = "twilio.enabled", havingValue = "false")
-public final class DummyTwilioClient implements TwilioClient {
+public final class FakeTwilioClient implements TwilioClient {
 
   public static final int TWILLIO_MAX_LIMIT_CHARS = 1600;
 

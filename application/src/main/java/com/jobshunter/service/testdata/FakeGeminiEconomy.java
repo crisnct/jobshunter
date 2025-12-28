@@ -15,9 +15,9 @@ import org.springframework.stereotype.Component;
 @Component("EconomyJobsClientGemini")
 @PackageExpected("com.jobshunter.service.clients.gemini")
 @ConditionalOnProperty(name = "gemini.enabled", havingValue = "false")
-public final class DummyEconomyGemini extends AbstractGeminiApiClient implements AiJobsClient<GeminiJobSearchRequest, List<Job>> {
+public final class FakeGeminiEconomy extends AbstractGeminiApiClient implements AiJobsClient<GeminiJobSearchRequest, List<Job>> {
 
-  public DummyEconomyGemini(UrlExtractor urlExtractor) {
+  public FakeGeminiEconomy(UrlExtractor urlExtractor) {
     super(urlExtractor);
   }
 

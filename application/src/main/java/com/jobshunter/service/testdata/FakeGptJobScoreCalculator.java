@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 @Component("GptJobScoreCalculator")
 @PackageExpected("com.jobshunter.service.clients.gpt")
 @ConditionalOnProperty(name = "gpt.enabled", havingValue = "false")
-public final class DummyGPTJobScoreCalculator implements JobScoreCalculatorClient<GptJobScoreRequest> {
+public final class FakeGptJobScoreCalculator implements JobScoreCalculatorClient<GptJobScoreRequest> {
 
   @Override
   public int computeScore(GptJobScoreRequest request) {

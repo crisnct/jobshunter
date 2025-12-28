@@ -9,9 +9,8 @@ import com.jobshunter.model.GptJobSearchRequest;
 import com.jobshunter.model.Job;
 import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.clients.UrlExtractor;
-import com.jobshunter.service.testdata.DummyEconomyGpt;
-import com.jobshunter.service.testdata.DummyPremiumGpt;
-import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
+import com.jobshunter.service.testdata.FakeGptEconomy;
+import com.jobshunter.service.testdata.FakeGptPremium;
 import io.jsonwebtoken.lang.Collections;
 import jakarta.annotation.PostConstruct;
 import java.nio.charset.StandardCharsets;
@@ -27,7 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 @PackageExpected("com.jobshunter.service.clients.gpt")
 @RequiredArgsConstructor
 public abstract sealed class AbstractGptApiClient
-    permits EconomyGptJobSearchImpl, PremiumGptJobSearchImpl, DummyEconomyGpt, DummyPremiumGpt {
+    permits EconomyGptJobSearchImpl, PremiumGptJobSearchImpl, FakeGptEconomy, FakeGptPremium {
 
   protected final ApplicationProperties properties;
 

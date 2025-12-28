@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 @Component("Gpt")
 @PackageExpected("com.jobshunter.service.clients.gpt")
 @ConditionalOnProperty(name = "gpt.enabled", havingValue = "false")
-public final class DummyGptFileApiClient implements FileClient {
+public final class FakeGptFileApiClient implements FileClient {
 
   @Override
   public String uploadFile(Path cvPath) {

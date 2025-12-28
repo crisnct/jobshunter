@@ -14,7 +14,7 @@ import org.springframework.web.multipart.MultipartFile;
 @Component
 @PackageExpected("com.jobshunter.service.application.notifiers")
 @ConditionalOnProperty(name = "spring.mail.enabled", havingValue = "false")
-public final class DummySmtpMailtrapClient implements SmtpMailtrapClient {
+public final class FakeMailtrapSmtpClient implements SmtpMailtrapClient {
 
   @Override
   public void sendEmail(

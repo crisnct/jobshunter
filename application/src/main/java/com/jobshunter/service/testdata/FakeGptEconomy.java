@@ -16,9 +16,9 @@ import org.springframework.stereotype.Component;
 @Component("EconomyJobsClientGPT")
 @PackageExpected("com.jobshunter.service.clients.gpt")
 @ConditionalOnProperty(name = "gpt.enabled", havingValue = "false")
-public final class DummyEconomyGpt extends AbstractGptApiClient implements AiJobsClient<GptJobSearchRequest, List<Job>> {
+public final class FakeGptEconomy extends AbstractGptApiClient implements AiJobsClient<GptJobSearchRequest, List<Job>> {
 
-  public DummyEconomyGpt(ApplicationProperties properties, UrlExtractor urlExtractor) {
+  public FakeGptEconomy(ApplicationProperties properties, UrlExtractor urlExtractor) {
     super(properties, urlExtractor);
   }
 

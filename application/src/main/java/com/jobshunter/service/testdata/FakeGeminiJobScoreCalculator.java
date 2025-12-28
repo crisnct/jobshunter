@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
 @PackageExpected("com.jobshunter.service.clients.gemini")
 @ConditionalOnProperty(name = "gemini.enabled", havingValue = "false")
 @RequiredArgsConstructor
-public non-sealed class DummyGeminiJobScoreCalculator implements JobScoreCalculatorClient<GeminiJobScoreRequest> {
+public non-sealed class FakeGeminiJobScoreCalculator implements JobScoreCalculatorClient<GeminiJobScoreRequest> {
 
   @Override
   @RateLimiter(name = "geminiLimiter")
