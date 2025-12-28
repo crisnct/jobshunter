@@ -111,6 +111,8 @@ springdoc:
     disable-swagger-default-url: true
 
 # RATE LIMITER  ---------------------------------------------------------------------------
+# Throttle API requests to 2 per minute, preventing quota violations and automatic request queueing
+# with transparent permit management.
 
 resilience4j.ratelimiter:
   instances:
@@ -124,8 +126,30 @@ resilience4j.ratelimiter:
       limitRefreshPeriod: 30           # Every 30 sec
       timeoutDuration: 5m              # Wait up to 5min for a slot
       writableStackTraceEnabled: false
+    serpApiLimiter:
+      limitForPeriod: 2                # Allow 2 calls
+      limitRefreshPeriod: 1m           # Every 1 minute
+      timeoutDuration: 1m             # Wait up to 1m for a slot
+      writableStackTraceEnabled: false
+    twilioLimiter:
+      limitForPeriod: 10               # Allow 10 calls
+      limitRefreshPeriod: 1m           # Every 1 minute
+      timeoutDuration: 30s             # Wait up to 30s for a slot
+      writableStackTraceEnabled: false
+    tinyurlLimiter:
+      limitForPeriod: 5                # Allow 5 calls
+      limitRefreshPeriod: 1m           # Every 1 minute
+      timeoutDuration: 30s             # Wait up to 30s for a slot
+      writableStackTraceEnabled: false
+    mailtrapLimiter:
+      limitForPeriod: 10               # Allow 10 calls
+      limitRefreshPeriod: 1m           # Every 1 minute
+      timeoutDuration: 30s             # Wait up to 30s for a slot
+      writableStackTraceEnabled: false
 
 # TIME LIMITER ---------------------------------------------------------------------------
+# Enforces maximum execution time for API calls by cancelling requests that exceed the configured timeout threshold,
+# preventing indefinite hangs and ensuring predictable response times.
 
 resilience4j.timelimiter:
   instances:
@@ -135,6 +159,9 @@ resilience4j.timelimiter:
       writableStackTraceEnabled: false
 
 # CIRCUIT BREAKER ---------------------------------------------------------------------------
+# Fault tolerance by monitoring API call failures.
+# Automatically opens the circuit to prevent cascading failures when error threshold is exceeded,
+# failing fast and allowing services to recover before retrying requests.
 
 #registerHealthIndicator: expose a health indicator for this circuit breaker via actuator.
 #slidingWindowType: use a COUNT_BASED window (by number of calls) for metrics.
@@ -239,6 +266,8 @@ resilience4j.circuitbreaker:
       permittedNumberOfCallsInHalfOpenState: 3
 
 # BULK HEAD  ---------------------------------------------------------------------------
+# Isolates thread pools to limit concurrent requests to external services,
+# preventing resource exhaustion and ensuring one failing service doesn't impact others.
 
 resilience4j.bulkhead:
   instances:

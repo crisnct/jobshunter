@@ -10,6 +10,7 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.mail.MailException;
@@ -34,6 +35,7 @@ public non-sealed class SmtpMailtrapClientImpl implements SmtpMailtrapClient {
   private String configuredFrom;
 
   @Override
+  @RateLimiter(name = "mailtrapLimiter")
   @CircuitBreaker(name = "mailtrapSmtp", fallbackMethod = "fallbackSendEmail")
   public void sendEmail(
       @NonNull String to,
@@ -44,6 +46,7 @@ public non-sealed class SmtpMailtrapClientImpl implements SmtpMailtrapClient {
   }
 
   @Override
+  @RateLimiter(name = "mailtrapLimiter")
   @CircuitBreaker(name = "mailtrapSmtp", fallbackMethod = "fallbackSendEmailWithAttachment")
   public void sendEmail(
       @NonNull List<String> to,

@@ -2,6 +2,7 @@ package com.jobshunter.service.clients.tinyurl;
 
 import com.jobshunter.processor.PackageExpected;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import java.net.URI;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -15,6 +16,7 @@ public class TinyUrlClient {
 
   private final RestTemplate restTemplate;
 
+  @RateLimiter(name = "tinyurlLimiter")
   @CircuitBreaker(name = "tinyurl", fallbackMethod = "fallbackShorten")
   public String shorten(String longUrl) {
     String apiUrl = UriComponentsBuilder

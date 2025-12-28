@@ -9,6 +9,7 @@ import com.jobshunter.service.clients.AiJobsClient;
 import com.jobshunter.service.clients.BrowserSimulator;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.io.IOException;
@@ -46,6 +47,7 @@ public non-sealed class SerpApiClientImpl implements AiJobsClient<SearchWithSerp
   private final ApplicationProperties applicationProperties;
 
   @Override
+  @RateLimiter(name = "serpApiLimiter")
   @CircuitBreaker(name = "serpApi", fallbackMethod = "fallbackSearch")
   @Bulkhead(name = "serpApiBulkhead", type = Bulkhead.Type.SEMAPHORE)
   public List<Job> searchJobs(@NotNull SearchWithSerpRequest request) {
