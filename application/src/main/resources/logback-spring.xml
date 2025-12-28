@@ -1,18 +1,66 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration scan="true" scanPeriod="60 seconds">
   <property name="LOG_DIR" value="${LOG_DIR:-logs}"/>
-  <property name="LOG_PATTERN" value="%d{ISO8601} %-5level [%thread] %logger{36}.%M:%line - %msg%n"/>
 
+  <!-- Patterns for different log levels -->
+  <property name="ERROR_PATTERN" value="%d{ISO8601} ❌ ERROR [%thread] %logger{36}.%M:%line - %msg%n"/>
+  <property name="WARN_PATTERN" value="%d{ISO8601} ⚠️  WARN [%thread] %logger{36}.%M:%line - %msg%n"/>
+  <property name="INFO_PATTERN" value="%d{ISO8601} ✅ INFO  [%thread] %logger{36}.%M:%line - %msg%n"/>
+  <property name="DEBUG_PATTERN" value="%d{ISO8601} 🔧 DEBUG [%thread] %logger{36}.%M:%line - %msg%n"/>
+  <property name="TRACE_PATTERN" value="%d{ISO8601} 🔍 TRACE [%thread] %logger{36}.%M:%line - %msg%n"/>
+
+  <!-- Generic pattern for file logging -->
+  <property name="FILE_PATTERN" value="%d{ISO8601} %-5level [%thread] %logger{36}.%M:%line - %msg%n"/>
+
+  <!-- Console Appender with different patterns per level -->
   <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
     <encoder>
-      <pattern>${LOG_PATTERN}</pattern>
+      <pattern>${INFO_PATTERN}</pattern>
     </encoder>
   </appender>
 
+  <!-- Error-specific console appender -->
+  <appender name="CONSOLE_ERROR" class="ch.qos.logback.core.ConsoleAppender">
+    <target>System.err</target>
+    <filter class="ch.qos.logback.classic.filter.LevelFilter">
+      <level>ERROR</level>
+      <onMatch>ACCEPT</onMatch>
+      <onMismatch>DENY</onMismatch>
+    </filter>
+    <encoder>
+      <pattern>${ERROR_PATTERN}</pattern>
+    </encoder>
+  </appender>
+
+  <!-- Warn-specific console appender -->
+  <appender name="CONSOLE_WARN" class="ch.qos.logback.core.ConsoleAppender">
+    <filter class="ch.qos.logback.classic.filter.LevelFilter">
+      <level>WARN</level>
+      <onMatch>ACCEPT</onMatch>
+      <onMismatch>DENY</onMismatch>
+    </filter>
+    <encoder>
+      <pattern>${WARN_PATTERN}</pattern>
+    </encoder>
+  </appender>
+
+  <!-- Debug-specific console appender -->
+  <appender name="CONSOLE_DEBUG" class="ch.qos.logback.core.ConsoleAppender">
+    <filter class="ch.qos.logback.classic.filter.LevelFilter">
+      <level>DEBUG</level>
+      <onMatch>ACCEPT</onMatch>
+      <onMismatch>DENY</onMismatch>
+    </filter>
+    <encoder>
+      <pattern>${DEBUG_PATTERN}</pattern>
+    </encoder>
+  </appender>
+
+  <!-- File Appender for all logs -->
   <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
     <file>${LOG_DIR}/application.log</file>
     <encoder>
-      <pattern>${LOG_PATTERN}</pattern>
+      <pattern>${FILE_PATTERN}</pattern>
     </encoder>
     <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
       <fileNamePattern>${LOG_DIR}/application-%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
@@ -21,9 +69,46 @@
     </rollingPolicy>
   </appender>
 
+  <!-- Separate file for errors only -->
+  <appender name="FILE_ERROR" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>${LOG_DIR}/error.log</file>
+    <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+      <level>ERROR</level>
+    </filter>
+    <encoder>
+      <pattern>${FILE_PATTERN}</pattern>
+    </encoder>
+    <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+      <fileNamePattern>${LOG_DIR}/error-%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+      <maxFileSize>10MB</maxFileSize>
+      <maxHistory>30</maxHistory>
+    </rollingPolicy>
+  </appender>
+
+  <!-- Async appender for better performance -->
+  <appender name="ASYNC_FILE" class="ch.qos.logback.classic.AsyncAppender">
+    <queueSize>512</queueSize>
+    <discardingThreshold>0</discardingThreshold>
+    <appender-ref ref="FILE"/>
+  </appender>
+
+  <!-- Root logger configuration -->
   <root level="INFO">
     <appender-ref ref="CONSOLE"/>
-    <appender-ref ref="FILE"/>
+    <appender-ref ref="CONSOLE_WARN"/>
+    <appender-ref ref="CONSOLE_ERROR"/>
+    <appender-ref ref="CONSOLE_DEBUG"/>
+    <appender-ref ref="ASYNC_FILE"/>
+    <appender-ref ref="FILE_ERROR"/>
   </root>
-</configuration>
 
+  <!-- Spring Framework logging (reduce noise) -->
+  <logger name="org.springframework" level="WARN"/>
+  <logger name="org.springframework.boot.autoconfigure.logging" level="INFO"/>
+
+  <!-- Resilience4j logging -->
+  <logger name="io.github.resilience4j" level="INFO"/>
+
+  <!-- Your application logging -->
+  <logger name="com.jobshunter" level="DEBUG"/>
+</configuration>
