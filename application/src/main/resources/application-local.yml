@@ -89,73 +89,63 @@ resilience4j.circuitbreaker:
     gptCircuitBreaker:
       registerHealthIndicator: true
       slidingWindowType: COUNT_BASED
-      slidingWindowSize: 20
-      minimumNumberOfCalls: 10
+      slidingWindowSize: 1
+      minimumNumberOfCalls: 1
       failureRateThreshold: 50
       slowCallRateThreshold: 50
       slowCallDurationThreshold: 5s
-      waitDurationInOpenState: 30s
-      permittedNumberOfCallsInHalfOpenState: 3
+      waitDurationInOpenState: 2m
+      permittedNumberOfCallsInHalfOpenState: 1
     geminiCircuitBreaker:
       registerHealthIndicator: true
       slidingWindowType: COUNT_BASED
-      slidingWindowSize: 20
-      minimumNumberOfCalls: 10
+      slidingWindowSize: 1
+      minimumNumberOfCalls: 1
       failureRateThreshold: 50
       slowCallRateThreshold: 50
       slowCallDurationThreshold: 5s
-      waitDurationInOpenState: 30s
-      permittedNumberOfCallsInHalfOpenState: 3
+      waitDurationInOpenState: 2m
+      permittedNumberOfCallsInHalfOpenState: 1
     serpApi:
       registerHealthIndicator: true
       slidingWindowType: COUNT_BASED
-      slidingWindowSize: 20
-      minimumNumberOfCalls: 10
+      slidingWindowSize: 1
+      minimumNumberOfCalls: 1
       failureRateThreshold: 50
       slowCallRateThreshold: 50
       slowCallDurationThreshold: 5s
-      waitDurationInOpenState: 30s
-      permittedNumberOfCallsInHalfOpenState: 3
+      waitDurationInOpenState: 2m
+      permittedNumberOfCallsInHalfOpenState: 1
     twilio:
       registerHealthIndicator: true
       slidingWindowType: COUNT_BASED
-      slidingWindowSize: 20
-      minimumNumberOfCalls: 5
+      slidingWindowSize: 1
+      minimumNumberOfCalls: 1
       failureRateThreshold: 50
       slowCallRateThreshold: 50
       slowCallDurationThreshold: 5s
-      waitDurationInOpenState: 30s
-      permittedNumberOfCallsInHalfOpenState: 3
-    mailtrapRest:
+      waitDurationInOpenState: 2m
+      permittedNumberOfCallsInHalfOpenState: 1
+    mailtrap:
       registerHealthIndicator: true
       slidingWindowType: COUNT_BASED
-      slidingWindowSize: 20
-      minimumNumberOfCalls: 5
+      slidingWindowSize: 1
+      minimumNumberOfCalls: 1
       failureRateThreshold: 50
       slowCallRateThreshold: 50
       slowCallDurationThreshold: 5s
-      waitDurationInOpenState: 30s
-      permittedNumberOfCallsInHalfOpenState: 3
-    mailtrapSmtp:
-      registerHealthIndicator: true
-      slidingWindowType: COUNT_BASED
-      slidingWindowSize: 20
-      minimumNumberOfCalls: 5
-      failureRateThreshold: 50
-      slowCallRateThreshold: 50
-      slowCallDurationThreshold: 5s
-      waitDurationInOpenState: 30s
-      permittedNumberOfCallsInHalfOpenState: 3
+      waitDurationInOpenState: 2m
+      permittedNumberOfCallsInHalfOpenState: 1
     tinyurl:
       registerHealthIndicator: true
       slidingWindowType: COUNT_BASED
-      slidingWindowSize: 20
-      minimumNumberOfCalls: 5
+      slidingWindowSize: 1
+      minimumNumberOfCalls: 1
       failureRateThreshold: 50
       slowCallRateThreshold: 50
       slowCallDurationThreshold: 5s
-      waitDurationInOpenState: 30s
-      permittedNumberOfCallsInHalfOpenState: 3
+      waitDurationInOpenState: 2m
+      permittedNumberOfCallsInHalfOpenState: 1
 
 # BULK HEAD  ---------------------------------------------------------------------------
 # Isolates thread pools to limit concurrent requests to external services,

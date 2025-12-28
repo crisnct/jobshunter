@@ -1,8 +1,9 @@
 package com.jobshunter.service.testdata;
 
+import com.jobshunter.model.GptJobScoreRequest;
 import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.clients.JobScoreCalculatorClient;
-import com.jobshunter.model.GptJobScoreRequest;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -16,8 +17,15 @@ public non-sealed class FakeGptJobScoreCalculator implements JobScoreCalculatorC
 
   @Override
   @RateLimiter(name = "gptLimiter")
+  @CircuitBreaker(name = "gptCircuitBreaker", fallbackMethod = "fallbackComputeScore")
   public int computeScore(GptJobScoreRequest request) {
     return request.getJobDescription().charAt(0) % 15 + 85;
+  }
+
+  @SuppressWarnings("unused")
+  private int fallbackComputeScore(GptJobScoreRequest request, Throwable t) {
+    log.error("{} call short-circuited/bulkheaded: {}", getClass().getSimpleName(), t.getMessage());
+    return -1;
   }
 
 }

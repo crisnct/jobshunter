@@ -42,7 +42,7 @@ public non-sealed class RestMailtrapClientImpl implements RestMailtrapClient {
   private String templateUUID;
 
   @Override
-  @CircuitBreaker(name = "mailtrapRest", fallbackMethod = "fallbackSendEmail")
+  @CircuitBreaker(name = "mailtrap", fallbackMethod = "fallbackSendEmail")
   public void sendEmailWithNewJobs(
       @NonNull String username,
       @NonNull String email,

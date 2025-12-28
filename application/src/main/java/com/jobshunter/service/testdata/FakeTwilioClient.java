@@ -3,6 +3,7 @@ package com.jobshunter.service.testdata;
 import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.clients.TwilioClient;
 import com.twilio.exception.ApiException;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -20,6 +21,7 @@ public non-sealed class FakeTwilioClient implements TwilioClient {
 
   @SuppressWarnings("BooleanMethodIsAlwaysInverted")
   @Override
+  @CircuitBreaker(name = "twilio", fallbackMethod = "fallbackSend")
   public boolean trySend(String toNumber, String fromNumber, String body) {
     try {
       fromNumber = formatWhatsapp(sanitizePhone(fromNumber));
@@ -50,6 +52,12 @@ public non-sealed class FakeTwilioClient implements TwilioClient {
 
   private String sanitizePhone(String phone) {
     return StringUtils.hasText(phone) ? StringUtils.trimAllWhitespace(phone) : null;
+  }
+
+  @SuppressWarnings("unused")
+  private boolean fallbackSend(String toNumber, String fromNumber, String body, Throwable throwable) {
+    log.error("{} call short-circuited/bulkheaded: {}", getClass().getSimpleName(), throwable.getMessage());
+    return false;
   }
 
 }

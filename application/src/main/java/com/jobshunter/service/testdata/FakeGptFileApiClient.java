@@ -2,6 +2,7 @@ package com.jobshunter.service.testdata;
 
 import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.clients.FileClient;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import java.nio.file.Path;
 import java.util.List;
@@ -17,6 +18,7 @@ public non-sealed class FakeGptFileApiClient implements FileClient {
 
   @Override
   @RateLimiter(name = "gptLimiter")
+  @CircuitBreaker(name = "gptCircuitBreaker", fallbackMethod = "fallbackUpload")
   public String uploadFile(Path cvPath) {
     log.info("File {} uploaded properly", cvPath);
     return "uploaded";
@@ -30,5 +32,11 @@ public non-sealed class FakeGptFileApiClient implements FileClient {
   @Override
   public void deleteAllFilesExcept(List<String> fileIds) {
     log.info("Files unused deleted");
+  }
+
+  @SuppressWarnings("unused")
+  private String fallbackUpload(Path cvPat, Throwable t) {
+    log.error("{} call short-circuited/bulkheaded: {}", getClass().getSimpleName(), t.getMessage());
+    return "";
   }
 }

@@ -4,6 +4,7 @@ import com.jobshunter.dto.serpRequest.SearchWithSerpRequest;
 import com.jobshunter.model.Job;
 import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.clients.AiJobsClient;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Component;
 public non-sealed class FakeSerpApiEconomyClient implements AiJobsClient<SearchWithSerpRequest, List<Job>> {
 
   @Override
+  @CircuitBreaker(name = "serpApi", fallbackMethod = "fallbackSearch")
   public List<Job> searchJobs(SearchWithSerpRequest request) {
     return List.of(
         new Job(-1,
@@ -31,6 +33,12 @@ public non-sealed class FakeSerpApiEconomyClient implements AiJobsClient<SearchW
             null
         )
     );
+  }
+
+  @SuppressWarnings("unused")
+  private List<Job> fallbackSearch(SearchWithSerpRequest request, Throwable t) {
+    log.error("{} call short-circuited/bulkheaded: {}", getClass().getSimpleName(), t.getMessage());
+    return List.of();
   }
 
 }

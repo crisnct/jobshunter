@@ -6,6 +6,7 @@ import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.application.UrlExtractor;
 import com.jobshunter.service.clients.AiJobsClient;
 import com.jobshunter.service.clients.gemini.AbstractGeminiApiClient;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
@@ -29,6 +30,7 @@ public non-sealed class FakeGeminiPremium extends AbstractGeminiApiClient implem
 
   @Override
   @RateLimiter(name = "geminiLimiter")
+  @CircuitBreaker(name = "geminiCircuitBreaker", fallbackMethod = "fallbackSearch")
   public List<Job> searchJobs(GeminiJobSearchRequest request) {
     String model = request.getPrompt().getEngineConfiguration().getModel();
     return List.of(
@@ -45,5 +47,11 @@ public non-sealed class FakeGeminiPremium extends AbstractGeminiApiClient implem
             model
         )
     );
+  }
+
+  @SuppressWarnings("unused")
+  private List<Job> fallbackSearch(GeminiJobSearchRequest request, Throwable t) {
+    log.error("{} call short-circuited/bulkheaded: {}", getClass().getSimpleName(), t.getMessage());
+    return List.of();
   }
 }

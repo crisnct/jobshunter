@@ -76,7 +76,7 @@ public non-sealed class PremiumGptJobSearchImpl extends AbstractGptApiClient
   }
 
   @SuppressWarnings("unused")
-  private List<Job> fallbackSearch(String systemPrompt, GptJobSearchRequest request, Throwable t) {
+  private List<Job> fallbackSearch(GptJobSearchRequest request, Throwable t) {
     log.error("Premium GPT call short-circuited/bulkheaded: {}", t.getMessage());
     return List.of();
   }

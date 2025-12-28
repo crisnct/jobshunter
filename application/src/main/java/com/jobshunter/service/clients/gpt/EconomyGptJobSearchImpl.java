@@ -79,7 +79,7 @@ public non-sealed class EconomyGptJobSearchImpl extends AbstractGptApiClient
   }
 
   @SuppressWarnings("unused")
-  private List<Job> fallbackSearch(String systemPrompt, GptJobSearchRequest request, Throwable t) {
+  private List<Job> fallbackSearch(GptJobSearchRequest request, Throwable t) {
     log.error("Economy GPT call short-circuited/bulkheaded: {}", t.getMessage());
     return List.of();
   }

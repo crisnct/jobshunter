@@ -15,6 +15,7 @@ import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.clients.JobScoreCalculatorClient;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import jakarta.annotation.PostConstruct;
 import java.io.IOException;
 import java.net.URI;
@@ -69,6 +70,7 @@ public non-sealed class GeminiJobScoreCalculatorClientImpl implements JobScoreCa
   @Override
   @RateLimiter(name = "geminiLimiter")
   @Bulkhead(name = "geminiBulkhead", type = Bulkhead.Type.SEMAPHORE)
+  @CircuitBreaker(name = "geminiCircuitBreaker", fallbackMethod = "fallbackComputeScore")
   public int computeScore(GeminiJobScoreRequest request) {
     try {
       Gemini config = properties.getGemini();
@@ -105,6 +107,12 @@ public non-sealed class GeminiJobScoreCalculatorClientImpl implements JobScoreCa
     Optional<Part> item = response.candidates().stream()
         .flatMap((Function<Candidate, Stream<Part>>) candidate -> candidate.content().parts().stream()).findFirst();
     return item.map(part -> Integer.parseInt(part.text())).orElse(0);
+  }
+
+  @SuppressWarnings("unused")
+  private int fallbackComputeScore(GeminiJobScoreRequest request, Throwable t) {
+    log.error("{} call short-circuited/bulkheaded: {}", getClass().getSimpleName(), t.getMessage());
+    return 0;
   }
 
 }
