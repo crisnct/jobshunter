@@ -74,8 +74,7 @@ public final class GeminiFileClientImpl implements FileClient {
           .body(UploadFileResponse.class);
 
       if (response == null || response.file() == null) {
-        throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
-            "Fail to upload file to Gemini Api");
+        throw new RuntimeException("Fail to upload file to Gemini Api: " + cvPath);
       }
       return response.file().name();
     }
@@ -92,7 +91,7 @@ public final class GeminiFileClientImpl implements FileClient {
 
   @Override
   public void deleteAllFilesExcept(List<String> fileIds) {
-    throw new IllegalStateException();
+    throw new RuntimeException("not implemented");
   }
 
   @JsonIgnoreProperties(ignoreUnknown = true)

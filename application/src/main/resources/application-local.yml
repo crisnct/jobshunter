@@ -21,3 +21,161 @@ serpApi:
 security:
   httpsOnly:
     enabled: false
+
+# RATE LIMITER  ---------------------------------------------------------------------------
+# Throttle API requests to 2 per minute, preventing quota violations and automatic request queueing
+# with transparent permit management.
+
+resilience4j.ratelimiter:
+  instances:
+    gptLimiter:
+      limitForPeriod: 1                # Allow 1 call
+      limitRefreshPeriod: 5s           # Every 1 seconds
+      timeoutDuration: 10s             # Wait up to 10s for a slot
+      writableStackTraceEnabled: false
+    geminiLimiter:
+      limitForPeriod: 1
+      limitRefreshPeriod: 1s
+      timeoutDuration: 10s
+      writableStackTraceEnabled: false
+    serpApiLimiter:
+      limitForPeriod: 1
+      limitRefreshPeriod: 5s
+      timeoutDuration: 10s
+      writableStackTraceEnabled: false
+    twilioLimiter:
+      limitForPeriod: 1
+      limitRefreshPeriod: 5s
+      timeoutDuration: 10s
+      writableStackTraceEnabled: false
+    tinyurlLimiter:
+      limitForPeriod: 1
+      limitRefreshPeriod: 5s
+      timeoutDuration: 10s
+      writableStackTraceEnabled: false
+    mailtrapLimiter:
+      limitForPeriod: 1
+      limitRefreshPeriod: 5s
+      timeoutDuration: 10s
+      writableStackTraceEnabled: false
+
+# TIME LIMITER ---------------------------------------------------------------------------
+# Enforces maximum execution time for API calls by cancelling requests that exceed the configured timeout threshold,
+# preventing indefinite hangs and ensuring predictable response times.
+
+resilience4j.timelimiter:
+  instances:
+    browserSimulatorLimiter:
+      timeoutDuration: 30s             # Timeout for browser page opening operations
+      cancelRunningFuture: true        # Cancel the future if timeout occurs
+      writableStackTraceEnabled: false
+
+# CIRCUIT BREAKER ---------------------------------------------------------------------------
+# Fault tolerance by monitoring API call failures.
+# Automatically opens the circuit to prevent cascading failures when error threshold is exceeded,
+# failing fast and allowing services to recover before retrying requests.
+
+#registerHealthIndicator: expose a health indicator for this circuit breaker via actuator.
+#slidingWindowType: use a COUNT_BASED window (by number of calls) for metrics.
+#slidingWindowSize: track the last slidingWindowSize calls in the sliding window.
+#minimumNumberOfCalls: start calculating failure stats only after at least minimumNumberOfCalls calls.
+#failureRateThreshold: open the breaker if the failure rate exceeds failureRateThreshold %.
+#slowCallRateThreshold: treat slow calls as a problem when more than slowCallRateThreshold % are slow.
+#slowCallDurationThreshold: any call slower than slowCallDurationThreshold sec is counted as “slow.”
+#waitDurationInOpenState: keep the breaker open for waitDurationInOpenState sec before trying again (half-open).
+#permittedNumberOfCallsInHalfOpenState: allow that number of trial calls while half-open.
+resilience4j.circuitbreaker:
+  instances:
+    gptCircuitBreaker:
+      registerHealthIndicator: true
+      slidingWindowType: COUNT_BASED
+      slidingWindowSize: 20
+      minimumNumberOfCalls: 10
+      failureRateThreshold: 50
+      slowCallRateThreshold: 50
+      slowCallDurationThreshold: 5s
+      waitDurationInOpenState: 30s
+      permittedNumberOfCallsInHalfOpenState: 3
+    geminiCircuitBreaker:
+      registerHealthIndicator: true
+      slidingWindowType: COUNT_BASED
+      slidingWindowSize: 20
+      minimumNumberOfCalls: 10
+      failureRateThreshold: 50
+      slowCallRateThreshold: 50
+      slowCallDurationThreshold: 5s
+      waitDurationInOpenState: 30s
+      permittedNumberOfCallsInHalfOpenState: 3
+    serpApi:
+      registerHealthIndicator: true
+      slidingWindowType: COUNT_BASED
+      slidingWindowSize: 20
+      minimumNumberOfCalls: 10
+      failureRateThreshold: 50
+      slowCallRateThreshold: 50
+      slowCallDurationThreshold: 5s
+      waitDurationInOpenState: 30s
+      permittedNumberOfCallsInHalfOpenState: 3
+    twilio:
+      registerHealthIndicator: true
+      slidingWindowType: COUNT_BASED
+      slidingWindowSize: 20
+      minimumNumberOfCalls: 5
+      failureRateThreshold: 50
+      slowCallRateThreshold: 50
+      slowCallDurationThreshold: 5s
+      waitDurationInOpenState: 30s
+      permittedNumberOfCallsInHalfOpenState: 3
+    mailtrapRest:
+      registerHealthIndicator: true
+      slidingWindowType: COUNT_BASED
+      slidingWindowSize: 20
+      minimumNumberOfCalls: 5
+      failureRateThreshold: 50
+      slowCallRateThreshold: 50
+      slowCallDurationThreshold: 5s
+      waitDurationInOpenState: 30s
+      permittedNumberOfCallsInHalfOpenState: 3
+    mailtrapSmtp:
+      registerHealthIndicator: true
+      slidingWindowType: COUNT_BASED
+      slidingWindowSize: 20
+      minimumNumberOfCalls: 5
+      failureRateThreshold: 50
+      slowCallRateThreshold: 50
+      slowCallDurationThreshold: 5s
+      waitDurationInOpenState: 30s
+      permittedNumberOfCallsInHalfOpenState: 3
+    tinyurl:
+      registerHealthIndicator: true
+      slidingWindowType: COUNT_BASED
+      slidingWindowSize: 20
+      minimumNumberOfCalls: 5
+      failureRateThreshold: 50
+      slowCallRateThreshold: 50
+      slowCallDurationThreshold: 5s
+      waitDurationInOpenState: 30s
+      permittedNumberOfCallsInHalfOpenState: 3
+
+# BULK HEAD  ---------------------------------------------------------------------------
+# Isolates thread pools to limit concurrent requests to external services,
+# preventing resource exhaustion and ensuring one failing service doesn't impact others.
+
+resilience4j.bulkhead:
+  instances:
+    gptBulkhead:
+      maxConcurrentCalls: 3
+      maxWaitDuration: 2m
+      writableStackTraceEnabled: false
+    geminiBulkhead:
+      maxConcurrentCalls: 3
+      maxWaitDuration: 2m
+      writableStackTraceEnabled: false
+    serpApiBulkhead:
+      maxConcurrentCalls: 3
+      maxWaitDuration: 2m
+      writableStackTraceEnabled: false
+    mailtrapBulkhead:
+      maxConcurrentCalls: 5
+      maxWaitDuration: 30s
+      writableStackTraceEnabled: false

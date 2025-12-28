@@ -1,7 +1,6 @@
-package com.jobshunter.service.clients.gpt;
+package com.jobshunter.model;
 
 import com.jobshunter.database.entities.UserCvEntity;
-import com.jobshunter.model.JobScoreRequest;
 import lombok.Data;
 
 @Data

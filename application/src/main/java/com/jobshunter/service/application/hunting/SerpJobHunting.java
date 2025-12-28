@@ -2,7 +2,6 @@ package com.jobshunter.service.application.hunting;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.json.JsonMapper;
-import com.jobshunter.ApplicationProperties;
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.entities.UserPromptEntity;
 import com.jobshunter.dto.serpRequest.SearchWithSerpRequest;
@@ -18,19 +17,15 @@ import org.springframework.stereotype.Service;
 @Service
 public class SerpJobHunting extends GenericJobHunting<SearchWithSerpRequest> {
 
-  private final ApplicationProperties properties;
-
   private final JsonMapper mapper;
 
   public SerpJobHunting(
       @Qualifier("EconomyJobsClientSerp") AiJobsClient<SearchWithSerpRequest, List<Job>> serpApiClient,
       @Qualifier("serpApiExecutor") Executor serpApiExecutor,
-      JsonMapper mapper,
-      ApplicationProperties properties
+      JsonMapper mapper
   ) {
     super(serpApiExecutor, serpApiClient, null);
     this.mapper = mapper;
-    this.properties = properties;
   }
 
   @Override

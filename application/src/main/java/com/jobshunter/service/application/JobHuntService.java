@@ -186,7 +186,7 @@ public class JobHuntService {
       return jobHuntResponse;
     } catch (IOException e) {
       log.error(e.getMessage(), e);
-      throw new BusinessException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+      throw new RuntimeException("Unexpected error about creating file on local storage " + e.getMessage(), e);
     } finally {
       if (resumeFileIdCleanup != null) {
         jobScoring.cleanup(resumeFileIdCleanup);

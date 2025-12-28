@@ -8,6 +8,7 @@ import com.jobshunter.dto.gptRequest.Gpt4ScorePayload;
 import com.jobshunter.dto.gptResponse.ContentItem;
 import com.jobshunter.dto.gptResponse.GptCompletionResponse;
 import com.jobshunter.dto.gptResponse.OutputItem;
+import com.jobshunter.model.GptJobScoreRequest;
 import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.clients.JobScoreCalculatorClient;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;

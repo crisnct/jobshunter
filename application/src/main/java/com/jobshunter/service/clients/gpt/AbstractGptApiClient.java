@@ -2,10 +2,8 @@ package com.jobshunter.service.clients.gpt;
 
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.jobshunter.ApplicationProperties;
-import com.jobshunter.ApplicationProperties.Gpt;
 import com.jobshunter.dto.gptResponse.GptCompletionResponse;
 import com.jobshunter.dto.gptResponse.OutputItem;
-import com.jobshunter.model.GptJobSearchRequest;
 import com.jobshunter.model.Job;
 import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.application.UrlExtractor;
@@ -38,8 +36,6 @@ public abstract sealed class AbstractGptApiClient
 
   private final UrlExtractor urlExtractor;
 
-  public abstract List<Job> searchWithModel(String systemPrompt, GptJobSearchRequest request);
-
   public abstract String getSystemPromptFilename();
 
   @PostConstruct
@@ -50,24 +46,15 @@ public abstract sealed class AbstractGptApiClient
       //noinspection DataFlowIssue
       jobsSystemPrompt = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
     } catch (Exception e) {
-      throw new IllegalStateException("Cannot load system prompt file", e);
+      throw new RuntimeException("Cannot load system prompt file", e);
     }
     try (var inputStream = getClass().getClassLoader().getResourceAsStream("prompts/gptJobsJsonOutputSchema.txt")) {
       //noinspection DataFlowIssue
       String schemaJson = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
       outputSchema = mapper.readValue(schemaJson, Object.class);
     } catch (Exception e) {
-      throw new IllegalStateException("Cannot load output schema file", e);
+      throw new RuntimeException("Cannot load output schema file", e);
     }
-  }
-
-  public List<Job> searchJobs(GptJobSearchRequest request) {
-    Gpt gpt = properties.getGpt();
-    if (gpt.getApiKey() == null || gpt.getApiKey().isBlank()) {
-      log.warn("ChatGPT job search enabled but CHATGPT_API_KEY missing.");
-      return List.of();
-    }
-    return searchWithModel(jobsSystemPrompt, request);
   }
 
   protected List<Job> extractJobs(GptCompletionResponse response) {

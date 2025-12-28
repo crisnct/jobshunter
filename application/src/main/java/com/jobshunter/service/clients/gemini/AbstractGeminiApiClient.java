@@ -41,14 +41,14 @@ public abstract class AbstractGeminiApiClient {
       //noinspection DataFlowIssue
       jobsSystemPrompt = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
     } catch (Exception e) {
-      throw new IllegalStateException("Cannot load system prompt file", e);
+      throw new RuntimeException("Cannot load system prompt file", e);
     }
     try (var inputStream = getClass().getClassLoader().getResourceAsStream("prompts/geminiJobsJsonOutputSchema.txt")) {
       //noinspection DataFlowIssue
       String schemaJson = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
       outputSchema = mapper.readValue(schemaJson, Object.class);
     } catch (Exception e) {
-      throw new IllegalStateException("Cannot load output schema file", e);
+      throw new RuntimeException("Cannot load output schema file", e);
     }
   }
 

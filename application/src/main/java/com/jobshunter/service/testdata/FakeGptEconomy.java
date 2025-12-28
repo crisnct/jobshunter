@@ -4,9 +4,11 @@ import com.jobshunter.ApplicationProperties;
 import com.jobshunter.model.GptJobSearchRequest;
 import com.jobshunter.model.Job;
 import com.jobshunter.processor.PackageExpected;
-import com.jobshunter.service.clients.AiJobsClient;
 import com.jobshunter.service.application.UrlExtractor;
+import com.jobshunter.service.clients.AiJobsClient;
 import com.jobshunter.service.clients.gpt.AbstractGptApiClient;
+import io.github.resilience4j.ratelimiter.RateLimiterRegistry;
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -16,14 +18,15 @@ import org.springframework.stereotype.Component;
 @Component("EconomyJobsClientGPT")
 @PackageExpected("com.jobshunter.service.clients.gpt")
 @ConditionalOnProperty(name = "gpt.enabled", havingValue = "false")
-public final class FakeGptEconomy extends AbstractGptApiClient implements AiJobsClient<GptJobSearchRequest, List<Job>> {
+public non-sealed class FakeGptEconomy extends AbstractGptApiClient implements AiJobsClient<GptJobSearchRequest, List<Job>> {
 
-  public FakeGptEconomy(ApplicationProperties properties, UrlExtractor urlExtractor) {
+  public FakeGptEconomy(ApplicationProperties properties, UrlExtractor urlExtractor, RateLimiterRegistry rateLimiterRegistry) {
     super(properties, urlExtractor);
   }
 
   @Override
-  public List<Job> searchWithModel(String systemPrompt, GptJobSearchRequest request) {
+  @RateLimiter(name = "gptLimiter")
+  public List<Job> searchJobs(GptJobSearchRequest request) {
     return List.of(
         new Job(-1,
             "https://br.bebee.com/job/63c331e10c2e5c04df61d25ef8219be8?utm_campaign=google_jobs_apply&utm_source=google_jobs_apply&utm_medium=organic",

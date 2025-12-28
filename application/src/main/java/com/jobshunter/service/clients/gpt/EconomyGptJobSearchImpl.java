@@ -47,13 +47,13 @@ public non-sealed class EconomyGptJobSearchImpl extends AbstractGptApiClient
   @CircuitBreaker(name = "gptCircuitBreaker", fallbackMethod = "fallbackSearch")
   @Bulkhead(name = "gptBulkhead", type = Bulkhead.Type.SEMAPHORE)
   @RateLimiter(name = "gptLimiter")
-  public List<Job> searchWithModel(String systemPrompt, GptJobSearchRequest request) {
+  public List<Job> searchJobs(GptJobSearchRequest request) {
     try {
       GptJobsPayload payload = GptJobsPayload.builder()
           .model(request.getPrompt().getEngineConfiguration().getModel())
           .max_output_tokens(properties.getGpt().getMaxTokens())
           .addTools(Tools.builder().setDeepSearch().build())
-          .addSystemPrompt(systemPrompt)
+          .addSystemPrompt(getJobsSystemPrompt())
           .addUserPrompt(request.getPrompt().getPrompt(), request.getFileId())
           .build();
 

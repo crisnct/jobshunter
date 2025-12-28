@@ -4,14 +4,13 @@ import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.clients.RestMailtrapClient;
 import com.jobshunter.service.clients.mailtrap.RestMailtrapClientImpl.MailtrapTemplateRequest.From;
 import com.jobshunter.service.clients.mailtrap.RestMailtrapClientImpl.MailtrapTemplateRequest.To;
-import jakarta.annotation.PostConstruct;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpStatusCode;
@@ -66,7 +65,7 @@ public non-sealed class RestMailtrapClientImpl implements RestMailtrapClient {
         .retrieve()
         .onStatus(HttpStatusCode::isError, (req, res) -> {
           String error = new String(res.getBody().readAllBytes());
-          throw new IllegalStateException("Mailtrap failed: " + res.getStatusCode() + " " + error);
+          throw new RuntimeException("Mailtrap failed: " + res.getStatusCode() + " " + error);
         })
         .onStatus(HttpStatusCode::is2xxSuccessful, (req, res) -> {
           log.info("Email send successfully to {}", email);

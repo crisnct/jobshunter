@@ -50,7 +50,7 @@ public class JobScoring implements JobProcessor {
               new GeminiJobScoreRequest(context.getResumeFileId(), uploadedFile.getFileId()));
         }
       } catch (IOException e) {
-        throw new RuntimeException("Error at scoring job  " + job, e);
+        throw new RuntimeException("Unexpected error about creating file on local storage at scoring job  " + job, e);
       }
     } else {
       score = -1;

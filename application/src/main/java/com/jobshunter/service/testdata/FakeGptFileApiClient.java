@@ -2,6 +2,7 @@ package com.jobshunter.service.testdata;
 
 import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.clients.FileClient;
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import java.nio.file.Path;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
@@ -12,9 +13,10 @@ import org.springframework.stereotype.Component;
 @Component("Gpt")
 @PackageExpected("com.jobshunter.service.clients.gpt")
 @ConditionalOnProperty(name = "gpt.enabled", havingValue = "false")
-public final class FakeGptFileApiClient implements FileClient {
+public non-sealed class FakeGptFileApiClient implements FileClient {
 
   @Override
+  @RateLimiter(name = "gptLimiter")
   public String uploadFile(Path cvPath) {
     log.info("File {} uploaded properly", cvPath);
     return "uploaded";

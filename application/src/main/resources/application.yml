@@ -123,12 +123,12 @@ resilience4j.ratelimiter:
       writableStackTraceEnabled: false
     geminiLimiter:
       limitForPeriod: 1                # Allow 1 call
-      limitRefreshPeriod: 30           # Every 30 sec
+      limitRefreshPeriod: 10s           # Every 10 sec
       timeoutDuration: 5m              # Wait up to 5min for a slot
       writableStackTraceEnabled: false
     serpApiLimiter:
-      limitForPeriod: 2                # Allow 2 calls
-      limitRefreshPeriod: 1m           # Every 1 minute
+      limitForPeriod: 1                # Allow 2 calls
+      limitRefreshPeriod: 30s           # Every 1 minute
       timeoutDuration: 1m             # Wait up to 1m for a slot
       writableStackTraceEnabled: false
     twilioLimiter:

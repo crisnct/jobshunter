@@ -23,11 +23,11 @@ public class UserMessagesFactory {
     String location = TEMPLATE_FOLDER + template.fileName;
     try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream(location)) {
       if (inputStream == null) {
-        throw new IllegalStateException("Template file not found: " + location);
+        throw new RuntimeException("Template file not found: " + location);
       }
       return new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
     } catch (IOException e) {
-      throw new IllegalStateException("Failed to read template: " + location, e);
+      throw new RuntimeException("Failed to read template: " + location, e);
     }
   }
 

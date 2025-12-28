@@ -7,14 +7,13 @@ import com.jobshunter.dto.AIJobSearchRequest;
 import com.jobshunter.model.Job;
 import com.jobshunter.model.SearchJobOrder;
 import com.jobshunter.service.clients.AiJobsClient;
+import io.github.resilience4j.ratelimiter.RequestNotPermitted;
 import jakarta.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.server.ResponseStatusException;
 
 @Slf4j
 public abstract non-sealed class GenericJobHunting<T extends AIJobSearchRequest> implements JobHunting {
@@ -60,8 +59,14 @@ public abstract non-sealed class GenericJobHunting<T extends AIJobSearchRequest>
   private CompletableFuture<List<Job>> searchAsync(T request, Executor executor) {
     return CompletableFuture.supplyAsync(() -> searchSync(request), executor)
         .exceptionally(throwable -> {
-          log.error("Unexpected error at gathering jobs from model {}: {} for prompt {}", request.getPrompt().getEngineConfiguration().getModel(),
-              throwable.getMessage(), request.getPrompt().getPrompt());
+          EngineConfigurationEntity engineConfig = request.getPrompt().getEngineConfiguration();
+          if (throwable.getCause() != null && throwable.getCause() instanceof RequestNotPermitted) {
+            log.error("❌ Rate limit exceed for user {}, Engine: {}, Tier: {},   Model: {}",
+                request.getUsername(), engineConfig.getEngineType(), engineConfig.getTier(), engineConfig.getModel());
+          } else {
+            log.error("Unexpected error at gathering jobs from model {}: {} for prompt {}", engineConfig.getModel(),
+                throwable.getMessage(), request.getPrompt().getPrompt());
+          }
           return List.of();
         });
   }
@@ -73,7 +78,7 @@ public abstract non-sealed class GenericJobHunting<T extends AIJobSearchRequest>
     List<Job> jobsFound = switch (engineConfig.getTier()) {
       case ECONOMY -> economyModel.searchJobs(request);
       case PREMIUM -> premiumModel.searchJobs(request);
-      default -> throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid engine");
+      default -> throw new RuntimeException("Invalid engine tier " + engineConfig.getTier());
     };
     jobsFound.forEach(job -> {
       job.setPromptId(request.getPrompt().getId());

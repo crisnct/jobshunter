@@ -97,7 +97,7 @@ public non-sealed class SerpApiClientImpl implements AiJobsClient<SearchWithSerp
         log.info("SERP API request executed successfully");
       }
       if (response.getStatusCode().isError()) {
-        throw new IllegalStateException("SERP API failed: " + response.getStatusCode().value() + " " + response.getBody());
+        throw new RuntimeException("SERP API failed: " + response.getStatusCode().value() + " " + response.getBody());
       }
       return new SerpApiJobsResponseParser().parse(response.getBody());
     } catch (Throwable e) {
@@ -159,7 +159,7 @@ public non-sealed class SerpApiClientImpl implements AiJobsClient<SearchWithSerp
 
     String[] kv = parameters.toArray(String[]::new);
     if (kv.length % 2 != 0) {
-      throw new IllegalArgumentException("key/value pairs required");
+      throw new RuntimeException("key/value pairs required");
     }
     StringBuilder sb = new StringBuilder(BASE.toString()).append("?");
     for (int i = 0; i < kv.length; i += 2) {
@@ -183,7 +183,7 @@ public non-sealed class SerpApiClientImpl implements AiJobsClient<SearchWithSerp
 
   private double kilometersToMiles(double kilometers) {
     if (kilometers < 0) {
-      throw new IllegalArgumentException("Distance cannot be negative");
+      throw new RuntimeException("Distance cannot be negative");
     }
     return kilometers * KM_TO_MILES;
   }

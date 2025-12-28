@@ -43,6 +43,12 @@ open module com.jobshunter.application {
   requires org.apache.httpcomponents.client5.httpclient5;
   requires org.apache.httpcomponents.core5.httpcore5;
 
+  requires io.github.resilience4j.annotations;
+  requires io.github.resilience4j.ratelimiter;
+  requires io.github.resilience4j.timelimiter;
+  requires io.github.resilience4j.bulkhead;
+  requires io.github.resilience4j.circuitbreaker;
+
   requires org.jspecify;
   requires org.slf4j;
   requires liquibase.core;
@@ -50,14 +56,13 @@ open module com.jobshunter.application {
   requires com.auth0.jwt;
   requires jjwt.api;
   requires java.sql;
-  requires io.github.resilience4j.annotations;
   requires java.net.http;
   requires org.jsoup;
+  requires io.github.bucket4j.core;
+  requires io.swagger.v3.oas.annotations;
 
   requires static lombok;
   requires static com.jobshunter.processor;
-  requires io.github.bucket4j.core;
-  requires io.swagger.v3.oas.annotations;
 
 }
 

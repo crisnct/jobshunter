@@ -8,6 +8,7 @@ import com.jobshunter.dto.ChangePasswordRequest;
 import com.jobshunter.dto.LoginRequest;
 import com.jobshunter.dto.RegisterRequest;
 import com.jobshunter.dto.exceptions.BusinessException;
+import com.jobshunter.dto.exceptions.ValidationException;
 import com.jobshunter.service.application.authentication.JwtService;
 import com.jobshunter.service.application.notifiers.EmailNotifierService;
 import java.time.LocalDateTime;
@@ -45,13 +46,13 @@ public class AuthService {
   @Transactional
   public UserEntity register(RegisterRequest request) {
     if (userRepository.existsByUsernameIgnoreCase(request.username())) {
-      throw new BusinessException(HttpStatus.BAD_REQUEST, "Username already in use");
+      throw new ValidationException("Username already in use");
     }
     if (userRepository.existsByEmailIgnoreCase(request.email())) {
-      throw new BusinessException(HttpStatus.BAD_REQUEST, "Email already in use");
+      throw new ValidationException("Email already in use");
     }
     if (userRepository.existsByPhoneNumberIgnoreCase(request.phoneNumber())) {
-      throw new BusinessException(HttpStatus.BAD_REQUEST, "Phone number already in use");
+      throw new ValidationException("Phone number already in use");
     }
 
     RoleEntity userRole = roleRepository.findByName("USER")
@@ -78,17 +79,17 @@ public class AuthService {
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials"));
 
     if (!user.isEmailVerified()) {
-      throw new BusinessException(HttpStatus.FORBIDDEN, "Email not verified");
+      throw new ValidationException("Email not verified");
     }
     if (!user.isApproved()) {
-      throw new BusinessException(HttpStatus.FORBIDDEN, "Account was not approved yet. Approval process might takes 72h!");
+      throw new ValidationException("Account was not approved yet. Approval process might takes 72h!");
     }
 
     try {
       authenticationManager.authenticate(
           new UsernamePasswordAuthenticationToken(request.username(), request.password()));
     } catch (BadCredentialsException ex) {
-      throw new BusinessException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
+      throw new ValidationException("Invalid credentials");
     }
 
     String token = jwtService.generateToken(user);
@@ -113,7 +114,7 @@ public class AuthService {
     UserEntity user = userRepository.findByUsername(username)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid username"));
     if (!passwordEncoder.matches(request.oldPassword(), user.getPassword())) {
-      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Password doesn't match");
+      throw new ValidationException("Password doesn't match");
     }
     user.setPassword(passwordEncoder.encode(request.newPassword()));
     user.setEmailVerified(false);

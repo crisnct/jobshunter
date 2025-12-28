@@ -3,6 +3,7 @@ package com.jobshunter.service.application;
 import com.jobshunter.database.entities.UserCvEntity;
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.service.UserDataService;
+import com.jobshunter.dto.exceptions.ValidationException;
 import com.jobshunter.service.clients.FileClient;
 import jakarta.validation.constraints.NotNull;
 import java.io.IOException;
@@ -60,10 +61,10 @@ public class UserCvService {
       cleanupOldCVs();
     }
     if (!StringUtils.hasText(username)) {
-      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not authenticated");
+      throw new ValidationException("User not authenticated");
     }
     if (file == null || file.isEmpty()) {
-      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "CV file is required");
+      throw new ValidationException("CV file in pdf format is required");
     }
     validateFile(file);
 
@@ -82,7 +83,7 @@ public class UserCvService {
 
       String gptFileId = gptFileClient.uploadFile(tempFile);
       if (!StringUtils.hasText(gptFileId)) {
-        throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Failed to upload CV to ChatGPT");
+        throw new RuntimeException("Failed to upload file to GPT "+tempFile.getFileName());
       }
       userDataService.replaceUserCv(user, cvContent, gptFileId);
       return gptFileId;
@@ -98,10 +99,10 @@ public class UserCvService {
   @Transactional
   public void deleteUserCv(String username) {
     if (!StringUtils.hasText(username)) {
-      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not authenticated");
+      throw new ValidationException("User not authenticated");
     }
     UserEntity user = userDataService.getUser(username)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+        .orElseThrow(() -> new ValidationException("User not found"));
     if (user.getCv() != null) {
       deleteRemoteFiles(user.getCv());
       userDataService.deleteUserCv(user);
@@ -111,11 +112,11 @@ public class UserCvService {
   private void validateFile(MultipartFile file) {
     String contentType = file.getContentType();
     if (StringUtils.hasText(contentType) && !ALLOWED_CONTENT_TYPES.contains(contentType.toLowerCase())) {
-      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unsupported CV content type");
+      throw new ValidationException("Unsupported CV content type");
     }
     long size = file.getSize();
     if (size > MAX_CV_BYTES) {
-      throw new ResponseStatusException(HttpStatus.PAYLOAD_TOO_LARGE, "CV file exceeds 10MB limit");
+      throw new ValidationException("CV file exceeds 10MB limit");
     }
   }
 
@@ -127,7 +128,7 @@ public class UserCvService {
       while ((read = in.read(buffer)) != -1) {
         copied += read;
         if (copied > maxBytes) {
-          throw new ResponseStatusException(HttpStatus.PAYLOAD_TOO_LARGE, "CV file exceeds 10MB limit");
+          throw new ValidationException("CV file exceeds 10MB limit");
         }
         out.write(buffer, 0, read);
       }

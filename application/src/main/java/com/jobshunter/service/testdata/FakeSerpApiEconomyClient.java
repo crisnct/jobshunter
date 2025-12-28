@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 @Component("EconomyJobsClientSerp")
 @ConditionalOnProperty(name = "serpApi.enabled", havingValue = "false")
 @PackageExpected("com.jobshunter.service.clients.serpapi")
-public final class FakeSerpApiEconomyClient implements AiJobsClient<SearchWithSerpRequest, List<Job>> {
+public non-sealed class FakeSerpApiEconomyClient implements AiJobsClient<SearchWithSerpRequest, List<Job>> {
 
   @Override
   public List<Job> searchJobs(SearchWithSerpRequest request) {

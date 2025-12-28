@@ -29,7 +29,7 @@ public class CvController {
   ) throws IOException {
     String username = authentication != null ? authentication.getName() : null;
     String fileId = userCvService.uploadUserCv(username, file);
-    return ResponseEntity.ok(Map.of("message", "CV uploaded to ChatGPT successfully", "fileId", fileId));
+    return ResponseEntity.ok(Map.of("message", "CV uploaded to GPT successfully", "fileId", fileId));
   }
 
   @DeleteMapping

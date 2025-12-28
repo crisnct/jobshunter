@@ -1,6 +1,5 @@
 package com.jobshunter.service.application.hunting;
 
-import com.jobshunter.ApplicationProperties;
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.entities.UserPromptEntity;
 import com.jobshunter.model.GeminiJobSearchRequest;
@@ -17,15 +16,11 @@ import org.springframework.stereotype.Service;
 @Service
 public class GeminiJobHunting extends GenericJobHunting<GeminiJobSearchRequest> {
 
-  private final ApplicationProperties properties;
-
   public GeminiJobHunting(
       @Qualifier("geminiSearchExecutor") Executor geminiSearchExecutor,
       @Qualifier("EconomyJobsClientGemini") AiJobsClient<GeminiJobSearchRequest, List<Job>> geminiEconomy,
-      @Qualifier("PremiumJobsClientGemini") AiJobsClient<GeminiJobSearchRequest, List<Job>> geminiPremium,
-      ApplicationProperties properties) {
+      @Qualifier("PremiumJobsClientGemini") AiJobsClient<GeminiJobSearchRequest, List<Job>> geminiPremium) {
     super(geminiSearchExecutor, geminiEconomy, geminiPremium);
-    this.properties = properties;
   }
 
   @Override

@@ -1,6 +1,5 @@
 package com.jobshunter.service.application.hunting;
 
-import com.jobshunter.ApplicationProperties;
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.entities.UserPromptEntity;
 import com.jobshunter.model.GptJobSearchRequest;
@@ -16,16 +15,12 @@ import org.springframework.stereotype.Service;
 @Service
 public class GptJobHunting extends GenericJobHunting<GptJobSearchRequest> {
 
-  private final ApplicationProperties properties;
-
   public GptJobHunting(
       @Qualifier("gptSearchExecutor") Executor gptSearchExecutor,
       @Qualifier("EconomyJobsClientGPT") AiJobsClient<GptJobSearchRequest, List<Job>> gptEconomy,
-      @Qualifier("PremiumJobsClientGPT") AiJobsClient<GptJobSearchRequest, List<Job>> gptPremium,
-      ApplicationProperties properties
+      @Qualifier("PremiumJobsClientGPT") AiJobsClient<GptJobSearchRequest, List<Job>> gptPremium
   ) {
     super(gptSearchExecutor, gptEconomy, gptPremium);
-    this.properties = properties;
   }
 
   @Override

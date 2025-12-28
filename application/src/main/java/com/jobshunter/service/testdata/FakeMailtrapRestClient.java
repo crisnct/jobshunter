@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 @Component
 @PackageExpected("com.jobshunter.service.application.notifiers")
 @ConditionalOnProperty(name = "spring.mail.enabled", havingValue = "false")
-public final class FakeMailtrapRestClient implements RestMailtrapClient {
+public non-sealed class FakeMailtrapRestClient implements RestMailtrapClient {
 
   @Override
   public void sendEmailWithNewJobs(@NonNull String username, @NonNull String email, @NonNull String body) {

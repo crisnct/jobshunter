@@ -3,9 +3,10 @@ package com.jobshunter.service.testdata;
 import com.jobshunter.model.GeminiJobSearchRequest;
 import com.jobshunter.model.Job;
 import com.jobshunter.processor.PackageExpected;
-import com.jobshunter.service.clients.AiJobsClient;
 import com.jobshunter.service.application.UrlExtractor;
+import com.jobshunter.service.clients.AiJobsClient;
 import com.jobshunter.service.clients.gemini.AbstractGeminiApiClient;
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -15,7 +16,7 @@ import org.springframework.stereotype.Component;
 @Component("PremiumJobsClientGemini")
 @PackageExpected("com.jobshunter.service.clients.gemini")
 @ConditionalOnProperty(name = "gemini.enabled", havingValue = "false")
-public final class FakeGeminiPremium extends AbstractGeminiApiClient implements AiJobsClient<GeminiJobSearchRequest, List<Job>> {
+public non-sealed class FakeGeminiPremium extends AbstractGeminiApiClient implements AiJobsClient<GeminiJobSearchRequest, List<Job>> {
 
   public FakeGeminiPremium(UrlExtractor urlExtractor) {
     super(urlExtractor);
@@ -27,6 +28,7 @@ public final class FakeGeminiPremium extends AbstractGeminiApiClient implements 
   }
 
   @Override
+  @RateLimiter(name = "geminiLimiter")
   public List<Job> searchJobs(GeminiJobSearchRequest request) {
     String model = request.getPrompt().getEngineConfiguration().getModel();
     return List.of(
