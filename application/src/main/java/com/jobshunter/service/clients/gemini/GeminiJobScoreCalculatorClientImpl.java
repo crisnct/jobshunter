@@ -14,6 +14,7 @@ import com.jobshunter.dto.geminiResponse.GeminiGenerateContentResponse.Candidate
 import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.clients.JobScoreCalculatorClient;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
+import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import jakarta.annotation.PostConstruct;
 import java.io.IOException;
 import java.net.URI;
@@ -67,6 +68,7 @@ public non-sealed class GeminiJobScoreCalculatorClientImpl implements JobScoreCa
 
   @Override
   @RateLimiter(name = "geminiLimiter")
+  @Bulkhead(name = "geminiBulkhead", type = Bulkhead.Type.SEMAPHORE)
   public int computeScore(GeminiJobScoreRequest request) {
     try {
       Gemini config = properties.getGemini();

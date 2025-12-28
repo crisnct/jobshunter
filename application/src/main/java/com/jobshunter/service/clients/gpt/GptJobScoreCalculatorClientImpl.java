@@ -60,7 +60,7 @@ public non-sealed class GptJobScoreCalculatorClientImpl implements JobScoreCalcu
   }
 
   @Override
-  @RateLimiter(name = "openaiLimiter")
+  @RateLimiter(name = "gptLimiter")
   public int computeScore(GptJobScoreRequest request) {
     try {
       Gpt config = properties.getGpt();

@@ -116,7 +116,7 @@ springdoc:
 
 resilience4j.ratelimiter:
   instances:
-    openaiLimiter:
+    gptLimiter:
       limitForPeriod: 1                # Allow 1 call
       limitRefreshPeriod: 30s           # Every 30 seconds
       timeoutDuration: 5m              # Wait up to 5min for a slot
@@ -174,7 +174,7 @@ resilience4j.timelimiter:
 #permittedNumberOfCallsInHalfOpenState: allow that number of trial calls while half-open.
 resilience4j.circuitbreaker:
   instances:
-    geminiPremium:
+    gptCircuitBreaker:
       registerHealthIndicator: true
       slidingWindowType: COUNT_BASED
       slidingWindowSize: 20
@@ -184,27 +184,7 @@ resilience4j.circuitbreaker:
       slowCallDurationThreshold: 5s
       waitDurationInOpenState: 30s
       permittedNumberOfCallsInHalfOpenState: 3
-    geminiEconomy:
-      registerHealthIndicator: true
-      slidingWindowType: COUNT_BASED
-      slidingWindowSize: 20
-      minimumNumberOfCalls: 10
-      failureRateThreshold: 50
-      slowCallRateThreshold: 50
-      slowCallDurationThreshold: 5s
-      waitDurationInOpenState: 30s
-      permittedNumberOfCallsInHalfOpenState: 3
-    gptPremium:
-      registerHealthIndicator: true
-      slidingWindowType: COUNT_BASED
-      slidingWindowSize: 20
-      minimumNumberOfCalls: 10
-      failureRateThreshold: 50
-      slowCallRateThreshold: 50
-      slowCallDurationThreshold: 5s
-      waitDurationInOpenState: 30s
-      permittedNumberOfCallsInHalfOpenState: 3
-    gptEconomy:
+    geminiCircuitBreaker:
       registerHealthIndicator: true
       slidingWindowType: COUNT_BASED
       slidingWindowSize: 20
@@ -271,15 +251,19 @@ resilience4j.circuitbreaker:
 
 resilience4j.bulkhead:
   instances:
-    gptEconomyBulkhead:
-      maxConcurrentCalls: 5
-      maxWaitDuration: 2s
+    gptBulkhead:
+      maxConcurrentCalls: 3
+      maxWaitDuration: 2m
       writableStackTraceEnabled: false
-    gptPremiumBulkhead:
-      maxConcurrentCalls: 5
-      maxWaitDuration: 2s
+    geminiBulkhead:
+      maxConcurrentCalls: 3
+      maxWaitDuration: 2m
       writableStackTraceEnabled: false
     serpApiBulkhead:
+      maxConcurrentCalls: 3
+      maxWaitDuration: 2m
+      writableStackTraceEnabled: false
+    mailtrapBulkhead:
       maxConcurrentCalls: 5
-      maxWaitDuration: 2s
+      maxWaitDuration: 30s
       writableStackTraceEnabled: false

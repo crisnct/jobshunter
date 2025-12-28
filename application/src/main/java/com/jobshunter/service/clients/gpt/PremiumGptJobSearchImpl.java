@@ -11,6 +11,7 @@ import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.clients.AiJobsClient;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import java.net.URI;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
@@ -43,8 +44,9 @@ public non-sealed class PremiumGptJobSearchImpl extends AbstractGptApiClient
   }
 
   @Override
-  @CircuitBreaker(name = "gptPremium", fallbackMethod = "fallbackSearch")
-  @Bulkhead(name = "gptPremiumBulkhead", type = Bulkhead.Type.SEMAPHORE)
+  @CircuitBreaker(name = "gptCircuitBreaker", fallbackMethod = "fallbackSearch")
+  @Bulkhead(name = "gptBulkhead", type = Bulkhead.Type.SEMAPHORE)
+  @RateLimiter(name = "gptLimiter")
   public List<Job> searchWithModel(String systemPrompt, GptJobSearchRequest request) {
     try {
       GptJobsPayload payload = GptJobsPayload.builder()

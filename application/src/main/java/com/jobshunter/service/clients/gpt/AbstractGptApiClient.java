@@ -39,7 +39,6 @@ public abstract sealed class AbstractGptApiClient
 
   private final UrlExtractor urlExtractor;
 
-  @RateLimiter(name = "openaiLimiter")
   public abstract List<Job> searchWithModel(String systemPrompt, GptJobSearchRequest request);
 
   public abstract String getSystemPromptFilename();
