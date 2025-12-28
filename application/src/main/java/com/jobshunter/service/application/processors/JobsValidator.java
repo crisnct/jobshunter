@@ -1,10 +1,10 @@
-package com.jobshunter.service.application;
+package com.jobshunter.service.application.processors;
 
 import com.jobshunter.ApplicationProperties;
 import com.jobshunter.model.Job;
+import com.jobshunter.service.application.JobContext;
+import com.jobshunter.service.application.JobPhase;
 import com.jobshunter.service.clients.BrowserSimulator;
-import jakarta.annotation.PostConstruct;
-import jakarta.validation.constraints.NotNull;
 import java.net.InetAddress;
 import java.net.URI;
 import java.util.ArrayList;
@@ -12,48 +12,34 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executor;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
-public class JobsValidator {
-
-  private final Executor jobsValidatorExecutor;
-
-  private final ApplicationProperties properties;
+public class JobsValidator implements JobProcessor {
 
   private final BrowserSimulator browserSimulator;
+
+  private List<Pattern> expiredJobsPatterns;
 
   private final Set<String> blacklistDomains;
 
   public JobsValidator(
-      @Qualifier("jobsValidatorExecutor") Executor jobsValidatorExecutor,
       ApplicationProperties properties,
       BrowserSimulator browserSimulator
   ) {
-    this.jobsValidatorExecutor = jobsValidatorExecutor;
-    this.properties = properties;
     this.browserSimulator = browserSimulator;
     this.blacklistDomains = Arrays.stream(properties.getJobsHunter().getBlacklist().split(","))
         .map(String::trim)
         .map(String::toLowerCase)
         .collect(Collectors.toUnmodifiableSet());
-  }
 
-  private List<Pattern> expiredJobsPatterns;
-
-  @PostConstruct
-  public void init() {
     expiredJobsPatterns = new ArrayList<>();
     for (String keyword : properties.getJobsHunter().getExpiredExpressions().split(",")) {
       expiredJobsPatterns.add(Pattern.compile(">[^<]{0,500}" + Pattern.quote(keyword) + "[^<]{0,500}<",
@@ -62,43 +48,20 @@ public class JobsValidator {
     expiredJobsPatterns = Collections.unmodifiableList(expiredJobsPatterns);
   }
 
-  public List<Job> validateJobs(List<Job> jobs) {
-    log.info("JobsValidator will validate {} url's", jobs.size());
-    Set<String> invalidURL = ConcurrentHashMap.newKeySet(50);
-
-    //In case of redirects get the last redirect URL
-    List<CompletableFuture<Void>> redirectionFutures = new ArrayList<>();
-    for (Job job : jobs) {
-      redirectionFutures.add(CompletableFuture.runAsync(() -> updateURL(job), jobsValidatorExecutor));
-    }
-    CompletableFuture.allOf(redirectionFutures.toArray(CompletableFuture[]::new)).join();
-
-    //Validate URL's
-    redirectionFutures = new ArrayList<>();
-    for (Job job : jobs) {
-      redirectionFutures.add(CompletableFuture.runAsync(() -> validateURL(job, invalidURL), jobsValidatorExecutor));
-    }
-    CompletableFuture.allOf(redirectionFutures.toArray(CompletableFuture[]::new)).join();
-
-    List<Job> result = jobs.stream().filter(job -> !invalidURL.contains(job.getUrl())).toList();
-    log.info("JobsValidator detected that only {} url's are valid", result.size());
-    return result;
-  }
-
-  private void updateURL(@NotNull Job job) {
-    String newURL = browserSimulator.getFinalRedirectedURL(job.getUrl());
-    job.setUrl(newURL);
-  }
-
-  private void validateURL(@NotNull Job job, Set<String> invalidURLs) {
+  @Override
+  public JobContext processAsync(JobContext context) {
+    Job job = context.getJob();
     Pair<Boolean, String> validJob = isValidJob(job.getUrl());
     if (validJob.getFirst()) {
       String desc = job.getDescription() != null ? job.getDescription() : "";
       desc += "\n" + cleanupHTML(validJob.getSecond());
       job.setDescription(desc);
+      context.setAccepted(true);
     } else {
-      invalidURLs.add(job.getUrl());
+      context.setAccepted(false);
     }
+    context.setPhase(JobPhase.VALIDATED);
+    return context;
   }
 
   private String cleanupHTML(String body) {

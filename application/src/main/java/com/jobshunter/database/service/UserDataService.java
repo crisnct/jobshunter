@@ -13,11 +13,14 @@ import com.jobshunter.database.repository.UserRepository;
 import com.jobshunter.model.EngineTier;
 import com.jobshunter.model.EngineType;
 import com.jobshunter.model.Job;
-import com.jobshunter.service.application.JobsSynchronizer;
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.Hibernate;
@@ -117,14 +120,12 @@ public class UserDataService {
   }
 
   @Transactional
-  public void saveJobsToDB(JobsSynchronizer jobsSync, UserEntity user, List<Job> validatedJobs) {
-    log.info("Found {} jobs for {} ", validatedJobs.size(), user.getEmail());
-    validatedJobs.forEach(v -> log.info(v.getUrl()));
-    for (Entry<Long, List<Job>> entry : jobsSync.getJobs().entrySet()) {
-      int count = (int) entry.getValue().stream().filter(validatedJobs::contains).count();
-      this.incrementPromptJobsFound(entry.getKey(), count);
+  public void saveJobsToDB(Map<Long, List<Job>> jobsByPrompt, UserEntity user) {
+    for (Entry<Long, List<Job>> entry : jobsByPrompt.entrySet()) {
+      this.incrementPromptJobsFound(entry.getKey(), entry.getValue().size());
     }
-    this.updateUser(user, validatedJobs);
+    List<Job> jobs = jobsByPrompt.values().stream().flatMap((Function<List<Job>, Stream<Job>>) Collection::stream).toList();
+    this.updateUser(user, jobs);
   }
 
   public List<String> getExistingJobUrlsForUser(String username) {

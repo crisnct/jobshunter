@@ -1,10 +1,8 @@
 package com.jobshunter.service.clients;
 
 import com.jobshunter.ApplicationProperties;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.net.URI;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -12,7 +10,6 @@ import org.apache.hc.client5.http.protocol.HttpClientContext;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
 
 @Slf4j
@@ -31,11 +28,6 @@ public class BrowserSimulator {
       MediaType.ALL
   };
 
-  private static final String BROWSER_UA =
-      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
-          "AppleWebKit/537.36 (KHTML, like Gecko) " +
-          "Chrome/122.0.0.0 Safari/537.36";
-
   private static final String ACCEPT_LANGUAGE_HEADER = "en-US,en;q=0.9";
 
   private static final String CONNECTION_HEADER = "keep-alive";
@@ -49,30 +41,29 @@ public class BrowserSimulator {
       return restClient.get()
           .uri(url)
           .accept(MediaType.ALL)
-          .header("User-Agent", BROWSER_UA)
+          .header("User-Agent", "JobsHunter" + System.currentTimeMillis() + "in64; x64)")
           .header("Accept-Language", ACCEPT_LANGUAGE_HEADER)
           .retrieve()
           .toEntity(String.class);
-    } catch (HttpClientErrorException.MethodNotAllowed | HttpClientErrorException.NotAcceptable ex) {
+    } catch (Throwable ex) {
+      log.error(
+          """
+              First time failure about getting the html
+          """
+      );
       return restClient.get()
           .uri(url)
           .accept(BROWSER_ACCEPT)
-          .header("Referer", extractHost(url))
-          .header("User-Agent", BROWSER_UA)
+          .header("Referer", "JobsHunter" + System.currentTimeMillis())
           .header("Accept-Language", ACCEPT_LANGUAGE_HEADER)
           .header("Connection", CONNECTION_HEADER)
+          .header("User-Agent", "JobsHunter" + System.currentTimeMillis() + "in64; x64)")//This is mandatory hack
+          .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
+          .header("Accept-Language", "en-US,en;q=0.5")
+          .header("Accept-Encoding", "gzip, deflate")
+          .header("Connection", "keep-alive")
           .retrieve()
           .toEntity(String.class);
-    }
-  }
-
-  public String extractHost(@NotBlank String url) {
-    Matcher matcher = HOST_PATTERN.matcher(url.trim());
-    String host = matcher.find() ? matcher.group(1) : null;
-    if (host == null) {
-      return url;
-    } else {
-      return "https://" + host;
     }
   }
 

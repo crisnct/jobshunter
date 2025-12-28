@@ -39,19 +39,16 @@ gemini:
   enabled: true
   apiKey: ${GEMINI_API_KEY:notset}
   maxTokens: 2000
-  delay: 10000
 
 gpt:
   enabled: true
   apiKey: ${CHATGPT_API_KEY:notset}
   maxTokens: 2000
-  delay: 30000
 
 serpApi:
   enabled: true
   apiKey: ${SERP_API_KEY:notset}
   maxPageSearch: 3
-  delay: 10000
 
 spring:
   profiles:
@@ -120,12 +117,12 @@ resilience4j.ratelimiter:
     openaiLimiter:
       limitForPeriod: 1                # Allow 1 call
       limitRefreshPeriod: 30s           # Every 30 seconds
-      timeoutDuration: 1m              # Wait up to 1min for a slot
+      timeoutDuration: 5m              # Wait up to 5min for a slot
       writableStackTraceEnabled: false
     geminiLimiter:
       limitForPeriod: 1                # Allow 1 call
-      limitRefreshPeriod: 30s           # Every 30 seconds
-      timeoutDuration: 1m              # Wait up to 1min for a slot
+      limitRefreshPeriod: 30           # Every 30 sec
+      timeoutDuration: 5m              # Wait up to 5min for a slot
       writableStackTraceEnabled: false
 
 # CIRCUIT BREAKER ---------------------------------------------------------------------------

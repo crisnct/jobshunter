@@ -13,14 +13,13 @@ import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component("EconomyJobsClientGemini")
-@PackageExpected("com.jobshunter.service.clients.gpt")
+@PackageExpected("com.jobshunter.service.clients.gemini")
 @ConditionalOnProperty(name = "gemini.enabled", havingValue = "false")
 public final class DummyEconomyGemini extends AbstractGeminiApiClient implements AiJobsClient<GeminiJobSearchRequest, List<Job>> {
 
   public DummyEconomyGemini(UrlExtractor urlExtractor) {
     super(urlExtractor);
   }
-
 
   @Override
   public String getSystemPromptFilename() {
@@ -29,19 +28,26 @@ public final class DummyEconomyGemini extends AbstractGeminiApiClient implements
 
   @Override
   public List<Job> searchJobs(GeminiJobSearchRequest request) {
-    String model = request.getPrompt().getEngineConfiguration().getModel();
     return List.of(
-        new Job(95,
-            "https://jobs.digitalhire.com/job-listing/opening/6W2b0Y7QrlHiOrwemePL8C?utm_campaign=google_jobs_apply&utm_source=google_jobs_apply&utm_medium=organic",
-            model
+        new Job(-1,
+            "https://devjob.ro/en/jobs/Evantage-Soft-SRL-Senior-Java-Full-Stack-Developer",
+            null
         ),
-        new Job(72,
-            "https://www.accenture.com/us-en/careers/jobdetails?id=R00298524_en&title=SAP+Intercompany+Manager+-+Life+Sciences",
-            model
+        new Job(-1,
+            "https://jobs.citi.com/job/pune/java-spark-senior-lead-developer-java-spark-hdfs-hive-vice-president/287/88303699072",
+            null
         ),
-        new Job(71,
-            "https://www.linkedin.com/jobs/collections/recommended/?currentJobId=4263267426",
-            model
+        new Job(-1,
+            "https://jobs.citi.com/job/dublin/technical-java-lead-vice-president/287/89302337248",
+            null
+        ),
+        new Job(-1,
+            "https://weworkremotely.com/remote-jobs/h2corporation-vice-president-of-engineering-usa",
+            null
+        ),
+        new Job(-1,
+            "https://weworkremotely.com/remote-jobs/h2corporation-vice-president-of-engineering-usa",
+            null
         )
     );
   }

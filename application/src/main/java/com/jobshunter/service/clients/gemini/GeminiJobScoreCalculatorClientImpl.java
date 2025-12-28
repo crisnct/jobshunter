@@ -30,9 +30,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
 @Slf4j
-@Component("GeminiScoreCalculator")
+@Component("GeminiJobScoreCalculator")
 @PackageExpected("com.jobshunter.service.clients.gpt")
-@ConditionalOnProperty(name = "gpt.enabled", havingValue = "true")
+@ConditionalOnProperty(name = "gemini.enabled", havingValue = "true")
 @RequiredArgsConstructor
 public non-sealed class GeminiJobScoreCalculatorClientImpl implements JobScoreCalculatorClient<GeminiJobScoreRequest> {
 

@@ -40,6 +40,7 @@ public class ApplicationProperties {
     private String accountSid;
     private String authToken;
     private String fromNumber;
+    private boolean enabled;
   }
 
   @Data
@@ -48,7 +49,7 @@ public class ApplicationProperties {
 
     private String apiKey;
     private int maxTokens;
-    private int delay;
+    private boolean enabled;
   }
 
   @Data
@@ -57,7 +58,7 @@ public class ApplicationProperties {
 
     private String apiKey;
     private int maxTokens;
-    private int delay;
+    private boolean enabled;
   }
 
   @Data
@@ -66,7 +67,7 @@ public class ApplicationProperties {
 
     private String apiKey;
     private int maxPageSearch;
-    private int delay;
+    private boolean enabled;
   }
 
   @Data

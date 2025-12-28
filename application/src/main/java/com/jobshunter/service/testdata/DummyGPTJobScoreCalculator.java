@@ -8,10 +8,10 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 @Slf4j
-@Component
+@Component("GptJobScoreCalculator")
 @PackageExpected("com.jobshunter.service.clients.gpt")
 @ConditionalOnProperty(name = "gpt.enabled", havingValue = "false")
-public final class DummyJobScoreCalculatorClient implements JobScoreCalculatorClient<GptJobScoreRequest> {
+public final class DummyGPTJobScoreCalculator implements JobScoreCalculatorClient<GptJobScoreRequest> {
 
   @Override
   public int computeScore(GptJobScoreRequest request) {

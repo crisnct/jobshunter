@@ -73,9 +73,7 @@ public non-sealed class EconomyGeminiJobSearchImpl extends AbstractGeminiApiClie
           .retrieve()
           .body(GeminiGenerateContentResponse.class);
 
-      List<Job> jobs = extractJobs(response);
-      jobs.forEach(job -> job.setSource(request.getPrompt().getEngineConfiguration().getModel()));
-      return jobs;
+      return extractJobs(response);
     } catch (Exception e) {
       log.error("Gemini job API call failed", e);
       return List.of();

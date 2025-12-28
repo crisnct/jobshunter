@@ -38,9 +38,4 @@ public class GeminiJobHunting extends GenericJobHunting<GeminiJobSearchRequest> 
     );
   }
 
-  @Override
-  public long getDelayTaskExecution() {
-    return properties.getGemini().getDelay();
-  }
-
 }

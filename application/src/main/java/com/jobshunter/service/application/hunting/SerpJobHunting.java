@@ -45,9 +45,4 @@ public class SerpJobHunting extends GenericJobHunting<SearchWithSerpRequest> {
     }
   }
 
-  @Override
-  public long getDelayTaskExecution() {
-    return properties.getSerpApi().getDelay();
-  }
-
 }

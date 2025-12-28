@@ -31,15 +31,15 @@ public final class DummyPremiumGpt extends AbstractGptApiClient implements AiJob
     String model = request.getPrompt().getEngineConfiguration().getModel();
     return List.of(
         new Job(95,
-            "https://jobs.digitalhire.com/job-listing/opening/6W2b0Y7QrlHiOrwemePL8C?utm_campaign=google_jobs_apply&utm_source=google_jobs_apply&utm_medium=organic",
+            "https://www.crossover.com/jobs/java-developer/ro/timisoara",
             model
         ),
         new Job(72,
-            "https://www.accenture.com/us-en/careers/jobdetails?id=R00298524_en&title=SAP+Intercompany+Manager+-+Life+Sciences",
+            "https://jobs-cee.pwc.com/ro/ro/job/680253WD/Senior-Manager-Technical-Lead-Security-Risk-and-Architecture",
             model
         ),
         new Job(71,
-            "https://www.linkedin.com/jobs/collections/recommended/?currentJobId=4263267426",
+            "https://www.wearedevelopers.com/en/companies/3227/deichmann-se/47974/senior-java-developer-springboot-m-w-d",
             model
         )
     );

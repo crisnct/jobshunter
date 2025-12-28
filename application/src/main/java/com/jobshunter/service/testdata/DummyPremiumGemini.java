@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component("PremiumJobsClientGemini")
-@PackageExpected("com.jobshunter.service.clients.gpt")
+@PackageExpected("com.jobshunter.service.clients.gemini")
 @ConditionalOnProperty(name = "gemini.enabled", havingValue = "false")
 public final class DummyPremiumGemini extends AbstractGeminiApiClient implements AiJobsClient<GeminiJobSearchRequest, List<Job>> {
 

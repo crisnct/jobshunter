@@ -69,9 +69,7 @@ public abstract sealed class AbstractGptApiClient
       log.warn("ChatGPT job search enabled but CHATGPT_API_KEY missing.");
       return List.of();
     }
-    List<Job> jobs = searchWithModel(jobsSystemPrompt, request);
-    jobs.forEach(job->job.setSource(request.getPrompt().getEngineConfiguration().getModel()));
-    return jobs;
+    return searchWithModel(jobsSystemPrompt, request);
   }
 
   protected List<Job> extractJobs(GptCompletionResponse response) {

@@ -1,0 +1,17 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="JobsHunter-prod" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot">
+    <option name="FRAME_DEACTIVATION_UPDATE_POLICY" value="UnknownPolicyInFreeMode" />
+    <module name="jobshunter" />
+    <option name="SPRING_BOOT_MAIN_CLASS" value="com.jobshunter.JobshunterApplication" />
+    <option name="VM_PARAMETERS" value="-Dspring.profiles.active=prod" />
+    <extension name="coverage">
+      <pattern>
+        <option name="PATTERN" value="com.jobshunter.*" />
+        <option name="ENABLED" value="true" />
+      </pattern>
+    </extension>
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>

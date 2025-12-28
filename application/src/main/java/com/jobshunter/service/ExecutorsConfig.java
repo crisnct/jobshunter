@@ -30,10 +30,10 @@ public class ExecutorsConfig {
     return executor;
   }
 
-  @Bean(name = "jobsValidatorExecutor")
-  public ThreadPoolExecutor jobsValidatorExecutor() {
+  @Bean(name = "browseURLExecutor")
+  public ThreadPoolExecutor browseURLExecutor() {
     ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(10);
-    executor.setThreadFactory(Thread.ofVirtual().name("jobs-validator-", 0).factory());
+    executor.setThreadFactory(Thread.ofVirtual().name("url-browse-", 0).factory());
     return executor;
   }
 

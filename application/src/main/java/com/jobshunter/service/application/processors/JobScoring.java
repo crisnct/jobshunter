@@ -1,8 +1,9 @@
-package com.jobshunter.service.application;
+package com.jobshunter.service.application.processors;
 
 import com.jobshunter.database.entities.UserCvEntity;
-import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.model.Job;
+import com.jobshunter.service.application.JobContext;
+import com.jobshunter.service.application.JobPhase;
 import com.jobshunter.service.clients.FileClient;
 import com.jobshunter.service.clients.JobScoreCalculatorClient;
 import com.jobshunter.service.clients.gemini.GeminiJobScoreRequest;
@@ -11,45 +12,52 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
-public class JobScoring {
-
-  private final Executor executor;
+public class JobScoring implements JobProcessor {
 
   private final FileClient fileClient;
 
   private final JobScoreCalculatorClient<GeminiJobScoreRequest> calculator;
 
   public JobScoring(
-      @Qualifier("geminiSearchExecutor")
-      Executor executor,
-
       @Qualifier("Gemini")
       FileClient fileClient,
 
-      @Qualifier("GeminiScoreCalculator")
+      @Qualifier("GeminiJobScoreCalculator")
       JobScoreCalculatorClient<GeminiJobScoreRequest> calculator
   ) {
-    this.executor = executor;
     this.calculator = calculator;
     this.fileClient = fileClient;
   }
 
-  public CompletableFuture<Void> calculateScore(Job job, UserEntity user, String resumeFileId) {
-    return CompletableFuture.runAsync(() -> {
+  @Override
+  public JobContext processAsync(JobContext context) {
+    Job job = context.getJob();
+    int score;
+    if (context.isAccepted()) {
       try {
-        calculateScoreSync(job, user, resumeFileId);
+        Path path = createPathFromByteArray(job.getDescription().getBytes(StandardCharsets.UTF_8),
+            "jd-user-" + context.getUser().getUsername(), ".txt");
+        String jdFileId = fileClient.uploadFile(path);
+        try {
+          score = calculator.computeScore(new GeminiJobScoreRequest(context.getResumeFileId(), jdFileId));
+        } finally {
+          fileClient.deleteFile(jdFileId);
+        }
       } catch (IOException e) {
-        throw new RuntimeException(e);
+        throw new RuntimeException("Error at scoring job  " + job, e);
       }
-    }, executor);
+    } else {
+      score = -1;
+    }
+    job.setScore(score);
+    context.setPhase(JobPhase.SCORED);
+    return context;
   }
 
   public String uploadUserCv(UserCvEntity cv) throws IOException {
@@ -62,18 +70,6 @@ public class JobScoring {
     Files.write(pdfPath, bytearray, StandardOpenOption.TRUNCATE_EXISTING);
     pdfPath.toFile().deleteOnExit();
     return pdfPath;
-  }
-
-  private void calculateScoreSync(Job job, UserEntity user, String resumeFileId) throws IOException {
-    Path path = createPathFromByteArray(job.getDescription().getBytes(StandardCharsets.UTF_8),
-        "jd-user-" + user.getUsername(), ".txt");
-    String jdFileId = fileClient.uploadFile(path);
-    try {
-      int score = calculator.computeScore(new GeminiJobScoreRequest(resumeFileId, jdFileId));
-      job.setScore(score);
-    } finally {
-      fileClient.deleteFile(jdFileId);
-    }
   }
 
   public void cleanup(String resumeFileId) {

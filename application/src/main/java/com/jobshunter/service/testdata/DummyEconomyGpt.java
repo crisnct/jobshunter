@@ -24,19 +24,26 @@ public final class DummyEconomyGpt extends AbstractGptApiClient implements AiJob
 
   @Override
   public List<Job> searchWithModel(String systemPrompt, GptJobSearchRequest request) {
-    String model = request.getPrompt().getEngineConfiguration().getModel();
     return List.of(
-        new Job(95,
-            "https://jobs.digitalhire.com/job-listing/opening/6W2b0Y7QrlHiOrwemePL8C?utm_campaign=google_jobs_apply&utm_source=google_jobs_apply&utm_medium=organic",
-            model
+        new Job(-1,
+            "https://br.bebee.com/job/63c331e10c2e5c04df61d25ef8219be8?utm_campaign=google_jobs_apply&utm_source=google_jobs_apply&utm_medium=organic",
+            null
         ),
-        new Job(72,
-            "https://www.accenture.com/us-en/careers/jobdetails?id=R00298524_en&title=SAP+Intercompany+Manager+-+Life+Sciences",
-            model
+        new Job(-1,
+            "https://www.dice.com/job-detail/1f3c5759-dfad-40d7-9e0a-aa6fdd24db5c?utm_source=openai",
+            null
         ),
-        new Job(71,
-            "https://www.linkedin.com/jobs/collections/recommended/?currentJobId=4263267426",
-            model
+        new Job(-1,
+            "https://www.linkedin.com/jobs/collections/recommended/?currentJobId=42955246261",
+            null
+        ),
+        new Job(-1,
+            "https://weworkremotely.com/remote-jobs/h2corporation-vice-president-of-engineering-usa",
+            null
+        ),
+        new Job(-1,
+            "https://weworkremotely.com/remote-jobs/h2corporation-vice-president-of-engineering-usa",
+            null
         )
     );
   }

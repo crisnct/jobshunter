@@ -6,13 +6,12 @@ import com.jobshunter.database.entities.UserPromptEntity;
 import com.jobshunter.dto.AIJobSearchRequest;
 import com.jobshunter.model.Job;
 import com.jobshunter.model.SearchJobOrder;
-import com.jobshunter.service.application.JobsSynchronizer;
 import com.jobshunter.service.clients.AiJobsClient;
+import jakarta.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
-import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
@@ -38,41 +37,51 @@ public abstract non-sealed class GenericJobHunting<T extends AIJobSearchRequest>
 
   public abstract T createRequest(UserEntity user, UserPromptEntity prompt);
 
-  public abstract long getDelayTaskExecution();
-
   @Override
-  public CompletableFuture<Void> searchJobs(JobsSynchronizer jobsSync, SearchJobOrder order) {
+  public CompletableFuture<List<Job>> searchJobsAsync(SearchJobOrder order) {
     UserEntity user = order.user();
-    List<CompletableFuture<Void>> futures = new ArrayList<>();
-    int delayCounter = 0;
-    List<UserPromptEntity> prompts = user.getPrompts().stream().filter(p -> contains(order, p)).toList();
-    for (UserPromptEntity prompt : prompts) {
-      Executor delayedExecutor = CompletableFuture.delayedExecutor(
-          (long) delayCounter++ * getDelayTaskExecution(),
-          TimeUnit.MILLISECONDS,
-          geminiSearchExecutor
-      );
-      T request = createRequest(user, prompt);
-      futures.add(CompletableFuture.runAsync(() -> search(jobsSync, request), delayedExecutor));
-    }
 
-    // Combine all async iteration futures into one
-    return CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new))
-        .exceptionally(ex -> {
-          log.error("{} search failed for {}", getClass().getSimpleName(), user.getUsername(), ex);
-          return null;
+    CompletableFuture<List<Job>> futures = CompletableFuture.completedFuture(List.of());
+    List<UserPromptEntity> prompts = user.getPrompts().stream().filter(p -> contains(order, p)).toList();
+
+    for (UserPromptEntity prompt : prompts) {
+      T request = createRequest(user, prompt);
+
+      CompletableFuture<List<Job>> jobsFound = this.searchAsync(request, geminiSearchExecutor);
+      futures = futures.thenCombine(jobsFound, (previousJobs, newJobs) -> {
+        List<Job> merged = new ArrayList<>(previousJobs);
+        merged.addAll(newJobs);
+        return merged;
+      });
+    }
+    return futures;
+  }
+
+  private CompletableFuture<List<Job>> searchAsync(T request, Executor executor) {
+    return CompletableFuture.supplyAsync(() -> searchSync(request), executor)
+        .exceptionally(throwable -> {
+          log.error("Unexpected error at gathering jobs from model {}: {} for prompt {}", request.getPrompt().getEngineConfiguration().getModel(),
+              throwable.getMessage(), request.getPrompt().getPrompt());
+          return List.of();
         });
   }
 
-  private void search(JobsSynchronizer jobsSync, T request) {
+  @Nonnull
+  private List<Job> searchSync(T request) {
     EngineConfigurationEntity engineConfig = request.getPrompt().getEngineConfiguration();
-    log.info("Searching jobs for user {} with model {}", request.getUsername(), request.getPrompt().getEngineConfiguration().getModel());
+    log.info("Searching jobs for user {} with model {}", request.getUsername(), engineConfig.getModel());
     List<Job> jobsFound = switch (engineConfig.getTier()) {
       case ECONOMY -> economyModel.searchJobs(request);
       case PREMIUM -> premiumModel.searchJobs(request);
       default -> throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid engine");
     };
-    jobsSync.addJobs(jobsFound, engineConfig.getEngineType(), engineConfig.getTier(), request.getPrompt().getId());
+    jobsFound.forEach(job -> {
+      job.setPromptId(request.getPrompt().getId());
+      job.setSource(engineConfig.getModel());
+    });
+    String model = engineConfig.getModel();
+    log.info("{} found {} url's and are going to be validated", model, jobsFound.size());
+    return jobsFound;
   }
 
   private boolean contains(SearchJobOrder order, UserPromptEntity prompt) {

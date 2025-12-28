@@ -38,9 +38,4 @@ public class GptJobHunting extends GenericJobHunting<GptJobSearchRequest> {
     );
   }
 
-  @Override
-  public long getDelayTaskExecution() {
-    return properties.getGpt().getDelay();
-  }
-
 }
