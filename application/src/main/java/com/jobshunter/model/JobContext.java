@@ -28,6 +28,7 @@ public class JobContext {
     JobContext ctx = new JobContext(job, user, resumeFileId);
     ctx.failed = true;
     ctx.failureMessage = t != null ? t.getMessage() : "Unknown pipeline failure";
+    ctx.accepted = false;
     return ctx;
   }
 

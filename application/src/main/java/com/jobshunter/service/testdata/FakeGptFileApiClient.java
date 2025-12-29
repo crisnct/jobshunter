@@ -23,7 +23,7 @@ public non-sealed class FakeGptFileApiClient implements FileClient {
   @Bulkhead(name = "gptBulkhead")
   public String uploadFile(Path cvPath) {
     log.info("File {} uploaded properly", cvPath);
-    return "uploaded";
+    return "files/" + (12345678 + System.currentTimeMillis() % 12345678);
   }
 
   @Override
