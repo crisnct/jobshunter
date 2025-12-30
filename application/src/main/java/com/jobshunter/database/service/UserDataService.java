@@ -1,11 +1,13 @@
 package com.jobshunter.database.service;
 
 import com.jobshunter.database.entities.EngineConfigurationEntity;
+import com.jobshunter.database.entities.PromptsJobsEntity;
 import com.jobshunter.database.entities.UserCvEntity;
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.entities.UserJobEntity;
 import com.jobshunter.database.entities.UserPromptEntity;
 import com.jobshunter.database.repository.EngineConfigurationRepository;
+import com.jobshunter.database.repository.PromptsJobsRepository;
 import com.jobshunter.database.repository.UserCvRepository;
 import com.jobshunter.database.repository.UserJobRepository;
 import com.jobshunter.database.repository.UserPromptRepository;
@@ -39,6 +41,8 @@ public class UserDataService {
   private final UserJobRepository userJobRepository;
 
   private final UserPromptRepository userPromptRepository;
+
+  private final PromptsJobsRepository promptsJobsRepository;
 
   private final EngineConfigurationRepository engineRepository;
 
@@ -81,25 +85,34 @@ public class UserDataService {
     return userRepository.save(user);
   }
 
-  public void addJobUrl(UserEntity user, String url, EngineConfigurationEntity engineConfiguration) {
-    if (!userJobRepository.existsByUserIdAndUrl(user.getId(), url)) {
-      userJobRepository.save(new UserJobEntity(user, url, engineConfiguration));
-    }
+  public UserJobEntity addJobUrl(UserEntity user, String url, EngineConfigurationEntity engineConfiguration) {
+    Optional<UserJobEntity> existing = userJobRepository.findByUserIdAndUrl(user.getId(), url);
+    return existing.orElseGet(() -> userJobRepository.save(new UserJobEntity(user, url, engineConfiguration)));
   }
 
   @Transactional
   public void updateUser(UserEntity user, List<Job> jobs) {
     user.setLastJobs(LocalDateTime.now());
-    updateUser(user);
     jobs.forEach(job -> {
       EngineConfigurationEntity engineConfig = null;
+      UserPromptEntity userPrompt = null;
       if (job.getPromptId() != null) {
-        engineConfig = userPromptRepository.findById(job.getPromptId())
-            .map(UserPromptEntity::getEngineConfiguration)
-            .orElse(null);
+        var promptOptional = userPromptRepository.findById(job.getPromptId());
+        if (promptOptional.isPresent()) {
+          userPrompt = promptOptional.get();
+          engineConfig = userPrompt.getEngineConfiguration();
+        }
       }
-      addJobUrl(user, job.getUrl(), engineConfig);
+      UserJobEntity userJobEntity = addJobUrl(user, job.getUrl(), engineConfig);
+      if (userPrompt != null) {
+        PromptsJobsEntity promptJob = new PromptsJobsEntity();
+        promptJob.setUserJob(userJobEntity);
+        promptJob.setPrompt(userPrompt);
+        promptsJobsRepository.save(promptJob);
+        userPromptRepository.save(userPrompt);
+      }
     });
+    this.updateUser(user);
   }
 
   public UserPromptEntity updatePrompt(UserEntity user, EngineType engine, Long promptId, String prompt) {

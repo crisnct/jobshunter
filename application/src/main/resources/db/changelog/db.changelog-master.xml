@@ -443,4 +443,42 @@
         </createIndex>
     </changeSet>
 
+    <changeSet id="30-create-prompts-jobs-junction-table" author="assistant">
+        <comment>Create prompts_jobs junction table to link user_prompts to user_jobs (one-to-many relationship)</comment>
+        <createTable tableName="prompts_jobs">
+            <column name="prompt_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="user_jobs_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <!-- Composite primary key (ensures combination is unique) -->
+        <addPrimaryKey tableName="prompts_jobs"
+                       columnNames="prompt_id, user_jobs_id"
+                       constraintName="pk_prompts_jobs"/>
+        <!-- Unique constraint on user_jobs_id to enforce one-to-many (one job can only belong to one prompt) -->
+        <addUniqueConstraint tableName="prompts_jobs"
+                             columnNames="user_jobs_id"
+                             constraintName="uc_prompts_jobs_user_jobs_id"/>
+        <!-- Foreign key to user_prompts -->
+        <addForeignKeyConstraint constraintName="fk_prompts_jobs_prompt"
+                                 baseTableName="prompts_jobs"
+                                 baseColumnNames="prompt_id"
+                                 referencedTableName="user_prompts"
+                                 referencedColumnNames="id"
+                                 onDelete="CASCADE"/>
+        <!-- Foreign key to user_jobs -->
+        <addForeignKeyConstraint constraintName="fk_prompts_jobs_user_job"
+                                 baseTableName="prompts_jobs"
+                                 baseColumnNames="user_jobs_id"
+                                 referencedTableName="user_jobs"
+                                 referencedColumnNames="id"
+                                 onDelete="CASCADE"/>
+        <!-- Index on prompt_id for query performance -->
+        <createIndex tableName="prompts_jobs" indexName="idx_prompts_jobs_prompt">
+            <column name="prompt_id"/>
+        </createIndex>
+    </changeSet>
+
 </databaseChangeLog>

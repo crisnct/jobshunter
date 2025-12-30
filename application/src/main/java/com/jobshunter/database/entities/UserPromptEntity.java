@@ -1,18 +1,19 @@
 package com.jobshunter.database.entities;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.jobshunter.model.EngineType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -42,5 +43,14 @@ public class UserPromptEntity {
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "engine_id")
   private EngineConfigurationEntity engineConfiguration;
+
+  @JsonIgnore
+  @OneToMany(fetch = FetchType.LAZY)
+  @JoinTable(
+      name = "prompts_jobs",
+      joinColumns = @JoinColumn(name = "prompt_id"),
+      inverseJoinColumns = @JoinColumn(name = "user_jobs_id")
+  )
+  private List<UserJobEntity> jobs = new ArrayList<>();
 
 }
