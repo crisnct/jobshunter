@@ -412,4 +412,35 @@
         <renameColumn tableName="engine_configuration" oldColumnName="engine_type" newColumnName="engine" columnDataType="VARCHAR(255)"/>
     </changeSet>
 
+    <changeSet id="29-rename-job-url-to-url-and-add-engine-config" author="assistant">
+        <comment>Rename job_url to url and add engine_configuration_id foreign key</comment>
+        <!-- Drop the unique index that uses job_url -->
+        <sql>
+            ALTER TABLE user_jobs DROP INDEX uc_user_jobs_user_url;
+        </sql>
+        <!-- Rename job_url to url -->
+        <renameColumn tableName="user_jobs" oldColumnName="job_url" newColumnName="url" columnDataType="VARCHAR(2048)"/>
+        <!-- Add engine_configuration_id column (nullable to allow SET NULL on delete) -->
+        <addColumn tableName="user_jobs">
+            <column name="engine_configuration_id" type="BIGINT">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+        <!-- Add foreign key constraint -->
+        <addForeignKeyConstraint constraintName="fk_user_jobs_engine_configuration"
+                                 baseTableName="user_jobs"
+                                 baseColumnNames="engine_configuration_id"
+                                 referencedTableName="engine_configuration"
+                                 referencedColumnNames="id"
+                                 onDelete="SET NULL"/>
+        <!-- Recreate unique index with new column name (using prefix length for MySQL utf8mb4 compatibility) -->
+        <sql>
+            CREATE UNIQUE INDEX uc_user_jobs_user_url ON user_jobs (user_id, url(512));
+        </sql>
+        <!-- Add index on engine_configuration_id for query performance -->
+        <createIndex tableName="user_jobs" indexName="idx_user_jobs_engine_configuration">
+            <column name="engine_configuration_id"/>
+        </createIndex>
+    </changeSet>
+
 </databaseChangeLog>

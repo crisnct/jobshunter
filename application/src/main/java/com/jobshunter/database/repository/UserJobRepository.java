@@ -11,9 +11,9 @@ import org.springframework.data.repository.query.Param;
 @PackageExpected("com.jobshunter.database.service")
 public interface UserJobRepository extends JpaRepository<UserJobEntity, Long> {
 
-    boolean existsByUserIdAndJobUrl(Long userId, @SqlInjectionSafe String jobUrl);
+    boolean existsByUserIdAndUrl(Long userId, @SqlInjectionSafe String url);
 
-    @Query("select uj.jobUrl from UserJobEntity uj where lower(uj.user.username) = lower(:username)")
+    @Query("select uj.url from UserJobEntity uj where lower(uj.user.username) = lower(:username)")
     List<String> findJobUrlsByUsernameIgnoreCase(
         @Param("username")
         @SqlInjectionSafe

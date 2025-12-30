@@ -22,7 +22,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @Entity
 @Table(name = "user_jobs",
-    uniqueConstraints = @UniqueConstraint(name = "uc_user_jobs_user_url", columnNames = {"user_id", "job_url"}))
+    uniqueConstraints = @UniqueConstraint(name = "uc_user_jobs_user_url", columnNames = {"user_id", "url"}))
 public class UserJobEntity {
 
     @Id
@@ -34,15 +34,25 @@ public class UserJobEntity {
     @JoinColumn(name = "user_id", nullable = false)
     private UserEntity user;
 
-    @Column(name = "job_url", nullable = false, length = 500)
-    private String jobUrl;
+    @Column(name = "url", nullable = false, length = 2048)
+    private String url;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "engine_configuration_id")
+    private EngineConfigurationEntity engineConfiguration;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
-    public UserJobEntity(UserEntity user, String jobUrl) {
+    public UserJobEntity(UserEntity user, String url) {
         this.user = user;
-        this.jobUrl = jobUrl;
+        this.url = url;
+    }
+
+    public UserJobEntity(UserEntity user, String url, EngineConfigurationEntity engineConfiguration) {
+        this.user = user;
+        this.url = url;
+        this.engineConfiguration = engineConfiguration;
     }
 
     @PrePersist

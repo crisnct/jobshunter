@@ -158,7 +158,7 @@ public class UserController {
 
   private UserJobResponse toUserJobResponse(UserJobEntity userJob) {
     return new UserJobResponse(
-        userJob.getJobUrl(),
+        userJob.getUrl(),
         formatDateTime(userJob.getCreatedAt())
     );
   }

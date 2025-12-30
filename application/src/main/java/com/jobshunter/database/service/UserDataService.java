@@ -81,9 +81,9 @@ public class UserDataService {
     return userRepository.save(user);
   }
 
-  public void addJobUrl(UserEntity user, String url) {
-    if (!userJobRepository.existsByUserIdAndJobUrl(user.getId(), url)) {
-      userJobRepository.save(new UserJobEntity(user, url));
+  public void addJobUrl(UserEntity user, String url, EngineConfigurationEntity engineConfiguration) {
+    if (!userJobRepository.existsByUserIdAndUrl(user.getId(), url)) {
+      userJobRepository.save(new UserJobEntity(user, url, engineConfiguration));
     }
   }
 
@@ -91,7 +91,15 @@ public class UserDataService {
   public void updateUser(UserEntity user, List<Job> jobs) {
     user.setLastJobs(LocalDateTime.now());
     updateUser(user);
-    jobs.forEach(job -> addJobUrl(user, job.getUrl()));
+    jobs.forEach(job -> {
+      EngineConfigurationEntity engineConfig = null;
+      if (job.getPromptId() != null) {
+        engineConfig = userPromptRepository.findById(job.getPromptId())
+            .map(UserPromptEntity::getEngineConfiguration)
+            .orElse(null);
+      }
+      addJobUrl(user, job.getUrl(), engineConfig);
+    });
   }
 
   public UserPromptEntity updatePrompt(UserEntity user, EngineType engine, Long promptId, String prompt) {
