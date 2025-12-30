@@ -36,7 +36,7 @@ import org.springframework.web.client.RestClient;
 @AllArgsConstructor
 public non-sealed class GptV1JobSearchImpl implements AiJobsClient<GptJobSearchRequest, List<Job>> {
 
-  private static final URI DEFAULT_URI = URI.create("https://api.openai.com/v1/responses");
+  public static final URI DEFAULT_URI = URI.create("https://api.openai.com/v1/responses");
 
   private final ApplicationProperties properties;
 

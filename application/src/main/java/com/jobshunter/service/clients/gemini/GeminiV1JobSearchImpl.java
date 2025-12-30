@@ -37,7 +37,7 @@ import org.springframework.web.client.RestClient;
 @AllArgsConstructor
 public non-sealed class GeminiV1JobSearchImpl implements AiJobsClient<GeminiJobSearchRequest, List<Job>> {
 
-  private static final String GEMINI_URI = "https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent?key=%s";
+  public static final String GEMINI_URI = "https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent?key=%s";
 
   private final ApplicationProperties properties;
 

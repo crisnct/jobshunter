@@ -500,4 +500,140 @@
         <dropColumn tableName="user_prompts" columnName="jobs_found"/>
     </changeSet>
 
+    <changeSet id="33-insert-gpt-models" author="assistant">
+        <comment>Insert GPT model configurations safely, skipping if they already exist</comment>
+        <sql>
+            INSERT INTO engine_configuration (engine, model)
+            SELECT 'GPT', 'gpt-5-mini-2025-08-07' WHERE NOT EXISTS (SELECT 1 FROM engine_configuration WHERE engine = 'GPT' AND model = 'gpt-5-mini-2025-08-07');
+            INSERT INTO engine_configuration (engine, model)
+            SELECT 'GPT', 'gpt-4o-mini-2024-07-18' WHERE NOT EXISTS (SELECT 1 FROM engine_configuration WHERE engine = 'GPT' AND model = 'gpt-4o-mini-2024-07-18');
+            INSERT INTO engine_configuration (engine, model)
+            SELECT 'GPT', 'gpt-5.1-2025-11-13' WHERE NOT EXISTS (SELECT 1 FROM engine_configuration WHERE engine = 'GPT' AND model = 'gpt-5.1-2025-11-13');
+            INSERT INTO engine_configuration (engine, model)
+            SELECT 'GPT', 'o1-pro-2025-03-19' WHERE NOT EXISTS (SELECT 1 FROM engine_configuration WHERE engine = 'GPT' AND model = 'o1-pro-2025-03-19');
+            INSERT INTO engine_configuration (engine, model)
+            SELECT 'GPT', 'gpt-5-2025-08-07' WHERE NOT EXISTS (SELECT 1 FROM engine_configuration WHERE engine = 'GPT' AND model = 'gpt-5-2025-08-07');
+            INSERT INTO engine_configuration (engine, model)
+            SELECT 'GPT', 'gpt-5-chat-latest' WHERE NOT EXISTS (SELECT 1 FROM engine_configuration WHERE engine = 'GPT' AND model = 'gpt-5-chat-latest');
+            INSERT INTO engine_configuration (engine, model)
+            SELECT 'GPT', 'gpt-5.2-2025-12-11' WHERE NOT EXISTS (SELECT 1 FROM engine_configuration WHERE engine = 'GPT' AND model = 'gpt-5.2-2025-12-11');
+            INSERT INTO engine_configuration (engine, model)
+            SELECT 'GPT', 'gpt-3.5-turbo-1106' WHERE NOT EXISTS (SELECT 1 FROM engine_configuration WHERE engine = 'GPT' AND model = 'gpt-3.5-turbo-1106');
+            INSERT INTO engine_configuration (engine, model)
+            SELECT 'GPT', 'gpt-5-pro-2025-10-06' WHERE NOT EXISTS (SELECT 1 FROM engine_configuration WHERE engine = 'GPT' AND model = 'gpt-5-pro-2025-10-06');
+            INSERT INTO engine_configuration (engine, model)
+            SELECT 'GPT', 'gpt-4-1106-preview' WHERE NOT EXISTS (SELECT 1 FROM engine_configuration WHERE engine = 'GPT' AND model = 'gpt-4-1106-preview');
+            INSERT INTO engine_configuration (engine, model)
+            SELECT 'GPT', 'gpt-5.1-codex' WHERE NOT EXISTS (SELECT 1 FROM engine_configuration WHERE engine = 'GPT' AND model = 'gpt-5.1-codex');
+            INSERT INTO engine_configuration (engine, model)
+            SELECT 'GPT', 'gpt-5.1-codex-max' WHERE NOT EXISTS (SELECT 1 FROM engine_configuration WHERE engine = 'GPT' AND model = 'gpt-5.1-codex-max');
+            INSERT INTO engine_configuration (engine, model)
+            SELECT 'GPT', 'o1-pro' WHERE NOT EXISTS (SELECT 1 FROM engine_configuration WHERE engine = 'GPT' AND model = 'o1-pro');
+            INSERT INTO engine_configuration (engine, model)
+            SELECT 'GPT', 'o3-2025-04-16' WHERE NOT EXISTS (SELECT 1 FROM engine_configuration WHERE engine = 'GPT' AND model = 'o3-2025-04-16');
+            INSERT INTO engine_configuration (engine, model)
+            SELECT 'GPT', 'gpt-3.5-turbo' WHERE NOT EXISTS (SELECT 1 FROM engine_configuration WHERE engine = 'GPT' AND model = 'gpt-3.5-turbo');
+            INSERT INTO engine_configuration (engine, model)
+            SELECT 'GPT', 'gpt-4-turbo-2024-04-09' WHERE NOT EXISTS (SELECT 1 FROM engine_configuration WHERE engine = 'GPT' AND model = 'gpt-4-turbo-2024-04-09');
+            INSERT INTO engine_configuration (engine, model)
+            SELECT 'GPT', 'gpt-4o' WHERE NOT EXISTS (SELECT 1 FROM engine_configuration WHERE engine = 'GPT' AND model = 'gpt-4o');
+            INSERT INTO engine_configuration (engine, model)
+            SELECT 'GPT', 'o3-mini-2025-01-31' WHERE NOT EXISTS (SELECT 1 FROM engine_configuration WHERE engine = 'GPT' AND model = 'o3-mini-2025-01-31');
+            INSERT INTO engine_configuration (engine, model)
+            SELECT 'GPT', 'o4-mini' WHERE NOT EXISTS (SELECT 1 FROM engine_configuration WHERE engine = 'GPT' AND model = 'o4-mini');
+            INSERT INTO engine_configuration (engine, model)
+            SELECT 'GPT', 'gpt-4o-2024-11-20' WHERE NOT EXISTS (SELECT 1 FROM engine_configuration WHERE engine = 'GPT' AND model = 'gpt-4o-2024-11-20');
+            INSERT INTO engine_configuration (engine, model)
+            SELECT 'GPT', 'gpt-4-turbo-preview' WHERE NOT EXISTS (SELECT 1 FROM engine_configuration WHERE engine = 'GPT' AND model = 'gpt-4-turbo-preview');
+            INSERT INTO engine_configuration (engine, model)
+            SELECT 'GPT', 'gpt-4-0613' WHERE NOT EXISTS (SELECT 1 FROM engine_configuration WHERE engine = 'GPT' AND model = 'gpt-4-0613');
+            INSERT INTO engine_configuration (engine, model)
+            SELECT 'GPT', 'gpt-5-mini' WHERE NOT EXISTS (SELECT 1 FROM engine_configuration WHERE engine = 'GPT' AND model = 'gpt-5-mini');
+            INSERT INTO engine_configuration (engine, model)
+            SELECT 'GPT', 'gpt-4o-2024-05-13' WHERE NOT EXISTS (SELECT 1 FROM engine_configuration WHERE engine = 'GPT' AND model = 'gpt-4o-2024-05-13');
+            INSERT INTO engine_configuration (engine, model)
+            SELECT 'GPT', 'gpt-4o-2024-08-06' WHERE NOT EXISTS (SELECT 1 FROM engine_configuration WHERE engine = 'GPT' AND model = 'gpt-4o-2024-08-06');
+            INSERT INTO engine_configuration (engine, model)
+            SELECT 'GPT', 'gpt-5-pro' WHERE NOT EXISTS (SELECT 1 FROM engine_configuration WHERE engine = 'GPT' AND model = 'gpt-5-pro');
+            INSERT INTO engine_configuration (engine, model)
+            SELECT 'GPT', 'gpt-5.2-pro-2025-12-11' WHERE NOT EXISTS (SELECT 1 FROM engine_configuration WHERE engine = 'GPT' AND model = 'gpt-5.2-pro-2025-12-11');
+            INSERT INTO engine_configuration (engine, model)
+            SELECT 'GPT', 'o3-mini' WHERE NOT EXISTS (SELECT 1 FROM engine_configuration WHERE engine = 'GPT' AND model = 'o3-mini');
+            INSERT INTO engine_configuration (engine, model)
+            SELECT 'GPT', 'gpt-4.1-2025-04-14' WHERE NOT EXISTS (SELECT 1 FROM engine_configuration WHERE engine = 'GPT' AND model = 'gpt-4.1-2025-04-14');
+            INSERT INTO engine_configuration (engine, model)
+            SELECT 'GPT', 'gpt-4' WHERE NOT EXISTS (SELECT 1 FROM engine_configuration WHERE engine = 'GPT' AND model = 'gpt-4');
+            INSERT INTO engine_configuration (engine, model)
+            SELECT 'GPT', 'gpt-4.1-mini' WHERE NOT EXISTS (SELECT 1 FROM engine_configuration WHERE engine = 'GPT' AND model = 'gpt-4.1-mini');
+            INSERT INTO engine_configuration (engine, model)
+            SELECT 'GPT', 'gpt-5' WHERE NOT EXISTS (SELECT 1 FROM engine_configuration WHERE engine = 'GPT' AND model = 'gpt-5');
+            INSERT INTO engine_configuration (engine, model)
+            SELECT 'GPT', 'gpt-3.5-turbo-0125' WHERE NOT EXISTS (SELECT 1 FROM engine_configuration WHERE engine = 'GPT' AND model = 'gpt-3.5-turbo-0125');
+            INSERT INTO engine_configuration (engine, model)
+            SELECT 'GPT', 'gpt-4o-mini' WHERE NOT EXISTS (SELECT 1 FROM engine_configuration WHERE engine = 'GPT' AND model = 'gpt-4o-mini');
+            INSERT INTO engine_configuration (engine, model)
+            SELECT 'GPT', 'gpt-4.1-nano' WHERE NOT EXISTS (SELECT 1 FROM engine_configuration WHERE engine = 'GPT' AND model = 'gpt-4.1-nano');
+            INSERT INTO engine_configuration (engine, model)
+            SELECT 'GPT', 'gpt-4-0125-preview' WHERE NOT EXISTS (SELECT 1 FROM engine_configuration WHERE engine = 'GPT' AND model = 'gpt-4-0125-preview');
+            INSERT INTO engine_configuration (engine, model)
+            SELECT 'GPT', 'o1' WHERE NOT EXISTS (SELECT 1 FROM engine_configuration WHERE engine = 'GPT' AND model = 'o1');
+            INSERT INTO engine_configuration (engine, model)
+            SELECT 'GPT', 'o3' WHERE NOT EXISTS (SELECT 1 FROM engine_configuration WHERE engine = 'GPT' AND model = 'o3');
+            INSERT INTO engine_configuration (engine, model)
+            SELECT 'GPT', 'gpt-5-codex' WHERE NOT EXISTS (SELECT 1 FROM engine_configuration WHERE engine = 'GPT' AND model = 'gpt-5-codex');
+            INSERT INTO engine_configuration (engine, model)
+            SELECT 'GPT', 'gpt-5-nano-2025-08-07' WHERE NOT EXISTS (SELECT 1 FROM engine_configuration WHERE engine = 'GPT' AND model = 'gpt-5-nano-2025-08-07');
+            INSERT INTO engine_configuration (engine, model)
+            SELECT 'GPT', 'gpt-5.1' WHERE NOT EXISTS (SELECT 1 FROM engine_configuration WHERE engine = 'GPT' AND model = 'gpt-5.1');
+            INSERT INTO engine_configuration (engine, model)
+            SELECT 'GPT', 'gpt-5.2' WHERE NOT EXISTS (SELECT 1 FROM engine_configuration WHERE engine = 'GPT' AND model = 'gpt-5.2');
+            INSERT INTO engine_configuration (engine, model)
+            SELECT 'GPT', 'o4-mini-2025-04-16' WHERE NOT EXISTS (SELECT 1 FROM engine_configuration WHERE engine = 'GPT' AND model = 'o4-mini-2025-04-16');
+            INSERT INTO engine_configuration (engine, model)
+            SELECT 'GPT', 'gpt-5-nano' WHERE NOT EXISTS (SELECT 1 FROM engine_configuration WHERE engine = 'GPT' AND model = 'gpt-5-nano');
+            INSERT INTO engine_configuration (engine, model)
+            SELECT 'GPT', 'gpt-4.1-mini-2025-04-14' WHERE NOT EXISTS (SELECT 1 FROM engine_configuration WHERE engine = 'GPT' AND model = 'gpt-4.1-mini-2025-04-14');
+            INSERT INTO engine_configuration (engine, model)
+            SELECT 'GPT', 'chatgpt-4o-latest' WHERE NOT EXISTS (SELECT 1 FROM engine_configuration WHERE engine = 'GPT' AND model = 'chatgpt-4o-latest');
+            INSERT INTO engine_configuration (engine, model)
+            SELECT 'GPT', 'gpt-5.1-chat-latest' WHERE NOT EXISTS (SELECT 1 FROM engine_configuration WHERE engine = 'GPT' AND model = 'gpt-5.1-chat-latest');
+            INSERT INTO engine_configuration (engine, model)
+            SELECT 'GPT', 'gpt-5.2-chat-latest' WHERE NOT EXISTS (SELECT 1 FROM engine_configuration WHERE engine = 'GPT' AND model = 'gpt-5.2-chat-latest');
+            INSERT INTO engine_configuration (engine, model)
+            SELECT 'GPT', 'gpt-4-turbo' WHERE NOT EXISTS (SELECT 1 FROM engine_configuration WHERE engine = 'GPT' AND model = 'gpt-4-turbo');
+            INSERT INTO engine_configuration (engine, model)
+            SELECT 'GPT', 'gpt-5.2-pro' WHERE NOT EXISTS (SELECT 1 FROM engine_configuration WHERE engine = 'GPT' AND model = 'gpt-5.2-pro');
+            INSERT INTO engine_configuration (engine, model)
+            SELECT 'GPT', 'o1-2024-12-17' WHERE NOT EXISTS (SELECT 1 FROM engine_configuration WHERE engine = 'GPT' AND model = 'o1-2024-12-17');
+            INSERT INTO engine_configuration (engine, model)
+            SELECT 'GPT', 'gpt-4.1-nano-2025-04-14' WHERE NOT EXISTS (SELECT 1 FROM engine_configuration WHERE engine = 'GPT' AND model = 'gpt-4.1-nano-2025-04-14');
+            INSERT INTO engine_configuration (engine, model)
+            SELECT 'GPT', 'gpt-4.1' WHERE NOT EXISTS (SELECT 1 FROM engine_configuration WHERE engine = 'GPT' AND model = 'gpt-4.1');
+            INSERT INTO engine_configuration (engine, model)
+            SELECT 'GPT', 'gpt-5.1-codex-mini' WHERE NOT EXISTS (SELECT 1 FROM engine_configuration WHERE engine = 'GPT' AND model = 'gpt-5.1-codex-mini');
+        </sql>
+    </changeSet>
+
+    <changeSet id="34-insert-gemini-models" author="assistant">
+        <comment>Insert GEMINI model configurations safely, skipping if they already exist</comment>
+        <sql>
+            INSERT INTO engine_configuration (engine, model)
+            SELECT 'GEMINI', 'gemini-2.0-flash-001' WHERE NOT EXISTS (SELECT 1 FROM engine_configuration WHERE engine = 'GEMINI' AND model = 'gemini-2.0-flash-001');
+            INSERT INTO engine_configuration (engine, model)
+            SELECT 'GEMINI', 'gemini-2.5-pro' WHERE NOT EXISTS (SELECT 1 FROM engine_configuration WHERE engine = 'GEMINI' AND model = 'gemini-2.5-pro');
+            INSERT INTO engine_configuration (engine, model)
+            SELECT 'GEMINI', 'gemini-2.5-flash-lite' WHERE NOT EXISTS (SELECT 1 FROM engine_configuration WHERE engine = 'GEMINI' AND model = 'gemini-2.5-flash-lite');
+            INSERT INTO engine_configuration (engine, model)
+            SELECT 'GEMINI', 'gemini-2.5-flash' WHERE NOT EXISTS (SELECT 1 FROM engine_configuration WHERE engine = 'GEMINI' AND model = 'gemini-2.5-flash');
+            INSERT INTO engine_configuration (engine, model)
+            SELECT 'GEMINI', 'gemini-2.0-flash' WHERE NOT EXISTS (SELECT 1 FROM engine_configuration WHERE engine = 'GEMINI' AND model = 'gemini-2.0-flash');
+            INSERT INTO engine_configuration (engine, model)
+            SELECT 'GEMINI', 'gemini-2.0-flash-exp' WHERE NOT EXISTS (SELECT 1 FROM engine_configuration WHERE engine = 'GEMINI' AND model = 'gemini-2.0-flash-exp');
+            INSERT INTO engine_configuration (engine, model)
+            SELECT 'GEMINI', 'gemini-2.0-flash-lite' WHERE NOT EXISTS (SELECT 1 FROM engine_configuration WHERE engine = 'GEMINI' AND model = 'gemini-2.0-flash-lite');
+            INSERT INTO engine_configuration (engine, model)
+            SELECT 'GEMINI', 'gemini-2.0-flash-lite-001' WHERE NOT EXISTS (SELECT 1 FROM engine_configuration WHERE engine = 'GEMINI' AND model = 'gemini-2.0-flash-lite-001');
+        </sql>
+    </changeSet>
+
 </databaseChangeLog>

@@ -90,18 +90,12 @@ components:
       type: string
       enum: [GPT, GEMINI, SERP]
 
-    EngineTier:
-      type: string
-      enum: [ECONOMY, PREMIUM]
-
     EngineSelection:
       type: object
       properties:
         type:
           $ref: '#/components/schemas/EngineType'
-        tier:
-          $ref: '#/components/schemas/EngineTier'
-      required: [type, tier]
+      required: [type]
 
     SearchJobsRequest:
       type: object
@@ -205,13 +199,13 @@ components:
     UserJobResponse:
       type: object
       properties:
-        jobUrl:
+        url:
           type: string
           format: uri
         createdAt:
           type: string
           description: ISO-8601 date-time as string.
-      required: [jobUrl, createdAt]
+      required: [url, createdAt]
 
     EmailRequest:
       type: object
@@ -243,6 +237,11 @@ components:
     SerpPrompt:
       type: object
       properties:
+        id:
+          type: integer
+          format: int64
+          nullable: true
+          description: Prompt ID for updates (null for new prompts)
         q:
           type: string
           maxLength: 2000
@@ -250,43 +249,55 @@ components:
         google_domain:
           type: string
           maxLength: 255
+          nullable: true
           description: Google domain (e.g., google.ro). See https://serpapi.com/google-domains
         date_posted:
           type: string
           maxLength: 128
+          nullable: true
           description: Date filter (today, last_3_days, last_7_days, last_14_days, last_30_days).
         gl:
           type: string
           maxLength: 2
+          nullable: true
           description: Country code. See https://serpapi.com/google-countries
         location:
           type: string
+          nullable: true
         workType:
           type: string
           enum: [REMOTE, ONSITE, HYBRID]
+          nullable: true
         radius:
           type: integer
           format: int32
+          nullable: true
           description: Radius in km.
         hl:
           type: string
           maxLength: 2
+          nullable: true
           description: Language code. See https://serpapi.com/google-languages
-        engine_tier:
-          $ref: '#/components/schemas/EngineTier'
-      required: [q, engine_tier]
+      required: [q]
 
     AiPrompt:
       type: object
       properties:
+        id:
+          type: integer
+          format: int64
+          nullable: true
+          description: Prompt ID for updates (null for new prompts)
         prompt:
           type: string
           maxLength: 3000
-        engine_type:
+        engine:
           $ref: '#/components/schemas/EngineType'
-        engine_tier:
-          $ref: '#/components/schemas/EngineTier'
-      required: [prompt, engine_type, engine_tier]
+        model:
+          type: string
+          maxLength: 255
+          description: Model name (e.g., gpt-4o-mini, gemini-2.5-flash)
+      required: [prompt, engine, model]
 
     UserUpdateRequest:
       type: object
@@ -352,6 +363,59 @@ components:
           format: uri
       required: [name, link, serpapiLink]
 
+    SearchWithSerpRequest:
+      type: object
+      properties:
+        q:
+          type: string
+          maxLength: 2000
+          description: SERP query
+        google_domain:
+          type: string
+          maxLength: 255
+          nullable: true
+          description: Google domain (e.g., google.ro). See https://serpapi.com/google-domains
+        date_posted:
+          type: string
+          maxLength: 128
+          nullable: true
+          description: Date filter (today, last_3_days, last_7_days, last_14_days, last_30_days)
+        gl:
+          type: string
+          maxLength: 2
+          nullable: true
+          description: Country code. See https://serpapi.com/google-countries
+        location:
+          type: string
+          nullable: true
+        workType:
+          type: string
+          enum: [REMOTE, ONSITE, HYBRID]
+          nullable: true
+        radius:
+          type: integer
+          format: int32
+          nullable: true
+          description: Radius in km
+        hl:
+          type: string
+          maxLength: 2
+          nullable: true
+          description: Language code. See https://serpapi.com/google-languages
+      required: [q]
+
+    ModelResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Engine configuration ID
+        model:
+          type: string
+          description: Model name
+      required: [id, model]
+
     ParseResult:
       type: object
       properties:
@@ -412,6 +476,13 @@ paths:
           required: true
           schema:
             type: string
+        - in: query
+          name: rejectReason
+          required: false
+          schema:
+            type: string
+            maxLength: 255
+          description: Optional rejection reason. If provided, sends rejection email instead of approval.
       responses:
         '200':
           description: User approved.
@@ -432,7 +503,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '403':
-          description: Forbidden (not admin).
+          description: Forbidden (not test role).
           content:
             application/json:
               schema:
@@ -501,6 +572,7 @@ paths:
           required: true
           schema:
             type: string
+            maxLength: 128
       responses:
         '200':
           description: Email verified.
@@ -520,6 +592,27 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+
+  /api/auth/csrf-token:
+    get:
+      summary: Get CSRF token
+      tags: [Auth]
+      description: Retrieves the CSRF token required for secure API requests
+      responses:
+        '200':
+          description: CSRF token retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                  headerName:
+                    type: string
+                  parameterName:
+                    type: string
+                required: [token, headerName, parameterName]
 
   /api/user/me:
     get:
@@ -604,7 +697,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '403':
-          description: Forbidden (not admin).
+          description: Forbidden (not test role).
           content:
             application/json:
               schema:
@@ -645,7 +738,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '403':
-          description: Forbidden (not admin).
+          description: Forbidden (not test role).
           content:
             application/json:
               schema:
@@ -780,9 +873,9 @@ paths:
 
   /api/test/email/send:
     post:
-      summary: Send custom email (admin only)
-      tags: [Admin Test]
-      description: Requires ROLE_ADMIN.
+      summary: Send custom email (test role only)
+      tags: [Test]
+      description: Requires ROLE_TEST.
       security:
         - bearerAuth: []
       requestBody:
@@ -805,7 +898,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '403':
-          description: Forbidden (not admin).
+          description: Forbidden (not test role).
           content:
             application/json:
               schema:
@@ -813,9 +906,9 @@ paths:
 
   /api/test/email/sendUsingTemplate:
     post:
-      summary: Send templated job email (admin only)
-      tags: [Admin Test]
-      description: Requires ROLE_ADMIN.
+      summary: Send templated job email (test role only)
+      tags: [Test]
+      description: Requires ROLE_TEST.
       security:
         - bearerAuth: []
       requestBody:
@@ -838,7 +931,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '403':
-          description: Forbidden (not admin).
+          description: Forbidden (not test role).
           content:
             application/json:
               schema:
@@ -848,7 +941,7 @@ paths:
     post:
       summary: Search jobs using SerpAPI (test role only)
       tags: [Test]
-      description: Requires ROLE_TEST. Searches for jobs using SerpAPI. Returns ParseResult with jobs if found, or error response if jobs list is empty.
+      description: Requires ROLE_TEST. Searches for jobs using SerpAPI. Returns list of Job objects.
       security:
         - bearerAuth: []
       requestBody:
@@ -859,17 +952,13 @@ paths:
               $ref: '#/components/schemas/SearchWithSerpRequest'
       responses:
         '200':
-          description: Jobs found successfully. Returns ParseResult with jobs array.
+          description: Jobs found successfully. Returns array of Job objects.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ParseResult'
-        '400':
-          description: No jobs found (jobs array is empty). Returns error message from ParseResult.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                type: array
+                items:
+                  $ref: '#/components/schemas/Job'
         '401':
           description: Unauthorized - authentication required.
           content:
@@ -884,6 +973,69 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
         '404':
           description: User not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/test/testGptModels:
+    get:
+      summary: Test GPT models (admin only)
+      tags: [Test]
+      description: Requires ROLE_ADMIN. Tests GPT API connection and models.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: GPT API response
+          content:
+            application/json:
+              schema:
+                type: object
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - requires ROLE_ADMIN
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/models:
+    get:
+      summary: Get available models for an engine
+      tags: [Models]
+      description: Returns list of all available models for the specified engine type. Requires authentication.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: engine
+          required: true
+          schema:
+            $ref: '#/components/schemas/EngineType'
+          description: Engine type to filter models by
+      responses:
+        '200':
+          description: List of models for the specified engine
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ModelResponse'
+        '400':
+          description: Invalid engine parameter
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
           content:
             application/json:
               schema:

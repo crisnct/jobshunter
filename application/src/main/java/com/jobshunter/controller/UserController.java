@@ -2,7 +2,6 @@ package com.jobshunter.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jobshunter.database.entities.EngineConfigurationEntity;
 import com.jobshunter.database.entities.RoleEntity;
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.entities.UserJobEntity;
