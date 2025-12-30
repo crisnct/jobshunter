@@ -12,16 +12,12 @@ import com.jobshunter.database.repository.UserCvRepository;
 import com.jobshunter.database.repository.UserJobRepository;
 import com.jobshunter.database.repository.UserPromptRepository;
 import com.jobshunter.database.repository.UserRepository;
+import com.jobshunter.dto.exceptions.BusinessException;
 import com.jobshunter.model.EngineType;
 import com.jobshunter.model.Job;
 import java.time.LocalDateTime;
-import java.util.Collection;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Optional;
-import java.util.function.Function;
-import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.Hibernate;
@@ -29,7 +25,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
-import org.springframework.web.server.ResponseStatusException;
 
 @Service
 @Slf4j
@@ -115,41 +110,20 @@ public class UserDataService {
     this.updateUser(user);
   }
 
-  public UserPromptEntity updatePrompt(UserEntity user, EngineType engine, Long promptId, String prompt) {
-    List<EngineConfigurationEntity> engineConfigs = engineRepository.findByEngine(engine);
-    if (engineConfigs.isEmpty()) {
-      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No engine found: " + engine);
-    }
+  public UserPromptEntity updatePrompt(UserEntity user, EngineType engine, String model, Long promptId, String prompt) {
+    EngineConfigurationEntity engineConfig = engineRepository.findByEngineAndModel(engine, model)
+        .orElseThrow(() -> new BusinessException(HttpStatus.BAD_REQUEST, "No model " + model + " found for engine " + engine));
     // Use the first available configuration for the engine
-    EngineConfigurationEntity engineConfig = engineConfigs.get(0);
     UserPromptEntity entity = userPromptRepository
         .findByIdAndUserIdAndEngineConfigurationId(promptId == null ? -1 : promptId, user.getId(), engineConfig.getId())
         .orElseGet(() -> {
           UserPromptEntity newEntity = new UserPromptEntity();
           newEntity.setUser(user);
           newEntity.setEngineConfiguration(engineConfig);
-          newEntity.setJobsFound(0);
           return newEntity;
         });
     entity.setPrompt(prompt);
     return userPromptRepository.save(entity);
-  }
-
-  @Transactional
-  public void incrementPromptJobsFound(long promptId, int amount) {
-    UserPromptEntity entity = userPromptRepository.findById(promptId).orElseThrow();
-    int current = entity.getJobsFound() != null ? entity.getJobsFound() : 0;
-    entity.setJobsFound(current + amount);
-    userPromptRepository.save(entity);
-  }
-
-  @Transactional
-  public void saveJobsToDB(Map<Long, List<Job>> jobsByPrompt, UserEntity user) {
-    for (Entry<Long, List<Job>> entry : jobsByPrompt.entrySet()) {
-      this.incrementPromptJobsFound(entry.getKey(), entry.getValue().size());
-    }
-    List<Job> jobs = jobsByPrompt.values().stream().flatMap((Function<List<Job>, Stream<Job>>) Collection::stream).toList();
-    this.updateUser(user, jobs);
   }
 
   public List<String> getExistingJobUrlsForUser(String username) {

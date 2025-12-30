@@ -31,7 +31,7 @@ import org.springframework.web.server.ResponseStatusException;
 @PackageExpected("com.jobshunter.service.clients.gemini")
 @ConditionalOnProperty(name = "gemini.enabled", havingValue = "true")
 @RequiredArgsConstructor
-public final class GeminiFileClientImpl implements FileClient {
+public non-sealed class GeminiFileClientImpl implements FileClient {
 
   public static final String UPLOAD_URI = "https://generativelanguage.googleapis.com/upload/v1beta/files";
 

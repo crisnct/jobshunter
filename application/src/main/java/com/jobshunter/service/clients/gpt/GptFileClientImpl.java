@@ -37,7 +37,7 @@ import org.springframework.web.client.RestTemplate;
 @PackageExpected("com.jobshunter.service.clients.gpt")
 @ConditionalOnProperty(name = "gpt.enabled", havingValue = "true")
 @RequiredArgsConstructor
-public final class GptFileClientImpl implements FileClient {
+public non-sealed class GptFileClientImpl implements FileClient {
 
   private static final String API_URI = "https://api.openai.com/v1/files";
 

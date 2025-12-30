@@ -52,7 +52,7 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient<GptJobSearchR
     try {
       GptJobsPayload payload = GptJobsPayload.builder()
           .model(request.getPrompt().getEngineConfiguration().getModel())
-          .reasoning(new Reasoning("high"))
+          .reasoning(request.getReasoning())
           .max_output_tokens(properties.getGpt().getMaxTokens())
           .addTools(Tools.builder().setDeepSearch().build())
           .addSystemPrompt(AiMessage.of(AiMessageType.SYSTEM_PROMPT_JOB_SEARCH))

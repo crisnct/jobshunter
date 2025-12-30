@@ -19,9 +19,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -96,8 +94,7 @@ public class JobHuntService {
       List<Job> jobs = jobHuntResponse.jobsFound();
       if (!jobs.isEmpty()) {
         if (isEnableOneRealEngine) {
-          Map<Long, List<Job>> jobsByPromptId = jobs.stream().collect(Collectors.groupingBy(Job::getPromptId));
-          this.userDataService.saveJobsToDB(jobsByPromptId, user);
+          this.userDataService.updateUser(user, jobs);
         }
         if (user.isNotifyWhatsapp()) {
           whatsappNotifierService.send(jobs, user);

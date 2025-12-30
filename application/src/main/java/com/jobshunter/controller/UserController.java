@@ -2,6 +2,7 @@ package com.jobshunter.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jobshunter.database.entities.EngineConfigurationEntity;
 import com.jobshunter.database.entities.RoleEntity;
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.entities.UserJobEntity;
@@ -52,6 +53,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 @PreAuthorize("isAuthenticated()")
 public class UserController {
+
+  public static final String SERP_ENGINE_GOOGLE_JOBS = "google_jobs";
 
   private final UserDataService userDataService;
 
@@ -226,7 +229,7 @@ public class UserController {
       request.serpPrompts().forEach(serpPrompt -> {
         try {
           String promptJson = objectMapper.writeValueAsString(serpPrompt);
-          UserPromptEntity prompt = userDataService.updatePrompt(user, EngineType.SERP, serpPrompt.id(), promptJson);
+          UserPromptEntity prompt = userDataService.updatePrompt(user, EngineType.SERP, SERP_ENGINE_GOOGLE_JOBS, serpPrompt.id(), promptJson);
           promptsToDelete.remove(prompt.getId());
         } catch (JsonProcessingException e) {
           throw new ValidationException("Invalid SERP prompt payload", e);
@@ -239,7 +242,7 @@ public class UserController {
         if (aiPrompt.engine() != EngineType.GPT && aiPrompt.engine() != EngineType.GEMINI) {
           throw new ValidationException("engine must be GPT or GEMINI");
         }
-        UserPromptEntity prompt = userDataService.updatePrompt(user, aiPrompt.engine(), aiPrompt.id(), aiPrompt.prompt());
+        UserPromptEntity prompt = userDataService.updatePrompt(user, aiPrompt.engine(), aiPrompt.model(), aiPrompt.id(), aiPrompt.prompt());
         promptsToDelete.remove(prompt.getId());
       });
     }

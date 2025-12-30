@@ -83,7 +83,11 @@ public record UserUpdateRequest(
       String prompt,
 
       @NotNull
-      EngineType engine
+      EngineType engine,
+
+      @NotBlank
+      @Size(max = 255)
+      String model
   ) {
 
   }

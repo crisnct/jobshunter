@@ -11,7 +11,10 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.Getter;
@@ -37,8 +40,8 @@ public class UserPromptEntity {
   @Column(name = "prompt", nullable = false, length = 3000)
   private String prompt;
 
-  @Column(name = "jobs_found", nullable = false)
-  private Integer jobsFound = 0;
+  @Column(name = "modified_at", nullable = false)
+  private Instant modifiedAt;
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "engine_id")
@@ -52,5 +55,11 @@ public class UserPromptEntity {
       inverseJoinColumns = @JoinColumn(name = "user_jobs_id")
   )
   private List<UserJobEntity> jobs = new ArrayList<>();
+
+  @PrePersist
+  @PreUpdate
+  void updateModifiedAt() {
+    this.modifiedAt = Instant.now();
+  }
 
 }

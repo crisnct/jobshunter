@@ -481,4 +481,23 @@
         </createIndex>
     </changeSet>
 
+    <changeSet id="31-add-modified-at-to-user-prompts" author="assistant">
+        <comment>Add modified_at column to user_prompts table to track when records are updated</comment>
+        <!-- Add column as nullable first to allow setting values for existing records -->
+        <addColumn tableName="user_prompts">
+            <column name="modified_at" type="TIMESTAMP"/>
+        </addColumn>
+        <!-- Set initial value for existing records -->
+        <sql>
+            UPDATE user_prompts SET modified_at = CURRENT_TIMESTAMP WHERE modified_at IS NULL;
+        </sql>
+        <!-- Add NOT NULL constraint after setting values -->
+        <addNotNullConstraint tableName="user_prompts" columnName="modified_at" columnDataType="TIMESTAMP"/>
+    </changeSet>
+
+    <changeSet id="32-drop-jobs-found-from-user-prompts" author="assistant">
+        <comment>Remove jobs_found column from user_prompts table as it's no longer needed</comment>
+        <dropColumn tableName="user_prompts" columnName="jobs_found"/>
+    </changeSet>
+
 </databaseChangeLog>
