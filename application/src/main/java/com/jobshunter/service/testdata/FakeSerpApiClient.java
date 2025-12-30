@@ -13,10 +13,10 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 @Slf4j
-@Component("EconomyJobsClientSerp")
+@Component("JobsClientSerp")
 @ConditionalOnProperty(name = "serpApi.enabled", havingValue = "false")
 @PackageExpected("com.jobshunter.service.clients.serpapi")
-public non-sealed class FakeSerpApiEconomyClient implements AiJobsClient<SearchWithSerpRequest, List<Job>> {
+public non-sealed class FakeSerpApiClient implements AiJobsClient<SearchWithSerpRequest, List<Job>> {
 
   @Override
   @RateLimiter(name = "serpApiLimiter")

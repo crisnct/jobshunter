@@ -5,7 +5,6 @@ import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.service.UserDataService;
 import com.jobshunter.dto.JobHuntResponse;
 import com.jobshunter.model.EngineSelection;
-import com.jobshunter.model.EngineTier;
 import com.jobshunter.model.EngineType;
 import com.jobshunter.model.Job;
 import com.jobshunter.model.JobContext;
@@ -58,7 +57,7 @@ public class JobHuntService {
           this.searchJobsForUser(
               new SearchJobOrder(
                   user,
-                  List.of(new EngineSelection(EngineType.GPT, EngineTier.ECONOMY))
+                  List.of(new EngineSelection(EngineType.GPT))
               )
           );
         }

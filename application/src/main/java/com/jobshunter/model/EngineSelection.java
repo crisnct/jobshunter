@@ -7,8 +7,7 @@ import jakarta.validation.constraints.NotNull;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record EngineSelection(
-    @NotNull EngineType type,
-    @NotNull EngineTier tier
+    @NotNull EngineType type
 ) {
 }
 

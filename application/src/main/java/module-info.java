@@ -61,6 +61,8 @@ open module com.jobshunter.application {
   requires io.github.bucket4j.core;
   requires io.swagger.v3.oas.annotations;
 
+  requires com.github.mustachejava;
+
   requires static lombok;
   requires static com.jobshunter.processor;
 

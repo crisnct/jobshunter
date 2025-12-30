@@ -20,11 +20,11 @@ public class SerpJobHunting extends GenericJobHunting<SearchWithSerpRequest> {
   private final JsonMapper mapper;
 
   public SerpJobHunting(
-      @Qualifier("EconomyJobsClientSerp") AiJobsClient<SearchWithSerpRequest, List<Job>> serpApiClient,
+      @Qualifier("JobsClientSerp") AiJobsClient<SearchWithSerpRequest, List<Job>> serpApiClient,
       @Qualifier("serpApiExecutor") Executor serpApiExecutor,
       JsonMapper mapper
   ) {
-    super(serpApiExecutor, serpApiClient, null);
+    super(serpApiExecutor, serpApiClient);
     this.mapper = mapper;
   }
 

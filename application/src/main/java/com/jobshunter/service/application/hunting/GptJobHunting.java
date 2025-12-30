@@ -17,10 +17,9 @@ public class GptJobHunting extends GenericJobHunting<GptJobSearchRequest> {
 
   public GptJobHunting(
       @Qualifier("gptSearchExecutor") Executor gptSearchExecutor,
-      @Qualifier("EconomyJobsClientGPT") AiJobsClient<GptJobSearchRequest, List<Job>> gptEconomy,
-      @Qualifier("PremiumJobsClientGPT") AiJobsClient<GptJobSearchRequest, List<Job>> gptPremium
+      @Qualifier("JobsClientGPT") AiJobsClient<GptJobSearchRequest, List<Job>> gptClient
   ) {
-    super(gptSearchExecutor, gptEconomy, gptPremium);
+    super(gptSearchExecutor, gptClient);
   }
 
   @Override

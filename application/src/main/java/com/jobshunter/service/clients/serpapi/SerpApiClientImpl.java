@@ -30,7 +30,7 @@ import org.springframework.stereotype.Component;
  * <a href="https://serpapi.com/google-jobs-api">https://serpapi.com/google-jobs-api</a>
  */
 @Slf4j
-@Component("EconomyJobsClientSerp")
+@Component("JobsClientSerp")
 @ConditionalOnProperty(name = "serpApi.enabled", havingValue = "true")
 @RequiredArgsConstructor
 public non-sealed class SerpApiClientImpl implements AiJobsClient<SearchWithSerpRequest, List<Job>> {

@@ -4,12 +4,16 @@ import com.jobshunter.ApplicationProperties;
 import com.jobshunter.dto.geminiRequest.GeminiJobsPayload;
 import com.jobshunter.dto.geminiRequest.GenerationConfig;
 import com.jobshunter.dto.geminiRequest.GoogleSearchTool;
+import com.jobshunter.dto.geminiRequest.Part;
 import com.jobshunter.dto.geminiRequest.SafetySetting;
 import com.jobshunter.dto.geminiRequest.ThinkingConfig;
 import com.jobshunter.dto.geminiResponse.GeminiGenerateContentResponse;
+import com.jobshunter.dto.geminiResponse.GeminiGenerateContentResponse.Candidate;
 import com.jobshunter.model.GeminiJobSearchRequest;
 import com.jobshunter.model.Job;
 import com.jobshunter.processor.PackageExpected;
+import com.jobshunter.service.AiMessage;
+import com.jobshunter.service.AiMessage.AiMessageType;
 import com.jobshunter.service.application.UrlExtractor;
 import com.jobshunter.service.clients.AiJobsClient;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
@@ -17,6 +21,9 @@ import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import java.net.URI;
 import java.util.List;
+import java.util.function.Function;
+import java.util.stream.Stream;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.MediaType;
@@ -24,11 +31,11 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
 @Slf4j
-@Component("EconomyJobsClientGemini")
+@Component("JobsClientGemini")
 @PackageExpected("com.jobshunter.service.clients.gpt")
 @ConditionalOnProperty(name = "gemini.enabled", havingValue = "true")
-public non-sealed class EconomyGeminiJobSearchImpl extends AbstractGeminiApiClient
-    implements AiJobsClient<GeminiJobSearchRequest, List<Job>> {
+@AllArgsConstructor
+public non-sealed class GeminiV1JobSearchImpl implements AiJobsClient<GeminiJobSearchRequest, List<Job>> {
 
   private static final String GEMINI_URI = "https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent?key=%s";
 
@@ -36,15 +43,7 @@ public non-sealed class EconomyGeminiJobSearchImpl extends AbstractGeminiApiClie
 
   private final RestClient restClient;
 
-  public EconomyGeminiJobSearchImpl(
-      ApplicationProperties properties,
-      RestClient restClient,
-      UrlExtractor urlExtractor
-  ) {
-    super(urlExtractor);
-    this.properties = properties;
-    this.restClient = restClient;
-  }
+  private final UrlExtractor urlExtractor;
 
   @Override
   @CircuitBreaker(name = "geminiCircuitBreaker", fallbackMethod = "fallbackSearch")
@@ -59,7 +58,7 @@ public non-sealed class EconomyGeminiJobSearchImpl extends AbstractGeminiApiClie
           .build();
 
       GeminiJobsPayload payload = GeminiJobsPayload.builder()
-          .addSystemInstruction(getJobsSystemPrompt())
+          .addSystemInstruction(AiMessage.of(AiMessageType.SYSTEM_PROMPT_JOB_SEARCH))
           .addUserContent(request.getPrompt().getPrompt(), "application/pdf", request.getBase64CV())
           .generationConfig(generationConfig)
           .tools(List.of(new GoogleSearchTool()))
@@ -74,7 +73,7 @@ public non-sealed class EconomyGeminiJobSearchImpl extends AbstractGeminiApiClie
           .retrieve()
           .body(GeminiGenerateContentResponse.class);
 
-      return extractJobs(response);
+      return extractContentList(response);
     } catch (Exception e) {
       log.error("Gemini job API call failed", e);
       return List.of();
@@ -83,13 +82,21 @@ public non-sealed class EconomyGeminiJobSearchImpl extends AbstractGeminiApiClie
 
   @SuppressWarnings("unused")
   private List<Job> fallbackSearch(GeminiJobSearchRequest request, Throwable t) {
-    log.error("Economy Gemini call short-circuited/bulkheaded: {}", t.getMessage());
+    log.error("{} call short-circuited/bulkheaded: {}", getClass().getSimpleName(), t.getMessage());
     return List.of();
   }
 
-  @Override
-  public String getSystemPromptFilename() {
-    return "jobsSystemPromptEconomy.txt";
+  protected List<Job> extractContentList(GeminiGenerateContentResponse response) {
+    if (response == null || response.candidates() == null) {
+      return List.of();
+    }
+    return response.candidates().stream()
+        .map(Candidate::content)
+        .filter(c -> c != null && c.parts() != null)
+        .flatMap(c -> c.parts().stream())
+        .map(Part::text)
+        .filter(text -> text != null && text.length() > 2)
+        .flatMap((Function<String, Stream<Job>>) s -> urlExtractor.parseJobs(s).stream())
+        .toList();
   }
-
 }

@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.jobshunter.dto.serpRequest.WorkType;
-import com.jobshunter.model.EngineTier;
 import com.jobshunter.model.EngineType;
 import com.jobshunter.processor.SqlInjectionSafe;
 import jakarta.annotation.Nullable;
@@ -66,10 +65,7 @@ public record UserUpdateRequest(
       @Size(max = 2)
       @JsonProperty("hl")
       @SqlInjectionSafe
-      String language,
-
-      @NotNull
-      EngineTier engineTier
+      String language
   ) {
 
   }
@@ -87,10 +83,7 @@ public record UserUpdateRequest(
       String prompt,
 
       @NotNull
-      EngineType engineType,
-
-      @NotNull
-      EngineTier engineTier
+      EngineType engine
   ) {
 
   }

@@ -20,18 +20,14 @@ public abstract non-sealed class GenericJobHunting<T extends AIJobSearchRequest>
 
   private final Executor geminiSearchExecutor;
 
-  private final AiJobsClient<T, List<Job>> economyModel;
-
-  private final AiJobsClient<T, List<Job>> premiumModel;
+  private final AiJobsClient<T, List<Job>> jobsClient;
 
   public GenericJobHunting(
       Executor executor,
-      AiJobsClient<T, List<Job>> economyModel,
-      AiJobsClient<T, List<Job>> premiumModel
+      AiJobsClient<T, List<Job>> jobsClient
   ) {
     this.geminiSearchExecutor = executor;
-    this.economyModel = economyModel;
-    this.premiumModel = premiumModel;
+    this.jobsClient = jobsClient;
   }
 
   public abstract T createRequest(UserEntity user, UserPromptEntity prompt);
@@ -61,8 +57,8 @@ public abstract non-sealed class GenericJobHunting<T extends AIJobSearchRequest>
         .exceptionally(throwable -> {
           EngineConfigurationEntity engineConfig = request.getPrompt().getEngineConfiguration();
           if (throwable.getCause() != null && throwable.getCause() instanceof RequestNotPermitted) {
-            log.error("❌ Rate limit exceed for user {}, Engine: {}, Tier: {},   Model: {}",
-                request.getUsername(), engineConfig.getEngineType(), engineConfig.getTier(), engineConfig.getModel());
+            log.error("❌ Rate limit exceed for user {}, Engine: {}, Model: {}",
+                request.getUsername(), engineConfig.getEngine(), engineConfig.getModel());
           } else {
             log.error("Unexpected error at gathering jobs from model {}: {} for prompt {}", engineConfig.getModel(),
                 throwable.getMessage(), request.getPrompt().getPrompt());
@@ -75,11 +71,7 @@ public abstract non-sealed class GenericJobHunting<T extends AIJobSearchRequest>
   private List<Job> searchSync(T request) {
     EngineConfigurationEntity engineConfig = request.getPrompt().getEngineConfiguration();
     log.info("Searching jobs for user {} with model {}", request.getUsername(), engineConfig.getModel());
-    List<Job> jobsFound = switch (engineConfig.getTier()) {
-      case ECONOMY -> economyModel.searchJobs(request);
-      case PREMIUM -> premiumModel.searchJobs(request);
-      default -> throw new RuntimeException("Invalid engine tier " + engineConfig.getTier());
-    };
+    List<Job> jobsFound = jobsClient.searchJobs(request);
     jobsFound.forEach(job -> {
       job.setPromptId(request.getPrompt().getId());
       job.setSource(engineConfig.getModel());
@@ -91,7 +83,6 @@ public abstract non-sealed class GenericJobHunting<T extends AIJobSearchRequest>
 
   private boolean contains(SearchJobOrder order, UserPromptEntity prompt) {
     return order.engines().stream()
-        .anyMatch(p -> p.type() == prompt.getEngineConfiguration().getEngineType() &&
-            p.tier() == prompt.getEngineConfiguration().getTier());
+        .anyMatch(p -> p.type() == prompt.getEngineConfiguration().getEngine());
   }
 }

@@ -1,7 +1,6 @@
 package com.jobshunter.service.clients.gemini;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.jobshunter.ApplicationProperties;
 import com.jobshunter.ApplicationProperties.Gemini;
 import com.jobshunter.dto.geminiRequest.FileData;
@@ -12,14 +11,13 @@ import com.jobshunter.dto.geminiRequest.SafetySetting;
 import com.jobshunter.dto.geminiResponse.GeminiGenerateContentResponse;
 import com.jobshunter.dto.geminiResponse.GeminiGenerateContentResponse.Candidate;
 import com.jobshunter.processor.PackageExpected;
+import com.jobshunter.service.AiMessage;
+import com.jobshunter.service.AiMessage.AiMessageType;
 import com.jobshunter.service.clients.JobScoreCalculatorClient;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
-import jakarta.annotation.PostConstruct;
-import java.io.IOException;
 import java.net.URI;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
@@ -48,25 +46,6 @@ public non-sealed class GeminiJobScoreCalculatorClientImpl implements JobScoreCa
 
   private final RestClient restClient;
 
-  private String calculateScoreSystemPrompt;
-
-  private String calculateScoreUserPrompt;
-
-  private final JsonMapper mapper;
-
-  @PostConstruct
-  @SuppressWarnings("DataFlowIssue")
-  public void init() throws IOException {
-    try (var inputStream = getClass().getClassLoader().getResourceAsStream(
-        "prompts/gptScoreUserPrompt.txt")) {
-      calculateScoreUserPrompt = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
-    }
-    try (var inputStream = getClass().getClassLoader().getResourceAsStream(
-        "prompts/gptScoreSystemPrompt.txt")) {
-      calculateScoreSystemPrompt = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
-    }
-  }
-
   @Override
   @RateLimiter(name = "geminiLimiter")
   @Bulkhead(name = "geminiBulkhead")
@@ -83,8 +62,8 @@ public non-sealed class GeminiJobScoreCalculatorClientImpl implements JobScoreCa
       FileData jobDescriptionFile = new FileData(FILES_URI + "/" + request.getJobDescriptionFileId(), MediaType.TEXT_PLAIN_VALUE);
 
       GeminiJobsPayload payload = GeminiJobsPayload.builder()
-          .addSystemInstruction(calculateScoreSystemPrompt)
-          .addUserContent(calculateScoreUserPrompt, List.of(resume, jobDescriptionFile))
+          .addSystemInstruction(AiMessage.of(AiMessageType.SYSTEM_PROMPT_MATCH_SCORE))
+          .addUserContent(AiMessage.of(AiMessageType.USER_PROMPT_MATCH_SCORE), List.of(resume, jobDescriptionFile))
           .generationConfig(generationConfig)
           .safetySettings(List.of(new SafetySetting("HARM_CATEGORY_DANGEROUS_CONTENT", "BLOCK_LOW_AND_ABOVE")))
           .build();

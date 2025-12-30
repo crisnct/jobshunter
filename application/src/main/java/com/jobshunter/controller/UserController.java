@@ -15,7 +15,6 @@ import com.jobshunter.dto.UserInfoResponse;
 import com.jobshunter.dto.UserJobResponse;
 import com.jobshunter.dto.UserUpdateRequest;
 import com.jobshunter.dto.exceptions.ValidationException;
-import com.jobshunter.model.EngineTier;
 import com.jobshunter.model.EngineType;
 import com.jobshunter.model.SearchJobOrder;
 import com.jobshunter.service.application.JobHuntService;
@@ -227,7 +226,7 @@ public class UserController {
       request.serpPrompts().forEach(serpPrompt -> {
         try {
           String promptJson = objectMapper.writeValueAsString(serpPrompt);
-          UserPromptEntity prompt = userDataService.updatePrompt(user, EngineType.SERP, EngineTier.ECONOMY, serpPrompt.id(), promptJson);
+          UserPromptEntity prompt = userDataService.updatePrompt(user, EngineType.SERP, serpPrompt.id(), promptJson);
           promptsToDelete.remove(prompt.getId());
         } catch (JsonProcessingException e) {
           throw new ValidationException("Invalid SERP prompt payload", e);
@@ -237,10 +236,10 @@ public class UserController {
 
     if (request.aiPrompts() != null) {
       request.aiPrompts().forEach(aiPrompt -> {
-        if (aiPrompt.engineType() != EngineType.GPT && aiPrompt.engineType() != EngineType.GEMINI) {
-          throw new ValidationException("engine_type must be GPT or GEMINI");
+        if (aiPrompt.engine() != EngineType.GPT && aiPrompt.engine() != EngineType.GEMINI) {
+          throw new ValidationException("engine must be GPT or GEMINI");
         }
-        UserPromptEntity prompt = userDataService.updatePrompt(user, aiPrompt.engineType(), aiPrompt.engineTier(), aiPrompt.id(), aiPrompt.prompt());
+        UserPromptEntity prompt = userDataService.updatePrompt(user, aiPrompt.engine(), aiPrompt.id(), aiPrompt.prompt());
         promptsToDelete.remove(prompt.getId());
       });
     }

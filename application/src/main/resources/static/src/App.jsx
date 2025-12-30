@@ -153,6 +153,7 @@ const App = () => {
             </div>
             <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">JobsHunter</h1>
             <p className="text-slate-500 mt-2 font-medium">Your gateway to the next career leap</p>
+            <h2 className="text-1xl font-extrabold text-slate-700 tracking-tight">Put AI to hunt jobs for you</h2>
           </div>
 
           <div className="bg-white rounded-3xl shadow-2xl shadow-slate-200/60 p-8 border border-slate-100">

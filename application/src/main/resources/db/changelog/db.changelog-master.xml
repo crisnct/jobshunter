@@ -402,4 +402,14 @@
         </rollback>
     </changeSet>
 
+    <changeSet id="28-drop-tier-column-and-rename-engine-type" author="assistant">
+        <comment>Drop tier column from engine_configuration and rename engine_type to engine</comment>
+        <!-- Drop the unique constraint that includes tier -->
+        <dropUniqueConstraint tableName="engine_configuration" constraintName="uc_engine_configuration_type_tier"/>
+        <!-- Drop tier column -->
+        <dropColumn tableName="engine_configuration" columnName="tier"/>
+        <!-- Rename engine_type to engine -->
+        <renameColumn tableName="engine_configuration" oldColumnName="engine_type" newColumnName="engine" columnDataType="VARCHAR(255)"/>
+    </changeSet>
+
 </databaseChangeLog>

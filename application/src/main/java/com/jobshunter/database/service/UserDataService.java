@@ -10,7 +10,6 @@ import com.jobshunter.database.repository.UserCvRepository;
 import com.jobshunter.database.repository.UserJobRepository;
 import com.jobshunter.database.repository.UserPromptRepository;
 import com.jobshunter.database.repository.UserRepository;
-import com.jobshunter.model.EngineTier;
 import com.jobshunter.model.EngineType;
 import com.jobshunter.model.Job;
 import java.time.LocalDateTime;
@@ -95,9 +94,13 @@ public class UserDataService {
     jobs.forEach(job -> addJobUrl(user, job.getUrl()));
   }
 
-  public UserPromptEntity updatePrompt(UserEntity user, EngineType engine, EngineTier tier, Long promptId, String prompt) {
-    EngineConfigurationEntity engineConfig = engineRepository.findByEngineTypeAndTier(engine, tier)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid combination of engineType and tier"));
+  public UserPromptEntity updatePrompt(UserEntity user, EngineType engine, Long promptId, String prompt) {
+    List<EngineConfigurationEntity> engineConfigs = engineRepository.findByEngine(engine);
+    if (engineConfigs.isEmpty()) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No engine found: " + engine);
+    }
+    // Use the first available configuration for the engine
+    EngineConfigurationEntity engineConfig = engineConfigs.get(0);
     UserPromptEntity entity = userPromptRepository
         .findByIdAndUserIdAndEngineConfigurationId(promptId == null ? -1 : promptId, user.getId(), engineConfig.getId())
         .orElseGet(() -> {

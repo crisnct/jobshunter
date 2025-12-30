@@ -2,18 +2,27 @@ package com.jobshunter.service.clients.gpt;
 
 import com.jobshunter.ApplicationProperties;
 import com.jobshunter.dto.gptRequest.GptJobsPayload;
+import com.jobshunter.dto.gptRequest.Reasoning;
 import com.jobshunter.dto.gptRequest.tools.Tools;
 import com.jobshunter.dto.gptResponse.GptCompletionResponse;
+import com.jobshunter.dto.gptResponse.OutputItem;
 import com.jobshunter.model.GptJobSearchRequest;
 import com.jobshunter.model.Job;
 import com.jobshunter.processor.PackageExpected;
+import com.jobshunter.service.AiMessage;
+import com.jobshunter.service.AiMessage.AiMessageType;
 import com.jobshunter.service.application.UrlExtractor;
 import com.jobshunter.service.clients.AiJobsClient;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
+import io.jsonwebtoken.lang.Collections;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.MediaType;
@@ -21,11 +30,11 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
 @Slf4j
-@Component("EconomyJobsClientGPT")
+@Component("JobsClientGPT")
 @PackageExpected("com.jobshunter.service.clients.gpt")
 @ConditionalOnProperty(name = "gpt.enabled", havingValue = "true")
-public non-sealed class EconomyGptJobSearchImpl extends AbstractGptApiClient
-    implements AiJobsClient<GptJobSearchRequest, List<Job>> {
+@AllArgsConstructor
+public non-sealed class GptV1JobSearchImpl implements AiJobsClient<GptJobSearchRequest, List<Job>> {
 
   private static final URI DEFAULT_URI = URI.create("https://api.openai.com/v1/responses");
 
@@ -33,15 +42,7 @@ public non-sealed class EconomyGptJobSearchImpl extends AbstractGptApiClient
 
   private final RestClient restClient;
 
-  public EconomyGptJobSearchImpl(
-      ApplicationProperties properties,
-      RestClient restClient,
-      UrlExtractor urlExtractor
-  ) {
-    super(properties, urlExtractor);
-    this.properties = properties;
-    this.restClient = restClient;
-  }
+  private final UrlExtractor urlExtractor;
 
   @Override
   @CircuitBreaker(name = "gptCircuitBreaker", fallbackMethod = "fallbackSearch")
@@ -51,9 +52,10 @@ public non-sealed class EconomyGptJobSearchImpl extends AbstractGptApiClient
     try {
       GptJobsPayload payload = GptJobsPayload.builder()
           .model(request.getPrompt().getEngineConfiguration().getModel())
+          .reasoning(new Reasoning("high"))
           .max_output_tokens(properties.getGpt().getMaxTokens())
           .addTools(Tools.builder().setDeepSearch().build())
-          .addSystemPrompt(getJobsSystemPrompt())
+          .addSystemPrompt(AiMessage.of(AiMessageType.SYSTEM_PROMPT_JOB_SEARCH))
           .addUserPrompt(request.getPrompt().getPrompt(), request.getFileId())
           .build();
 
@@ -73,15 +75,28 @@ public non-sealed class EconomyGptJobSearchImpl extends AbstractGptApiClient
     }
   }
 
-  @Override
-  public String getSystemPromptFilename() {
-    return "jobsSystemPromptEconomy.txt";
-  }
-
   @SuppressWarnings("unused")
   private List<Job> fallbackSearch(GptJobSearchRequest request, Throwable t) {
     log.error("{} call short-circuited/bulkheaded: {}", getClass().getSimpleName(), t.getMessage());
     return List.of();
   }
 
+  protected List<Job> extractJobs(GptCompletionResponse response) {
+    if (Collections.isEmpty(response.output())) {
+      return List.of();
+    }
+    Optional<OutputItem> item = response.output().stream()
+        .filter(p -> Objects.equals(p.type(), "message") && !p.content().isEmpty())
+        .findAny();
+    if (item.isPresent()) {
+      final List<Job> jobs = new ArrayList<>();
+      item.get().content().stream()
+          .filter(c -> c.text().length() > 2)
+          .filter(c -> Objects.equals("output_text", c.type()))
+          .forEach(o -> jobs.addAll(urlExtractor.parseJobs(o.text())));
+      return jobs;
+    } else {
+      return java.util.Collections.emptyList();
+    }
+  }
 }
