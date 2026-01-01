@@ -1,9 +1,12 @@
 package com.jobshunter.database.entities;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.jobshunter.model.Relocation;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -102,6 +105,31 @@ public class UserEntity implements UserDetails {
   @JsonIgnore
   @Column(name = "jwt_token", length = 64)
   private String jwtToken;
+
+  @Column(name = "city", length = 64)
+  private String city;
+
+  @Column(name = "country", length = 64)
+  private String country;
+
+  @Column(name = "job_domain", length = 64)
+  private String jobDomain;
+
+  @Enumerated(EnumType.STRING)
+  @Column(name = "relocation", length = 25)
+  private Relocation relocation;
+
+  @JsonIgnore
+  @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+  private List<UserJobRoleEntity> jobRoles = new ArrayList<>();
+
+  @JsonIgnore
+  @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+  private List<UserJobTypeEntity> jobTypes = new ArrayList<>();
+
+  @JsonIgnore
+  @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+  private List<UserContractTypeEntity> contractTypes = new ArrayList<>();
 
   @Override
   @JsonIgnore

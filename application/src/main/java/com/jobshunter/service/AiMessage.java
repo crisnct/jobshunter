@@ -29,6 +29,52 @@ public interface AiMessage {
       }
     },
 
+    USER_PROMPT_COMPANIES{
+      @Override
+      public String toString() {
+        return """
+            List 30 {{domain}} companies from {{city}}, {{country}} actively hiring for these positions:
+            {{positions}}
+            """;
+      }
+    },
+    USER_PROMPT_JOB{
+      @Override
+      public String toString() {
+        return """
+            Check if these companies are hiring for {{positions}} and provide the URLs for the open roles:
+            {{companies}}
+            """;
+      }
+    },
+    SYSTEM_PROMPT_COMPANY_SEARCH {
+      @Override
+      public String toString() {
+        return """
+               {
+                  "identity": {
+                    "role": "Market Research Analyst",
+                    "expertise": "Quantitative Analysis & Statistical Expertise"
+                  },
+                  "context": {
+                    "location": {
+                      "city": "{{city}}",
+                      "country": "{{country}}"
+                    },
+                    "timestamp": "{{timestamp}}"
+                  },
+                  "output": {
+                    "format_only": true,
+                    "no_explanations": true,
+                    "no_markdown": true,
+                    "language": "en",
+                    "empty_result": "{}"
+                  }
+                 }
+            """;
+      }
+    },
+
     SYSTEM_PROMPT_MATCH_SCORE {
       @Override
       public String toString() {
@@ -144,6 +190,100 @@ public interface AiMessage {
             }
             """;
       }
+    },
+
+    GPT_JSON_COMPANY_SCHEMA_RESPONSE{
+      @Override
+      public String toString() {
+        return """
+                 {
+                   "type": "object",
+                   "properties": {
+                     "results": {
+                       "type": "array",
+                       "items": {
+                         "type": "object",
+                         "properties": {
+                           "company_name": {
+                             "type": "string"
+                           },
+                           "company_location": {
+                             "type": "string"
+                           }
+                         },
+                         "required": ["company_name","company_location"],
+                         "additionalProperties": false
+                       }
+                     }
+                   },
+                   "required": ["results"],
+                   "additionalProperties": false
+                 }
+        """;
+      }
+    },
+
+    TEST_JOB_SEARCH_AP{
+      @Override
+      public String toString() {
+        return """
+            {
+            	"identity": {
+            		"role": "job-search-assistant",
+            		"expertise": "expert recruiter in IT industry"
+            	},
+            	"task": "Find active HR job postings",
+            	"context": {
+            		"location": {
+            			"city": "Timisoara",
+            			"county": "Timis",
+            			"country": "Romania"
+            		},
+            		"timeframe": "last 14 days",
+            		"timestamp": "2025-12-31T10:00:00Z",
+            		"seniority": ["junior"]
+            	},
+            	"inputs": {
+            		"roles": [
+            			"HR Specialist",
+            			"IT Recruiter",
+            			"Recruitment Specialist",
+            			"People & Culture Specialist",
+            			"Onboarding Specialist"
+            		]
+            	},
+            	"filters": {
+            		"exclude_conditions": [
+            			"job_expired",
+            			"job_closed",
+            			"applications_closed"
+            		]
+            	},
+            	"constraints": {
+            		"include": [
+            			"active job postings"
+            		],
+            		"location_rules": {
+            			"onsite": "Timisoara only",
+            			"hybrid": "Timisoara only",
+            			"remote": "allowed"
+            		}
+            	},
+            	"output": {
+            		"schema": [
+            			{
+            				"job_url": "string"
+            			}
+            		],
+            		"format_only": true,
+            		"no_explanations": true,
+            		"no_markdown": true,
+            		"language": "en",
+            		"empty_result": "{}"
+            	}
+            }
+            """;
+      }
     }
   }
 
@@ -157,6 +297,10 @@ public interface AiMessage {
 
   static String of(AiMessageType template, String param1, Object value1, String param2, Object value2) {
     return of(template, Map.of(param1, value1, param2, value2));
+  }
+
+  static String of(AiMessageType template, String param1, Object value1, String param2, Object value2, String param3, Object value3) {
+    return of(template, Map.of(param1, value1, param2, value2, param3, value3));
   }
 
   static String of(AiMessageType template, Map<String, Object> variables) {

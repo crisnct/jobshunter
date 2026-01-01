@@ -5,6 +5,7 @@ import com.jobshunter.database.entities.UserPromptEntity;
 import com.jobshunter.dto.gptRequest.Reasoning;
 import com.jobshunter.model.GptJobSearchRequest;
 import com.jobshunter.model.Job;
+import com.jobshunter.model.SearchJobOrder;
 import com.jobshunter.service.clients.AiJobsClient;
 import java.util.List;
 import java.util.concurrent.Executor;
@@ -25,14 +26,19 @@ public class GptJobHunting extends GenericJobHunting<GptJobSearchRequest> {
 
   @Override
   public GptJobSearchRequest createRequest(UserEntity user, UserPromptEntity prompt) {
-    String gptFileId = user.getCv().getGptFileId();
     Reasoning reasoning = prompt.getEngineConfiguration().getModel().startsWith("gpt-5") ? new Reasoning("high") : null;
     return new GptJobSearchRequest(
-        user.getUsername(),
+        user,
         prompt,
-        gptFileId,
         reasoning
     );
+  }
+
+  @Override
+  public GptJobSearchRequest createCompaniesRequest(SearchJobOrder order) {
+    GptJobSearchRequest request = new GptJobSearchRequest(order.user(), null, null);
+    request.setModel(order.engines().getFirst().model());
+    return request;
   }
 
 }

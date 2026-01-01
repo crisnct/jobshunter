@@ -26,7 +26,8 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
-
+//TODO
+//to collapse with GptV1JobSearchImpl
 @Slf4j
 @Component("GPTScoreCalculator")
 @PackageExpected("com.jobshunter.service.clients.gpt")

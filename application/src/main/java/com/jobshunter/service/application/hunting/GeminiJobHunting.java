@@ -4,6 +4,7 @@ import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.entities.UserPromptEntity;
 import com.jobshunter.model.GeminiJobSearchRequest;
 import com.jobshunter.model.Job;
+import com.jobshunter.model.SearchJobOrder;
 import com.jobshunter.service.clients.AiJobsClient;
 import java.util.Base64;
 import java.util.List;
@@ -26,10 +27,15 @@ public class GeminiJobHunting extends GenericJobHunting<GeminiJobSearchRequest> 
   public GeminiJobSearchRequest createRequest(UserEntity user, UserPromptEntity prompt) {
     String userCVBase64 = Base64.getEncoder().encodeToString(user.getCv().getCv());
     return new GeminiJobSearchRequest(
-        user.getUsername(),
+        user,
         prompt,
         userCVBase64
     );
+  }
+
+  @Override
+  public GeminiJobSearchRequest createCompaniesRequest(SearchJobOrder order) {
+    return null;
   }
 
 }

@@ -1,6 +1,7 @@
 package com.jobshunter.service.clients;
 
 import com.jobshunter.dto.AIJobSearchRequest;
+import com.jobshunter.dto.CompanyDto;
 import com.jobshunter.model.Job;
 import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.clients.gemini.GeminiV1JobSearchImpl;
@@ -18,5 +19,9 @@ public sealed interface AiJobsClient
     FakeSerpApiClient {
 
   F searchJobs(T request);
+
+  List<CompanyDto> searchCompanies(T request);
+
+  F searchJobsFromCompanies(T request, List<CompanyDto> group);
 
 }

@@ -12,6 +12,7 @@ import com.jobshunter.dto.geminiRequest.GenerationConfig;
 import com.jobshunter.dto.geminiRequest.GoogleSearchTool;
 import com.jobshunter.dto.geminiResponse.GeminiGenerateContentResponse;
 import com.jobshunter.dto.gptRequest.GptJobsPayload;
+import com.jobshunter.dto.gptRequest.tools.Tools;
 import com.jobshunter.dto.gptResponse.GptCompletionResponse;
 import com.jobshunter.dto.serpRequest.SearchWithSerpRequest;
 import com.jobshunter.model.Job;
@@ -23,7 +24,9 @@ import com.jobshunter.service.clients.gemini.GeminiV1JobSearchImpl;
 import com.jobshunter.service.clients.gpt.GptV1JobSearchImpl;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import java.net.URI;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -40,6 +43,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestClient;
 
@@ -203,6 +207,55 @@ public class TestController {
       }
     }
     return ResponseEntity.ok(modelsSupported);
+  }
+
+  @PostMapping(value = "/testGPT", consumes = MediaType.APPLICATION_JSON_VALUE)
+  @PreAuthorize("hasRole('ADMIN')")
+  @RateLimiter(name = "gptLimiter")
+  public ResponseEntity<?> testGptSearch(
+      @NotBlank
+      @RequestParam("model")
+      String model,
+
+      @NotBlank
+      @RequestParam("fileId")
+      String fileId,
+
+      @NotBlank
+      @RequestParam("city")
+      String city,
+
+      @NotBlank
+      @RequestParam("country")
+      String country,
+
+      @Valid
+      @RequestBody
+      String payload
+  ) {
+    GptJobsPayload gptPayload = GptJobsPayload.builder()
+        .model(model)
+        .max_output_tokens(2000)
+        .addTools(Tools.builder().setDeepSearch().build())
+        .addSystemPrompt(AiMessage.of(AiMessageType.SYSTEM_PROMPT_COMPANY_SEARCH,
+            "city", city,
+            "country", country,
+            "timestamp", String.valueOf(Instant.now())
+        ))
+        .addUserPrompt(payload, fileId)
+        .build();
+    try {
+      return restClient.post()
+          .uri(GptV1JobSearchImpl.DEFAULT_URI)
+          .header("Authorization", "Bearer " + properties.getGpt().getApiKey())
+          .contentType(MediaType.APPLICATION_JSON)
+          .body(gptPayload)
+          .retrieve()
+          .toEntity(GptCompletionResponse.class);
+    } catch (Throwable e) {
+      e.printStackTrace();
+      return ResponseEntity.badRequest().body(e.getMessage());
+    }
   }
 
   public record ModelsPayload(Set<String> models) {

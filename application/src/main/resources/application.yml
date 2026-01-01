@@ -180,8 +180,8 @@ resilience4j.circuitbreaker:
       slidingWindowSize: 1
       minimumNumberOfCalls: 1
       failureRateThreshold: 50
-      slowCallRateThreshold: 50
-      slowCallDurationThreshold: 5s
+      slowCallRateThreshold: 90
+      slowCallDurationThreshold: 1m
       waitDurationInOpenState: 2m
       permittedNumberOfCallsInHalfOpenState: 1
     geminiCircuitBreaker:
@@ -190,8 +190,8 @@ resilience4j.circuitbreaker:
       slidingWindowSize: 1
       minimumNumberOfCalls: 1
       failureRateThreshold: 50
-      slowCallRateThreshold: 50
-      slowCallDurationThreshold: 5s
+      slowCallRateThreshold: 90
+      slowCallDurationThreshold: 1m
       waitDurationInOpenState: 2m
       permittedNumberOfCallsInHalfOpenState: 1
     serpApi:
@@ -200,8 +200,8 @@ resilience4j.circuitbreaker:
       slidingWindowSize: 1
       minimumNumberOfCalls: 1
       failureRateThreshold: 50
-      slowCallRateThreshold: 50
-      slowCallDurationThreshold: 5s
+      slowCallRateThreshold: 90
+      slowCallDurationThreshold: 30s
       waitDurationInOpenState: 1m
       permittedNumberOfCallsInHalfOpenState: 1
     twilio:

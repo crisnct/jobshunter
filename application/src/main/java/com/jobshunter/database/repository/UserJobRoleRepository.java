@@ -1,0 +1,19 @@
+package com.jobshunter.database.repository;
+
+import com.jobshunter.database.entities.UserJobRoleEntity;
+import com.jobshunter.processor.PackageExpected;
+import java.util.List;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
+@PackageExpected("com.jobshunter.database.service")
+public interface UserJobRoleRepository extends JpaRepository<UserJobRoleEntity, Long> {
+
+  List<UserJobRoleEntity> findByUserId(Long userId);
+
+  @Modifying
+  @Query("DELETE FROM UserJobRoleEntity ujr WHERE ujr.user.id = :userId")
+  void deleteByUserId(@Param("userId") Long userId);
+}

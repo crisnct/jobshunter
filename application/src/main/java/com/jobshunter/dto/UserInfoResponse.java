@@ -1,5 +1,8 @@
 package com.jobshunter.dto;
 
+import com.jobshunter.model.ContractType;
+import com.jobshunter.model.JobType;
+import com.jobshunter.model.Relocation;
 import java.util.List;
 
 public record UserInfoResponse(
@@ -16,6 +19,13 @@ public record UserInfoResponse(
     Integer timeInterval,
     List<String> prompts,
     String createdAt,
-    List<String> roles
+    List<String> roles,
+    String city,
+    String country,
+    String jobDomain,
+    List<String> jobRoles,
+    List<JobType> jobTypes,
+    Relocation relocation,
+    List<ContractType> contractTypes
 ) {
 }

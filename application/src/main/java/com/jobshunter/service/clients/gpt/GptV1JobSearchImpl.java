@@ -1,8 +1,13 @@
 package com.jobshunter.service.clients.gpt;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.jobshunter.ApplicationProperties;
+import com.jobshunter.database.entities.UserEntity;
+import com.jobshunter.database.entities.UserJobRoleEntity;
+import com.jobshunter.dto.CompanyDto;
+import com.jobshunter.dto.CompanyDtoList;
 import com.jobshunter.dto.gptRequest.GptJobsPayload;
-import com.jobshunter.dto.gptRequest.Reasoning;
 import com.jobshunter.dto.gptRequest.tools.Tools;
 import com.jobshunter.dto.gptResponse.GptCompletionResponse;
 import com.jobshunter.dto.gptResponse.OutputItem;
@@ -18,12 +23,15 @@ import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import io.jsonwebtoken.lang.Collections;
 import java.net.URI;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
@@ -42,6 +50,8 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient<GptJobSearchR
 
   private final RestClient restClient;
 
+  private final JsonMapper mapper;
+
   private final UrlExtractor urlExtractor;
 
   @Override
@@ -56,7 +66,7 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient<GptJobSearchR
           .max_output_tokens(properties.getGpt().getMaxTokens())
           .addTools(Tools.builder().setDeepSearch().build())
           .addSystemPrompt(AiMessage.of(AiMessageType.SYSTEM_PROMPT_JOB_SEARCH))
-          .addUserPrompt(request.getPrompt().getPrompt(), request.getFileId())
+          .addUserPrompt(request.getPrompt().getPrompt(), request.getUser().getCv().getGptFileId())
           .build();
 
       GptCompletionResponse response = restClient.post()
@@ -70,13 +80,95 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient<GptJobSearchR
       //noinspection DataFlowIssue
       return extractJobs(response);
     } catch (Exception e) {
-      log.error("ChatGPT job API call failed", e);
+      log.error("GPT API call failed", e);
       return List.of();
     }
   }
 
+  @Override
+  @CircuitBreaker(name = "gptCircuitBreaker", fallbackMethod = "fallbackSearchCompanies")
+  @RateLimiter(name = "gptLimiter")
+  @Bulkhead(name = "gptBulkhead")
+  public List<CompanyDto> searchCompanies(GptJobSearchRequest request) {
+    try {
+      UserEntity user = request.getUser();
+      GptJobsPayload payload = GptJobsPayload.builder()
+          .model(request.getModel())
+          .max_output_tokens(properties.getGpt().getMaxTokens())
+          .addSystemPrompt(AiMessage.of(AiMessageType.SYSTEM_PROMPT_COMPANY_SEARCH,
+              "city", user.getCity(),
+              "country", user.getCountry(),
+              "timestamp", String.valueOf(Instant.now())
+          ))
+          .addUserPrompt(AiMessage.of(AiMessageType.USER_PROMPT_COMPANIES,
+              Map.of(
+                  "domain", user.getJobDomain(),
+                  "city", user.getCity(),
+                  "country", user.getCountry(),
+                  "positions", user.getJobRoles()
+              )))
+          .setResponseSchema(AiMessage.of(AiMessageType.GPT_JSON_COMPANY_SCHEMA_RESPONSE))
+          .build();
+
+      GptCompletionResponse response = restClient.post()
+          .uri(DEFAULT_URI)
+          .header("Authorization", "Bearer " + properties.getGpt().getApiKey())
+          .contentType(MediaType.APPLICATION_JSON)
+          .body(payload)
+          .retrieve()
+          .body(GptCompletionResponse.class);
+
+      //noinspection DataFlowIssue
+      return extractCompanies(response);
+    } catch (Exception e) {
+      log.error("GPT job API call failed", e);
+      return List.of();
+    }
+  }
+
+  @Override
+  @CircuitBreaker(name = "gptCircuitBreaker", fallbackMethod = "fallbackSearchJobsFromCompanies")
+  @RateLimiter(name = "gptLimiter")
+  @Bulkhead(name = "gptBulkhead")
+  public List<Job> searchJobsFromCompanies(GptJobSearchRequest request, List<CompanyDto> group) {
+    String userPrompt = AiMessage.of(AiMessageType.USER_PROMPT_JOB,
+        "positions", request.getUser().getJobRoles().stream().map(UserJobRoleEntity::getJobRole).toList(),
+        "companies", StringUtils.join(group.stream().map(CompanyDto::companyName).toList())
+    );
+    GptJobsPayload payload = GptJobsPayload.builder()
+        .model(request.getModel())
+        .max_output_tokens(properties.getGpt().getMaxTokens())
+        .reasoning(request.getReasoning())
+        .addTools(Tools.builder().setDeepSearch().build())
+        .addSystemPrompt(AiMessage.of(AiMessageType.SYSTEM_PROMPT_JOB_SEARCH))
+        .addUserPrompt(userPrompt)
+        .build();
+
+    GptCompletionResponse response = restClient.post()
+        .uri(DEFAULT_URI)
+        .header("Authorization", "Bearer " + properties.getGpt().getApiKey())
+        .contentType(MediaType.APPLICATION_JSON)
+        .body(payload)
+        .retrieve()
+        .body(GptCompletionResponse.class);
+    //noinspection DataFlowIssue
+    return extractJobs(response);
+  }
+
+  @SuppressWarnings("unused")
+  private List<Job> fallbackSearchJobsFromCompanies(GptJobSearchRequest request, List<CompanyDto> group, Throwable t) {
+    log.error("{} call short-circuited/bulkheaded: {}", getClass().getSimpleName(), t.getMessage());
+    return List.of();
+  }
+
   @SuppressWarnings("unused")
   private List<Job> fallbackSearch(GptJobSearchRequest request, Throwable t) {
+    log.error("{} call short-circuited/bulkheaded: {}", getClass().getSimpleName(), t.getMessage());
+    return List.of();
+  }
+
+  @SuppressWarnings("unused")
+  private List<CompanyDto> fallbackSearchCompanies(GptJobSearchRequest request, Throwable t) {
     log.error("{} call short-circuited/bulkheaded: {}", getClass().getSimpleName(), t.getMessage());
     return List.of();
   }
@@ -97,6 +189,32 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient<GptJobSearchR
       return jobs;
     } else {
       return java.util.Collections.emptyList();
+    }
+  }
+
+  protected List<CompanyDto> extractCompanies(GptCompletionResponse response) {
+    if (Collections.isEmpty(response.output())) {
+      return List.of();
+    }
+    Optional<OutputItem> item = response.output().stream()
+        .filter(p -> Objects.equals(p.type(), "message") && !p.content().isEmpty())
+        .findAny();
+    if (item.isPresent()) {
+      List<CompanyDto> companiesAll = new ArrayList<>();
+      item.get().content().stream()
+          .filter(c -> c.text().length() > 2)
+          .filter(c -> Objects.equals("output_text", c.type()))
+          .forEach(o -> {
+            try {
+              CompanyDtoList companies = mapper.readValue(o.text(), CompanyDtoList.class);
+              companiesAll.addAll(companies.results());
+            } catch (JsonProcessingException e) {
+              throw new RuntimeException(e);
+            }
+          });
+      return companiesAll;
+    } else {
+      return List.of();
     }
   }
 }

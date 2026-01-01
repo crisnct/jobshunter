@@ -1,8 +1,11 @@
 package com.jobshunter.model;
 
+import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.entities.UserPromptEntity;
 import com.jobshunter.dto.AIJobSearchRequest;
+import com.jobshunter.dto.CompanyDto;
 import com.jobshunter.dto.gptRequest.Reasoning;
+import java.util.List;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -10,18 +13,18 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(callSuper = true)
 public class GptJobSearchRequest extends AIJobSearchRequest {
 
-  private final String fileId;
+  private String model;
+
+  private List<CompanyDto> companies;
 
   private final Reasoning reasoning;
 
   public GptJobSearchRequest(
-      String username,
+      UserEntity user,
       UserPromptEntity prompt,
-      String fileId,
       Reasoning reasoning
   ) {
-    super(username, prompt);
-    this.fileId = fileId;
+    super(user, prompt);
     this.reasoning = reasoning;
   }
 

@@ -105,6 +105,15 @@ public class AuthController {
     tokenMap.put("headerName", csrfToken.getHeaderName());
     tokenMap.put("parameterName", csrfToken.getParameterName());
 
+    log.info("Generated new csrf token for {}", resolveClientKey(request));
     return new ResponseEntity<>(tokenMap, HttpStatus.OK);
+  }
+
+  private String resolveClientKey(HttpServletRequest request) {
+    String xff = request.getHeader("X-Forwarded-For");
+    if (xff != null && !xff.isBlank()) {
+      return "ip:" + xff.split(",")[0].trim();
+    }
+    return "ip:" + request.getRemoteAddr();
   }
 }

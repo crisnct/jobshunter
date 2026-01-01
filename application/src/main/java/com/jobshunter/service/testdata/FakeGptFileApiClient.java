@@ -33,7 +33,7 @@ public non-sealed class FakeGptFileApiClient implements FileClient {
 
   @Override
   public void deleteAllFilesExcept(List<String> fileIds) {
-    log.info("Files unused deleted");
+    log.info("{} cv's deleted", fileIds.size());
   }
 
   @SuppressWarnings("unused")

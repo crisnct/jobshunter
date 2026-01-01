@@ -4,7 +4,10 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.jobshunter.dto.serpRequest.WorkType;
+import com.jobshunter.model.ContractType;
 import com.jobshunter.model.EngineType;
+import com.jobshunter.model.JobType;
+import com.jobshunter.model.Relocation;
 import com.jobshunter.processor.SqlInjectionSafe;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotBlank;
@@ -22,7 +25,15 @@ public record UserUpdateRequest(
     boolean notifyWhatsapp,
     boolean notifyEmail,
     List<SerpPromptUpdate> serpPrompts,
-    List<AiPromptUpdate> aiPrompts
+    List<AiPromptUpdate> aiPrompts,
+    @Nullable @Size(max = 64) @SqlInjectionSafe String city,
+    @Nullable @Size(max = 64) @SqlInjectionSafe String country,
+    @Nullable @Size(max = 64) @SqlInjectionSafe String jobDomain,
+
+    @Nullable List<String> jobRoles,
+    @Nullable List<JobType> jobTypes,
+    @Nullable Relocation relocation,
+    @Nullable List<ContractType> contractTypes
 ) {
 
   @JsonInclude(JsonInclude.Include.NON_NULL)

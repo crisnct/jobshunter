@@ -1,5 +1,6 @@
 package com.jobshunter.service.testdata;
 
+import com.jobshunter.dto.CompanyDto;
 import com.jobshunter.model.GptJobSearchRequest;
 import com.jobshunter.model.Job;
 import com.jobshunter.processor.PackageExpected;
@@ -45,6 +46,16 @@ public non-sealed class FakeGptClient implements AiJobsClient<GptJobSearchReques
             null
         )
     );
+  }
+
+  @Override
+  public List<CompanyDto> searchCompanies(GptJobSearchRequest request) {
+    return List.of();
+  }
+
+  @Override
+  public List<Job> searchJobsFromCompanies(GptJobSearchRequest request, List<CompanyDto> group) {
+    return List.of();
   }
 
   @SuppressWarnings("unused")

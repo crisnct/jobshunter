@@ -1,6 +1,7 @@
 package com.jobshunter.service.clients.serpapi;
 
 import com.jobshunter.ApplicationProperties;
+import com.jobshunter.dto.CompanyDto;
 import com.jobshunter.dto.serpRequest.SearchWithSerpRequest;
 import com.jobshunter.dto.serpResponse.SerpApiJobHit;
 import com.jobshunter.dto.serpResponse.SerpApiJobsResult;
@@ -74,6 +75,16 @@ public non-sealed class SerpApiClientImpl implements AiJobsClient<SearchWithSerp
     }
 
     return jobs;
+  }
+
+  @Override
+  public List<CompanyDto> searchCompanies(SearchWithSerpRequest request) {
+    return List.of();
+  }
+
+  @Override
+  public List<Job> searchJobsFromCompanies(SearchWithSerpRequest request, List<CompanyDto> group) {
+    return List.of();
   }
 
   @SuppressWarnings("unused")

@@ -2,19 +2,27 @@ package com.jobshunter.database.service;
 
 import com.jobshunter.database.entities.EngineConfigurationEntity;
 import com.jobshunter.database.entities.PromptsJobsEntity;
+import com.jobshunter.database.entities.UserContractTypeEntity;
 import com.jobshunter.database.entities.UserCvEntity;
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.entities.UserJobEntity;
+import com.jobshunter.database.entities.UserJobRoleEntity;
+import com.jobshunter.database.entities.UserJobTypeEntity;
 import com.jobshunter.database.entities.UserPromptEntity;
 import com.jobshunter.database.repository.EngineConfigurationRepository;
 import com.jobshunter.database.repository.PromptsJobsRepository;
+import com.jobshunter.database.repository.UserContractTypeRepository;
 import com.jobshunter.database.repository.UserCvRepository;
 import com.jobshunter.database.repository.UserJobRepository;
+import com.jobshunter.database.repository.UserJobRoleRepository;
+import com.jobshunter.database.repository.UserJobTypeRepository;
 import com.jobshunter.database.repository.UserPromptRepository;
 import com.jobshunter.database.repository.UserRepository;
 import com.jobshunter.dto.exceptions.BusinessException;
+import com.jobshunter.model.ContractType;
 import com.jobshunter.model.EngineType;
 import com.jobshunter.model.Job;
+import com.jobshunter.model.JobType;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -43,6 +51,12 @@ public class UserDataService {
 
   private final UserCvRepository userCvRepository;
 
+  private final UserJobRoleRepository userJobRoleRepository;
+
+  private final UserJobTypeRepository userJobTypeRepository;
+
+  private final UserContractTypeRepository userContractTypeRepository;
+
   public List<UserJobEntity> getUserJobs(String username) {
     return userJobRepository.findAllByUsernameWithUser(username);
   }
@@ -55,6 +69,9 @@ public class UserDataService {
       Hibernate.initialize(user.getRoles());
       user.getPrompts().forEach(p -> Hibernate.initialize(p.getEngineConfiguration()));
       Hibernate.initialize(user.getCv());
+      Hibernate.initialize(user.getJobRoles());
+      Hibernate.initialize(user.getJobTypes());
+      Hibernate.initialize(user.getContractTypes());
     }
     return all;
   }
@@ -71,6 +88,9 @@ public class UserDataService {
       Hibernate.initialize(entity.getPrompts());
       entity.getPrompts().forEach(p -> Hibernate.initialize(p.getEngineConfiguration()));
       Hibernate.initialize(entity.getCv());
+      Hibernate.initialize(entity.getJobRoles());
+      Hibernate.initialize(entity.getJobTypes());
+      Hibernate.initialize(entity.getContractTypes());
     }
     return userop;
   }
@@ -165,6 +185,48 @@ public class UserDataService {
 
   public void deleteUserPrompts(List<Long> prompts) {
     userPromptRepository.deleteAllByIdInBatch(prompts);
+  }
+
+  @Transactional
+  public void updateUserJobRoles(UserEntity user, List<String> jobRoles) {
+    userJobRoleRepository.deleteByUserId(user.getId());
+    user.getJobRoles().clear();
+    if (jobRoles != null) {
+      jobRoles.forEach(jobRole -> {
+        if (jobRole != null && !jobRole.trim().isEmpty() && jobRole.length() <= 35) {
+          UserJobRoleEntity entity = new UserJobRoleEntity(user, jobRole.trim());
+          user.getJobRoles().add(entity);
+        }
+      });
+    }
+  }
+
+  @Transactional
+  public void updateUserJobTypes(UserEntity user, List<JobType> jobTypes) {
+    userJobTypeRepository.deleteByUserId(user.getId());
+    user.getJobTypes().clear();
+    if (jobTypes != null) {
+      jobTypes.forEach(jobType -> {
+        if (jobType != null) {
+          UserJobTypeEntity entity = new UserJobTypeEntity(user, jobType);
+          user.getJobTypes().add(entity);
+        }
+      });
+    }
+  }
+
+  @Transactional
+  public void updateUserContractTypes(UserEntity user, List<ContractType> contractTypes) {
+    userContractTypeRepository.deleteByUserId(user.getId());
+    user.getContractTypes().clear();
+    if (contractTypes != null) {
+      contractTypes.forEach(contractType -> {
+        if (contractType != null) {
+          UserContractTypeEntity entity = new UserContractTypeEntity(user, contractType);
+          user.getContractTypes().add(entity);
+        }
+      });
+    }
   }
 
 }

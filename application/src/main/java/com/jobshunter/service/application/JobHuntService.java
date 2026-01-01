@@ -55,7 +55,7 @@ public class JobHuntService {
           this.searchJobsForUser(
               new SearchJobOrder(
                   user,
-                  List.of(new EngineSelection(EngineType.GPT))
+                  List.of(new EngineSelection(EngineType.GPT, "gpt-4.1"))
               )
           );
         }

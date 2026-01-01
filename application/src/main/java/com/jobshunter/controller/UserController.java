@@ -3,8 +3,11 @@ package com.jobshunter.controller;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jobshunter.database.entities.RoleEntity;
+import com.jobshunter.database.entities.UserContractTypeEntity;
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.entities.UserJobEntity;
+import com.jobshunter.database.entities.UserJobRoleEntity;
+import com.jobshunter.database.entities.UserJobTypeEntity;
 import com.jobshunter.database.entities.UserPromptEntity;
 import com.jobshunter.database.service.AuthService;
 import com.jobshunter.database.service.UserDataService;
@@ -15,7 +18,9 @@ import com.jobshunter.dto.UserInfoResponse;
 import com.jobshunter.dto.UserJobResponse;
 import com.jobshunter.dto.UserUpdateRequest;
 import com.jobshunter.dto.exceptions.ValidationException;
+import com.jobshunter.model.ContractType;
 import com.jobshunter.model.EngineType;
+import com.jobshunter.model.JobType;
 import com.jobshunter.model.SearchJobOrder;
 import com.jobshunter.service.application.JobHuntService;
 import com.jobshunter.service.application.UserCvService;
@@ -32,6 +37,7 @@ import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -70,13 +76,10 @@ public class UserController {
   @GetMapping("/me")
   @Transactional(readOnly = true)
   public ResponseEntity<?> me(Authentication authentication) {
-    if (authentication == null || authentication.getName() == null) {
-      return ResponseEntity.status(401).body(Map.of("error", "Unauthorized"));
-    }
     log.info("Get user info for {}", authentication.getName());
-    return userDataService.getUser(authentication.getName())
+    return userDataService.getUserCompleteInfo(authentication.getName())
         .<ResponseEntity<?>>map(user -> ResponseEntity.ok(toResponse(user)))
-        .orElseGet(() -> ResponseEntity.status(404).body(Map.of("error", "User not found")));
+        .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "User not found")));
   }
 
   @PostMapping("/search")
@@ -138,6 +141,18 @@ public class UserController {
         .toList();
     List<UserPromptEntity> prompts = user.getPrompts();
     var latestCv = user.getCv();
+
+    // Initialize lazy collections
+    List<String> jobRoles = user.getJobRoles().stream()
+        .map(UserJobRoleEntity::getJobRole)
+        .toList();
+    List<JobType> jobTypes = user.getJobTypes().stream()
+        .map(UserJobTypeEntity::getJobType)
+        .toList();
+    List<ContractType> contractTypes = user.getContractTypes().stream()
+        .map(UserContractTypeEntity::getContractType)
+        .toList();
+
     return new UserInfoResponse(
         user.getUsername(),
         user.getEmail(),
@@ -154,7 +169,14 @@ public class UserController {
             .map(p -> String.format("id: %d, engine: %s, prompt: %s", p.getId(), p.getEngineConfiguration(), p.getPrompt()))
             .toList(),
         formatDateTime(user.getCreatedAt()),
-        roles
+        roles,
+        user.getCity(),
+        user.getCountry(),
+        user.getJobDomain(),
+        jobRoles,
+        jobTypes,
+        user.getRelocation(),
+        contractTypes
     );
   }
 
@@ -221,6 +243,21 @@ public class UserController {
     user.setTimeInterval(request.timeInterval());
     user.setNotifyWhatsapp(request.notifyWhatsapp());
     user.setNotifyEmail(request.notifyEmail());
+    user.setCity(request.city());
+    user.setCountry(request.country());
+    user.setJobDomain(request.jobDomain());
+    user.setRelocation(request.relocation());
+
+    // Update job roles, job types, and contract types through service
+    if (request.jobRoles() != null) {
+      userDataService.updateUserJobRoles(user, request.jobRoles());
+    }
+    if (request.jobTypes() != null) {
+      userDataService.updateUserJobTypes(user, request.jobTypes());
+    }
+    if (request.contractTypes() != null) {
+      userDataService.updateUserContractTypes(user, request.contractTypes());
+    }
 
     List<Long> promptsToDelete = new ArrayList<>(user.getPrompts().stream().map(UserPromptEntity::getId).toList());
 

@@ -30,6 +30,9 @@ public class HuntingOrchestrator {
     allFutureJobs.add(this.searchJobsAsync(EngineType.GPT, gptJobHunting, order));
     allFutureJobs.add(this.searchJobsAsync(EngineType.GEMINI, geminiJobHunting, order));
     allFutureJobs.add(this.searchJobsAsync(EngineType.SERP, serpJobHunting, order));
+    SearchJobOrder orderByCompanies
+        = new SearchJobOrder(order.user(), List.of(new EngineSelection(EngineType.GPT, "gpt-4.1")));
+    allFutureJobs.add(gptJobHunting.searchJobsByCompaniesAsync(orderByCompanies));
 
     return CompletableFuture.allOf(allFutureJobs.toArray(CompletableFuture[]::new))
         .thenApply(_ -> allFutureJobs.stream()

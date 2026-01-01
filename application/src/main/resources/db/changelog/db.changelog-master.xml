@@ -636,4 +636,137 @@
         </sql>
     </changeSet>
 
+    <changeSet id="35-add-user-profile-fields" author="assistant">
+        <comment>Add user profile fields: city, country, job_domain, job_roles, job_type, relocation, contract_type</comment>
+        <addColumn tableName="users">
+            <column name="city" type="VARCHAR(64)"/>
+            <column name="country" type="VARCHAR(64)"/>
+            <column name="job_domain" type="VARCHAR(64)"/>
+            <column name="job_roles" type="VARCHAR(255)"/>
+            <column name="job_type" type="VARCHAR(6)"/>
+            <column name="relocation" type="VARCHAR(25)"/>
+            <column name="contract_type" type="VARCHAR(16)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="36-refactor-user-job-fields-to-tables" author="assistant">
+        <comment>Refactor job_roles, job_type, and contract_type from users table to separate tables</comment>
+        
+        <!-- Create user_job_roles table -->
+        <createTable tableName="user_job_roles">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false" primaryKeyName="pk_user_job_roles"/>
+            </column>
+            <column name="user_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="job_role" type="VARCHAR(35)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addForeignKeyConstraint constraintName="fk_user_job_roles_user"
+                                 baseTableName="user_job_roles"
+                                 baseColumnNames="user_id"
+                                 referencedTableName="users"
+                                 referencedColumnNames="id"
+                                 onDelete="CASCADE"/>
+        <createIndex tableName="user_job_roles" indexName="idx_user_job_roles_user">
+            <column name="user_id"/>
+        </createIndex>
+
+        <!-- Create user_job_types table -->
+        <createTable tableName="user_job_types">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false" primaryKeyName="pk_user_job_types"/>
+            </column>
+            <column name="user_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="job_type" type="VARCHAR(6)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addForeignKeyConstraint constraintName="fk_user_job_types_user"
+                                 baseTableName="user_job_types"
+                                 baseColumnNames="user_id"
+                                 referencedTableName="users"
+                                 referencedColumnNames="id"
+                                 onDelete="CASCADE"/>
+        <createIndex tableName="user_job_types" indexName="idx_user_job_types_user">
+            <column name="user_id"/>
+        </createIndex>
+
+        <!-- Create user_contract_types table -->
+        <createTable tableName="user_contract_types">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false" primaryKeyName="pk_user_contract_types"/>
+            </column>
+            <column name="user_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="contract_type" type="VARCHAR(16)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addForeignKeyConstraint constraintName="fk_user_contract_types_user"
+                                 baseTableName="user_contract_types"
+                                 baseColumnNames="user_id"
+                                 referencedTableName="users"
+                                 referencedColumnNames="id"
+                                 onDelete="CASCADE"/>
+        <createIndex tableName="user_contract_types" indexName="idx_user_contract_types_user">
+            <column name="user_id"/>
+        </createIndex>
+
+        <!-- Migrate data from users table to new tables -->
+        <sql>
+            <!-- Migrate job_roles (split by comma if multiple) -->
+            INSERT INTO user_job_roles (user_id, job_role)
+            SELECT id, TRIM(SUBSTRING_INDEX(SUBSTRING_INDEX(job_roles, ',', numbers.n), ',', -1)) as job_role
+            FROM users
+            CROSS JOIN (
+                SELECT 1 n UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION
+                SELECT 6 UNION SELECT 7 UNION SELECT 8 UNION SELECT 9 UNION SELECT 10
+            ) numbers
+            WHERE job_roles IS NOT NULL 
+              AND job_roles != ''
+              AND CHAR_LENGTH(job_roles) - CHAR_LENGTH(REPLACE(job_roles, ',', '')) >= numbers.n - 1
+              AND TRIM(SUBSTRING_INDEX(SUBSTRING_INDEX(job_roles, ',', numbers.n), ',', -1)) != ''
+              AND CHAR_LENGTH(TRIM(SUBSTRING_INDEX(SUBSTRING_INDEX(job_roles, ',', numbers.n), ',', -1))) &lt;= 35;
+        </sql>
+        <sql>
+            <!-- Migrate single job_roles (no comma) -->
+            INSERT INTO user_job_roles (user_id, job_role)
+            SELECT id, TRIM(job_roles)
+            FROM users
+            WHERE job_roles IS NOT NULL 
+              AND job_roles != ''
+              AND job_roles NOT LIKE '%,%'
+              AND CHAR_LENGTH(TRIM(job_roles)) &lt;= 35;
+        </sql>
+        <sql>
+            <!-- Migrate job_type -->
+            INSERT INTO user_job_types (user_id, job_type)
+            SELECT id, job_type
+            FROM users
+            WHERE job_type IS NOT NULL 
+              AND job_type != ''
+              AND job_type IN ('REMOTE', 'HYBRID', 'ONSITE');
+        </sql>
+        <sql>
+            <!-- Migrate contract_type -->
+            INSERT INTO user_contract_types (user_id, contract_type)
+            SELECT id, contract_type
+            FROM users
+            WHERE contract_type IS NOT NULL 
+              AND contract_type != ''
+              AND contract_type IN ('EMPLOYMENT', 'B2B', 'EOR', 'INTERNSHIP');
+        </sql>
+
+        <!-- Drop old columns from users table -->
+        <dropColumn tableName="users" columnName="job_roles"/>
+        <dropColumn tableName="users" columnName="job_type"/>
+        <dropColumn tableName="users" columnName="contract_type"/>
+    </changeSet>
+
 </databaseChangeLog>

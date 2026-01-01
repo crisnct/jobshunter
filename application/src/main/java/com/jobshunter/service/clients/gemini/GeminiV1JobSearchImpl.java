@@ -1,6 +1,7 @@
 package com.jobshunter.service.clients.gemini;
 
 import com.jobshunter.ApplicationProperties;
+import com.jobshunter.dto.CompanyDto;
 import com.jobshunter.dto.geminiRequest.GeminiJobsPayload;
 import com.jobshunter.dto.geminiRequest.GenerationConfig;
 import com.jobshunter.dto.geminiRequest.GoogleSearchTool;
@@ -78,6 +79,16 @@ public non-sealed class GeminiV1JobSearchImpl implements AiJobsClient<GeminiJobS
       log.error("Gemini job API call failed", e);
       return List.of();
     }
+  }
+
+  @Override
+  public List<CompanyDto> searchCompanies(GeminiJobSearchRequest request) {
+    return List.of();
+  }
+
+  @Override
+  public List<Job> searchJobsFromCompanies(GeminiJobSearchRequest request, List<CompanyDto> group) {
+    return List.of();
   }
 
   @SuppressWarnings("unused")

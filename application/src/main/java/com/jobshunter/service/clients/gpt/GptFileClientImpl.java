@@ -5,8 +5,6 @@ import com.jobshunter.ApplicationProperties;
 import com.jobshunter.dto.gptResponse.FileInfo;
 import com.jobshunter.dto.gptResponse.FileListResponse;
 import com.jobshunter.dto.gptResponse.UploadFileResponse;
-import com.jobshunter.model.GptJobSearchRequest;
-import com.jobshunter.model.Job;
 import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.clients.FileClient;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
@@ -95,7 +93,7 @@ public non-sealed class GptFileClientImpl implements FileClient {
       for (FileInfo file : toDelete) {
         deleteFile(file.id());
       }
-      log.info("Deleted {} files", toDelete.size());
+      log.info("Deleted {} files from GPT", toDelete.size());
     }
   }
 

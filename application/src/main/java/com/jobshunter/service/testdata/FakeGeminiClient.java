@@ -1,5 +1,6 @@
 package com.jobshunter.service.testdata;
 
+import com.jobshunter.dto.CompanyDto;
 import com.jobshunter.model.GeminiJobSearchRequest;
 import com.jobshunter.model.Job;
 import com.jobshunter.processor.PackageExpected;
@@ -45,6 +46,16 @@ public non-sealed class FakeGeminiClient implements AiJobsClient<GeminiJobSearch
             null
         )
     );
+  }
+
+  @Override
+  public List<CompanyDto> searchCompanies(GeminiJobSearchRequest request) {
+    return List.of();
+  }
+
+  @Override
+  public List<Job> searchJobsFromCompanies(GeminiJobSearchRequest request, List<CompanyDto> group) {
+    return List.of();
   }
 
   @SuppressWarnings("unused")

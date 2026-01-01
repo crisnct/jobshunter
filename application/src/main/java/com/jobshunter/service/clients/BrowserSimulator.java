@@ -84,8 +84,8 @@ public class BrowserSimulator {
                       : context.getRedirectLocations().get(context.getRedirectLocations().size() - 1);
 
               return finalUri.toString();
-            } catch (Exception e) {
-              log.error("Redirection error for url {}", url);
+            } catch (Throwable e) {
+              log.error("Redirection error for url {}: {}", url, e.getMessage());
               return url;
             }
           });
