@@ -33,7 +33,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
       HttpServletResponse response,
       FilterChain filterChain) throws ServletException, IOException {
 
-    String clientKey = resolveClientKey(request);
+    String clientKey = response.getHeader("JHIPHEADER");
 
     // 🔴 1. Check hard blocks
     if (blockRegistry.isBlocked(clientKey)) {
@@ -78,11 +78,4 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     );
   }
 
-  private String resolveClientKey(HttpServletRequest request) {
-    String xff = request.getHeader("X-Forwarded-For");
-    if (xff != null && !xff.isBlank()) {
-      return "ip:" + xff.split(",")[0].trim();
-    }
-    return "ip:" + request.getRemoteAddr();
-  }
 }

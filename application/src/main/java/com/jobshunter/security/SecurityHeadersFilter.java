@@ -30,6 +30,8 @@ import org.springframework.stereotype.Component;
 @Order(Ordered.HIGHEST_PRECEDENCE)
 public class SecurityHeadersFilter implements Filter {
 
+  public static final String IP_HEADER = "JHIPHEADER";
+
   @Override
   public void init(FilterConfig filterConfig) throws ServletException {
     // No initialization needed
@@ -60,6 +62,8 @@ public class SecurityHeadersFilter implements Filter {
    * @param response the HTTP response
    */
   private void addSecurityHeaders(HttpServletRequest request, HttpServletResponse response) {
+
+    response.setHeader(IP_HEADER, resolveClientKey(request));
 
     // 1. X-Frame-Options: Prevent clickjacking attacks
     response.setHeader("X-Frame-Options", "DENY");
@@ -143,4 +147,13 @@ public class SecurityHeadersFilter implements Filter {
 
     return csp.toString();
   }
+
+  private String resolveClientKey(HttpServletRequest request) {
+    String xff = request.getHeader("X-Forwarded-For");
+    if (xff != null && !xff.isBlank()) {
+      return "ip:" + xff.split(",")[0].trim();
+    }
+    return "ip:" + request.getRemoteAddr();
+  }
+
 }

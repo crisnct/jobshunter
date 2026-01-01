@@ -65,6 +65,7 @@ open module com.jobshunter.application {
 
   requires static lombok;
   requires static com.jobshunter.processor;
+  requires org.aspectj.weaver;
 
 }
 

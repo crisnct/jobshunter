@@ -84,6 +84,9 @@ public class UserEntity implements UserDetails {
   @Column(name = "approved", nullable = false)
   private boolean approved = false;
 
+  @Column(name = "deleted", nullable = false)
+  private boolean deleted = false;
+
   @ManyToMany(fetch = FetchType.EAGER)
   @JoinTable(name = "user_roles",
       joinColumns = @JoinColumn(name = "user_id"),
@@ -130,6 +133,10 @@ public class UserEntity implements UserDetails {
   @JsonIgnore
   @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
   private List<UserContractTypeEntity> contractTypes = new ArrayList<>();
+
+  @JsonIgnore
+  @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+  private List<JobOrderEntity> jobOrders = new ArrayList<>();
 
   @Override
   @JsonIgnore

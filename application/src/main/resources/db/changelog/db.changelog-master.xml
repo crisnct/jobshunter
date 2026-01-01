@@ -769,4 +769,100 @@
         <dropColumn tableName="users" columnName="contract_type"/>
     </changeSet>
 
+    <changeSet id="37-add-deleted-to-users" author="assistant">
+        <comment>Add deleted field to users table for soft delete functionality</comment>
+        <addColumn tableName="users">
+            <column name="deleted" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="38-create-job-order-table" author="assistant">
+        <comment>Create job_order table to track job search orders</comment>
+        <createTable tableName="job_order">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false" primaryKeyName="pk_job_order"/>
+            </column>
+            <column name="user_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="engine_configuration_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="search_companies" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="TEXT">
+                <constraints nullable="true"/>
+            </column>
+            <column name="notified" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="timestamp" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="error_message" type="TEXT">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+        <addForeignKeyConstraint constraintName="fk_job_order_user"
+                                 baseTableName="job_order"
+                                 baseColumnNames="user_id"
+                                 referencedTableName="users"
+                                 referencedColumnNames="id"
+                                 onDelete="CASCADE"/>
+        <addForeignKeyConstraint constraintName="fk_job_order_engine_configuration"
+                                 baseTableName="job_order"
+                                 baseColumnNames="engine_configuration_id"
+                                 referencedTableName="engine_configuration"
+                                 referencedColumnNames="id"
+                                 onDelete="RESTRICT"/>
+        <createIndex tableName="job_order" indexName="idx_job_order_user">
+            <column name="user_id"/>
+        </createIndex>
+        <createIndex tableName="job_order" indexName="idx_job_order_engine_configuration">
+            <column name="engine_configuration_id"/>
+        </createIndex>
+        <createIndex tableName="job_order" indexName="idx_job_order_timestamp">
+            <column name="timestamp"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="39-create-job-order-result-table" author="assistant">
+        <comment>Create job_order_result table to link job orders with job results</comment>
+        <createTable tableName="job_order_result">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false" primaryKeyName="pk_job_order_result"/>
+            </column>
+            <column name="job_order_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="job_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addForeignKeyConstraint constraintName="fk_job_order_result_job_order"
+                                 baseTableName="job_order_result"
+                                 baseColumnNames="job_order_id"
+                                 referencedTableName="job_order"
+                                 referencedColumnNames="id"
+                                 onDelete="CASCADE"/>
+        <addForeignKeyConstraint constraintName="fk_job_order_result_user_job"
+                                 baseTableName="job_order_result"
+                                 baseColumnNames="job_id"
+                                 referencedTableName="user_jobs"
+                                 referencedColumnNames="id"
+                                 onDelete="CASCADE"/>
+        <createIndex tableName="job_order_result" indexName="idx_job_order_result_job_order">
+            <column name="job_order_id"/>
+        </createIndex>
+        <createIndex tableName="job_order_result" indexName="idx_job_order_result_job">
+            <column name="job_id"/>
+        </createIndex>
+        <addUniqueConstraint tableName="job_order_result"
+                             columnNames="job_order_id, job_id"
+                             constraintName="uc_job_order_result_order_job"/>
+    </changeSet>
+
 </databaseChangeLog>

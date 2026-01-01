@@ -285,7 +285,7 @@ public class UserController {
 
     userDataService.deleteUserPrompts(promptsToDelete);
     userDataService.updateUser(user);
-    return ResponseEntity.ok(Map.of("message", "User updated successfully"));
+    return ResponseEntity.ok(Map.of("user", user.getUsername(), "message", "User updated successfully"));
   }
 
 }
