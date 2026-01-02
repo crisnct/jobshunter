@@ -1,0 +1,11 @@
+package com.jobshunter.model;
+
+public enum AiSchemaType {
+
+  GEMINI_JSON_SCHEMA_RESPONSE,
+
+  GPT_JSON_COMPANY_SCHEMA_RESPONSE,
+
+  GPT_JSON_SCHEMA_RESPONSE,
+
+}

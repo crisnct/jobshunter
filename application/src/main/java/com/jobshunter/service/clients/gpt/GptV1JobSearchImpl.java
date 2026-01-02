@@ -11,11 +11,12 @@ import com.jobshunter.dto.gptRequest.GptJobsPayload;
 import com.jobshunter.dto.gptRequest.tools.Tools;
 import com.jobshunter.dto.gptResponse.GptCompletionResponse;
 import com.jobshunter.dto.gptResponse.OutputItem;
+import com.jobshunter.model.AiSchemaType;
 import com.jobshunter.model.GptJobSearchRequest;
 import com.jobshunter.model.Job;
+import com.jobshunter.model.PromptType;
 import com.jobshunter.processor.PackageExpected;
-import com.jobshunter.service.AiMessage;
-import com.jobshunter.service.AiMessage.AiMessageType;
+import com.jobshunter.service.TemplateRenderer;
 import com.jobshunter.service.application.UrlExtractor;
 import com.jobshunter.service.clients.AiJobsClient;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
@@ -54,6 +55,8 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient<GptJobSearchR
 
   private final UrlExtractor urlExtractor;
 
+  private final TemplateRenderer templateRenderer;
+
   @Override
   @CircuitBreaker(name = "gptCircuitBreaker", fallbackMethod = "fallbackSearch")
   @RateLimiter(name = "gptLimiter")
@@ -65,7 +68,7 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient<GptJobSearchR
           .reasoning(request.getReasoning())
           .max_output_tokens(properties.getGpt().getMaxTokens())
           .addTools(Tools.builder().setDeepSearch().build())
-          .addSystemPrompt(AiMessage.of(AiMessageType.SYSTEM_PROMPT_JOB_SEARCH))
+          .addSystemPrompt(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_JOB_SEARCH))
           .addUserPrompt(request.getPrompt().getPrompt(), request.getUser().getCv().getGptFileId())
           .build();
 
@@ -95,19 +98,19 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient<GptJobSearchR
       GptJobsPayload payload = GptJobsPayload.builder()
           .model(request.getOrder().engineSelection().model())
           .max_output_tokens(properties.getGpt().getMaxTokens())
-          .addSystemPrompt(AiMessage.of(AiMessageType.SYSTEM_PROMPT_COMPANY_SEARCH,
+          .addSystemPrompt(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_COMPANY_SEARCH,
               "city", user.getCity(),
               "country", user.getCountry(),
               "timestamp", String.valueOf(Instant.now())
           ))
-          .addUserPrompt(AiMessage.of(AiMessageType.USER_PROMPT_COMPANIES,
+          .addUserPrompt(templateRenderer.getPrompt(PromptType.USER_PROMPT_COMPANIES,
               Map.of(
                   "domain", user.getJobDomain(),
                   "city", user.getCity(),
                   "country", user.getCountry(),
                   "positions", user.getJobRoles()
               )))
-          .setResponseSchema(AiMessage.of(AiMessageType.GPT_JSON_COMPANY_SCHEMA_RESPONSE))
+          .setResponseSchema(templateRenderer.getSchema(AiSchemaType.GPT_JSON_COMPANY_SCHEMA_RESPONSE))
           .build();
 
       GptCompletionResponse response = restClient.post()
@@ -131,8 +134,8 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient<GptJobSearchR
   @RateLimiter(name = "gptLimiter")
   @Bulkhead(name = "gptBulkhead")
   public List<Job> searchJobsFromCompanies(GptJobSearchRequest request, List<CompanyDto> group) {
-    String userPrompt = AiMessage.of(AiMessageType.USER_PROMPT_JOB,
-        "positions", request.getUser().getJobRoles().stream().map(UserJobRoleEntity::getJobRole).toList(),
+    String userPrompt = templateRenderer.getPrompt(PromptType.USER_PROMPT_JOB,
+        "positions", request.getUser().getJobRoles().stream().map(UserJobRoleEntity::getJobRole).toList().toString(),
         "companies", StringUtils.join(group.stream().map(CompanyDto::companyName).toList())
     );
     GptJobsPayload payload = GptJobsPayload.builder()
@@ -140,7 +143,7 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient<GptJobSearchR
         .max_output_tokens(properties.getGpt().getMaxTokens())
         .reasoning(request.getReasoning())
         .addTools(Tools.builder().setDeepSearch().build())
-        .addSystemPrompt(AiMessage.of(AiMessageType.SYSTEM_PROMPT_JOB_SEARCH))
+        .addSystemPrompt(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_JOB_SEARCH))
         .addUserPrompt(userPrompt)
         .build();
 

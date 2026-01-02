@@ -16,8 +16,8 @@ import com.jobshunter.dto.gptRequest.tools.Tools;
 import com.jobshunter.dto.gptResponse.GptCompletionResponse;
 import com.jobshunter.dto.serpRequest.SearchWithSerpRequest;
 import com.jobshunter.model.Job;
-import com.jobshunter.service.AiMessage;
-import com.jobshunter.service.AiMessage.AiMessageType;
+import com.jobshunter.model.PromptType;
+import com.jobshunter.service.TemplateRenderer;
 import com.jobshunter.service.application.notifiers.EmailNotifierService;
 import com.jobshunter.service.clients.AiJobsClient;
 import com.jobshunter.service.clients.gemini.GeminiV1JobSearchImpl;
@@ -63,18 +63,22 @@ public class TestController {
 
   private final AiJobsClient<SearchWithSerpRequest, List<Job>> serpApi;
 
+  private final TemplateRenderer templateRenderer;
+
   public TestController(
       EmailNotifierService emailNotifierService,
       UserDataService userDataService,
       ApplicationProperties properties,
       RestClient restClient,
-      @Qualifier("JobsClientSerp")
-      AiJobsClient<SearchWithSerpRequest, List<Job>> serpApi) {
+      @Qualifier("JobsClientSerp") AiJobsClient<SearchWithSerpRequest, List<Job>> serpApi,
+      TemplateRenderer templateRenderer
+  ) {
     this.emailNotifierService = emailNotifierService;
     this.userDataService = userDataService;
     this.serpApi = serpApi;
     this.properties = properties;
     this.restClient = restClient;
+    this.templateRenderer = templateRenderer;
   }
 
   @PostMapping(value = "/email/send", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -168,8 +172,9 @@ public class TestController {
           .temperature(0.0)
           .maxOutputTokens(properties.getGemini().getMaxTokens())
           .build();
+
       GeminiJobsPayload payload = GeminiJobsPayload.builder()
-          .addSystemInstruction(AiMessage.of(AiMessageType.SYSTEM_PROMPT_JOB_SEARCH))
+          .addSystemInstruction(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_JOB_SEARCH))
           .addUserContent("Act like an developer working at Open AI")
           .generationConfig(generationConfig)
           .tools(List.of(new GoogleSearchTool()))
@@ -228,7 +233,7 @@ public class TestController {
         .model(model)
         .max_output_tokens(2000)
         .addTools(Tools.builder().setDeepSearch().build())
-        .addSystemPrompt(AiMessage.of(AiMessageType.SYSTEM_PROMPT_COMPANY_SEARCH,
+        .addSystemPrompt(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_COMPANY_SEARCH,
             "city", city,
             "country", country,
             "timestamp", String.valueOf(Instant.now())

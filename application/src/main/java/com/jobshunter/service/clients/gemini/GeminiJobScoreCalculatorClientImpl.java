@@ -10,9 +10,9 @@ import com.jobshunter.dto.geminiRequest.Part;
 import com.jobshunter.dto.geminiRequest.SafetySetting;
 import com.jobshunter.dto.geminiResponse.GeminiGenerateContentResponse;
 import com.jobshunter.dto.geminiResponse.GeminiGenerateContentResponse.Candidate;
+import com.jobshunter.model.PromptType;
 import com.jobshunter.processor.PackageExpected;
-import com.jobshunter.service.AiMessage;
-import com.jobshunter.service.AiMessage.AiMessageType;
+import com.jobshunter.service.TemplateRenderer;
 import com.jobshunter.service.clients.JobScoreCalculatorClient;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
@@ -46,6 +46,8 @@ public non-sealed class GeminiJobScoreCalculatorClientImpl implements JobScoreCa
 
   private final RestClient restClient;
 
+  private final TemplateRenderer templateRenderer;
+
   @Override
   @RateLimiter(name = "geminiLimiter")
   @Bulkhead(name = "geminiBulkhead")
@@ -62,8 +64,8 @@ public non-sealed class GeminiJobScoreCalculatorClientImpl implements JobScoreCa
       FileData jobDescriptionFile = new FileData(FILES_URI + "/" + request.getJobDescriptionFileId(), MediaType.TEXT_PLAIN_VALUE);
 
       GeminiJobsPayload payload = GeminiJobsPayload.builder()
-          .addSystemInstruction(AiMessage.of(AiMessageType.SYSTEM_PROMPT_MATCH_SCORE))
-          .addUserContent(AiMessage.of(AiMessageType.USER_PROMPT_MATCH_SCORE), List.of(resume, jobDescriptionFile))
+          .addSystemInstruction(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_MATCH_SCORE))
+          .addUserContent(templateRenderer.getPrompt(PromptType.USER_PROMPT_MATCH_SCORE), List.of(resume, jobDescriptionFile))
           .generationConfig(generationConfig)
           .safetySettings(List.of(new SafetySetting("HARM_CATEGORY_DANGEROUS_CONTENT", "BLOCK_LOW_AND_ABOVE")))
           .build();

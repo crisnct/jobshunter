@@ -9,15 +9,16 @@ import com.jobshunter.dto.gptResponse.ContentItem;
 import com.jobshunter.dto.gptResponse.GptCompletionResponse;
 import com.jobshunter.dto.gptResponse.OutputItem;
 import com.jobshunter.model.GptJobScoreRequest;
+import com.jobshunter.model.PromptType;
 import com.jobshunter.processor.PackageExpected;
-import com.jobshunter.service.AiMessage;
-import com.jobshunter.service.AiMessage.AiMessageType;
+import com.jobshunter.service.TemplateRenderer;
 import com.jobshunter.service.clients.JobScoreCalculatorClient;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import io.jsonwebtoken.lang.Collections;
 import java.net.URI;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -45,6 +46,8 @@ public non-sealed class GptJobScoreCalculatorClientImpl implements JobScoreCalcu
 
   private final JsonMapper mapper;
 
+  private final TemplateRenderer templateRenderer;
+
   @Override
   @RateLimiter(name = "gptLimiter")
   @CircuitBreaker(name = "gptCircuitBreaker", fallbackMethod = "fallbackComputeScore")
@@ -52,12 +55,12 @@ public non-sealed class GptJobScoreCalculatorClientImpl implements JobScoreCalcu
   public int computeScore(GptJobScoreRequest request) {
     try {
       Gpt config = properties.getGpt();
-      String userPrompt = AiMessage.of(AiMessageType.USER_PROMPT_MATCH_SCORE,"description", request.getJobDescription());
+      String userPrompt = templateRenderer.getPrompt(PromptType.USER_PROMPT_MATCH_SCORE, "description", request.getJobDescription());
       Gpt4ScorePayload payload = Gpt4ScorePayload.builder()
           .model(AI_MODEL)
           .temperature(0)
           .max_output_tokens(config.getMaxTokens())
-          .addSystemPrompt(AiMessage.of(AiMessageType.SYSTEM_PROMPT_MATCH_SCORE))
+          .addSystemPrompt(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_MATCH_SCORE))
           .addUserPrompt(userPrompt, request.getUserCV().getGptFileId())
           .build();
 

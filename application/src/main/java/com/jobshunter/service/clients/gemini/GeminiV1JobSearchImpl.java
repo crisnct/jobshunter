@@ -12,9 +12,9 @@ import com.jobshunter.dto.geminiResponse.GeminiGenerateContentResponse;
 import com.jobshunter.dto.geminiResponse.GeminiGenerateContentResponse.Candidate;
 import com.jobshunter.model.GeminiJobSearchRequest;
 import com.jobshunter.model.Job;
+import com.jobshunter.model.PromptType;
 import com.jobshunter.processor.PackageExpected;
-import com.jobshunter.service.AiMessage;
-import com.jobshunter.service.AiMessage.AiMessageType;
+import com.jobshunter.service.TemplateRenderer;
 import com.jobshunter.service.application.UrlExtractor;
 import com.jobshunter.service.clients.AiJobsClient;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
@@ -46,6 +46,8 @@ public non-sealed class GeminiV1JobSearchImpl implements AiJobsClient<GeminiJobS
 
   private final UrlExtractor urlExtractor;
 
+  private final TemplateRenderer templateRenderer;
+
   @Override
   @CircuitBreaker(name = "geminiCircuitBreaker", fallbackMethod = "fallbackSearch")
   @Bulkhead(name = "geminiBulkhead")
@@ -59,7 +61,7 @@ public non-sealed class GeminiV1JobSearchImpl implements AiJobsClient<GeminiJobS
           .build();
 
       GeminiJobsPayload payload = GeminiJobsPayload.builder()
-          .addSystemInstruction(AiMessage.of(AiMessageType.SYSTEM_PROMPT_JOB_SEARCH))
+          .addSystemInstruction(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_JOB_SEARCH))
           .addUserContent(request.getPrompt().getPrompt(), "application/pdf", request.getBase64CV())
           .generationConfig(generationConfig)
           .tools(List.of(new GoogleSearchTool()))

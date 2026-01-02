@@ -1,4 +1,4 @@
-package com.jobshunter.service.application;
+package com.jobshunter.service.application.scheduler;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
