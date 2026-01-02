@@ -9,6 +9,7 @@ import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import org.apache.logging.log4j.util.Strings;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
@@ -63,7 +64,7 @@ public class SecurityHeadersFilter implements Filter {
    */
   private void addSecurityHeaders(HttpServletRequest request, HttpServletResponse response) {
 
-    response.setHeader(IP_HEADER, resolveClientKey(request));
+    response.setHeader(IP_HEADER, ClientIpResolver.resolveClientIp(request));
 
     // 1. X-Frame-Options: Prevent clickjacking attacks
     response.setHeader("X-Frame-Options", "DENY");
@@ -150,7 +151,7 @@ public class SecurityHeadersFilter implements Filter {
 
   private String resolveClientKey(HttpServletRequest request) {
     String xff = request.getHeader("X-Forwarded-For");
-    if (xff != null && !xff.isBlank()) {
+    if (Strings.isNotBlank(xff) ) {
       return xff.split(",")[0].trim();
     } else {
       return request.getRemoteAddr();
