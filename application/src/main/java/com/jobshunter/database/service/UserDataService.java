@@ -22,10 +22,11 @@ import com.jobshunter.database.repository.UserPromptRepository;
 import com.jobshunter.database.repository.UserRepository;
 import com.jobshunter.dto.exceptions.BusinessException;
 import com.jobshunter.model.ContractType;
-import com.jobshunter.model.EngineType;
+import com.jobshunter.model.EngineCategory;
 import com.jobshunter.model.Job;
 import com.jobshunter.model.JobType;
 import com.jobshunter.model.OrderStatus;
+import com.jobshunter.model.SearchJobOrder;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -78,7 +79,6 @@ public class UserDataService {
   private void initializeUserData(UserEntity user) {
     Hibernate.initialize(user.getPrompts());
     Hibernate.initialize(user.getRoles());
-    user.getPrompts().forEach(p -> Hibernate.initialize(p.getEngineConfiguration()));
     Hibernate.initialize(user.getCv());
     Hibernate.initialize(user.getJobRoles());
     Hibernate.initialize(user.getJobTypes());
@@ -107,16 +107,17 @@ public class UserDataService {
   }
 
   @Transactional
-  public void updateUser(UserEntity user, List<Job> jobs) {
+  public void updateUser(UserEntity user, SearchJobOrder order, List<Job> jobs) {
+    @SuppressWarnings("OptionalGetWithoutIsPresent")
+    EngineConfigurationEntity engineConfig = engineRepository.findByEngineAndModel(order.engineSelection().type(), order.engineSelection().model()).get();
+
     user.setLastJobs(Instant.now());
     jobs.forEach(job -> {
-      EngineConfigurationEntity engineConfig = null;
       UserPromptEntity userPrompt = null;
       if (job.getPromptId() != null) {
         var promptOptional = userPromptRepository.findById(job.getPromptId());
         if (promptOptional.isPresent()) {
           userPrompt = promptOptional.get();
-          engineConfig = userPrompt.getEngineConfiguration();
         }
       }
       UserJobEntity userJobEntity = addJobUrl(user, job.getUrl(), engineConfig);
@@ -131,16 +132,14 @@ public class UserDataService {
     this.updateUser(user);
   }
 
-  public UserPromptEntity updatePrompt(UserEntity user, EngineType engine, String model, Long promptId, String prompt) {
-    EngineConfigurationEntity engineConfig = engineRepository.findByEngineAndModel(engine, model)
-        .orElseThrow(() -> new BusinessException(HttpStatus.BAD_REQUEST, "No model " + model + " found for engine " + engine));
+  public UserPromptEntity updatePrompt(UserEntity user, EngineCategory category,  Long promptId, String prompt) {
     // Use the first available configuration for the engine
     UserPromptEntity entity = userPromptRepository
-        .findByIdAndUserIdAndEngineConfigurationId(promptId == null ? -1 : promptId, user.getId(), engineConfig.getId())
+        .findByIdAndUserId(promptId == null ? -1 : promptId, user.getId())
         .orElseGet(() -> {
           UserPromptEntity newEntity = new UserPromptEntity();
           newEntity.setUser(user);
-          newEntity.setEngineConfiguration(engineConfig);
+          newEntity.setEngineCategory(category);
           return newEntity;
         });
     entity.setPrompt(prompt);

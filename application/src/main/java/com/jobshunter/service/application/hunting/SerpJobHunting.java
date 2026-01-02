@@ -2,7 +2,6 @@ package com.jobshunter.service.application.hunting;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.json.JsonMapper;
-import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.entities.UserPromptEntity;
 import com.jobshunter.dto.serpRequest.SearchWithSerpRequest;
 import com.jobshunter.model.Job;
@@ -30,10 +29,10 @@ public class SerpJobHunting extends GenericJobHunting<SearchWithSerpRequest> {
   }
 
   @Override
-  public SearchWithSerpRequest createRequest(UserEntity user, UserPromptEntity prompt) {
+  public SearchWithSerpRequest createRequest(SearchJobOrder order, UserPromptEntity prompt) {
     try {
       SearchWithSerpRequest request = mapper.readValue(prompt.getPrompt(), SearchWithSerpRequest.class);
-      request.setUser(user);
+      request.setOrder(order);
       request.setPrompt(prompt);
       return request;
     } catch (JsonProcessingException e) {

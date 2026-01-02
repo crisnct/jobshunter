@@ -7,10 +7,8 @@ import com.jobshunter.database.repository.EngineConfigurationRepository;
 import com.jobshunter.database.service.UserDataService;
 import com.jobshunter.dto.JobOrderRequest;
 import com.jobshunter.dto.JobOrderResponse;
-import com.jobshunter.model.EngineType;
 import jakarta.validation.Valid;
 import jakarta.validation.ValidationException;
-import jakarta.validation.constraints.NotNull;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -25,7 +23,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @Slf4j
@@ -85,20 +82,6 @@ public class EngineController {
         .map(this::toJobOrderResponse)
         .toList();
     return ResponseEntity.ok(responses);
-  }
-
-  @GetMapping
-  public ResponseEntity<List<String>> getModels(
-      @RequestParam("engine")
-      @NotNull
-      EngineType engine
-  ) {
-    log.info("Fetching models for engine: {}", engine);
-    List<EngineConfigurationEntity> configurations = engineConfigurationRepository.findByEngine(engine);
-    List<String> models = configurations.stream()
-        .map(EngineConfigurationEntity::getModel)
-        .toList();
-    return ResponseEntity.ok(models);
   }
 
   private JobOrderResponse toJobOrderResponse(JobOrderEntity order) {

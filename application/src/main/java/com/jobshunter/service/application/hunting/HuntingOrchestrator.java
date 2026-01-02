@@ -1,7 +1,5 @@
 package com.jobshunter.service.application.hunting;
 
-import com.jobshunter.model.EngineSelection;
-import com.jobshunter.model.EngineType;
 import com.jobshunter.model.Job;
 import com.jobshunter.model.SearchJobOrder;
 import java.util.ArrayList;
@@ -27,9 +25,11 @@ public class HuntingOrchestrator {
 
   public CompletableFuture<List<Job>> startHunting(SearchJobOrder order, List<String> existingURLs) {
     List<CompletableFuture<List<Job>>> allFutureJobs = new ArrayList<>();
-    allFutureJobs.add(this.searchJobsAsync(EngineType.GPT, gptJobHunting, order));
-    allFutureJobs.add(this.searchJobsAsync(EngineType.GEMINI, geminiJobHunting, order));
-    allFutureJobs.add(this.searchJobsAsync(EngineType.SERP, serpJobHunting, order));
+    allFutureJobs.add(switch (order.engineSelection().type()) {
+      case GPT -> gptJobHunting.searchJobsAsync(new SearchJobOrder(order.user(), false, order.engineSelection()));
+      case GEMINI -> geminiJobHunting.searchJobsAsync(new SearchJobOrder(order.user(), false, order.engineSelection()));
+      case SERP -> serpJobHunting.searchJobsAsync(new SearchJobOrder(order.user(), false, order.engineSelection()));
+    });
     if (order.searchCompanies()) {
       allFutureJobs.add(gptJobHunting.searchJobsByCompaniesAsync(order));
     }
@@ -53,21 +53,6 @@ public class HuntingOrchestrator {
           return url != null && seenUrls.add(url);
         })
         .toList();
-  }
-
-  private CompletableFuture<List<Job>> searchJobsAsync(
-      EngineType engineType,
-      JobHunting jobHunting,
-      SearchJobOrder order
-  ) {
-    List<EngineSelection> enginesFiltered = order.engines().stream()
-        .filter(selection -> selection.type() == engineType)
-        .toList();
-    if (enginesFiltered.isEmpty()) {
-      return CompletableFuture.completedFuture(List.of());
-    } else {
-      return jobHunting.searchJobsAsync(new SearchJobOrder(order.user(), false, enginesFiltered));
-    }
   }
 
 }

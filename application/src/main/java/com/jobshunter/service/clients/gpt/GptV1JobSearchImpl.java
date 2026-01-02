@@ -61,7 +61,7 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient<GptJobSearchR
   public List<Job> searchJobs(GptJobSearchRequest request) {
     try {
       GptJobsPayload payload = GptJobsPayload.builder()
-          .model(request.getPrompt().getEngineConfiguration().getModel())
+          .model(request.getOrder().engineSelection().model())
           .reasoning(request.getReasoning())
           .max_output_tokens(properties.getGpt().getMaxTokens())
           .addTools(Tools.builder().setDeepSearch().build())
@@ -93,7 +93,7 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient<GptJobSearchR
     try {
       UserEntity user = request.getUser();
       GptJobsPayload payload = GptJobsPayload.builder()
-          .model(request.getModel())
+          .model(request.getOrder().engineSelection().model())
           .max_output_tokens(properties.getGpt().getMaxTokens())
           .addSystemPrompt(AiMessage.of(AiMessageType.SYSTEM_PROMPT_COMPANY_SEARCH,
               "city", user.getCity(),
@@ -136,7 +136,7 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient<GptJobSearchR
         "companies", StringUtils.join(group.stream().map(CompanyDto::companyName).toList())
     );
     GptJobsPayload payload = GptJobsPayload.builder()
-        .model(request.getModel())
+        .model(request.getOrder().engineSelection().model())
         .max_output_tokens(properties.getGpt().getMaxTokens())
         .reasoning(request.getReasoning())
         .addTools(Tools.builder().setDeepSearch().build())

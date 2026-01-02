@@ -1,6 +1,5 @@
 package com.jobshunter.model;
 
-import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.entities.UserPromptEntity;
 import com.jobshunter.dto.AIJobSearchRequest;
 import lombok.Data;
@@ -13,11 +12,11 @@ public class GeminiJobSearchRequest extends AIJobSearchRequest {
   private String base64CV;
 
   public GeminiJobSearchRequest(
-      UserEntity user,
+      SearchJobOrder order,
       UserPromptEntity prompt,
       String base64CV
   ) {
-    super(user, prompt);
+    super(order, prompt);
     this.base64CV = base64CV;
   }
 

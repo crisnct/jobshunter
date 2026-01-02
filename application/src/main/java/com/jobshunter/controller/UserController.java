@@ -17,9 +17,8 @@ import com.jobshunter.dto.UserJobResponse;
 import com.jobshunter.dto.UserUpdateRequest;
 import com.jobshunter.dto.exceptions.ValidationException;
 import com.jobshunter.model.ContractType;
-import com.jobshunter.model.EngineType;
+import com.jobshunter.model.EngineCategory;
 import com.jobshunter.model.JobType;
-import com.jobshunter.service.application.JobHuntService;
 import com.jobshunter.service.application.UserCvService;
 import com.jobshunter.service.application.notifiers.EmailNotifierService;
 import jakarta.validation.Valid;
@@ -52,13 +51,9 @@ import org.springframework.web.bind.annotation.RestController;
 @PreAuthorize("isAuthenticated()")
 public class UserController {
 
-  public static final String SERP_ENGINE_GOOGLE_JOBS = "google_jobs";
-
   private final UserDataService userDataService;
 
   private final AuthService authService;
-
-  private final JobHuntService jobHuntService;
 
   private final EmailNotifierService emailService;
 
@@ -142,7 +137,7 @@ public class UserController {
         formatDateTime(user.getLastJobs()),
         user.getTimeInterval(),
         prompts.stream()
-            .map(p -> String.format("id: %d, engine: %s, prompt: %s", p.getId(), p.getEngineConfiguration(), p.getPrompt()))
+            .map(p -> String.format("id: %d, prompt: %s", p.getId(), p.getPrompt()))
             .toList(),
         formatDateTime(user.getCreatedAt()),
         roles,
@@ -232,7 +227,7 @@ public class UserController {
       request.serpPrompts().forEach(serpPrompt -> {
         try {
           String promptJson = objectMapper.writeValueAsString(serpPrompt);
-          UserPromptEntity prompt = userDataService.updatePrompt(user, EngineType.SERP, SERP_ENGINE_GOOGLE_JOBS, serpPrompt.id(), promptJson);
+          UserPromptEntity prompt = userDataService.updatePrompt(user, EngineCategory.SERP, serpPrompt.id(), promptJson);
           promptsToDelete.remove(prompt.getId());
         } catch (JsonProcessingException e) {
           throw new ValidationException("Invalid SERP prompt payload", e);
@@ -242,10 +237,7 @@ public class UserController {
 
     if (request.aiPrompts() != null) {
       request.aiPrompts().forEach(aiPrompt -> {
-        if (aiPrompt.engine() != EngineType.GPT && aiPrompt.engine() != EngineType.GEMINI) {
-          throw new ValidationException("engine must be GPT or GEMINI");
-        }
-        UserPromptEntity prompt = userDataService.updatePrompt(user, aiPrompt.engine(), aiPrompt.model(), aiPrompt.id(), aiPrompt.prompt());
+        UserPromptEntity prompt = userDataService.updatePrompt(user, EngineCategory.AI, aiPrompt.id(), aiPrompt.prompt());
         promptsToDelete.remove(prompt.getId());
       });
     }

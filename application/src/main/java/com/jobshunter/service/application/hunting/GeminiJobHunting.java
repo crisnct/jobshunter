@@ -1,6 +1,5 @@
 package com.jobshunter.service.application.hunting;
 
-import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.entities.UserPromptEntity;
 import com.jobshunter.model.GeminiJobSearchRequest;
 import com.jobshunter.model.Job;
@@ -24,13 +23,9 @@ public class GeminiJobHunting extends GenericJobHunting<GeminiJobSearchRequest> 
   }
 
   @Override
-  public GeminiJobSearchRequest createRequest(UserEntity user, UserPromptEntity prompt) {
-    String userCVBase64 = Base64.getEncoder().encodeToString(user.getCv().getCv());
-    return new GeminiJobSearchRequest(
-        user,
-        prompt,
-        userCVBase64
-    );
+  public GeminiJobSearchRequest createRequest(SearchJobOrder order, UserPromptEntity prompt) {
+    String userCVBase64 = Base64.getEncoder().encodeToString(order.user().getCv().getCv());
+    return new GeminiJobSearchRequest(order, prompt, userCVBase64);
   }
 
   @Override

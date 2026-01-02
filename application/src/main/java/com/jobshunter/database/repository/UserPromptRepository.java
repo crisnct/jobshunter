@@ -8,7 +8,7 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface UserPromptRepository extends JpaRepository<UserPromptEntity, Long> {
 
-  Optional<UserPromptEntity> findByIdAndUserIdAndEngineConfigurationId( Long id, Long userId, Long engineId);
+  Optional<UserPromptEntity> findByIdAndUserId(Long id, Long userId);
 
 }
 

@@ -91,14 +91,7 @@ public record UserUpdateRequest(
       @SqlInjectionSafe
       @NotBlank
       @Size(max = 3000)
-      String prompt,
-
-      @NotNull
-      EngineType engine,
-
-      @NotBlank
-      @Size(max = 255)
-      String model
+      String prompt
   ) {
 
   }

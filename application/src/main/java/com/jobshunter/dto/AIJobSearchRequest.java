@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.entities.UserPromptEntity;
+import com.jobshunter.model.SearchJobOrder;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -15,8 +16,12 @@ import lombok.NoArgsConstructor;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class AIJobSearchRequest {
 
-  private UserEntity user;
+  private SearchJobOrder order;
 
   private UserPromptEntity prompt;
+
+  public UserEntity getUser() {
+    return order.user();
+  }
 
 }

@@ -64,7 +64,7 @@ public class JobHuntScheduler {
             new SearchJobOrder(
                 jobOrder.getUser(),
                 jobOrder.isSearchCompanies(),
-                List.of(new EngineSelection(jobOrder.getEngineConfiguration().getEngine(), jobOrder.getEngineConfiguration().getModel())))
+                new EngineSelection(jobOrder.getEngineConfiguration().getEngine(), jobOrder.getEngineConfiguration().getModel()))
         );
         jobOrder.setStatus(OrderStatus.COMPLETED);
         userDataService.saveJobOrder(jobOrder);

@@ -865,4 +865,26 @@
                              constraintName="uc_job_order_result_order_job"/>
     </changeSet>
 
+    <changeSet id="40-drop-engine-id-from-user-prompts" author="assistant">
+        <comment>Drop engine_id column from user_prompts table</comment>
+        <!-- Drop the foreign key constraint first (this may also drop the index) -->
+        <dropForeignKeyConstraint baseTableName="user_prompts" constraintName="fk_user_prompts_engine_configuration"/>
+        <!-- Drop the index if it still exists (with precondition to avoid error if already dropped) -->
+        <dropIndex tableName="user_prompts" indexName="idx_user_prompts_engine_id"/>
+        <!-- Drop the column -->
+        <dropColumn tableName="user_prompts" columnName="engine_id"/>
+    </changeSet>
+
+    <changeSet id="41-add-engine-type-to-user-prompts" author="assistant">
+        <comment>Add engine_type column to user_prompts table to distinguish between AI and SERP prompts</comment>
+        <addColumn tableName="user_prompts">
+            <column name="engine_category" type="VARCHAR(10)">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+        <createIndex tableName="user_prompts" indexName="idx_user_prompts_engine_category">
+            <column name="engine_category"/>
+        </createIndex>
+    </changeSet>
+
 </databaseChangeLog>

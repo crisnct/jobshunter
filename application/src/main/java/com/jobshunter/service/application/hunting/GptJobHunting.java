@@ -1,6 +1,5 @@
 package com.jobshunter.service.application.hunting;
 
-import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.entities.UserPromptEntity;
 import com.jobshunter.dto.gptRequest.Reasoning;
 import com.jobshunter.model.GptJobSearchRequest;
@@ -25,20 +24,14 @@ public class GptJobHunting extends GenericJobHunting<GptJobSearchRequest> {
   }
 
   @Override
-  public GptJobSearchRequest createRequest(UserEntity user, UserPromptEntity prompt) {
-    Reasoning reasoning = prompt.getEngineConfiguration().getModel().startsWith("gpt-5") ? new Reasoning("high") : null;
-    return new GptJobSearchRequest(
-        user,
-        prompt,
-        reasoning
-    );
+  public GptJobSearchRequest createRequest(SearchJobOrder order, UserPromptEntity prompt) {
+    Reasoning reasoning = order.engineSelection().model().startsWith("gpt-5") ? new Reasoning("high") : null;
+    return new GptJobSearchRequest(order, prompt, reasoning);
   }
 
   @Override
   public GptJobSearchRequest createCompaniesRequest(SearchJobOrder order) {
-    GptJobSearchRequest request = new GptJobSearchRequest(order.user(), null, null);
-    request.setModel(order.engines().getFirst().model());
-    return request;
+    return new GptJobSearchRequest(order, null, null);
   }
 
 }

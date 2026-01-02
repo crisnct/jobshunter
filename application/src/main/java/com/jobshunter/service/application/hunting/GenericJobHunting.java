@@ -1,17 +1,19 @@
 package com.jobshunter.service.application.hunting;
 
-import com.jobshunter.database.entities.EngineConfigurationEntity;
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.entities.UserPromptEntity;
 import com.jobshunter.dto.AIJobSearchRequest;
 import com.jobshunter.dto.CompanyDto;
+import com.jobshunter.model.EngineCategory;
 import com.jobshunter.model.EngineSelection;
+import com.jobshunter.model.EngineType;
 import com.jobshunter.model.Job;
 import com.jobshunter.model.SearchJobOrder;
 import com.jobshunter.service.clients.AiJobsClient;
 import io.github.resilience4j.ratelimiter.RequestNotPermitted;
 import jakarta.annotation.Nonnull;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
@@ -33,7 +35,7 @@ public abstract non-sealed class GenericJobHunting<T extends AIJobSearchRequest>
     this.jobsClient = jobsClient;
   }
 
-  public abstract T createRequest(UserEntity user, UserPromptEntity prompt);
+  public abstract T createRequest(SearchJobOrder order, UserPromptEntity prompt);
 
   public abstract T createCompaniesRequest(SearchJobOrder order);
 
@@ -44,15 +46,19 @@ public abstract non-sealed class GenericJobHunting<T extends AIJobSearchRequest>
     //Search companies and then for each company search jobs
     CompletableFuture<List<Job>> futures = CompletableFuture.completedFuture(List.of());
     //Search jobs based on user requests
-    List<UserPromptEntity> prompts = user.getPrompts().stream().filter(p -> contains(order, p)).toList();
-    for (UserPromptEntity prompt : prompts) {
-      T request = createRequest(user, prompt);
-      CompletableFuture<List<Job>> jobsFound = this.searchAsync(request, executor);
-      futures = futures.thenCombine(jobsFound, (previousJobs, newJobs) -> {
-        List<Job> merged = new ArrayList<>(previousJobs);
-        merged.addAll(newJobs);
-        return merged;
-      });
+    boolean isAImodel = Arrays.stream(EngineType.values()).anyMatch(p -> p == order.engineSelection().type());
+    for (UserPromptEntity prompt : user.getPrompts()) {
+      if (((prompt.getEngineCategory() == EngineCategory.AI) && isAImodel)
+          || ((prompt.getEngineCategory() != EngineCategory.AI) && !isAImodel)) {
+
+        T request = createRequest(order, prompt);
+        CompletableFuture<List<Job>> jobsFound = this.searchAsync(request, executor);
+        futures = futures.thenCombine(jobsFound, (previousJobs, newJobs) -> {
+          List<Job> merged = new ArrayList<>(previousJobs);
+          merged.addAll(newJobs);
+          return merged;
+        });
+      }
     }
 
     return futures;
@@ -61,12 +67,12 @@ public abstract non-sealed class GenericJobHunting<T extends AIJobSearchRequest>
   public CompletableFuture<List<Job>> searchJobsByCompaniesAsync(SearchJobOrder order) {
     UserEntity user = order.user();
     T request = createCompaniesRequest(order);
-    return CompletableFuture.supplyAsync(() -> searchCompaniesSync(request, order.engines().getFirst()), executor)
+    return CompletableFuture.supplyAsync(() -> searchCompaniesSync(request, order.engineSelection()), executor)
         .exceptionally(throwable -> {
           if (throwable.getCause() != null && throwable.getCause() instanceof RequestNotPermitted) {
-            log.error("❌ Rate limit exceeded for user {} engine {}", user.getUsername(), order.engines().getFirst().type());
+            log.error("❌ Rate limit exceeded for user {} engine {}", user.getUsername(), order.engineSelection().type());
           } else {
-            log.error("Unexpected error at gathering jobs from engine {}", order.engines().getFirst().type());
+            log.error("Unexpected error at gathering jobs from engine {}", order.engineSelection().type());
           }
           return List.of();
         });
@@ -75,12 +81,12 @@ public abstract non-sealed class GenericJobHunting<T extends AIJobSearchRequest>
   private CompletableFuture<List<Job>> searchAsync(T request, Executor executor) {
     return CompletableFuture.supplyAsync(() -> searchSync(request), executor)
         .exceptionally(throwable -> {
-          EngineConfigurationEntity engineConfig = request.getPrompt().getEngineConfiguration();
+          EngineSelection engineConfig = request.getOrder().engineSelection();
           if (throwable.getCause() != null && throwable.getCause() instanceof RequestNotPermitted) {
             log.error("❌ Rate limit exceeded for user {}, engine: {}, eodel: {}",
-                request.getUser().getUsername(), engineConfig.getEngine(), engineConfig.getModel());
+                request.getOrder().user().getUsername(), engineConfig.type(), engineConfig.model());
           } else {
-            log.error("Unexpected error at gathering jobs from model {}: {} for prompt {}", engineConfig.getModel(),
+            log.error("Unexpected error at gathering jobs from model {}: {} for prompt {}", engineConfig.model(),
                 throwable.getMessage(), request.getPrompt().getPrompt());
           }
           return List.of();
@@ -89,14 +95,14 @@ public abstract non-sealed class GenericJobHunting<T extends AIJobSearchRequest>
 
   @Nonnull
   private List<Job> searchSync(T request) {
-    EngineConfigurationEntity engineConfig = request.getPrompt().getEngineConfiguration();
-    log.info("Searching jobs for user {} with model {}", request.getUser().getUsername(), engineConfig.getModel());
+    String model = request.getOrder().engineSelection().model();
+    log.info("Searching jobs for user {} with model {}", request.getUser().getUsername(), model);
     List<Job> jobsFound = jobsClient.searchJobs(request);
     jobsFound.forEach(job -> {
       job.setPromptId(request.getPrompt().getId());
-      job.setSource(engineConfig.getModel());
+      job.setSource(model);
     });
-    String model = engineConfig.getModel();
+
     log.info("{} found {} url's and are going to be validated", model, jobsFound.size());
     return jobsFound;
   }
@@ -119,11 +125,6 @@ public abstract non-sealed class GenericJobHunting<T extends AIJobSearchRequest>
     }
     jobsFound.forEach(job -> job.setSource("COMP-" + engineSelection.model()));
     return jobsFound;
-  }
-
-  private boolean contains(SearchJobOrder order, UserPromptEntity prompt) {
-    return order.engines().stream()
-        .anyMatch(p -> p.type() == prompt.getEngineConfiguration().getEngine());
   }
 
 }

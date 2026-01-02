@@ -70,7 +70,7 @@ public class JobHuntService {
       List<Job> jobs = jobHuntResponse.jobsFound();
       if (!jobs.isEmpty()) {
         if (isEnableOneRealEngine) {
-          this.userDataService.updateUser(user, jobs);
+          this.userDataService.updateUser(user, order, jobs);
         }
         if (user.isNotifyWhatsapp()) {
           whatsappNotifierService.send(jobs, user);
