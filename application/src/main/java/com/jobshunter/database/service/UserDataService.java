@@ -1,6 +1,7 @@
 package com.jobshunter.database.service;
 
 import com.jobshunter.database.entities.EngineConfigurationEntity;
+import com.jobshunter.database.entities.JobOrderEntity;
 import com.jobshunter.database.entities.PromptsJobsEntity;
 import com.jobshunter.database.entities.UserContractTypeEntity;
 import com.jobshunter.database.entities.UserCvEntity;
@@ -10,6 +11,7 @@ import com.jobshunter.database.entities.UserJobRoleEntity;
 import com.jobshunter.database.entities.UserJobTypeEntity;
 import com.jobshunter.database.entities.UserPromptEntity;
 import com.jobshunter.database.repository.EngineConfigurationRepository;
+import com.jobshunter.database.repository.JobOrderRepository;
 import com.jobshunter.database.repository.PromptsJobsRepository;
 import com.jobshunter.database.repository.UserContractTypeRepository;
 import com.jobshunter.database.repository.UserCvRepository;
@@ -23,7 +25,8 @@ import com.jobshunter.model.ContractType;
 import com.jobshunter.model.EngineType;
 import com.jobshunter.model.Job;
 import com.jobshunter.model.JobType;
-import java.time.LocalDateTime;
+import com.jobshunter.model.OrderStatus;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -57,6 +60,8 @@ public class UserDataService {
 
   private final UserContractTypeRepository userContractTypeRepository;
 
+  private final JobOrderRepository jobOrderRepository;
+
   public List<UserJobEntity> getUserJobs(String username) {
     return userJobRepository.findAllByUsernameWithUser(username);
   }
@@ -65,15 +70,19 @@ public class UserDataService {
   public List<UserEntity> getAllUsers() {
     List<UserEntity> all = userRepository.findAll();
     for (UserEntity user : all) {
-      Hibernate.initialize(user.getPrompts());
-      Hibernate.initialize(user.getRoles());
-      user.getPrompts().forEach(p -> Hibernate.initialize(p.getEngineConfiguration()));
-      Hibernate.initialize(user.getCv());
-      Hibernate.initialize(user.getJobRoles());
-      Hibernate.initialize(user.getJobTypes());
-      Hibernate.initialize(user.getContractTypes());
+      initializeUserData(user);
     }
     return all;
+  }
+
+  private void initializeUserData(UserEntity user) {
+    Hibernate.initialize(user.getPrompts());
+    Hibernate.initialize(user.getRoles());
+    user.getPrompts().forEach(p -> Hibernate.initialize(p.getEngineConfiguration()));
+    Hibernate.initialize(user.getCv());
+    Hibernate.initialize(user.getJobRoles());
+    Hibernate.initialize(user.getJobTypes());
+    Hibernate.initialize(user.getContractTypes());
   }
 
   public Optional<UserEntity> getUser(String username) {
@@ -83,15 +92,7 @@ public class UserDataService {
   @Transactional(readOnly = true)
   public Optional<UserEntity> getUserCompleteInfo(String username) {
     Optional<UserEntity> userop = userRepository.findByUsername(username);
-    if (userop.isPresent()) {
-      UserEntity entity = userop.get();
-      Hibernate.initialize(entity.getPrompts());
-      entity.getPrompts().forEach(p -> Hibernate.initialize(p.getEngineConfiguration()));
-      Hibernate.initialize(entity.getCv());
-      Hibernate.initialize(entity.getJobRoles());
-      Hibernate.initialize(entity.getJobTypes());
-      Hibernate.initialize(entity.getContractTypes());
-    }
+    userop.ifPresent(this::initializeUserData);
     return userop;
   }
 
@@ -107,7 +108,7 @@ public class UserDataService {
 
   @Transactional
   public void updateUser(UserEntity user, List<Job> jobs) {
-    user.setLastJobs(LocalDateTime.now());
+    user.setLastJobs(Instant.now());
     jobs.forEach(job -> {
       EngineConfigurationEntity engineConfig = null;
       UserPromptEntity userPrompt = null;
@@ -227,6 +228,39 @@ public class UserDataService {
         }
       });
     }
+  }
+
+  @Transactional
+  public JobOrderEntity createJobOrder(UserEntity user, Long engineConfigurationId, boolean searchCompanies) {
+    EngineConfigurationEntity engineConfiguration = engineRepository.findById(engineConfigurationId)
+        .orElseThrow(() -> new BusinessException(HttpStatus.BAD_REQUEST, 
+            "Engine configuration with id " + engineConfigurationId + " not found"));
+    
+    JobOrderEntity jobOrder = new JobOrderEntity(user, engineConfiguration, searchCompanies);
+    return jobOrderRepository.save(jobOrder);
+  }
+
+  @Transactional
+  public void saveJobOrder(JobOrderEntity jobOrder) {
+    jobOrderRepository.save(jobOrder);
+  }
+
+  @Transactional(readOnly = true)
+  public List<JobOrderEntity> getUserOrders(Long userId) {
+    List<JobOrderEntity> orders = jobOrderRepository.findByUserIdOrderByTimestampDescAndStatus(userId);
+    orders.forEach(order -> Hibernate.initialize(order.getEngineConfiguration()));
+    return orders;
+  }
+
+  @Transactional(readOnly = true)
+  public Optional<JobOrderEntity> getUserOldestNewOrder() {
+    Optional<JobOrderEntity> lastOrder = jobOrderRepository.findOldestByStatus(OrderStatus.NEW);
+    if (lastOrder.isEmpty()) {
+      return Optional.empty();
+    }
+    initializeUserData(lastOrder.get().getUser());
+    Hibernate.initialize(lastOrder.get().getEngineConfiguration());
+    return lastOrder;
   }
 
 }

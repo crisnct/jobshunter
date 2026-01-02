@@ -30,7 +30,10 @@ public class ApplicationProperties {
   @Data
   public static class Scheduler {
 
-    private String frequency;
+    private String processOrderFrequency;
+
+    private String notifyUsersFrequency;
+
   }
 
   @Data

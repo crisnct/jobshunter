@@ -18,7 +18,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -73,13 +73,13 @@ public class UserEntity implements UserDetails {
   private String verificationToken;
 
   @Column(name = "last_jobs")
-  private LocalDateTime lastJobs;
+  private Instant lastJobs;
 
   @Column(name = "time_interval")
   private Integer timeInterval;
 
   @Column(name = "created_at")
-  private LocalDateTime createdAt;
+  private Instant createdAt;
 
   @Column(name = "approved", nullable = false)
   private boolean approved = false;

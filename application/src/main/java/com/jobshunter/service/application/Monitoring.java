@@ -5,7 +5,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadPoolExecutor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -22,16 +24,20 @@ public class Monitoring {
 
   private final ThreadPoolExecutor miscellaneousExecutor;
 
+  private final TaskScheduler scheduler;
+
   public Monitoring(
       @Qualifier("gptSearchExecutor") ThreadPoolExecutor gptSearchExecutor,
       @Qualifier("geminiSearchExecutor") ThreadPoolExecutor geminiSearchExecutor,
       @Qualifier("serpApiExecutor") ThreadPoolExecutor serpApiExecutor,
-      @Qualifier("miscellaneousExecutor") ThreadPoolExecutor miscellaneousExecutor
+      @Qualifier("miscellaneousExecutor") ThreadPoolExecutor miscellaneousExecutor,
+      TaskScheduler scheduler
   ) {
     this.gptSearchExecutor = gptSearchExecutor;
     this.geminiSearchExecutor = geminiSearchExecutor;
     this.serpApiExecutor = serpApiExecutor;
     this.miscellaneousExecutor = miscellaneousExecutor;
+    this.scheduler = scheduler;
   }
 
   @Scheduled(fixedDelay = 10000)
@@ -40,6 +46,7 @@ public class Monitoring {
     monitorExecutor("Gemini executor", geminiSearchExecutor);
     monitorExecutor("Serp executor", serpApiExecutor);
     monitorExecutor("MiscellaneousExecutor executor", miscellaneousExecutor);
+    monitorExecutor("Scheduler", ((ThreadPoolTaskScheduler)scheduler).getScheduledThreadPoolExecutor());
   }
 
   private void monitorExecutor(String executorName, ThreadPoolExecutor executor) {

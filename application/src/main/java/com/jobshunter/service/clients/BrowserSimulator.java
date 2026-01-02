@@ -6,9 +6,10 @@ import jakarta.validation.constraints.NotNull;
 import java.net.URI;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
-import lombok.RequiredArgsConstructor;
+import java.util.concurrent.Executor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hc.client5.http.protocol.HttpClientContext;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
@@ -16,7 +17,6 @@ import org.springframework.web.client.RestClient;
 
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class BrowserSimulator {
 
   public static final ScopedValue<HttpClientContext> HTTP_CONTEXT = ScopedValue.newInstance();
@@ -36,6 +36,18 @@ public class BrowserSimulator {
 
   private final RestClient restClient;
 
+  private final Executor miscExecutor;
+
+  public BrowserSimulator(
+      ApplicationProperties properties,
+      RestClient restClient,
+      @Qualifier("miscellaneousExecutor") Executor miscExecutor
+  ) {
+    this.properties = properties;
+    this.restClient = restClient;
+    this.miscExecutor = miscExecutor;
+  }
+
   @TimeLimiter(name = "browserSimulatorLimiter")
   public CompletionStage<ResponseEntity<String>> openPage(String url) {
     return CompletableFuture.supplyAsync(() -> {
@@ -50,8 +62,8 @@ public class BrowserSimulator {
       } catch (Throwable ex) {
         log.error(
             """
-                First time failure about getting the html
-            """
+                    First time failure about getting the html
+                """
         );
         return restClient.get()
             .uri(url)
@@ -67,7 +79,7 @@ public class BrowserSimulator {
             .retrieve()
             .toEntity(String.class);
       }
-    });
+    }, miscExecutor);
   }
 
   public String getFinalRedirectedURL(@NotNull String url) {

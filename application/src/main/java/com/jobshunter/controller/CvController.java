@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -17,6 +18,7 @@ import org.springframework.web.multipart.MultipartFile;
 @RestController
 @RequestMapping("/api/cv")
 @RequiredArgsConstructor
+@PreAuthorize("isAuthenticated()")
 public class CvController {
 
   private final UserCvService userCvService;
@@ -27,15 +29,13 @@ public class CvController {
       @NotNull MultipartFile file,
       Authentication authentication
   ) throws IOException {
-    String username = authentication != null ? authentication.getName() : null;
-    String fileId = userCvService.uploadUserCv(username, file);
+    String fileId = userCvService.uploadUserCv(authentication.getName(), file);
     return ResponseEntity.ok(Map.of("message", "CV uploaded to GPT successfully", "fileId", fileId));
   }
 
   @DeleteMapping
   public ResponseEntity<?> deleteCv(Authentication authentication) {
-    String username = authentication != null ? authentication.getName() : null;
-    userCvService.deleteUserCv(username);
+    userCvService.deleteUserCv(authentication.getName());
     return ResponseEntity.ok(Map.of("message", "CV deleted successfully"));
   }
 }

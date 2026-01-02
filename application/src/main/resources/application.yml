@@ -24,7 +24,8 @@ jobshunter:
   blacklist: dailyremote.com,remote.co
   allowRedirection: true
   scheduler:
-    frequency: 3600000
+    processOrderFrequency: 5000
+    notifyUsersFrequency: 60000
   ratelimit:
     capacity: 60
     window: 1m

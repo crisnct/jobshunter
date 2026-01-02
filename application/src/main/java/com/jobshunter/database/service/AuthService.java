@@ -11,7 +11,7 @@ import com.jobshunter.dto.exceptions.BusinessException;
 import com.jobshunter.dto.exceptions.ValidationException;
 import com.jobshunter.service.application.authentication.JwtService;
 import com.jobshunter.service.application.notifiers.EmailNotifierService;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -64,7 +64,7 @@ public class AuthService {
     user.setPhoneNumber(request.phoneNumber());
     user.setPassword(passwordEncoder.encode(request.password()));
     user.setEmailVerified(false);
-    user.setCreatedAt(LocalDateTime.now());
+    user.setCreatedAt(Instant.now());
     user.setNotifyEmail(true);
     user.setTimeInterval((int) TimeUnit.DAYS.toMinutes(1));
     user.setVerificationToken(UUID.randomUUID().toString());

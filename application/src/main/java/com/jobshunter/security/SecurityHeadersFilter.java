@@ -151,9 +151,10 @@ public class SecurityHeadersFilter implements Filter {
   private String resolveClientKey(HttpServletRequest request) {
     String xff = request.getHeader("X-Forwarded-For");
     if (xff != null && !xff.isBlank()) {
-      return "ip:" + xff.split(",")[0].trim();
+      return xff.split(",")[0].trim();
+    } else {
+      return request.getRemoteAddr();
     }
-    return "ip:" + request.getRemoteAddr();
   }
 
 }

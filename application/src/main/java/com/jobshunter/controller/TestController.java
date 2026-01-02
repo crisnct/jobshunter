@@ -81,14 +81,8 @@ public class TestController {
   public ResponseEntity<?> send(
       @Valid
       @ModelAttribute
-      EmailRequest request,
-
-      @AuthenticationPrincipal
-      UserDetails userDetails
+      EmailRequest request
   ) {
-    if (userDetails == null) {
-      throw new ValidationException("Authentication required");
-    }
     emailNotifierService.sendCustomEmail(request.getEmail(), request.getSubject(), request.getMessage(), request.getFile());
     return ResponseEntity.ok(Map.of("message", "Email sent successfully"));
   }
@@ -120,9 +114,6 @@ public class TestController {
       @AuthenticationPrincipal
       UserDetails userDetails
   ) {
-    if (userDetails == null) {
-      throw new ValidationException("Authentication required");
-    }
     UserEntity user = userDataService.getUser(userDetails.getUsername())
         .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "User not found"));
     log.info("Searching jobs for {}", user.getUsername());

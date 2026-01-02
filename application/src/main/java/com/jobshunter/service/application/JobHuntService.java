@@ -4,8 +4,6 @@ import com.jobshunter.ApplicationProperties;
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.service.UserDataService;
 import com.jobshunter.dto.JobHuntResponse;
-import com.jobshunter.model.EngineSelection;
-import com.jobshunter.model.EngineType;
 import com.jobshunter.model.Job;
 import com.jobshunter.model.JobContext;
 import com.jobshunter.model.SearchJobOrder;
@@ -15,7 +13,6 @@ import com.jobshunter.service.application.notifiers.WhatsappNotifierService;
 import com.jobshunter.service.application.processors.JobScoring;
 import com.jobshunter.service.application.processors.JobsStateMachine;
 import java.io.IOException;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -42,27 +39,6 @@ public class JobHuntService {
   private final JobsStateMachine jobsStateMachine;
 
   private final ApplicationProperties properties;
-
-  public void scheduledRun() throws IOException {
-    log.info("Starts scheduled job hunt...");
-    for (var user : userDataService.getAllUsers()) {
-      if (user.isNotifyWhatsapp() || user.isNotifyEmail()) {
-        if (user.getTimeInterval() != null
-            && user.getTimeInterval() > 0
-            && user.getLastJobs() != null
-            && user.getLastJobs().plusMinutes(user.getTimeInterval()).isBefore(LocalDateTime.now())) {
-          log.info("Start searching jobs for {} ", user.getUsername());
-          this.searchJobsForUser(
-              new SearchJobOrder(
-                  user,
-                  List.of(new EngineSelection(EngineType.GPT, "gpt-4.1"))
-              )
-          );
-        }
-      }
-    }
-    log.info("Stop scheduled job hunt.");
-  }
 
   public JobHuntResponse searchJobsForUser(SearchJobOrder order) {
     UserEntity user = order.user();

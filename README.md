@@ -18,7 +18,7 @@ Java 25 + Spring Boot 4.0.0 service that keeps a user profile (prompt, CV, phone
 
 ---
 ## [Cristian Țone](https://github.com/crisnct)
-#### Product Owner and Lead Developer, sponsorship: 52eur <br>
+#### Product Owner and Lead Developer<br>
 • Search jobs asynchronously using CompletableFuture and thread pool executor with virtual threads 
 • Implemented rate limit for communication with GPT
 • Implemented communication with SERPA API for Google Jobs 

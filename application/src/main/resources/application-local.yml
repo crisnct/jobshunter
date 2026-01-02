@@ -5,6 +5,11 @@ spring:
   mail:
     enabled: false
 
+jobshunter:
+  scheduler:
+    processOrderFrequency: 2000
+    notifyUsersFrequency: 3000
+
 twilio:
   enabled: false
 

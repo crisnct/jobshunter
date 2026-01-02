@@ -1,9 +1,11 @@
 package com.jobshunter.database.entities;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.jobshunter.model.OrderStatus;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -11,9 +13,11 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.PostPersist;
 import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.Getter;
@@ -44,13 +48,14 @@ public class JobOrderEntity {
   private boolean searchCompanies = false;
 
   @Column(name = "status", columnDefinition = "TEXT")
-  private String status;
+  @Enumerated(jakarta.persistence.EnumType.STRING)
+  private OrderStatus status;
 
   @Column(name = "notified", nullable = false)
   private boolean notified = false;
 
   @Column(name = "timestamp", nullable = false)
-  private LocalDateTime timestamp;
+  private Instant timestamp;
 
   @Column(name = "error_message", columnDefinition = "TEXT")
   private String errorMessage;
@@ -60,9 +65,11 @@ public class JobOrderEntity {
   private List<JobOrderResultEntity> results = new ArrayList<>();
 
   @PrePersist
+  @PreUpdate
   void prePersist() {
-    if (timestamp == null) {
-      timestamp = LocalDateTime.now();
+    timestamp = Instant.now();
+    if (status == null) {
+      status = OrderStatus.NEW;
     }
   }
 
