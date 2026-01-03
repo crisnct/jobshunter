@@ -20,6 +20,9 @@ gemini:
 gpt:
   enabled: false
 
+grok:
+  enabled: false
+
 serpApi:
   enabled: false
   maxPageSearch: 1

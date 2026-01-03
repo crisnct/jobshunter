@@ -21,6 +21,8 @@ public class MonitoringController {
 
   private final ThreadPoolExecutor gptSearchExecutor;
 
+  private final ThreadPoolExecutor grokSearchExecutor;
+
   private final ThreadPoolExecutor geminiSearchExecutor;
 
   private final ThreadPoolExecutor serpApiExecutor;
@@ -31,12 +33,14 @@ public class MonitoringController {
 
   public MonitoringController(
       @Qualifier("gptSearchExecutor") ThreadPoolExecutor gptSearchExecutor,
+      @Qualifier("grokSearchExecutor") ThreadPoolExecutor grokSearchExecutor,
       @Qualifier("geminiSearchExecutor") ThreadPoolExecutor geminiSearchExecutor,
       @Qualifier("serpApiExecutor") ThreadPoolExecutor serpApiExecutor,
       @Qualifier("miscellaneousExecutor") ThreadPoolExecutor miscellaneousExecutor,
       TaskScheduler scheduler
   ) {
     this.gptSearchExecutor = gptSearchExecutor;
+    this.grokSearchExecutor = grokSearchExecutor;
     this.geminiSearchExecutor = geminiSearchExecutor;
     this.serpApiExecutor = serpApiExecutor;
     this.miscellaneousExecutor = miscellaneousExecutor;
@@ -47,7 +51,8 @@ public class MonitoringController {
   public ResponseEntity<Map<String, String>> getExecutorsStatus() {
     log.info("Fetching status of executors");
     Map<String, String> engineModelsMap = new LinkedHashMap<>();
-    engineModelsMap.put("GPT", formatMessage(gptSearchExecutor));
+    engineModelsMap.put("Gpt", formatMessage(gptSearchExecutor));
+    engineModelsMap.put("Grok", formatMessage(grokSearchExecutor));
     engineModelsMap.put("Gemini", formatMessage(geminiSearchExecutor));
     engineModelsMap.put("SerpApi", formatMessage(serpApiExecutor));
     engineModelsMap.put("Miscellaneous", formatMessage(miscellaneousExecutor));

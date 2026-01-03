@@ -59,12 +59,12 @@ public class JobHuntScheduler {
       jobOrder.setStatus(OrderStatus.PROCESSING);
       userDataService.saveJobOrder(jobOrder);
       try {
-        jobHuntService.searchJobsForUser(
-            new SearchJobOrder(
-                jobOrder.getUser(),
-                jobOrder.isSearchCompanies(),
-                new EngineSelection(jobOrder.getEngineConfiguration().getEngine(), jobOrder.getEngineConfiguration().getModel()))
-        );
+        SearchJobOrder searchOrder = new SearchJobOrder();
+        searchOrder.setUser(jobOrder.getUser());
+        searchOrder.setSearchCompanies(jobOrder.isSearchCompanies());
+        searchOrder.setEngineSelection(new EngineSelection(jobOrder.getEngineConfiguration().getEngine(), jobOrder.getEngineConfiguration().getModel()));
+        jobHuntService.searchJobsForUser(searchOrder);
+
         jobOrder.setStatus(OrderStatus.COMPLETED);
         userDataService.saveJobOrder(jobOrder);
         log.info("Completed processing job order id={} for user {}", jobOrder.getId(), jobOrder.getUser().getUsername());

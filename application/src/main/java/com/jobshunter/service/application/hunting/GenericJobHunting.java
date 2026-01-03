@@ -41,13 +41,11 @@ public abstract non-sealed class GenericJobHunting<T extends AIJobSearchRequest>
 
   @Override
   public CompletableFuture<List<Job>> searchJobsAsync(SearchJobOrder order) {
-    UserEntity user = order.user();
-
     //Search companies and then for each company search jobs
     CompletableFuture<List<Job>> futures = CompletableFuture.completedFuture(List.of());
     //Search jobs based on user requests
-    boolean isAImodel = Arrays.stream(EngineType.values()).anyMatch(p -> p == order.engineSelection().type());
-    for (UserPromptEntity prompt : user.getPrompts()) {
+    boolean isAImodel = Arrays.stream(EngineType.values()).anyMatch(p -> p == order.getEngineSelection().type());
+    for (UserPromptEntity prompt : order.getUser().getPrompts()) {
       if (((prompt.getEngineCategory() == EngineCategory.AI) && isAImodel)
           || ((prompt.getEngineCategory() != EngineCategory.AI) && !isAImodel)) {
 
@@ -65,14 +63,14 @@ public abstract non-sealed class GenericJobHunting<T extends AIJobSearchRequest>
   }
 
   public CompletableFuture<List<Job>> searchJobsByCompaniesAsync(SearchJobOrder order) {
-    UserEntity user = order.user();
+    UserEntity user = order.getUser();
     T request = createCompaniesRequest(order);
-    return CompletableFuture.supplyAsync(() -> searchCompaniesSync(request, order.engineSelection()), executor)
+    return CompletableFuture.supplyAsync(() -> searchCompaniesSync(request, order.getEngineSelection()), executor)
         .exceptionally(throwable -> {
           if (throwable.getCause() != null && throwable.getCause() instanceof RequestNotPermitted) {
-            log.error("❌ Rate limit exceeded for user {} engine {}", user.getUsername(), order.engineSelection().type());
+            log.error("❌ Rate limit exceeded for user {} engine {}", user.getUsername(), order.getEngineSelection().type());
           } else {
-            log.error("Unexpected error at gathering jobs from engine {}", order.engineSelection().type());
+            log.error("Unexpected error at gathering jobs from engine {}", order.getEngineSelection().type());
           }
           return List.of();
         });
@@ -81,10 +79,10 @@ public abstract non-sealed class GenericJobHunting<T extends AIJobSearchRequest>
   private CompletableFuture<List<Job>> searchAsync(T request, Executor executor) {
     return CompletableFuture.supplyAsync(() -> searchSync(request), executor)
         .exceptionally(throwable -> {
-          EngineSelection engineConfig = request.getOrder().engineSelection();
+          EngineSelection engineConfig = request.getOrder().getEngineSelection();
           if (throwable.getCause() != null && throwable.getCause() instanceof RequestNotPermitted) {
             log.error("❌ Rate limit exceeded for user {}, engine: {}, eodel: {}",
-                request.getOrder().user().getUsername(), engineConfig.type(), engineConfig.model());
+                request.getOrder().getUser().getUsername(), engineConfig.type(), engineConfig.model());
           } else {
             log.error("Unexpected error at gathering jobs from model {}: {} for prompt {}", engineConfig.model(),
                 throwable.getMessage(), request.getPrompt().getPrompt());
@@ -95,7 +93,7 @@ public abstract non-sealed class GenericJobHunting<T extends AIJobSearchRequest>
 
   @Nonnull
   private List<Job> searchSync(T request) {
-    String model = request.getOrder().engineSelection().model();
+    String model = request.getOrder().getEngineSelection().model();
     log.info("Searching jobs for user {} with model {}", request.getUser().getUsername(), model);
     List<Job> jobsFound = jobsClient.searchJobs(request);
     jobsFound.forEach(job -> {

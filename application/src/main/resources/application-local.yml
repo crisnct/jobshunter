@@ -19,6 +19,9 @@ gemini:
 gpt:
   enabled: false
 
+grok:
+  enabled: false
+
 serpApi:
   enabled: false
   maxPageSearch: 1
@@ -34,6 +37,11 @@ security:
 resilience4j.ratelimiter:
   instances:
     gptLimiter:
+      limitForPeriod: 1                # Allow 1 call
+      limitRefreshPeriod: 5s           # Every 1 seconds
+      timeoutDuration: 10s             # Wait up to 10s for a slot
+      writableStackTraceEnabled: false
+    grokLimiter:
       limitForPeriod: 1                # Allow 1 call
       limitRefreshPeriod: 5s           # Every 1 seconds
       timeoutDuration: 10s             # Wait up to 10s for a slot
@@ -101,6 +109,16 @@ resilience4j.circuitbreaker:
       slowCallDurationThreshold: 5s
       waitDurationInOpenState: 2m
       permittedNumberOfCallsInHalfOpenState: 1
+    grokCircuitBreaker:
+      registerHealthIndicator: true
+      slidingWindowType: COUNT_BASED
+      slidingWindowSize: 1
+      minimumNumberOfCalls: 1
+      failureRateThreshold: 50
+      slowCallRateThreshold: 50
+      slowCallDurationThreshold: 5s
+      waitDurationInOpenState: 2m
+      permittedNumberOfCallsInHalfOpenState: 1
     geminiCircuitBreaker:
       registerHealthIndicator: true
       slidingWindowType: COUNT_BASED
@@ -159,6 +177,15 @@ resilience4j.circuitbreaker:
 resilience4j.bulkhead:
   instances:
     gptBulkhead:
+      bulkheadType: THREADPOOL
+      maxConcurrentCalls: 3
+      maxThreadPoolSize: 5
+      coreThreadPoolSize: 1
+      queueCapacity: 20
+      maxWaitDuration: 20m
+      keepAliveDuration: 30s
+      writableStackTraceEnabled: false
+    grokBulkhead:
       bulkheadType: THREADPOOL
       maxConcurrentCalls: 3
       maxThreadPoolSize: 5

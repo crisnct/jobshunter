@@ -46,6 +46,11 @@ gpt:
   apiKey: ${CHATGPT_API_KEY:notset}
   maxTokens: 2000
 
+grok:
+  enabled: true
+  apiKey: ${GROK_API_KEY:notset}
+  maxTokens: 2000
+
 serpApi:
   enabled: true
   apiKey: ${SERP_API_KEY:notset}
@@ -122,6 +127,11 @@ resilience4j.ratelimiter:
       limitRefreshPeriod: 30s           # Every 30 seconds
       timeoutDuration: 5m              # Wait up to 5min for a slot
       writableStackTraceEnabled: false
+    grokLimiter:
+      limitForPeriod: 1                # Allow 1 call
+      limitRefreshPeriod: 30s           # Every 30 seconds
+      timeoutDuration: 5m              # Wait up to 5min for a slot
+      writableStackTraceEnabled: false
     geminiLimiter:
       limitForPeriod: 1                # Allow 1 call
       limitRefreshPeriod: 10s           # Every 10 sec
@@ -182,7 +192,17 @@ resilience4j.circuitbreaker:
       minimumNumberOfCalls: 1
       failureRateThreshold: 50
       slowCallRateThreshold: 90
-      slowCallDurationThreshold: 1m
+      slowCallDurationThreshold: 2m
+      waitDurationInOpenState: 2m
+      permittedNumberOfCallsInHalfOpenState: 1
+    grokCircuitBreaker:
+      registerHealthIndicator: true
+      slidingWindowType: COUNT_BASED
+      slidingWindowSize: 1
+      minimumNumberOfCalls: 1
+      failureRateThreshold: 50
+      slowCallRateThreshold: 90
+      slowCallDurationThreshold: 2m
       waitDurationInOpenState: 2m
       permittedNumberOfCallsInHalfOpenState: 1
     geminiCircuitBreaker:
@@ -192,7 +212,7 @@ resilience4j.circuitbreaker:
       minimumNumberOfCalls: 1
       failureRateThreshold: 50
       slowCallRateThreshold: 90
-      slowCallDurationThreshold: 1m
+      slowCallDurationThreshold: 2m
       waitDurationInOpenState: 2m
       permittedNumberOfCallsInHalfOpenState: 1
     serpApi:
@@ -250,6 +270,15 @@ resilience4j.circuitbreaker:
 resilience4j.bulkhead:
   instances:
     gptBulkhead:
+      bulkheadType: THREADPOOL
+      maxConcurrentCalls: 3
+      maxThreadPoolSize: 5
+      coreThreadPoolSize: 1
+      queueCapacity: 20
+      maxWaitDuration: 20m
+      keepAliveDuration: 30s
+      writableStackTraceEnabled: false
+    grokBulkhead:
       bulkheadType: THREADPOOL
       maxConcurrentCalls: 3
       maxThreadPoolSize: 5

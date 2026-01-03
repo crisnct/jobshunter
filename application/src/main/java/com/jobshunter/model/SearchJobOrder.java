@@ -1,11 +1,18 @@
 package com.jobshunter.model;
 
 import com.jobshunter.database.entities.UserEntity;
+import lombok.Data;
 
-public record SearchJobOrder(
-    UserEntity user,
-    boolean searchCompanies,
-    EngineSelection engineSelection
-) {
+@Data
+public class SearchJobOrder {
+
+  private UserEntity user;
+  private boolean searchCompanies;
+  private boolean searchByPrompts;
+  private EngineSelection engineSelection;
+
+  public SearchJobOrder() {
+
+  }
 
 }

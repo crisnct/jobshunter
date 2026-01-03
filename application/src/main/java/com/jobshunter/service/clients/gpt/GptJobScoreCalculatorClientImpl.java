@@ -6,7 +6,7 @@ import com.jobshunter.ApplicationProperties;
 import com.jobshunter.ApplicationProperties.Gpt;
 import com.jobshunter.dto.gptRequest.Gpt4ScorePayload;
 import com.jobshunter.dto.gptResponse.ContentItem;
-import com.jobshunter.dto.gptResponse.GptCompletionResponse;
+import com.jobshunter.dto.gptResponse.GptResponse;
 import com.jobshunter.dto.gptResponse.OutputItem;
 import com.jobshunter.model.GptJobScoreRequest;
 import com.jobshunter.model.PromptType;
@@ -79,7 +79,7 @@ public non-sealed class GptJobScoreCalculatorClientImpl implements JobScoreCalcu
   }
 
   private int extractScore(String body) throws JsonProcessingException {
-    GptCompletionResponse response = mapper.readValue(body, GptCompletionResponse.class);
+    GptResponse response = mapper.readValue(body, GptResponse.class);
     if (Collections.isEmpty(response.output())) {
       return 0;
     }

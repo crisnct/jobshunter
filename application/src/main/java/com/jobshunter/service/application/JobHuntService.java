@@ -41,7 +41,7 @@ public class JobHuntService {
   private final ApplicationProperties properties;
 
   public JobHuntResponse searchJobsForUser(SearchJobOrder order) {
-    UserEntity user = order.user();
+    UserEntity user = order.getUser();
     final List<String> existingURLs;
     boolean isEnableOneRealEngine = (properties.getGemini().isEnabled() || properties.getGpt().isEnabled() || properties.getSerpApi().isEnabled());
     if (isEnableOneRealEngine) {

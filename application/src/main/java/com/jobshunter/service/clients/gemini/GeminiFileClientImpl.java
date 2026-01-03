@@ -88,7 +88,6 @@ public non-sealed class GeminiFileClientImpl implements FileClient {
   public void deleteFile(@NotBlank String fileId) {
     restClient.delete()
         .uri(DELETE_URI + "/" + fileId + "?key=" + properties.getGemini().getApiKey())
-        //.attribute("key", properties.getGemini().getApiKey())
         .retrieve()
         .body(Void.class);
   }

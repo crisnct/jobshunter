@@ -44,11 +44,15 @@ public class UserCvEntity {
   @Column(name = "gemini_file_id")
   private String geminiFileId;
 
-  public UserCvEntity(UserEntity user, byte[] cv, String gptFileId, String geminiFileId) {
+  @Column(name = "grok_file_id")
+  private String grokFileId;
+
+  public UserCvEntity(UserEntity user, byte[] cv, String gptFileId, String geminiFileId, String grokFileId) {
     this.user = user;
     this.cv = cv;
     this.gptFileId = gptFileId;
     this.geminiFileId = geminiFileId;
+    this.grokFileId = grokFileId;
   }
 }
 

@@ -2,6 +2,7 @@ package com.jobshunter.model;
 
 public enum EngineType {
   GPT,
+  GROK,
   GEMINI,
   SERP;
 

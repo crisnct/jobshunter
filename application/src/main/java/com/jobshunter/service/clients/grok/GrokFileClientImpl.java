@@ -1,0 +1,102 @@
+package com.jobshunter.service.clients.grok;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.jobshunter.ApplicationProperties;
+import com.jobshunter.dto.grokResponse.FileInfo;
+import com.jobshunter.dto.grokResponse.FileListResponse;
+import com.jobshunter.processor.PackageExpected;
+import com.jobshunter.security.JHHeaders;
+import com.jobshunter.service.clients.FileClient;
+import io.github.resilience4j.bulkhead.annotation.Bulkhead;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import jakarta.validation.constraints.NotBlank;
+import java.io.IOException;
+import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.logging.log4j.util.Strings;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.http.MediaType;
+import org.springframework.stereotype.Component;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.RestClient;
+
+@Slf4j
+@Component("Grok")
+@PackageExpected("com.jobshunter.service.clients.grok")
+@ConditionalOnProperty(name = "grok.enabled", havingValue = "true")
+@RequiredArgsConstructor
+public non-sealed class GrokFileClientImpl implements FileClient {
+
+  private static final String API_URI = "https://api.x.ai/v1/files";
+
+  private final RestClient restClient;
+
+  private final ApplicationProperties properties;
+
+  @Override
+  @CircuitBreaker(name = "grokCircuitBreaker", fallbackMethod = "fallbackUploadFile")
+  @Bulkhead(name = "grokBulkhead")
+  public String uploadFile(Path cvPath) throws IOException {
+    try (var ignored = Files.newInputStream(cvPath)) {
+      MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+      body.add("purpose", "assistants");
+      body.add("file", new FileSystemResource(cvPath));
+
+      UploadFileResponse response = restClient.post()
+          .uri(URI.create(API_URI))
+          .header(JHHeaders.AUTHORIZATION, "Bearer " + properties.getGrok().getApiKey())
+          .contentType(MediaType.MULTIPART_FORM_DATA)
+          .body(body)
+          .retrieve()
+          .body(UploadFileResponse.class);
+
+      if (response == null || Strings.isBlank(response.id())) {
+        throw new RuntimeException("Fail to upload file to GROK Api: " + cvPath);
+      }
+      return response.id();
+    }
+  }
+
+  @Override
+  public void deleteFile(@NotBlank String fileId) {
+    restClient.delete()
+        .uri(API_URI + "/" + fileId)
+        .header(JHHeaders.AUTHORIZATION, "Bearer " + properties.getGrok().getApiKey())
+        .retrieve()
+        .body(Void.class);
+  }
+
+  @Override
+  public void deleteAllFilesExcept(@NotBlank List<String> fileIds) {
+    FileListResponse response = restClient.get()
+        .uri(API_URI)
+        .header(JHHeaders.AUTHORIZATION, "Bearer " + properties.getGrok().getApiKey())
+        .retrieve()
+        .body(FileListResponse.class);
+    if (response != null && response.data() != null) {
+      List<FileInfo> toDelete = response.data().stream().filter(f -> !fileIds.contains(f.id())).toList();
+      for (FileInfo file : toDelete) {
+        deleteFile(file.id());
+      }
+      log.info("Deleted {} files from GROK", toDelete.size());
+    }
+  }
+
+  @SuppressWarnings("unused")
+  private String fallbackUploadFile(Path cvPath, Throwable t) {
+    log.error("{} call short-circuited/bulkheaded: {}", getClass().getSimpleName(), t.getMessage());
+    return "";
+  }
+
+  @JsonIgnoreProperties(ignoreUnknown = true)
+  public record UploadFileResponse(String id) {
+
+  }
+
+}

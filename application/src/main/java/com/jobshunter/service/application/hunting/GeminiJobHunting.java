@@ -24,7 +24,7 @@ public class GeminiJobHunting extends GenericJobHunting<GeminiJobSearchRequest> 
 
   @Override
   public GeminiJobSearchRequest createRequest(SearchJobOrder order, UserPromptEntity prompt) {
-    String userCVBase64 = Base64.getEncoder().encodeToString(order.user().getCv().getCv());
+    String userCVBase64 = Base64.getEncoder().encodeToString(order.getUser().getCv().getCv());
     return new GeminiJobSearchRequest(order, prompt, userCVBase64);
   }
 

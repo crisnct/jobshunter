@@ -69,7 +69,7 @@ public non-sealed class GeminiV1JobSearchImpl implements AiJobsClient<GeminiJobS
           .build();
 
       GeminiGenerateContentResponse response = restClient.post()
-          .uri(URI.create(String.format(GEMINI_URI, request.getOrder().engineSelection().model(),
+          .uri(URI.create(String.format(GEMINI_URI, request.getOrder().getEngineSelection().model(),
               properties.getGemini().getApiKey())))
           .contentType(MediaType.APPLICATION_JSON)
           .body(payload)

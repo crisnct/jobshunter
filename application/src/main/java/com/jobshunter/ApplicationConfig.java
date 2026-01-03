@@ -1,6 +1,7 @@
 package com.jobshunter;
 
 import com.fasterxml.jackson.databind.json.JsonMapper;
+import com.jobshunter.security.JHHeaders;
 import com.jobshunter.service.clients.BrowserSimulator;
 import java.nio.charset.StandardCharsets;
 import lombok.extern.slf4j.Slf4j;
@@ -75,7 +76,7 @@ public class ApplicationConfig {
       restBuilder.requestFactory(requestFactory);
     }
 
-    return restBuilder.defaultHeader("Accept", "application/json").build();
+    return restBuilder.defaultHeader(JHHeaders.ACCEPT, "application/json").build();
   }
 
   @Bean

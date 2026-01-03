@@ -69,7 +69,7 @@ public non-sealed class SerpApiClientImpl implements AiJobsClient<SearchWithSerp
 
     final List<Job> jobs = new ArrayList<>();
     for (SerpApiJobHit serpJob : results.jobs()) {
-      Job job = new Job(-1, serpJob.applyLinks().getFirst(), request.getOrder().engineSelection().model());
+      Job job = new Job(-1, serpJob.applyLinks().getFirst(), request.getOrder().getEngineSelection().model());
       job.setDescription(serpJob.description() + "\n" + serpJob.highlights());
       jobs.add(job);
     }
@@ -103,7 +103,7 @@ public non-sealed class SerpApiClientImpl implements AiJobsClient<SearchWithSerp
     log.info("Searching jobs with Serp Api, query: {}", request.getQuery());
     final URI uri = this.buildUri(request, nextPageToken);
     try {
-      ResponseEntity<String> response = browserSimulator.openPage(uri.toString()).toCompletableFuture().get();
+      ResponseEntity<String> response = browserSimulator.openPageAsync(uri.toString()).toCompletableFuture().get();
       if (response.getStatusCode().is2xxSuccessful()) {
         log.info("SERP API request executed successfully");
       }
@@ -122,7 +122,7 @@ public non-sealed class SerpApiClientImpl implements AiJobsClient<SearchWithSerp
     parameters.add("api_key");
     parameters.add(applicationProperties.getSerpApi().getApiKey());
     parameters.add("engine");
-    parameters.add(request.getOrder().engineSelection().model().toLowerCase());
+    parameters.add(request.getOrder().getEngineSelection().model().toLowerCase());
     parameters.add("q");
     parameters.add(encode(request.getQuery()));
 

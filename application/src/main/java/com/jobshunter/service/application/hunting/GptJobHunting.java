@@ -25,7 +25,7 @@ public class GptJobHunting extends GenericJobHunting<GptJobSearchRequest> {
 
   @Override
   public GptJobSearchRequest createRequest(SearchJobOrder order, UserPromptEntity prompt) {
-    Reasoning reasoning = order.engineSelection().model().startsWith("gpt-5") ? new Reasoning("high") : null;
+    Reasoning reasoning = order.getEngineSelection().model().startsWith("gpt-5") ? new Reasoning("high") : null;
     return new GptJobSearchRequest(order, prompt, reasoning);
   }
 

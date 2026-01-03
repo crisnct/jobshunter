@@ -14,6 +14,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
@@ -46,6 +47,8 @@ public class JobScoring implements JobProcessor {
         Path path = createPathFromByteArray(job.getDescription().getBytes(StandardCharsets.UTF_8),
             "jd-user-" + context.getUser().getUsername(), ".txt");
         try (var uploadedFile = new UploadedFile(fileClient, path)) {
+          log.info("Computing matching score between {} resume and description of job {}",
+              context.getUser().getUsername(), StringUtils.abbreviate(job.getUrl(), 50));
           score = calculator.computeScore(
               new GeminiJobScoreRequest(context.getResumeFileId(), uploadedFile.getFileId()));
         }

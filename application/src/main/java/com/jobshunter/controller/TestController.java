@@ -13,7 +13,7 @@ import com.jobshunter.dto.geminiRequest.GoogleSearchTool;
 import com.jobshunter.dto.geminiResponse.GeminiGenerateContentResponse;
 import com.jobshunter.dto.gptRequest.GptJobsPayload;
 import com.jobshunter.dto.gptRequest.tools.Tools;
-import com.jobshunter.dto.gptResponse.GptCompletionResponse;
+import com.jobshunter.dto.gptResponse.GptResponse;
 import com.jobshunter.dto.serpRequest.SearchWithSerpRequest;
 import com.jobshunter.model.Job;
 import com.jobshunter.model.PromptType;
@@ -138,13 +138,13 @@ public class TestController {
           .build();
       boolean supported = false;
       try {
-        ResponseEntity<GptCompletionResponse> response = restClient.post()
+        ResponseEntity<GptResponse> response = restClient.post()
             .uri(GptV1JobSearchImpl.DEFAULT_URI)
             .header("Authorization", "Bearer " + properties.getGpt().getApiKey())
             .contentType(MediaType.APPLICATION_JSON)
             .body(payload)
             .retrieve()
-            .toEntity(GptCompletionResponse.class);
+            .toEntity(GptResponse.class);
         if (response.getStatusCode().is2xxSuccessful()) {
           supported = true;
         }
@@ -247,7 +247,7 @@ public class TestController {
           .contentType(MediaType.APPLICATION_JSON)
           .body(gptPayload)
           .retrieve()
-          .toEntity(GptCompletionResponse.class);
+          .toEntity(GptResponse.class);
     } catch (Throwable e) {
       e.printStackTrace();
       return ResponseEntity.badRequest().body(e.getMessage());

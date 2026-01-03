@@ -113,8 +113,8 @@ public class UserDataService {
   @Transactional
   public void updateUser(UserEntity user, SearchJobOrder order, List<Job> jobs) {
     @SuppressWarnings("OptionalGetWithoutIsPresent")
-    EngineConfigurationEntity engineConfig = engineRepository.findByEngineAndModel(order.engineSelection().type(), order.engineSelection().model())
-        .get();
+    EngineConfigurationEntity engineConfig
+        = engineRepository.findByEngineAndModel(order.getEngineSelection().type(), order.getEngineSelection().model()).get();
 
     user.setLastJobs(Instant.now());
     jobs.forEach(job -> {
@@ -173,11 +173,12 @@ public class UserDataService {
   }
 
   @Transactional
-  public UserCvEntity replaceUserCv(UserEntity user, byte[] cvContent, String gptFileId) {
+  public UserCvEntity replaceUserCv(UserEntity user, byte[] cvContent, String gptFileId, String grokFileId) {
     UserCvEntity entity = userCvRepository.findByUserId(user.getId())
-        .orElseGet(() -> new UserCvEntity(user, cvContent, gptFileId, null));
+        .orElseGet(() -> new UserCvEntity(user, cvContent, gptFileId, null, grokFileId));
     entity.setCv(cvContent);
     entity.setGptFileId(gptFileId);
+    entity.setGrokFileId(grokFileId);
     return userCvRepository.save(entity);
   }
 

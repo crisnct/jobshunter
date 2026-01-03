@@ -11,6 +11,7 @@ public class ApplicationProperties {
   private JobsHunter jobsHunter = new JobsHunter();
   private Twilio twilio = new Twilio();
   private Gpt gpt = new Gpt();
+  private Grok grok = new Grok();
   private Gemini gemini = new Gemini();
   private SerpApi serpApi = new SerpApi();
 
@@ -49,6 +50,15 @@ public class ApplicationProperties {
   @Data
   @ConfigurationProperties(prefix = "gpt")
   public static class Gpt {
+
+    private String apiKey;
+    private int maxTokens;
+    private boolean enabled;
+  }
+
+  @Data
+  @ConfigurationProperties(prefix = "grok")
+  public static class Grok {
 
     private String apiKey;
     private int maxTokens;

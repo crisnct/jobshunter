@@ -21,17 +21,28 @@ public class HuntingOrchestrator {
 
   private final GptJobHunting gptJobHunting;
 
+  private final GrokJobHunting grokJobHunting;
+
   private final GeminiJobHunting geminiJobHunting;
 
   public CompletableFuture<List<Job>> startHunting(SearchJobOrder order, List<String> existingURLs) {
     List<CompletableFuture<List<Job>>> allFutureJobs = new ArrayList<>();
-    allFutureJobs.add(switch (order.engineSelection().type()) {
-      case GPT -> gptJobHunting.searchJobsAsync(new SearchJobOrder(order.user(), false, order.engineSelection()));
-      case GEMINI -> geminiJobHunting.searchJobsAsync(new SearchJobOrder(order.user(), false, order.engineSelection()));
-      case SERP -> serpJobHunting.searchJobsAsync(new SearchJobOrder(order.user(), false, order.engineSelection()));
-    });
-    if (order.searchCompanies()) {
-      allFutureJobs.add(gptJobHunting.searchJobsByCompaniesAsync(order));
+
+    if (order.isSearchByPrompts()) {
+      allFutureJobs.add(switch (order.getEngineSelection().type()) {
+        case GPT -> gptJobHunting.searchJobsAsync(order);
+        case GROK -> grokJobHunting.searchJobsAsync(order);
+        case GEMINI -> geminiJobHunting.searchJobsAsync(order);
+        case SERP -> serpJobHunting.searchJobsAsync(order);
+      });
+    }
+    if (order.isSearchCompanies()) {
+      allFutureJobs.add(switch (order.getEngineSelection().type()) {
+        case GPT -> gptJobHunting.searchJobsByCompaniesAsync(order);
+        case GROK -> grokJobHunting.searchJobsByCompaniesAsync(order);
+        case GEMINI -> geminiJobHunting.searchJobsByCompaniesAsync(order);
+        case SERP -> serpJobHunting.searchJobsByCompaniesAsync(order);
+      });
     }
 
     return CompletableFuture.allOf(allFutureJobs.toArray(CompletableFuture[]::new))

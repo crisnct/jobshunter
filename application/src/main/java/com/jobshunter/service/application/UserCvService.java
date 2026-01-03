@@ -4,6 +4,7 @@ import com.jobshunter.database.entities.UserCvEntity;
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.service.UserDataService;
 import com.jobshunter.dto.exceptions.ValidationException;
+import com.jobshunter.model.EngineType;
 import com.jobshunter.service.clients.FileClient;
 import jakarta.validation.constraints.NotNull;
 import java.io.IOException;
@@ -11,21 +12,24 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.server.ResponseStatusException;
 
 @Slf4j
 @Service
+@PreAuthorize("isAuthenticated()")
 public class UserCvService {
 
   private static final long MAX_CV_BYTES = 10 * 1024 * 1024;
@@ -45,21 +49,22 @@ public class UserCvService {
 
   private final FileClient geminiFileClient;
 
+  private final FileClient grokFileClient;
+
   public UserCvService(
       UserDataService userDataService,
       @Qualifier("Gpt") FileClient gptFileClient,
-      @Qualifier("Gemini") FileClient geminiFileClient
+      @Qualifier("Gemini") FileClient geminiFileClient,
+      @Qualifier("Grok") FileClient grokFileClient
   ) {
     this.userDataService = userDataService;
     this.gptFileClient = gptFileClient;
     this.geminiFileClient = geminiFileClient;
+    this.grokFileClient = grokFileClient;
   }
 
   @Transactional
-  public String uploadUserCv(String username, MultipartFile file) throws IOException {
-    if (FIRST_TIME.compareAndExchange(false, true)) {
-      cleanupOldCVs();
-    }
+  public Map<EngineType, String> uploadUserCv(String username, MultipartFile file) throws IOException {
     if (!StringUtils.hasText(username)) {
       throw new ValidationException("User not authenticated");
     }
@@ -68,8 +73,8 @@ public class UserCvService {
     }
     validateFile(file);
 
-    UserEntity user = userDataService.getUser(username)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+    //noinspection OptionalGetWithoutIsPresent
+    UserEntity user = userDataService.getUser(username).get();
 
     Path tempFile = Files.createTempFile("cv-" + username + "-", resolveSafeSuffix(file.getOriginalFilename()));
     try {
@@ -81,17 +86,28 @@ public class UserCvService {
 
       byte[] cvContent = Files.readAllBytes(tempFile);
 
+      Map<EngineType, String> result = new LinkedHashMap<>();
       String gptFileId = gptFileClient.uploadFile(tempFile);
       if (!StringUtils.hasText(gptFileId)) {
-        throw new RuntimeException("Failed to upload file to GPT "+tempFile.getFileName());
+        throw new RuntimeException("Failed to upload file to GPT " + tempFile.getFileName());
       }
-      userDataService.replaceUserCv(user, cvContent, gptFileId);
-      return gptFileId;
+      String grokFileId = grokFileClient.uploadFile(tempFile);
+      if (!StringUtils.hasText(grokFileId)) {
+        throw new RuntimeException("Failed to upload file to GROK " + tempFile.getFileName());
+      }
+      result.put(EngineType.GPT, gptFileId);
+      result.put(EngineType.GROK, grokFileId);
+
+      userDataService.replaceUserCv(user, cvContent, gptFileId, grokFileId);
+      return result;
     } finally {
       try {
         Files.deleteIfExists(tempFile);
       } catch (IOException ex) {
         log.warn("Failed to delete temp CV file {}: {}", tempFile, ex.getMessage());
+      }
+      if (FIRST_TIME.compareAndExchange(false, true)) {
+        cleanupOldCVs();
       }
     }
   }
@@ -101,8 +117,7 @@ public class UserCvService {
     if (!StringUtils.hasText(username)) {
       throw new ValidationException("User not authenticated");
     }
-    UserEntity user = userDataService.getUser(username)
-        .orElseThrow(() -> new ValidationException("User not found"));
+    UserEntity user = userDataService.getUser(username).orElseThrow(() -> new ValidationException("User not found"));
     if (user.getCv() != null) {
       deleteRemoteFiles(user.getCv());
       userDataService.deleteUserCv(user);
@@ -163,12 +178,20 @@ public class UserCvService {
   private void cleanupOldCVs() {
     log.info("Cleanup old cv's from gpt which are not used...");
     List<String> gptFileIdUsed = userDataService.getAllUsers().stream()
-        .filter(user -> user.getCv() != null)
+        .filter(user -> user.getCv() != null  && Strings.isNotBlank(user.getCv().getGptFileId()))
         .map(user -> user.getCv().getGptFileId())
         .toList();
     if (!gptFileIdUsed.isEmpty()) {
       gptFileClient.deleteAllFilesExcept(gptFileIdUsed);
-
     }
+
+    List<String> grokFileIdUsed = userDataService.getAllUsers().stream()
+        .filter(user -> user.getCv() != null && Strings.isNotBlank(user.getCv().getGrokFileId()))
+        .map(user -> user.getCv().getGrokFileId())
+        .toList();
+    if (!grokFileIdUsed.isEmpty()) {
+      grokFileClient.deleteAllFilesExcept(grokFileIdUsed);
+    }
+
   }
 }

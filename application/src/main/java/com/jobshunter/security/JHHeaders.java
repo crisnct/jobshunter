@@ -14,4 +14,6 @@ public class JHHeaders extends HttpHeaders {
 
   public static final String X_FORWARDED_PROTO = "X-Forwarded-Proto";
 
+  public static final String X_XSRF_TOKEN = "X-XSRF-TOKEN";
+
 }

@@ -946,4 +946,42 @@
         </createIndex>
     </changeSet>
 
+    <changeSet id="44-insert-grok-models" author="assistant">
+        <comment>Insert GROK model configurations safely, skipping if they already exist</comment>
+        <sql>
+            INSERT INTO engine_configuration (engine, model)
+            SELECT 'GROK', 'grok-2-1212' WHERE NOT EXISTS (SELECT 1 FROM engine_configuration WHERE engine = 'GROK' AND model = 'grok-2-1212');
+            INSERT INTO engine_configuration (engine, model)
+            SELECT 'GROK', 'grok-2-vision-1212' WHERE NOT EXISTS (SELECT 1 FROM engine_configuration WHERE engine = 'GROK' AND model = 'grok-2-vision-1212');
+            INSERT INTO engine_configuration (engine, model)
+            SELECT 'GROK', 'grok-3' WHERE NOT EXISTS (SELECT 1 FROM engine_configuration WHERE engine = 'GROK' AND model = 'grok-3');
+            INSERT INTO engine_configuration (engine, model)
+            SELECT 'GROK', 'grok-3-mini' WHERE NOT EXISTS (SELECT 1 FROM engine_configuration WHERE engine = 'GROK' AND model = 'grok-3-mini');
+            INSERT INTO engine_configuration (engine, model)
+            SELECT 'GROK', 'grok-4-0709' WHERE NOT EXISTS (SELECT 1 FROM engine_configuration WHERE engine = 'GROK' AND model = 'grok-4-0709');
+            INSERT INTO engine_configuration (engine, model)
+            SELECT 'GROK', 'grok-4-1-fast-non-reasoning' WHERE NOT EXISTS (SELECT 1 FROM engine_configuration WHERE engine = 'GROK' AND model = 'grok-4-1-fast-non-reasoning');
+            INSERT INTO engine_configuration (engine, model)
+            SELECT 'GROK', 'grok-4-1-fast-reasoning' WHERE NOT EXISTS (SELECT 1 FROM engine_configuration WHERE engine = 'GROK' AND model = 'grok-4-1-fast-reasoning');
+            INSERT INTO engine_configuration (engine, model)
+            SELECT 'GROK', 'grok-4-fast-non-reasoning' WHERE NOT EXISTS (SELECT 1 FROM engine_configuration WHERE engine = 'GROK' AND model = 'grok-4-fast-non-reasoning');
+            INSERT INTO engine_configuration (engine, model)
+            SELECT 'GROK', 'grok-4-fast-reasoning' WHERE NOT EXISTS (SELECT 1 FROM engine_configuration WHERE engine = 'GROK' AND model = 'grok-4-fast-reasoning');
+            INSERT INTO engine_configuration (engine, model)
+            SELECT 'GROK', 'grok-code-fast-1' WHERE NOT EXISTS (SELECT 1 FROM engine_configuration WHERE engine = 'GROK' AND model = 'grok-code-fast-1');
+            INSERT INTO engine_configuration (engine, model)
+            SELECT 'GROK', 'grok-2-image-1212' WHERE NOT EXISTS (SELECT 1 FROM engine_configuration WHERE engine = 'GROK' AND model = 'grok-2-image-1212');
+        </sql>
+    </changeSet>
+
+    <changeSet id="45-add-grok-file-id-to-user-cv" author="assistant">
+        <comment>Add grok_file_id column to user_cv table to store GROK file ID</comment>
+        <addColumn tableName="user_cv">
+            <column name="grok_file_id" type="VARCHAR(255)"/>
+        </addColumn>
+        <createIndex tableName="user_cv" indexName="idx_user_cv_grok_file_id">
+            <column name="grok_file_id"/>
+        </createIndex>
+    </changeSet>
+
 </databaseChangeLog>

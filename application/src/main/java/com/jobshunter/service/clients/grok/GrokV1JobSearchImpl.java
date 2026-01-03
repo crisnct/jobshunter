@@ -1,0 +1,249 @@
+package com.jobshunter.service.clients.grok;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.json.JsonMapper;
+import com.jobshunter.ApplicationProperties;
+import com.jobshunter.database.entities.UserEntity;
+import com.jobshunter.database.entities.UserJobRoleEntity;
+import com.jobshunter.dto.CompanyDto;
+import com.jobshunter.dto.CompanyDtoList;
+import com.jobshunter.dto.grokRequest.GrokJobsPayload;
+import com.jobshunter.dto.grokRequest.GrokJobsPayload.GrokJobsPayloadBuilder;
+import com.jobshunter.dto.grokRequest.tools.Tools;
+import com.jobshunter.dto.grokResponse.GrokResponse;
+import com.jobshunter.dto.grokResponse.OutputItem;
+import com.jobshunter.model.AiSchemaType;
+import com.jobshunter.model.GrokJobSearchRequest;
+import com.jobshunter.model.Job;
+import com.jobshunter.model.PromptType;
+import com.jobshunter.processor.PackageExpected;
+import com.jobshunter.security.JHHeaders;
+import com.jobshunter.service.TemplateRenderer;
+import com.jobshunter.service.application.UrlExtractor;
+import com.jobshunter.service.clients.AiJobsClient;
+import io.github.resilience4j.bulkhead.annotation.Bulkhead;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
+import io.jsonwebtoken.lang.Collections;
+import jakarta.validation.constraints.NotBlank;
+import java.net.URI;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.http.MediaType;
+import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestClient;
+
+@Slf4j
+@Component("JobsClientGROK")
+@PackageExpected("com.jobshunter.service.clients.grok")
+@ConditionalOnProperty(name = "grok.enabled", havingValue = "true")
+@AllArgsConstructor
+public non-sealed class GrokV1JobSearchImpl implements AiJobsClient<GrokJobSearchRequest, List<Job>> {
+
+  public static final URI DEFAULT_URI = URI.create("https://api.x.ai/v1/responses");
+
+  private static final Pattern GROK_VERSION_PATTERN = Pattern.compile("^[a-zA-Z]+-(\\d+)-.*");
+
+  private final ApplicationProperties properties;
+
+  private final RestClient restClient;
+
+  private final JsonMapper mapper;
+
+  private final UrlExtractor urlExtractor;
+
+  private final TemplateRenderer templateRenderer;
+
+  @Override
+  @CircuitBreaker(name = "grokCircuitBreaker", fallbackMethod = "fallbackSearch")
+  @RateLimiter(name = "grokLimiter")
+  @Bulkhead(name = "grokBulkhead")
+  public List<Job> searchJobs(GrokJobSearchRequest request) {
+    try {
+      GrokJobsPayloadBuilder payloadBuilder = GrokJobsPayload.builder()
+          .model(request.getOrder().getEngineSelection().model())
+          //.previous_response_id(prevID)
+          .reasoning(request.getReasoning())
+          .max_output_tokens(properties.getGrok().getMaxTokens())
+          .addSystemPrompt(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_JOB_SEARCH));
+
+      if (getVersion(request.getOrder().getEngineSelection().model()) > 3) {
+        payloadBuilder.addTools(Tools.builder().setDeepSearch().build());
+        payloadBuilder.addUserPrompt(request.getPrompt().getPrompt(), request.getUser().getCv().getGrokFileId());
+      } else {
+        payloadBuilder.addUserPrompt(request.getPrompt().getPrompt());
+      }
+
+      GrokJobsPayload payload = payloadBuilder.build();
+      GrokResponse response = restClient.post()
+          .uri(DEFAULT_URI)
+          .header("Authorization", "Bearer " + properties.getGrok().getApiKey())
+          .contentType(MediaType.APPLICATION_JSON)
+          .body(payload)
+          .retrieve()
+          .body(GrokResponse.class);
+
+      //noinspection DataFlowIssue
+      return extractJobs(response);
+    } catch (Exception e) {
+      log.error("GROK API call failed", e);
+      return List.of();
+    }
+  }
+
+  private int getVersion(@NotBlank String model) {
+    try {
+      Matcher matcher = GROK_VERSION_PATTERN.matcher(model);
+      if (!matcher.matches()) {
+        throw new IllegalArgumentException("Invalid format: " + model);
+      }
+      return Integer.parseInt(matcher.group(1));
+    } catch (Exception e) {
+      log.error("Error parsing model version: {}", model, e);
+    }
+    return 2;
+  }
+
+  @Override
+  @CircuitBreaker(name = "grokCircuitBreaker", fallbackMethod = "fallbackSearchCompanies")
+  @RateLimiter(name = "grokLimiter")
+  @Bulkhead(name = "grokBulkhead")
+  public List<CompanyDto> searchCompanies(GrokJobSearchRequest request) {
+    try {
+      UserEntity user = request.getUser();
+      GrokJobsPayload payload = GrokJobsPayload.builder()
+          .model(request.getOrder().getEngineSelection().model())
+          .max_output_tokens(properties.getGrok().getMaxTokens())
+          .addSystemPrompt(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_COMPANY_SEARCH,
+              "city", user.getCity(),
+              "country", user.getCountry(),
+              "timestamp", String.valueOf(Instant.now())
+          ))
+          .addUserPrompt(templateRenderer.getPrompt(PromptType.USER_PROMPT_COMPANIES,
+              Map.of(
+                  "domain", user.getJobDomain(),
+                  "city", user.getCity(),
+                  "country", user.getCountry(),
+                  "positions", user.getJobRoles()
+              )))
+          .setResponseSchema(templateRenderer.getSchema(AiSchemaType.GROK_JSON_COMPANY_SCHEMA_RESPONSE))
+          .build();
+
+      GrokResponse response = restClient.post()
+          .uri(DEFAULT_URI)
+          .header(JHHeaders.AUTHORIZATION, "Bearer " + properties.getGrok().getApiKey())
+          .contentType(MediaType.APPLICATION_JSON)
+          .body(payload)
+          .retrieve()
+          .body(GrokResponse.class);
+
+      //noinspection DataFlowIssue
+      return extractCompanies(response);
+    } catch (Exception e) {
+      log.error("GROK job API call failed", e);
+      return List.of();
+    }
+  }
+
+  @Override
+  @CircuitBreaker(name = "grokCircuitBreaker", fallbackMethod = "fallbackSearchJobsFromCompanies")
+  @RateLimiter(name = "grokLimiter")
+  @Bulkhead(name = "grokBulkhead")
+  public List<Job> searchJobsFromCompanies(GrokJobSearchRequest request, List<CompanyDto> group) {
+    String userPrompt = templateRenderer.getPrompt(PromptType.USER_PROMPT_JOB,
+        "positions", request.getUser().getJobRoles().stream().map(UserJobRoleEntity::getJobRole).toList().toString(),
+        "companies", StringUtils.join(group.stream().map(CompanyDto::companyName).toList())
+    );
+    GrokJobsPayload payload = GrokJobsPayload.builder()
+        .model(request.getOrder().getEngineSelection().model())
+        .max_output_tokens(properties.getGrok().getMaxTokens())
+        .reasoning(request.getReasoning())
+        .addTools(Tools.builder().setDeepSearch().build())
+        .addSystemPrompt(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_JOB_SEARCH))
+        .addUserPrompt(userPrompt)
+        .build();
+
+    GrokResponse response = restClient.post()
+        .uri(DEFAULT_URI)
+        .header("Authorization", "Bearer " + properties.getGrok().getApiKey())
+        .contentType(MediaType.APPLICATION_JSON)
+        .body(payload)
+        .retrieve()
+        .body(GrokResponse.class);
+    //noinspection DataFlowIssue
+    return extractJobs(response);
+  }
+
+  @SuppressWarnings("unused")
+  private List<Job> fallbackSearchJobsFromCompanies(GrokJobSearchRequest request, List<CompanyDto> group, Throwable t) {
+    log.error("{} call short-circuited/bulkheaded: {}", getClass().getSimpleName(), t.getMessage());
+    return List.of();
+  }
+
+  @SuppressWarnings("unused")
+  private List<Job> fallbackSearch(GrokJobSearchRequest request, Throwable t) {
+    log.error("{} call short-circuited/bulkheaded: {}", getClass().getSimpleName(), t.getMessage());
+    return List.of();
+  }
+
+  @SuppressWarnings("unused")
+  private List<CompanyDto> fallbackSearchCompanies(GrokJobSearchRequest request, Throwable t) {
+    log.error("{} call short-circuited/bulkheaded: {}", getClass().getSimpleName(), t.getMessage());
+    return List.of();
+  }
+
+  protected List<Job> extractJobs(GrokResponse response) {
+    if (Collections.isEmpty(response.output())) {
+      return List.of();
+    }
+    Optional<OutputItem> item = response.output().stream()
+        .filter(p -> Objects.equals(p.type(), "message") && !p.content().isEmpty())
+        .findAny();
+    if (item.isPresent()) {
+      final List<Job> jobs = new ArrayList<>();
+      item.get().content().stream()
+          .filter(c -> c.text().length() > 2)
+          .filter(c -> Objects.equals("output_text", c.type()))
+          .forEach(o -> jobs.addAll(urlExtractor.parseJobs(o.text())));
+      return jobs;
+    } else {
+      return java.util.Collections.emptyList();
+    }
+  }
+
+  protected List<CompanyDto> extractCompanies(GrokResponse response) {
+    if (Collections.isEmpty(response.output())) {
+      return List.of();
+    }
+    Optional<OutputItem> item = response.output().stream()
+        .filter(p -> Objects.equals(p.type(), "message") && !p.content().isEmpty())
+        .findAny();
+    if (item.isPresent()) {
+      List<CompanyDto> companiesAll = new ArrayList<>();
+      item.get().content().stream()
+          .filter(c -> c.text().length() > 2)
+          .filter(c -> Objects.equals("output_text", c.type()))
+          .forEach(o -> {
+            try {
+              CompanyDtoList companies = mapper.readValue(o.text(), CompanyDtoList.class);
+              companiesAll.addAll(companies.results());
+            } catch (JsonProcessingException e) {
+              throw new RuntimeException(e);
+            }
+          });
+      return companiesAll;
+    } else {
+      return List.of();
+    }
+  }
+}

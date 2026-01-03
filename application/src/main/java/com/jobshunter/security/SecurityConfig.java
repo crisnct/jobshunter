@@ -11,6 +11,7 @@ import com.jobshunter.security.rateLimitBucket4J.InMemoryRateLimiter;
 import com.jobshunter.security.rateLimitBucket4J.ViolationRegistry;
 import com.jobshunter.service.application.authentication.JwtService;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -40,6 +41,10 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
+  private static final int MAX_AGE_HSTS = (int)TimeUnit.DAYS.toSeconds(30);
+
+  public static final long MAX_AGE_CORS = (int)TimeUnit.HOURS.toSeconds(1);
+
   private final UserDataService userDataService;
 
   private final JwtService jwtService;
@@ -49,7 +54,7 @@ public class SecurityConfig {
     CookieCsrfTokenRepository repository = CookieCsrfTokenRepository.withHttpOnlyFalse();
     repository.setCookiePath("/");
     repository.setCookieName("XSRF-TOKEN");
-    repository.setHeaderName("X-XSRF-TOKEN");
+    repository.setHeaderName(JHHeaders.X_XSRF_TOKEN);
     repository.setParameterName("_csrf");
     repository.setCookieCustomizer(cookie -> {
       cookie.path("/");
@@ -91,7 +96,7 @@ public class SecurityConfig {
             .anyRequest().authenticated()
         )
         .headers(h ->
-            h.httpStrictTransportSecurity(hsts -> hsts.includeSubDomains(true).maxAgeInSeconds(31536000))
+            h.httpStrictTransportSecurity(hsts -> hsts.includeSubDomains(true).maxAgeInSeconds(MAX_AGE_HSTS))
         )
         .authenticationProvider(daoAuthenticationProvider(userDetailsService, passwordEncoder))
         .addFilterBefore(rateLimitingFilter, UsernamePasswordAuthenticationFilter.class)
@@ -109,7 +114,7 @@ public class SecurityConfig {
     config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
     config.setAllowedHeaders(List.of("*"));
     config.setAllowCredentials(true);
-    config.setMaxAge(3600L);
+    config.setMaxAge(MAX_AGE_CORS);
 
     UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
     source.registerCorsConfiguration("/**", config);

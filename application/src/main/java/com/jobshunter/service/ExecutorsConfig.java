@@ -15,6 +15,13 @@ public class ExecutorsConfig {
     return executor;
   }
 
+  @Bean(name = "grokSearchExecutor")
+  public ThreadPoolExecutor grokSearchExecutor() {
+    ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(3);
+    executor.setThreadFactory(Thread.ofVirtual().name("grok-search-", 0).factory());
+    return executor;
+  }
+
   @Bean(name = "geminiSearchExecutor")
   public ThreadPoolExecutor geminiSearchExecutor() {
     ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(3);
@@ -31,7 +38,7 @@ public class ExecutorsConfig {
 
   @Bean(name = "miscellaneousExecutor")
   public ThreadPoolExecutor miscellaneousExecutor() {
-    ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(10);
+    ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(20);
     executor.setThreadFactory(Thread.ofVirtual().name("miscellaneous-", 0).factory());
     return executor;
   }

@@ -21,7 +21,7 @@ public class AIJobSearchRequest {
   private UserPromptEntity prompt;
 
   public UserEntity getUser() {
-    return order.user();
+    return order.getUser();
   }
 
 }

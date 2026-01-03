@@ -15,6 +15,7 @@ import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.springframework.data.util.Pair;
@@ -73,10 +74,10 @@ public class JobsValidator implements JobProcessor {
   }
 
   private Pair<Boolean, String> isValidJob(String jobURL) {
-    log.info("Validating URL: {}", jobURL);
+    log.info("Validating URL: {}", StringUtils.abbreviate(jobURL, 50));
     URI uri = toSafeHttpUri(jobURL);
     if (uri == null) {
-      log.error("Skipping URL {} because it is not a permitted HTTP/HTTPS target", jobURL);
+      log.error("Skipping URL because it is not a permitted HTTP/HTTPS target");
       return Pair.of(false, "");
     }
     String domain = uri.getHost();
@@ -87,20 +88,20 @@ public class JobsValidator implements JobProcessor {
       log.error("URL is blacklisted {}", jobURL);
       return Pair.of(false, "");
     }
-    log.info("Getting body from URL {}", jobURL);
+    log.info("Getting body from URL");
     try {
-      ResponseEntity<String> response = browserSimulator.openPage(uri.toString()).toCompletableFuture().get();
+      ResponseEntity<String> response = browserSimulator.openPageAsync(uri.toString()).toCompletableFuture().get();
       String body = response.getBody();
       String html = body.toLowerCase();
       boolean isExpired = expiredJobsPatterns.stream().anyMatch(pattern -> pattern.matcher(html).find());
       if (isExpired) {
-        log.warn("Invalid URL: {}", jobURL);
+        log.warn("Invalid URL");
       } else {
-        log.info("URL is valid: {}", jobURL);
+        log.info("URL is valid");
       }
       return Pair.of(!isExpired, isExpired ? "" : body);
     } catch (Throwable e) {
-      log.error("Invalid URL: {}-{}", jobURL,e.getMessage());
+      log.error("Invalid URL. Unexpected exception: " + e.getMessage());
       return Pair.of(false, "");
     }
   }

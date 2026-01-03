@@ -9,7 +9,7 @@ import com.jobshunter.dto.CompanyDto;
 import com.jobshunter.dto.CompanyDtoList;
 import com.jobshunter.dto.gptRequest.GptJobsPayload;
 import com.jobshunter.dto.gptRequest.tools.Tools;
-import com.jobshunter.dto.gptResponse.GptCompletionResponse;
+import com.jobshunter.dto.gptResponse.GptResponse;
 import com.jobshunter.dto.gptResponse.OutputItem;
 import com.jobshunter.model.AiSchemaType;
 import com.jobshunter.model.GptJobSearchRequest;
@@ -64,7 +64,7 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient<GptJobSearchR
   public List<Job> searchJobs(GptJobSearchRequest request) {
     try {
       GptJobsPayload payload = GptJobsPayload.builder()
-          .model(request.getOrder().engineSelection().model())
+          .model(request.getOrder().getEngineSelection().model())
           .reasoning(request.getReasoning())
           .max_output_tokens(properties.getGpt().getMaxTokens())
           .addTools(Tools.builder().setDeepSearch().build())
@@ -72,13 +72,13 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient<GptJobSearchR
           .addUserPrompt(request.getPrompt().getPrompt(), request.getUser().getCv().getGptFileId())
           .build();
 
-      GptCompletionResponse response = restClient.post()
+      GptResponse response = restClient.post()
           .uri(DEFAULT_URI)
           .header("Authorization", "Bearer " + properties.getGpt().getApiKey())
           .contentType(MediaType.APPLICATION_JSON)
           .body(payload)
           .retrieve()
-          .body(GptCompletionResponse.class);
+          .body(GptResponse.class);
 
       //noinspection DataFlowIssue
       return extractJobs(response);
@@ -96,7 +96,7 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient<GptJobSearchR
     try {
       UserEntity user = request.getUser();
       GptJobsPayload payload = GptJobsPayload.builder()
-          .model(request.getOrder().engineSelection().model())
+          .model(request.getOrder().getEngineSelection().model())
           .max_output_tokens(properties.getGpt().getMaxTokens())
           .addSystemPrompt(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_COMPANY_SEARCH,
               "city", user.getCity(),
@@ -113,13 +113,13 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient<GptJobSearchR
           .setResponseSchema(templateRenderer.getSchema(AiSchemaType.GPT_JSON_COMPANY_SCHEMA_RESPONSE))
           .build();
 
-      GptCompletionResponse response = restClient.post()
+      GptResponse response = restClient.post()
           .uri(DEFAULT_URI)
           .header("Authorization", "Bearer " + properties.getGpt().getApiKey())
           .contentType(MediaType.APPLICATION_JSON)
           .body(payload)
           .retrieve()
-          .body(GptCompletionResponse.class);
+          .body(GptResponse.class);
 
       //noinspection DataFlowIssue
       return extractCompanies(response);
@@ -139,7 +139,7 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient<GptJobSearchR
         "companies", StringUtils.join(group.stream().map(CompanyDto::companyName).toList())
     );
     GptJobsPayload payload = GptJobsPayload.builder()
-        .model(request.getOrder().engineSelection().model())
+        .model(request.getOrder().getEngineSelection().model())
         .max_output_tokens(properties.getGpt().getMaxTokens())
         .reasoning(request.getReasoning())
         .addTools(Tools.builder().setDeepSearch().build())
@@ -147,13 +147,13 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient<GptJobSearchR
         .addUserPrompt(userPrompt)
         .build();
 
-    GptCompletionResponse response = restClient.post()
+    GptResponse response = restClient.post()
         .uri(DEFAULT_URI)
         .header("Authorization", "Bearer " + properties.getGpt().getApiKey())
         .contentType(MediaType.APPLICATION_JSON)
         .body(payload)
         .retrieve()
-        .body(GptCompletionResponse.class);
+        .body(GptResponse.class);
     //noinspection DataFlowIssue
     return extractJobs(response);
   }
@@ -176,7 +176,7 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient<GptJobSearchR
     return List.of();
   }
 
-  protected List<Job> extractJobs(GptCompletionResponse response) {
+  protected List<Job> extractJobs(GptResponse response) {
     if (Collections.isEmpty(response.output())) {
       return List.of();
     }
@@ -195,7 +195,7 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient<GptJobSearchR
     }
   }
 
-  protected List<CompanyDto> extractCompanies(GptCompletionResponse response) {
+  protected List<CompanyDto> extractCompanies(GptResponse response) {
     if (Collections.isEmpty(response.output())) {
       return List.of();
     }

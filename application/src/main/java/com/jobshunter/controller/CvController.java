@@ -1,5 +1,6 @@
 package com.jobshunter.controller;
 
+import com.jobshunter.model.EngineType;
 import com.jobshunter.service.application.UserCvService;
 import jakarta.validation.constraints.NotNull;
 import java.io.IOException;
@@ -29,8 +30,8 @@ public class CvController {
       @NotNull MultipartFile file,
       Authentication authentication
   ) throws IOException {
-    String fileId = userCvService.uploadUserCv(authentication.getName(), file);
-    return ResponseEntity.ok(Map.of("message", "CV uploaded to GPT successfully", "fileId", fileId));
+    Map<EngineType, String> result = userCvService.uploadUserCv(authentication.getName(), file);
+    return ResponseEntity.ok(result);
   }
 
   @DeleteMapping
