@@ -1,6 +1,10 @@
-package com.jobshunter.security.rateLimitBucket4J;
+package com.jobshunter.security.filters;
 
 import com.jobshunter.ApplicationProperties;
+import com.jobshunter.security.ClientIpResolver;
+import com.jobshunter.security.rateLimitBucket4J.BlockRegistry;
+import com.jobshunter.security.rateLimitBucket4J.InMemoryRateLimiter;
+import com.jobshunter.security.rateLimitBucket4J.ViolationRegistry;
 import io.github.bucket4j.Bucket;
 import io.github.bucket4j.ConsumptionProbe;
 import jakarta.servlet.FilterChain;
@@ -11,10 +15,8 @@ import java.io.IOException;
 import java.time.Duration;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-@Component
 @RequiredArgsConstructor
 public class RateLimitingFilter extends OncePerRequestFilter {
 
@@ -33,7 +35,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
       HttpServletResponse response,
       FilterChain filterChain) throws ServletException, IOException {
 
-    String clientKey = response.getHeader("JHIPHEADER");
+    String clientKey = ClientIpResolver.resolveClientIp(request);
 
     // 🔴 1. Check hard blocks
     if (blockRegistry.isBlocked(clientKey)) {
@@ -76,6 +78,18 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     response.getWriter().write(
         "{\"message\":\"Rate LLimit Exceeded. Access temporarily restricted.\"}"
     );
+  }
+
+  @Override
+  protected boolean shouldNotFilter(HttpServletRequest request) {
+    String path = request.getRequestURI();
+    return path.startsWith("/css/")
+        || path.startsWith("/js/")
+        || path.startsWith("/images/")
+        || path.startsWith("/swagger")
+        || path.startsWith("/v3/api-docs")
+        || path.startsWith("/api/auth")
+        || "OPTIONS".equalsIgnoreCase(request.getMethod());
   }
 
 }

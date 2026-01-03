@@ -1,4 +1,4 @@
-package com.jobshunter.security;
+package com.jobshunter.security.filters;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

@@ -887,4 +887,63 @@
         </createIndex>
     </changeSet>
 
+    <changeSet id="42-create-user-devices-table" author="assistant">
+        <comment>Create user_devices table to track user devices and sessions</comment>
+        <createTable tableName="user_devices">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false" primaryKeyName="pk_user_devices"/>
+            </column>
+            <column name="user_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="device_id" type="CHAR(36)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="user_agent" type="VARCHAR(1024)"/>
+            <column name="ip_address" type="VARCHAR(45)"/>
+            <column name="status" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last_seen_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addForeignKeyConstraint constraintName="fk_user_devices_user"
+                                 baseTableName="user_devices"
+                                 baseColumnNames="user_id"
+                                 referencedTableName="users"
+                                 referencedColumnNames="id"
+                                 onDelete="CASCADE"/>
+        <createIndex tableName="user_devices" indexName="idx_user_devices_user">
+            <column name="user_id"/>
+        </createIndex>
+        <createIndex tableName="user_devices" indexName="idx_user_devices_device_id">
+            <column name="device_id"/>
+        </createIndex>
+        <createIndex tableName="user_devices" indexName="idx_user_devices_status">
+            <column name="status"/>
+        </createIndex>
+        <!-- Note: MySQL doesn't support partial unique indexes with WHERE clause -->
+        <!-- The constraint "only one ACTIVE device per user" must be enforced at application level -->
+        <!-- Alternative: Create a unique index on user_id only if you want only one device per user total -->
+        <rollback>
+            <dropTable tableName="user_devices"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="43-add-status-to-user-devices" author="assistant">
+        <comment>Add status column to user_devices table if it doesn't exist (ACTIVE/REVOKED/EXPIRED)</comment>
+        <addColumn tableName="user_devices">
+            <column name="status" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+        <createIndex tableName="user_devices" indexName="idx_user_devices_status">
+            <column name="status"/>
+        </createIndex>
+    </changeSet>
+
 </databaseChangeLog>

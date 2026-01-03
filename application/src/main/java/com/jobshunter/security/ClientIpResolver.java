@@ -19,12 +19,12 @@ public final class ClientIpResolver {
       return ip;
     }
 
-    ip = firstFromXForwardedFor(request.getHeader("X-Forwarded-For"));
+    ip = firstFromXForwardedFor(request.getHeader(JHHeaders.X_FORWARDED_FOR));
     if (isValidIp(ip)) {
       return ip;
     }
 
-    ip = request.getHeader("X-Real-IP");
+    ip = request.getHeader(JHHeaders.X_REAL_IP);
     if (isValidIp(ip)) {
       return ip;
     }
@@ -35,7 +35,7 @@ public final class ClientIpResolver {
   private static String fromForwardedHeader(HttpServletRequest request) {
     // Exemplu: Forwarded: for=203.0.113.60;proto=https;by=203.0.113.43
     // sau:     Forwarded: for="[2001:db8:cafe::17]:4711"
-    String forwarded = request.getHeader("Forwarded");
+    String forwarded = request.getHeader(JHHeaders.FORWARDED);
     if (forwarded == null || forwarded.isBlank()) {
       return null;
     }

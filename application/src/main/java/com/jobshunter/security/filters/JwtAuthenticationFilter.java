@@ -1,6 +1,8 @@
-package com.jobshunter.service.application.authentication;
+package com.jobshunter.security.filters;
 
 import com.jobshunter.database.entities.UserEntity;
+import com.jobshunter.security.JHHeaders;
+import com.jobshunter.service.application.authentication.JwtService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -31,7 +33,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
       HttpServletResponse response,
       FilterChain filterChain
   ) throws ServletException, IOException {
-    String authHeader = request.getHeader("Authorization");
+    String authHeader = request.getHeader(JHHeaders.AUTHORIZATION);
     if (authHeader == null || !authHeader.startsWith(BEARER_PREFIX)) {
       filterChain.doFilter(request, response);
       return;

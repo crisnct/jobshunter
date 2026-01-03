@@ -1,18 +1,13 @@
-package com.jobshunter.security;
+package com.jobshunter.security.filters;
 
-import jakarta.servlet.Filter;
+import com.jobshunter.security.ClientIpResolver;
+import com.jobshunter.security.JHHeaders;
 import jakarta.servlet.FilterChain;
-import jakarta.servlet.FilterConfig;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.ServletRequest;
-import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import org.apache.logging.log4j.util.Strings;
-import org.springframework.core.Ordered;
-import org.springframework.core.annotation.Order;
-import org.springframework.stereotype.Component;
+import org.springframework.web.filter.OncePerRequestFilter;
 
 /**
  * Security headers filter to protect against common web vulnerabilities. Implements comprehensive security headers to prevent:
@@ -24,31 +19,18 @@ import org.springframework.stereotype.Component;
  * - Information disclosure (X-Permitted-Cross-Domain-Policies)
  * - Referrer information leakage (Referrer-Policy)
  *}
- *
  * @author Security Team
  */
-@Component
-@Order(Ordered.HIGHEST_PRECEDENCE)
-public class SecurityHeadersFilter implements Filter {
-
-  public static final String IP_HEADER = "JHIPHEADER";
+public class SecurityHeadersFilter extends OncePerRequestFilter {
 
   @Override
-  public void init(FilterConfig filterConfig) throws ServletException {
-    // No initialization needed
-  }
-
-  @Override
-  public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
-      throws IOException, ServletException {
-
-    HttpServletRequest httpRequest = (HttpServletRequest) request;
-    HttpServletResponse httpResponse = (HttpServletResponse) response;
+  protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+      throws ServletException, IOException {
 
     // Add comprehensive security headers
-    addSecurityHeaders(httpRequest, httpResponse);
+    addSecurityHeaders(request, response);
 
-    chain.doFilter(request, response);
+    filterChain.doFilter(request, response);
   }
 
   @Override
@@ -64,7 +46,7 @@ public class SecurityHeadersFilter implements Filter {
    */
   private void addSecurityHeaders(HttpServletRequest request, HttpServletResponse response) {
 
-    response.setHeader(IP_HEADER, ClientIpResolver.resolveClientIp(request));
+    response.setHeader(JHHeaders.IP_HEADER, ClientIpResolver.resolveClientIp(request));
 
     // 1. X-Frame-Options: Prevent clickjacking attacks
     response.setHeader("X-Frame-Options", "DENY");
@@ -76,7 +58,7 @@ public class SecurityHeadersFilter implements Filter {
     response.setHeader("X-XSS-Protection", "1; mode=block");
 
     // 4. Strict-Transport-Security: Force HTTPS (only for HTTPS requests)
-    if (request.isSecure() || "https".equalsIgnoreCase(request.getHeader("X-Forwarded-Proto"))) {
+    if (request.isSecure() || "https".equalsIgnoreCase(request.getHeader(JHHeaders.X_FORWARDED_PROTO))) {
       response.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains; preload");
     }
 
@@ -147,15 +129,6 @@ public class SecurityHeadersFilter implements Filter {
     csp.append("; upgrade-insecure-requests");
 
     return csp.toString();
-  }
-
-  private String resolveClientKey(HttpServletRequest request) {
-    String xff = request.getHeader("X-Forwarded-For");
-    if (Strings.isNotBlank(xff) ) {
-      return xff.split(",")[0].trim();
-    } else {
-      return request.getRemoteAddr();
-    }
   }
 
 }

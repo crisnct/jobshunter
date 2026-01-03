@@ -95,7 +95,7 @@ spring:
 security:
   jwt:
     secret: ${JWT_SECRET:change-me-dev-secret-please-keep-long}
-    expiration-ms: ${JWT_EXPIRATION_MS:86400000}
+    expiration-ms: ${JWT_EXPIRATION_MS:2592000000} # 30 days
 
 logging:
   level:

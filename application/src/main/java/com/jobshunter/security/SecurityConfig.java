@@ -1,7 +1,14 @@
 package com.jobshunter.security;
 
+import com.jobshunter.ApplicationProperties;
 import com.jobshunter.database.service.UserDataService;
-import com.jobshunter.service.application.authentication.JwtAuthenticationFilter;
+import com.jobshunter.security.filters.DeviceIdFilter;
+import com.jobshunter.security.filters.JwtAuthenticationFilter;
+import com.jobshunter.security.filters.RateLimitingFilter;
+import com.jobshunter.security.filters.SecurityHeadersFilter;
+import com.jobshunter.security.rateLimitBucket4J.BlockRegistry;
+import com.jobshunter.security.rateLimitBucket4J.InMemoryRateLimiter;
+import com.jobshunter.security.rateLimitBucket4J.ViolationRegistry;
 import com.jobshunter.service.application.authentication.JwtService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +27,6 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.AnonymousAuthenticationFilter;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
@@ -58,6 +64,9 @@ public class SecurityConfig {
       HttpSecurity http,
       JwtAuthenticationFilter jwtAuthenticationFilter,
       SecurityHeadersFilter securityHeadersFilter,
+      DeviceIdFilter deviceIdFilter,
+      RateLimitingFilter rateLimitingFilter,
+      RestAuthenticationEntryPoint restAuthenticationEntryPoint,
       CookieCsrfTokenRepository csrfTokenRepository,
       UserDetailsService userDetailsService,
       PasswordEncoder passwordEncoder
@@ -81,14 +90,16 @@ public class SecurityConfig {
             .requestMatchers("/actuator/health", "/actuator/info").permitAll()
             .anyRequest().authenticated()
         )
-        .headers(h -> h
-            .httpStrictTransportSecurity(hsts ->
-                hsts.includeSubDomains(true).maxAgeInSeconds(31536000)
-            )
+        .headers(h ->
+            h.httpStrictTransportSecurity(hsts -> hsts.includeSubDomains(true).maxAgeInSeconds(31536000))
         )
         .authenticationProvider(daoAuthenticationProvider(userDetailsService, passwordEncoder))
-        .addFilterBefore(securityHeadersFilter, AnonymousAuthenticationFilter.class)
-        .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+        .addFilterBefore(rateLimitingFilter, UsernamePasswordAuthenticationFilter.class)
+        .addFilterBefore(securityHeadersFilter, UsernamePasswordAuthenticationFilter.class)
+        .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+        .addFilterAfter(deviceIdFilter, UsernamePasswordAuthenticationFilter.class)
+
+        .exceptionHandling(ex -> ex.authenticationEntryPoint(restAuthenticationEntryPoint));
     return http.build();
   }
 
@@ -116,8 +127,27 @@ public class SecurityConfig {
     return new JwtAuthenticationFilter(jwtService, userDetailsService);
   }
 
-  private AuthenticationProvider daoAuthenticationProvider(
-      UserDetailsService userDetailsService, PasswordEncoder passwordEncoder) {
+  @Bean
+  public SecurityHeadersFilter createSecurityHeadersFilter() {
+    return new SecurityHeadersFilter();
+  }
+
+  @Bean
+  public RateLimitingFilter rateLimitingFilter(
+      InMemoryRateLimiter rateLimiter,
+      ViolationRegistry violationRegistry,
+      BlockRegistry blockRegistry,
+      ApplicationProperties properties
+  ) {
+    return new RateLimitingFilter(rateLimiter, violationRegistry, blockRegistry, properties);
+  }
+
+  @Bean
+  public DeviceIdFilter deviceIdFilter(UserDataService userDataService, RestAuthenticationEntryPoint restAuthenticationEntryPoint) {
+    return new DeviceIdFilter(userDataService, restAuthenticationEntryPoint);
+  }
+
+  private AuthenticationProvider daoAuthenticationProvider(UserDetailsService userDetailsService, PasswordEncoder passwordEncoder) {
     DaoAuthenticationProvider provider = new DaoAuthenticationProvider(userDetailsService);
     provider.setPasswordEncoder(passwordEncoder);
     return provider;

@@ -5,7 +5,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.jobshunter.dto.serpRequest.WorkType;
 import com.jobshunter.model.ContractType;
-import com.jobshunter.model.EngineType;
 import com.jobshunter.model.JobType;
 import com.jobshunter.model.Relocation;
 import com.jobshunter.processor.SqlInjectionSafe;

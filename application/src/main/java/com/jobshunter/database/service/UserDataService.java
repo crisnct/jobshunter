@@ -5,6 +5,7 @@ import com.jobshunter.database.entities.JobOrderEntity;
 import com.jobshunter.database.entities.PromptsJobsEntity;
 import com.jobshunter.database.entities.UserContractTypeEntity;
 import com.jobshunter.database.entities.UserCvEntity;
+import com.jobshunter.database.entities.UserDeviceEntity;
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.entities.UserJobEntity;
 import com.jobshunter.database.entities.UserJobRoleEntity;
@@ -15,6 +16,7 @@ import com.jobshunter.database.repository.JobOrderRepository;
 import com.jobshunter.database.repository.PromptsJobsRepository;
 import com.jobshunter.database.repository.UserContractTypeRepository;
 import com.jobshunter.database.repository.UserCvRepository;
+import com.jobshunter.database.repository.UserDeviceRepository;
 import com.jobshunter.database.repository.UserJobRepository;
 import com.jobshunter.database.repository.UserJobRoleRepository;
 import com.jobshunter.database.repository.UserJobTypeRepository;
@@ -54,6 +56,8 @@ public class UserDataService {
   private final EngineConfigurationRepository engineRepository;
 
   private final UserCvRepository userCvRepository;
+
+  private final UserDeviceRepository userDeviceRepository;
 
   private final UserJobRoleRepository userJobRoleRepository;
 
@@ -109,7 +113,8 @@ public class UserDataService {
   @Transactional
   public void updateUser(UserEntity user, SearchJobOrder order, List<Job> jobs) {
     @SuppressWarnings("OptionalGetWithoutIsPresent")
-    EngineConfigurationEntity engineConfig = engineRepository.findByEngineAndModel(order.engineSelection().type(), order.engineSelection().model()).get();
+    EngineConfigurationEntity engineConfig = engineRepository.findByEngineAndModel(order.engineSelection().type(), order.engineSelection().model())
+        .get();
 
     user.setLastJobs(Instant.now());
     jobs.forEach(job -> {
@@ -132,7 +137,7 @@ public class UserDataService {
     this.updateUser(user);
   }
 
-  public UserPromptEntity updatePrompt(UserEntity user, EngineCategory category,  Long promptId, String prompt) {
+  public UserPromptEntity updatePrompt(UserEntity user, EngineCategory category, Long promptId, String prompt) {
     // Use the first available configuration for the engine
     UserPromptEntity entity = userPromptRepository
         .findByIdAndUserId(promptId == null ? -1 : promptId, user.getId())
@@ -232,9 +237,9 @@ public class UserDataService {
   @Transactional
   public JobOrderEntity createJobOrder(UserEntity user, Long engineConfigurationId, boolean searchCompanies) {
     EngineConfigurationEntity engineConfiguration = engineRepository.findById(engineConfigurationId)
-        .orElseThrow(() -> new BusinessException(HttpStatus.BAD_REQUEST, 
+        .orElseThrow(() -> new BusinessException(HttpStatus.BAD_REQUEST,
             "Engine configuration with id " + engineConfigurationId + " not found"));
-    
+
     JobOrderEntity jobOrder = new JobOrderEntity(user, engineConfiguration, searchCompanies);
     return jobOrderRepository.save(jobOrder);
   }
@@ -262,4 +267,17 @@ public class UserDataService {
     return lastOrder;
   }
 
+  @Transactional
+  public void updateDeviceId(String username, String deviceId, String ip, String userAgent) {
+    UserDeviceEntity entity = userDeviceRepository.findByUsername(username).orElseThrow();
+    entity.setDeviceId(deviceId);
+    entity.setIpAddress(ip);
+    entity.setUserAgent(userAgent);
+    userDeviceRepository.save(entity);
+  }
+
+  @Transactional(readOnly = true)
+  public Optional<UserDeviceEntity> getActiveDevice(String username) {
+    return userDeviceRepository.findActiveByUsername(username);
+  }
 }
