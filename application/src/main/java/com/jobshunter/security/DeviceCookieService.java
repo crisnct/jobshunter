@@ -29,7 +29,7 @@ public class DeviceCookieService {
     cookie.setMaxAge(maxAge);
 
     // SameSite not available directly on Cookie pre-Servlet 6
-    response.addHeader("Set-Cookie",
+    response.addHeader(JHHeaders.SET_COOKIE,
         DEVICE_ID_COOKIE + "=" + deviceId +
             "; Max-Age=" + maxAge +
             "; Path=/" +

@@ -6,6 +6,7 @@ import com.jobshunter.dto.gptResponse.FileInfo;
 import com.jobshunter.dto.gptResponse.FileListResponse;
 import com.jobshunter.dto.gptResponse.UploadFileResponse;
 import com.jobshunter.processor.PackageExpected;
+import com.jobshunter.security.JHHeaders;
 import com.jobshunter.service.clients.FileClient;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
@@ -50,7 +51,7 @@ public non-sealed class GptFileClientImpl implements FileClient {
   public String uploadFile(Path cvPath) throws IOException {
     try (var ignored = Files.newInputStream(cvPath)) {
       HttpHeaders headers = new HttpHeaders();
-      headers.set("Authorization", "Bearer " + properties.getGpt().getApiKey());
+      headers.set(JHHeaders.AUTHORIZATION, "Bearer " + properties.getGpt().getApiKey());
       headers.setContentType(MediaType.MULTIPART_FORM_DATA);
 
       MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
@@ -72,7 +73,7 @@ public non-sealed class GptFileClientImpl implements FileClient {
   @Override
   public void deleteFile(@NotBlank String fileId) {
     HttpHeaders headers = new HttpHeaders();
-    headers.set("Authorization", "Bearer " + properties.getGpt().getApiKey());
+    headers.set(JHHeaders.AUTHORIZATION, "Bearer " + properties.getGpt().getApiKey());
     restTemplate.exchange(
         URI.create(API_URI + "/" + fileId),
         HttpMethod.DELETE,
@@ -85,7 +86,7 @@ public non-sealed class GptFileClientImpl implements FileClient {
   public void deleteAllFilesExcept(@NotBlank List<String> fileIds) {
     FileListResponse response = restClient.get()
         .uri(API_URI)
-        .header("Authorization", "Bearer " + properties.getGpt().getApiKey())
+        .header(JHHeaders.AUTHORIZATION, "Bearer " + properties.getGpt().getApiKey())
         .retrieve()
         .body(FileListResponse.class);
     if (response != null && response.data() != null) {

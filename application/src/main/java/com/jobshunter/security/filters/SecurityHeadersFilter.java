@@ -49,41 +49,41 @@ public class SecurityHeadersFilter extends OncePerRequestFilter {
     response.setHeader(JHHeaders.IP_HEADER, ClientIpResolver.resolveClientIp(request));
 
     // 1. X-Frame-Options: Prevent clickjacking attacks
-    response.setHeader("X-Frame-Options", "DENY");
+    response.setHeader(JHHeaders.X_FRAME_OPTIONS, "DENY");
 
     // 2. X-Content-Type-Options: Prevent MIME type sniffing
-    response.setHeader("X-Content-Type-Options", "nosniff");
+    response.setHeader(JHHeaders.X_CONTENT_TYPE_OPTIONS, "nosniff");
 
     // 3. X-XSS-Protection: Enable XSS filtering (legacy browsers)
-    response.setHeader("X-XSS-Protection", "1; mode=block");
+    response.setHeader(JHHeaders.X_XSS_PROTECTION, "1; mode=block");
 
     // 4. Strict-Transport-Security: Force HTTPS (only for HTTPS requests)
     if (request.isSecure() || "https".equalsIgnoreCase(request.getHeader(JHHeaders.X_FORWARDED_PROTO))) {
-      response.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains; preload");
+      response.setHeader(JHHeaders.STRICT_TRANSPORT_SECURITY, "max-age=31536000; includeSubDomains; preload");
     }
 
     // 5. Content-Security-Policy: Comprehensive XSS protection
     String csp = buildContentSecurityPolicy(request);
-    response.setHeader("Content-Security-Policy", csp);
+    response.setHeader(JHHeaders.CONTENT_SECURITY_POLICY, csp);
 
     // 6. Referrer-Policy: Control referrer information
-    response.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+    response.setHeader(JHHeaders.REFERRER_POLICY, "strict-origin-when-cross-origin");
 
     // 7. X-Permitted-Cross-Domain-Policies: Restrict cross-domain policies
-    response.setHeader("X-Permitted-Cross-Domain-Policies", "none");
+    response.setHeader(JHHeaders.X_PERMITTED_CROSS_DOMAIN_POLICIES, "none");
 
     // 8. Permissions-Policy: Control browser features
-    response.setHeader("Permissions-Policy",
+    response.setHeader(JHHeaders.PERMISSIONS_POLICY,
         "geolocation=(), microphone=(), camera=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()");
 
     // 9. Cross-Origin-Embedder-Policy: Prevent cross-origin embedding
-    response.setHeader("Cross-Origin-Embedder-Policy", "require-corp");
+    response.setHeader(JHHeaders.CROSS_ORIGIN_EMBEDDER_POLICY, "require-corp");
 
     // 10. Cross-Origin-Opener-Policy: Isolate browsing context
-    response.setHeader("Cross-Origin-Opener-Policy", "same-origin");
+    response.setHeader(JHHeaders.CROSS_ORIGIN_OPENER_POLICY, "same-origin");
 
     // 11. Cross-Origin-Resource-Policy: Control cross-origin resource access
-    response.setHeader("Cross-Origin-Resource-Policy", "same-origin");
+    response.setHeader(JHHeaders.CROSS_ORIGIN_RESOURCE_POLICY, "same-origin");
   }
 
   /**

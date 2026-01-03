@@ -11,6 +11,7 @@ import com.jobshunter.dto.gptResponse.OutputItem;
 import com.jobshunter.model.GptJobScoreRequest;
 import com.jobshunter.model.PromptType;
 import com.jobshunter.processor.PackageExpected;
+import com.jobshunter.security.JHHeaders;
 import com.jobshunter.service.TemplateRenderer;
 import com.jobshunter.service.clients.JobScoreCalculatorClient;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
@@ -65,7 +66,7 @@ public non-sealed class GptJobScoreCalculatorClientImpl implements JobScoreCalcu
 
       String response = restClient.post()
           .uri(DEFAULT_URI)
-          .header("Authorization", "Bearer " + config.getApiKey())
+          .header(JHHeaders.AUTHORIZATION, "Bearer " + config.getApiKey())
           .contentType(MediaType.APPLICATION_JSON)
           .body(payload)
           .retrieve()

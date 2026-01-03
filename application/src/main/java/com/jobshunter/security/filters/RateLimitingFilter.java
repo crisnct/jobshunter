@@ -2,6 +2,7 @@ package com.jobshunter.security.filters;
 
 import com.jobshunter.ApplicationProperties;
 import com.jobshunter.security.ClientIpResolver;
+import com.jobshunter.security.JHHeaders;
 import com.jobshunter.security.rateLimitBucket4J.BlockRegistry;
 import com.jobshunter.security.rateLimitBucket4J.InMemoryRateLimiter;
 import com.jobshunter.security.rateLimitBucket4J.ViolationRegistry;
@@ -73,7 +74,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
 
   private void reject(HttpServletResponse response, long retryAfterSeconds) throws IOException {
     response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
-    response.setHeader("Retry-After", String.valueOf(retryAfterSeconds));
+    response.setHeader(JHHeaders.RETRY_AFTER, String.valueOf(retryAfterSeconds));
     response.setContentType("application/json");
     response.getWriter().write(
         "{\"message\":\"Rate LLimit Exceeded. Access temporarily restricted.\"}"

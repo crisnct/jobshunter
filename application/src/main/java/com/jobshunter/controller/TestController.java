@@ -17,6 +17,7 @@ import com.jobshunter.dto.gptResponse.GptResponse;
 import com.jobshunter.dto.serpRequest.SearchWithSerpRequest;
 import com.jobshunter.model.Job;
 import com.jobshunter.model.PromptType;
+import com.jobshunter.security.JHHeaders;
 import com.jobshunter.service.TemplateRenderer;
 import com.jobshunter.service.application.notifiers.EmailNotifierService;
 import com.jobshunter.service.clients.AiJobsClient;
@@ -140,7 +141,7 @@ public class TestController {
       try {
         ResponseEntity<GptResponse> response = restClient.post()
             .uri(GptV1JobSearchImpl.DEFAULT_URI)
-            .header("Authorization", "Bearer " + properties.getGpt().getApiKey())
+            .header(JHHeaders.AUTHORIZATION, "Bearer " + properties.getGpt().getApiKey())
             .contentType(MediaType.APPLICATION_JSON)
             .body(payload)
             .retrieve()
@@ -243,7 +244,7 @@ public class TestController {
     try {
       return restClient.post()
           .uri(GptV1JobSearchImpl.DEFAULT_URI)
-          .header("Authorization", "Bearer " + properties.getGpt().getApiKey())
+          .header(JHHeaders.AUTHORIZATION, "Bearer " + properties.getGpt().getApiKey())
           .contentType(MediaType.APPLICATION_JSON)
           .body(gptPayload)
           .retrieve()

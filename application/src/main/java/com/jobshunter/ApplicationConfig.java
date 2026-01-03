@@ -105,10 +105,10 @@ public class ApplicationConfig {
     // interceptor exact ca în Spring Boot 3
     restTemplate.getInterceptors().add((request, body, execution) -> {
       var headers = request.getHeaders();
-      headers.set("User-Agent", "Mozilla/5.0");
-      headers.set("Accept-Language", "en-US,en;q=0.9");
-      headers.set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
-      headers.set("Referer", "https://www.jobs-hunter.com");
+      headers.set(JHHeaders.USER_AGENT, "Mozilla/5.0");
+      headers.set(JHHeaders.ACCEPT_LANGUAGE, "en-US,en;q=0.9");
+      headers.set(JHHeaders.ACCEPT, "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
+      headers.set(JHHeaders.REFERER, "https://www.jobs-hunter.com");
 
       return execution.execute(request, body);
     });

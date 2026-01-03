@@ -16,6 +16,7 @@ import com.jobshunter.model.GptJobSearchRequest;
 import com.jobshunter.model.Job;
 import com.jobshunter.model.PromptType;
 import com.jobshunter.processor.PackageExpected;
+import com.jobshunter.security.JHHeaders;
 import com.jobshunter.service.TemplateRenderer;
 import com.jobshunter.service.application.UrlExtractor;
 import com.jobshunter.service.clients.AiJobsClient;
@@ -74,7 +75,7 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient<GptJobSearchR
 
       GptResponse response = restClient.post()
           .uri(DEFAULT_URI)
-          .header("Authorization", "Bearer " + properties.getGpt().getApiKey())
+          .header(JHHeaders.AUTHORIZATION, "Bearer " + properties.getGpt().getApiKey())
           .contentType(MediaType.APPLICATION_JSON)
           .body(payload)
           .retrieve()
@@ -115,7 +116,7 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient<GptJobSearchR
 
       GptResponse response = restClient.post()
           .uri(DEFAULT_URI)
-          .header("Authorization", "Bearer " + properties.getGpt().getApiKey())
+          .header(JHHeaders.AUTHORIZATION, "Bearer " + properties.getGpt().getApiKey())
           .contentType(MediaType.APPLICATION_JSON)
           .body(payload)
           .retrieve()
@@ -149,7 +150,7 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient<GptJobSearchR
 
     GptResponse response = restClient.post()
         .uri(DEFAULT_URI)
-        .header("Authorization", "Bearer " + properties.getGpt().getApiKey())
+        .header(JHHeaders.AUTHORIZATION, "Bearer " + properties.getGpt().getApiKey())
         .contentType(MediaType.APPLICATION_JSON)
         .body(payload)
         .retrieve()
