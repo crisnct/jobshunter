@@ -23,7 +23,7 @@ gpt:
 grok:
   enabled: false
 
-serpApi:
+serp:
   enabled: false
   maxPageSearch: 1
 

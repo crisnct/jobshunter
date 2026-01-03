@@ -1,7 +1,5 @@
 package com.jobshunter.service.clients.gpt;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.jobshunter.ApplicationProperties;
 import com.jobshunter.ApplicationProperties.Gpt;
 import com.jobshunter.dto.gptRequest.Gpt4ScorePayload;
@@ -17,7 +15,6 @@ import com.jobshunter.service.clients.JobScoreCalculatorClient;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
-import io.jsonwebtoken.lang.Collections;
 import java.net.URI;
 import java.util.Objects;
 import java.util.Optional;
@@ -27,8 +24,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
-//TODO
-//to collapse with GptV1JobSearchImpl
 @Slf4j
 @Component("GPTScoreCalculator")
 @PackageExpected("com.jobshunter.service.clients.gpt")
@@ -43,8 +38,6 @@ public non-sealed class GptJobScoreCalculatorClientImpl implements JobScoreCalcu
   private final ApplicationProperties properties;
 
   private final RestClient restClient;
-
-  private final JsonMapper mapper;
 
   private final TemplateRenderer templateRenderer;
 
@@ -64,14 +57,15 @@ public non-sealed class GptJobScoreCalculatorClientImpl implements JobScoreCalcu
           .addUserPrompt(userPrompt, request.getUserCV().getGptFileId())
           .build();
 
-      String response = restClient.post()
+      GptResponse response = restClient.post()
           .uri(DEFAULT_URI)
           .header(JHHeaders.AUTHORIZATION, "Bearer " + config.getApiKey())
           .contentType(MediaType.APPLICATION_JSON)
           .body(payload)
           .retrieve()
-          .body(String.class);
+          .body(GptResponse.class);
 
+      //noinspection DataFlowIssue
       return extractScore(response);
     } catch (Exception e) {
       log.error("ChatGPT job API call failed", e);
@@ -79,11 +73,7 @@ public non-sealed class GptJobScoreCalculatorClientImpl implements JobScoreCalcu
     }
   }
 
-  private int extractScore(String body) throws JsonProcessingException {
-    GptResponse response = mapper.readValue(body, GptResponse.class);
-    if (Collections.isEmpty(response.output())) {
-      return 0;
-    }
+  private int extractScore(GptResponse response) {
     Optional<OutputItem> item = response.output().stream()
         .filter(p -> Objects.equals(p.type(), "message") && !p.content().isEmpty())
         .findAny();

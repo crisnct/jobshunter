@@ -1,10 +1,10 @@
-package com.jobshunter.service.clients.serpapi;
+package com.jobshunter.service.clients.serp;
 
 import com.jobshunter.ApplicationProperties;
 import com.jobshunter.dto.CompanyDto;
 import com.jobshunter.dto.serpRequest.SearchWithSerpRequest;
-import com.jobshunter.dto.serpResponse.SerpApiJobHit;
-import com.jobshunter.dto.serpResponse.SerpApiJobsResult;
+import com.jobshunter.dto.serpResponse.SerpJobHit;
+import com.jobshunter.dto.serpResponse.SerpJobsResult;
 import com.jobshunter.model.Job;
 import com.jobshunter.service.clients.AiJobsClient;
 import com.jobshunter.service.clients.BrowserSimulator;
@@ -32,9 +32,9 @@ import org.springframework.stereotype.Component;
  */
 @Slf4j
 @Component("JobsClientSerp")
-@ConditionalOnProperty(name = "serpApi.enabled", havingValue = "true")
+@ConditionalOnProperty(name = "serp.enabled", havingValue = "true")
 @RequiredArgsConstructor
-public non-sealed class SerpApiClientImpl implements AiJobsClient<SearchWithSerpRequest, List<Job>> {
+public non-sealed class SerpClientImpl implements AiJobsClient<SearchWithSerpRequest, List<Job>> {
 
   private static final URI BASE = URI.create("https://serpapi.com/search");
 
@@ -48,18 +48,18 @@ public non-sealed class SerpApiClientImpl implements AiJobsClient<SearchWithSerp
   private final ApplicationProperties applicationProperties;
 
   @Override
-  @RateLimiter(name = "serpApiLimiter")
-  @CircuitBreaker(name = "serpApi", fallbackMethod = "fallbackSearch")
-  @Bulkhead(name = "serpApiBulkhead")
+  @RateLimiter(name = "serpLimiter")
+  @CircuitBreaker(name = "serp", fallbackMethod = "fallbackSearch")
+  @Bulkhead(name = "serpBulkhead")
   public List<Job> searchJobs(@NotNull SearchWithSerpRequest request) {
-    SerpApiJobsResult results;
+    SerpJobsResult results;
     try {
       results = searchJobsPagination(request, null);
-      for (int i = 0; i < applicationProperties.getSerpApi().getMaxPageSearch(); i++) {
+      for (int i = 0; i < applicationProperties.getSerp().getMaxPageSearch(); i++) {
         if (results.nextPageToken() == null) {
           break;
         } else {
-          SerpApiJobsResult results2 = searchJobsPagination(request, results.nextPageToken());
+          SerpJobsResult results2 = searchJobsPagination(request, results.nextPageToken());
           results = consolidate(results, results2);
         }
       }
@@ -68,7 +68,7 @@ public non-sealed class SerpApiClientImpl implements AiJobsClient<SearchWithSerp
     }
 
     final List<Job> jobs = new ArrayList<>();
-    for (SerpApiJobHit serpJob : results.jobs()) {
+    for (SerpJobHit serpJob : results.jobs()) {
       Job job = new Job(-1, serpJob.applyLinks().getFirst(), request.getOrder().getEngineSelection().model());
       job.setDescription(serpJob.description() + "\n" + serpJob.highlights());
       jobs.add(job);
@@ -89,17 +89,17 @@ public non-sealed class SerpApiClientImpl implements AiJobsClient<SearchWithSerp
 
   @SuppressWarnings("unused")
   private List<Job> fallbackSearch(@NotNull SearchWithSerpRequest request, Throwable t) {
-    log.error("SerpApi search short-circuited/bulkheaded: {}", t.getMessage());
+    log.error("Serp search short-circuited/bulkheaded: {}", t.getMessage());
     return List.of();
   }
 
-  private SerpApiJobsResult consolidate(SerpApiJobsResult results1, SerpApiJobsResult results2) {
-    List<SerpApiJobHit> jobs = new ArrayList<>(results1.jobs());
+  private SerpJobsResult consolidate(SerpJobsResult results1, SerpJobsResult results2) {
+    List<SerpJobHit> jobs = new ArrayList<>(results1.jobs());
     jobs.addAll(results2.jobs());
-    return new SerpApiJobsResult(jobs, results2.nextPageToken());
+    return new SerpJobsResult(jobs, results2.nextPageToken());
   }
 
-  private SerpApiJobsResult searchJobsPagination(SearchWithSerpRequest request, String nextPageToken) throws IOException {
+  private SerpJobsResult searchJobsPagination(SearchWithSerpRequest request, String nextPageToken) throws IOException {
     log.info("Searching jobs with Serp Api, query: {}", request.getQuery());
     final URI uri = this.buildUri(request, nextPageToken);
     try {
@@ -108,19 +108,19 @@ public non-sealed class SerpApiClientImpl implements AiJobsClient<SearchWithSerp
         log.info("SERP API request executed successfully");
       }
       if (response.getStatusCode().isError()) {
-        throw new RuntimeException("SERP API failed: " + response.getStatusCode().value() + " " + response.getBody());
+        throw new RuntimeException("SERP failed: " + response.getStatusCode().value() + " " + response.getBody());
       }
-      return new SerpApiJobsResponseParser().parse(response.getBody());
+      return new SerpJobsResponseParser().parse(response.getBody());
     } catch (Throwable e) {
       log.error(e.getMessage());
-      return new SerpApiJobsResult(List.of(), null);
+      return new SerpJobsResult(List.of(), null);
     }
   }
 
   private URI buildUri(SearchWithSerpRequest request, String nextPageToken) {
     List<String> parameters = new ArrayList<>();
     parameters.add("api_key");
-    parameters.add(applicationProperties.getSerpApi().getApiKey());
+    parameters.add(applicationProperties.getSerp().getApiKey());
     parameters.add("engine");
     parameters.add(request.getOrder().getEngineSelection().model().toLowerCase());
     parameters.add("q");

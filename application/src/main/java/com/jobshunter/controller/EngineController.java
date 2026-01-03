@@ -1,9 +1,9 @@
 package com.jobshunter.controller;
 
-import com.jobshunter.database.entities.EngineConfigurationEntity;
+import com.jobshunter.database.entities.AiModelEntity;
 import com.jobshunter.database.entities.JobOrderEntity;
 import com.jobshunter.database.entities.UserEntity;
-import com.jobshunter.database.repository.EngineConfigurationRepository;
+import com.jobshunter.database.repository.AiModelRepository;
 import com.jobshunter.database.service.UserDataService;
 import com.jobshunter.dto.JobOrderRequest;
 import com.jobshunter.dto.JobOrderResponse;
@@ -32,7 +32,7 @@ import org.springframework.web.bind.annotation.RestController;
 @PreAuthorize("isAuthenticated()")
 public class EngineController {
 
-  private final EngineConfigurationRepository engineConfigurationRepository;
+  private final AiModelRepository aiModelRepository;
 
   private final UserDataService userDataService;
 
@@ -40,12 +40,12 @@ public class EngineController {
   @Transactional(readOnly = true)
   public ResponseEntity<Map<String, List<String>>> getEngineModels() {
     log.info("Fetching all engine models");
-    List<EngineConfigurationEntity> configurations = engineConfigurationRepository.findAll();
+    List<AiModelEntity> configurations = aiModelRepository.findAll();
     Map<String, List<String>> engineModelsMap = configurations.stream()
         .collect(Collectors.groupingBy(
-            config -> config.getEngine().name(),
+            config -> config.getProvider().name(),
             Collectors.mapping(
-                EngineConfigurationEntity::getModel,
+                AiModelEntity::getModel,
                 Collectors.toList()
             )
         ));
@@ -66,7 +66,7 @@ public class EngineController {
 
     @SuppressWarnings("OptionalGetWithoutIsPresent")
     UserEntity user = userDataService.getUser(authentication.getName()).get();
-    JobOrderEntity jobOrder = userDataService.createJobOrder(user, request.engineId(), request.searchCompanies());
+    JobOrderEntity jobOrder = userDataService.createJobOrder(user, request.engineId(), request.searchCompanies(), request.searchWithUserPrompts());
     return ResponseEntity.status(HttpStatus.CREATED)
         .body(Map.of("id", jobOrder.getId(), "message", "Job order created successfully"));
   }
@@ -85,14 +85,15 @@ public class EngineController {
   }
 
   private JobOrderResponse toJobOrderResponse(JobOrderEntity order) {
-    EngineConfigurationEntity engineConfig = order.getEngineConfiguration();
+    AiModelEntity aiModel = order.getAiModel();
 
     return new JobOrderResponse(
         order.getId(),
-        engineConfig.getId(),
-        engineConfig.getEngine().name(),
-        engineConfig.getModel(),
+        aiModel.getId(),
+        aiModel.getProvider().name(),
+        aiModel.getModel(),
         order.isSearchCompanies(),
+        order.isSearchByPrompts(),
         order.getStatus(),
         order.isNotified(),
         order.getTimestamp(),

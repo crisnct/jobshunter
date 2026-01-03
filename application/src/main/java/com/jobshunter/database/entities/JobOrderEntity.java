@@ -41,10 +41,13 @@ public class JobOrderEntity {
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "engine_configuration_id", nullable = false)
-  private EngineConfigurationEntity engineConfiguration;
+  private AiModelEntity aiModel;
 
   @Column(name = "search_companies", nullable = false)
   private boolean searchCompanies = false;
+
+  @Column(name = "search_by_prompts", nullable = false)
+  private boolean searchByPrompts = false;
 
   @Column(name = "status", columnDefinition = "TEXT")
   @Enumerated(jakarta.persistence.EnumType.STRING)
@@ -72,9 +75,10 @@ public class JobOrderEntity {
     }
   }
 
-  public JobOrderEntity(UserEntity user, EngineConfigurationEntity engineConfiguration, boolean searchCompanies) {
+  public JobOrderEntity(UserEntity user, AiModelEntity aiModel, boolean searchCompanies, boolean searchByPrompts) {
     this.user = user;
-    this.engineConfiguration = engineConfiguration;
+    this.aiModel = aiModel;
     this.searchCompanies = searchCompanies;
+    this.searchByPrompts = searchByPrompts;
   }
 }

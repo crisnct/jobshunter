@@ -55,7 +55,7 @@ grok:
   threads: 3
   maxTokens: 2000
 
-serpApi:
+serp:
   enabled: true
   apiKey: ${SERP_API_KEY:notset}
   threads: 3
@@ -142,7 +142,7 @@ resilience4j.ratelimiter:
       limitRefreshPeriod: 10s           # Every 10 sec
       timeoutDuration: 5m              # Wait up to 5min for a slot
       writableStackTraceEnabled: false
-    serpApiLimiter:
+    serpLimiter:
       limitForPeriod: 1                # Allow 2 calls
       limitRefreshPeriod: 30s           # Every 1 minute
       timeoutDuration: 1m             # Wait up to 1m for a slot
@@ -220,7 +220,7 @@ resilience4j.circuitbreaker:
       slowCallDurationThreshold: 2m
       waitDurationInOpenState: 2m
       permittedNumberOfCallsInHalfOpenState: 1
-    serpApi:
+    serp:
       registerHealthIndicator: true
       slidingWindowType: COUNT_BASED
       slidingWindowSize: 1
@@ -301,7 +301,7 @@ resilience4j.bulkhead:
       maxWaitDuration: 20m
       keepAliveDuration: 30s
       writableStackTraceEnabled: false
-    serpApiBulkhead:
+    serpBulkhead:
       bulkheadType: THREADPOOL
       maxConcurrentCalls: 3
       maxThreadPoolSize: 5

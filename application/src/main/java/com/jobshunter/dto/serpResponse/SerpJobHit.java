@@ -2,7 +2,7 @@ package com.jobshunter.dto.serpResponse;
 
 import java.util.List;
 
-public record SerpApiJobHit(
+public record SerpJobHit(
     String title,
     String company,
     String location,

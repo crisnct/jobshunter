@@ -38,8 +38,8 @@ public class UserJobEntity {
     private String url;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "engine_configuration_id")
-    private EngineConfigurationEntity engineConfiguration;
+    @JoinColumn(name = "model_id")
+    private AiModelEntity aiModel;
 
     @Column(name = "created_at")
     private Instant createdAt;
@@ -49,10 +49,10 @@ public class UserJobEntity {
         this.url = url;
     }
 
-    public UserJobEntity(UserEntity user, String url, EngineConfigurationEntity engineConfiguration) {
+    public UserJobEntity(UserEntity user, String url, AiModelEntity aiModel) {
         this.user = user;
         this.url = url;
-        this.engineConfiguration = engineConfiguration;
+        this.aiModel = aiModel;
     }
 
     @PrePersist

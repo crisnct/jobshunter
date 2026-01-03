@@ -6,9 +6,10 @@ import java.time.Instant;
 public record JobOrderResponse(
     Long id,
     Long engineConfigurationId,
-    String engine,
+    String provider,
     String model,
     boolean searchCompanies,
+    boolean searchByPrompts,
     OrderStatus status,
     boolean notified,
     Instant timestamp,

@@ -15,14 +15,14 @@ import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component("JobsClientSerp")
-@ConditionalOnProperty(name = "serpApi.enabled", havingValue = "false")
-@PackageExpected("com.jobshunter.service.clients.serpapi")
-public non-sealed class FakeSerpApiClient implements AiJobsClient<SearchWithSerpRequest, List<Job>> {
+@ConditionalOnProperty(name = "serp.enabled", havingValue = "false")
+@PackageExpected("com.jobshunter.service.clients.serp")
+public non-sealed class FakeSerpClient implements AiJobsClient<SearchWithSerpRequest, List<Job>> {
 
   @Override
-  @RateLimiter(name = "serpApiLimiter")
-  @CircuitBreaker(name = "serpApi", fallbackMethod = "fallbackSearch")
-  @Bulkhead(name = "serpApiBulkhead")
+  @RateLimiter(name = "serpLimiter")
+  @CircuitBreaker(name = "serp", fallbackMethod = "fallbackSearch")
+  @Bulkhead(name = "serpBulkhead")
   public List<Job> searchJobs(SearchWithSerpRequest request) {
     return List.of(
         new Job(-1,

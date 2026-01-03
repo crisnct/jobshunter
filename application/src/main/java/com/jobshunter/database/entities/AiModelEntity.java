@@ -18,24 +18,23 @@ import lombok.ToString;
 @Setter
 @NoArgsConstructor
 @Entity
-@Table(name = "engine_configuration")
+@Table(name = "ai_models")
 @ToString
-public class EngineConfigurationEntity {
+public class AiModelEntity {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
   @Enumerated(EnumType.STRING)
-  @Column(name = "engine", nullable = false, length = 255)
-  private EngineType engine;
+  @Column(name = "provider", nullable = false, length = 255)
+  private EngineType provider;
 
   @Column(name = "model", nullable = false, length = 255)
   private String model;
 
-  public EngineConfigurationEntity(EngineType engine, String model) {
-    this.engine = engine;
+  public AiModelEntity(EngineType provider, String model) {
+    this.provider = provider;
     this.model = model;
   }
 }
-

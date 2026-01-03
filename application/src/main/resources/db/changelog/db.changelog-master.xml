@@ -984,4 +984,162 @@
         </createIndex>
     </changeSet>
 
+    <changeSet id="46-rename-engine-configuration-to-ai-models" author="assistant">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="engine_configuration"/>
+        </preConditions>
+        <comment>Rename table engine_configuration to ai_models and column engine to provider</comment>
+
+        <!-- Drop foreign key constraints that reference engine_configuration (using SQL for safety) -->
+        <sql>
+            SET @fk_exists = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS 
+                              WHERE CONSTRAINT_SCHEMA = DATABASE() 
+                              AND TABLE_NAME = 'user_jobs' 
+                              AND CONSTRAINT_NAME = 'fk_user_jobs_engine_configuration' 
+                              AND CONSTRAINT_TYPE = 'FOREIGN KEY');
+            SET @sql = IF(@fk_exists > 0, 
+                         'ALTER TABLE user_jobs DROP FOREIGN KEY fk_user_jobs_engine_configuration', 
+                         'SELECT 1');
+            PREPARE stmt FROM @sql;
+            EXECUTE stmt;
+            DEALLOCATE PREPARE stmt;
+        </sql>
+        
+        <sql>
+            SET @fk_exists = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS 
+                              WHERE CONSTRAINT_SCHEMA = DATABASE() 
+                              AND TABLE_NAME = 'job_order' 
+                              AND CONSTRAINT_NAME = 'fk_job_order_engine_configuration' 
+                              AND CONSTRAINT_TYPE = 'FOREIGN KEY');
+            SET @sql = IF(@fk_exists > 0, 
+                         'ALTER TABLE job_order DROP FOREIGN KEY fk_job_order_engine_configuration', 
+                         'SELECT 1');
+            PREPARE stmt FROM @sql;
+            EXECUTE stmt;
+            DEALLOCATE PREPARE stmt;
+        </sql>
+        
+        <!-- Drop indexes on engine_configuration_id (using SQL for safety) -->
+        <sql>
+            SET @idx_exists = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.STATISTICS 
+                              WHERE TABLE_SCHEMA = DATABASE() 
+                              AND TABLE_NAME = 'user_jobs' 
+                              AND INDEX_NAME = 'idx_user_jobs_engine_configuration');
+            SET @sql = IF(@idx_exists > 0, 
+                         'ALTER TABLE user_jobs DROP INDEX idx_user_jobs_engine_configuration', 
+                         'SELECT 1');
+            PREPARE stmt FROM @sql;
+            EXECUTE stmt;
+            DEALLOCATE PREPARE stmt;
+        </sql>
+        
+        <sql>
+            SET @idx_exists = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.STATISTICS 
+                              WHERE TABLE_SCHEMA = DATABASE() 
+                              AND TABLE_NAME = 'job_order' 
+                              AND INDEX_NAME = 'idx_job_order_engine_configuration');
+            SET @sql = IF(@idx_exists > 0, 
+                         'ALTER TABLE job_order DROP INDEX idx_job_order_engine_configuration', 
+                         'SELECT 1');
+            PREPARE stmt FROM @sql;
+            EXECUTE stmt;
+            DEALLOCATE PREPARE stmt;
+        </sql>
+        
+        <!-- Rename the column from engine to provider -->
+        <renameColumn tableName="engine_configuration" 
+                     oldColumnName="engine" 
+                     newColumnName="provider" 
+                     columnDataType="VARCHAR(255)"/>
+        
+        <!-- Rename the table from engine_configuration to ai_models -->
+        <renameTable oldTableName="engine_configuration" newTableName="ai_models"/>
+        
+        <!-- Recreate foreign key constraints pointing to the new table name -->
+        <addForeignKeyConstraint constraintName="fk_user_jobs_ai_model"
+                                 baseTableName="user_jobs"
+                                 baseColumnNames="engine_configuration_id"
+                                 referencedTableName="ai_models"
+                                 referencedColumnNames="id"
+                                 onDelete="SET NULL"/>
+        <addForeignKeyConstraint constraintName="fk_job_order_ai_model"
+                                 baseTableName="job_order"
+                                 baseColumnNames="engine_configuration_id"
+                                 referencedTableName="ai_models"
+                                 referencedColumnNames="id"
+                                 onDelete="RESTRICT"/>
+        
+        <!-- Recreate indexes -->
+        <createIndex tableName="user_jobs" indexName="idx_user_jobs_engine_configuration">
+            <column name="engine_configuration_id"/>
+        </createIndex>
+        <createIndex tableName="job_order" indexName="idx_job_order_engine_configuration">
+            <column name="engine_configuration_id"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="47-add-search-by-prompts-to-job-order" author="assistant">
+        <comment>Add search_by_prompts column to job_order table</comment>
+        <addColumn tableName="job_order">
+            <column name="search_by_prompts" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="48-rename-engine-configuration-id-to-model-id-in-user-jobs" author="assistant">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="user_jobs" columnName="engine_configuration_id"/>
+        </preConditions>
+        <comment>Rename column engine_configuration_id to model_id in user_jobs table</comment>
+
+        <!-- Drop foreign key constraint -->
+        <sql>
+            SET @fk_exists = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS 
+                              WHERE CONSTRAINT_SCHEMA = DATABASE() 
+                              AND TABLE_NAME = 'user_jobs' 
+                              AND CONSTRAINT_NAME = 'fk_user_jobs_ai_model' 
+                              AND CONSTRAINT_TYPE = 'FOREIGN KEY');
+            SET @sql = IF(@fk_exists > 0, 
+                         'ALTER TABLE user_jobs DROP FOREIGN KEY fk_user_jobs_ai_model', 
+                         'SELECT 1');
+            PREPARE stmt FROM @sql;
+            EXECUTE stmt;
+            DEALLOCATE PREPARE stmt;
+        </sql>
+        
+        <!-- Drop index -->
+        <sql>
+            SET @idx_exists = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.STATISTICS 
+                              WHERE TABLE_SCHEMA = DATABASE() 
+                              AND TABLE_NAME = 'user_jobs' 
+                              AND INDEX_NAME = 'idx_user_jobs_engine_configuration');
+            SET @sql = IF(@idx_exists > 0, 
+                         'ALTER TABLE user_jobs DROP INDEX idx_user_jobs_engine_configuration', 
+                         'SELECT 1');
+            PREPARE stmt FROM @sql;
+            EXECUTE stmt;
+            DEALLOCATE PREPARE stmt;
+        </sql>
+        
+        <!-- Rename the column -->
+        <renameColumn tableName="user_jobs" 
+                     oldColumnName="engine_configuration_id" 
+                     newColumnName="model_id" 
+                     columnDataType="BIGINT"/>
+        
+        <!-- Recreate foreign key constraint with new column name -->
+        <addForeignKeyConstraint constraintName="fk_user_jobs_ai_model"
+                                 baseTableName="user_jobs"
+                                 baseColumnNames="model_id"
+                                 referencedTableName="ai_models"
+                                 referencedColumnNames="id"
+                                 onDelete="SET NULL"/>
+        
+        <!-- Recreate index with new column name -->
+        <createIndex tableName="user_jobs" indexName="idx_user_jobs_model_id">
+            <column name="model_id"/>
+        </createIndex>
+    </changeSet>
+
 </databaseChangeLog>

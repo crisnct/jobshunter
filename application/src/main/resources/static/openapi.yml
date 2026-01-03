@@ -441,16 +441,19 @@ components:
         engineConfigurationId:
           type: integer
           format: int64
-          description: Engine configuration ID
-        engine:
+          description: AI model configuration ID
+        provider:
           type: string
-          description: Engine type (GPT, GEMINI, SERP)
+          description: AI provider type (GPT, GEMINI, GROK, SERP)
         model:
           type: string
           description: Model name
         searchCompanies:
           type: boolean
           description: Whether to search for companies
+        searchByPrompts:
+          type: boolean
+          description: Whether to search using user prompts
         status:
           $ref: '#/components/schemas/OrderStatus'
         notified:
@@ -464,7 +467,7 @@ components:
           type: string
           nullable: true
           description: Error message if the order failed
-      required: [id, engineConfigurationId, engine, model, searchCompanies, status, notified, timestamp]
+      required: [id, engineConfigurationId, provider, model, searchCompanies, searchByPrompts, status, notified, timestamp]
 
     OrderStatus:
       type: string

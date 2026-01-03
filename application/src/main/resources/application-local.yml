@@ -22,7 +22,7 @@ gpt:
 grok:
   enabled: false
 
-serpApi:
+serp:
   enabled: false
   maxPageSearch: 1
 
@@ -51,7 +51,7 @@ resilience4j.ratelimiter:
       limitRefreshPeriod: 1s
       timeoutDuration: 10s
       writableStackTraceEnabled: false
-    serpApiLimiter:
+    serpLimiter:
       limitForPeriod: 1
       limitRefreshPeriod: 5s
       timeoutDuration: 10s
@@ -129,7 +129,7 @@ resilience4j.circuitbreaker:
       slowCallDurationThreshold: 5s
       waitDurationInOpenState: 2m
       permittedNumberOfCallsInHalfOpenState: 1
-    serpApi:
+    serp:
       registerHealthIndicator: true
       slidingWindowType: COUNT_BASED
       slidingWindowSize: 1
@@ -203,7 +203,7 @@ resilience4j.bulkhead:
       maxWaitDuration: 20m
       keepAliveDuration: 30s
       writableStackTraceEnabled: false
-    serpApiBulkhead:
+    serpBulkhead:
       bulkheadType: THREADPOOL
       maxConcurrentCalls: 3
       maxThreadPoolSize: 5

@@ -43,7 +43,7 @@ public class JobHuntService {
   public JobHuntResponse searchJobsForUser(SearchJobOrder order) {
     UserEntity user = order.getUser();
     final List<String> existingURLs;
-    boolean isEnableOneRealEngine = (properties.getGemini().isEnabled() || properties.getGpt().isEnabled() || properties.getSerpApi().isEnabled());
+    boolean isEnableOneRealEngine = (properties.getGemini().isEnabled() || properties.getGpt().isEnabled() || properties.getSerp().isEnabled());
     if (isEnableOneRealEngine) {
       existingURLs = userDataService.getExistingJobUrlsForUser(user.getUsername());
     } else {

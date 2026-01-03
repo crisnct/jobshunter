@@ -30,8 +30,8 @@ public class ExecutorsConfig {
     return executor;
   }
 
-  @Bean(name = "serpApiExecutor")
-  public ThreadPoolExecutor serpApiExecutor(@Value("${serp.threads:}") String threads) {
+  @Bean(name = "serpExecutor")
+  public ThreadPoolExecutor serpExecutor(@Value("${serp.threads:}") String threads) {
     ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(Integer.parseInt(threads));
     executor.setThreadFactory(Thread.ofVirtual().name("serp-search-", 0).factory());
     return executor;

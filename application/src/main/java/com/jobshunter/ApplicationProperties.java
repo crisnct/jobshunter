@@ -13,7 +13,7 @@ public class ApplicationProperties {
   private Gpt gpt = new Gpt();
   private Grok grok = new Grok();
   private Gemini gemini = new Gemini();
-  private SerpApi serpApi = new SerpApi();
+  private Serp serp = new Serp();
 
   @Data
   @ConfigurationProperties(prefix = "jobshunter")
@@ -75,8 +75,8 @@ public class ApplicationProperties {
   }
 
   @Data
-  @ConfigurationProperties(prefix = "serpApi")
-  public static class SerpApi {
+  @ConfigurationProperties(prefix = "serp")
+  public static class Serp {
 
     private String apiKey;
     private int maxPageSearch;

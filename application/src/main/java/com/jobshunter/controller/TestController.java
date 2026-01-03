@@ -62,7 +62,7 @@ public class TestController {
 
   private final RestClient restClient;
 
-  private final AiJobsClient<SearchWithSerpRequest, List<Job>> serpApi;
+  private final AiJobsClient<SearchWithSerpRequest, List<Job>> serpClient;
 
   private final TemplateRenderer templateRenderer;
 
@@ -71,12 +71,12 @@ public class TestController {
       UserDataService userDataService,
       ApplicationProperties properties,
       RestClient restClient,
-      @Qualifier("JobsClientSerp") AiJobsClient<SearchWithSerpRequest, List<Job>> serpApi,
+      @Qualifier("JobsClientSerp") AiJobsClient<SearchWithSerpRequest, List<Job>> serpClient,
       TemplateRenderer templateRenderer
   ) {
     this.emailNotifierService = emailNotifierService;
     this.userDataService = userDataService;
-    this.serpApi = serpApi;
+    this.serpClient = serpClient;
     this.properties = properties;
     this.restClient = restClient;
     this.templateRenderer = templateRenderer;
@@ -122,7 +122,7 @@ public class TestController {
     UserEntity user = userDataService.getUser(userDetails.getUsername())
         .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "User not found"));
     log.info("Searching jobs for {}", user.getUsername());
-    List<Job> jobs = serpApi.searchJobs(request);
+    List<Job> jobs = serpClient.searchJobs(request);
     return ResponseEntity.ok(jobs);
   }
 

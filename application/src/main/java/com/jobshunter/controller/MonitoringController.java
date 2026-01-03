@@ -25,7 +25,7 @@ public class MonitoringController {
 
   private final ThreadPoolExecutor geminiSearchExecutor;
 
-  private final ThreadPoolExecutor serpApiExecutor;
+  private final ThreadPoolExecutor serpExecutor;
 
   private final ThreadPoolExecutor miscellaneousExecutor;
 
@@ -35,14 +35,14 @@ public class MonitoringController {
       @Qualifier("gptSearchExecutor") ThreadPoolExecutor gptSearchExecutor,
       @Qualifier("grokSearchExecutor") ThreadPoolExecutor grokSearchExecutor,
       @Qualifier("geminiSearchExecutor") ThreadPoolExecutor geminiSearchExecutor,
-      @Qualifier("serpApiExecutor") ThreadPoolExecutor serpApiExecutor,
+      @Qualifier("serpExecutor") ThreadPoolExecutor serpExecutor,
       @Qualifier("miscellaneousExecutor") ThreadPoolExecutor miscellaneousExecutor,
       TaskScheduler scheduler
   ) {
     this.gptSearchExecutor = gptSearchExecutor;
     this.grokSearchExecutor = grokSearchExecutor;
     this.geminiSearchExecutor = geminiSearchExecutor;
-    this.serpApiExecutor = serpApiExecutor;
+    this.serpExecutor = serpExecutor;
     this.miscellaneousExecutor = miscellaneousExecutor;
     this.scheduler = scheduler;
   }
@@ -54,7 +54,7 @@ public class MonitoringController {
     engineModelsMap.put("Gpt", formatMessage(gptSearchExecutor));
     engineModelsMap.put("Grok", formatMessage(grokSearchExecutor));
     engineModelsMap.put("Gemini", formatMessage(geminiSearchExecutor));
-    engineModelsMap.put("SerpApi", formatMessage(serpApiExecutor));
+    engineModelsMap.put("Serp", formatMessage(serpExecutor));
     engineModelsMap.put("Miscellaneous", formatMessage(miscellaneousExecutor));
     engineModelsMap.put("Scheduler", formatMessage(((ThreadPoolTaskScheduler) scheduler).getScheduledThreadPoolExecutor()));
     return ResponseEntity.ok(engineModelsMap);

@@ -1,6 +1,6 @@
 package com.jobshunter.database.service;
 
-import com.jobshunter.database.entities.EngineConfigurationEntity;
+import com.jobshunter.database.entities.AiModelEntity;
 import com.jobshunter.database.entities.JobOrderEntity;
 import com.jobshunter.database.entities.PromptsJobsEntity;
 import com.jobshunter.database.entities.UserContractTypeEntity;
@@ -11,7 +11,7 @@ import com.jobshunter.database.entities.UserJobEntity;
 import com.jobshunter.database.entities.UserJobRoleEntity;
 import com.jobshunter.database.entities.UserJobTypeEntity;
 import com.jobshunter.database.entities.UserPromptEntity;
-import com.jobshunter.database.repository.EngineConfigurationRepository;
+import com.jobshunter.database.repository.AiModelRepository;
 import com.jobshunter.database.repository.JobOrderRepository;
 import com.jobshunter.database.repository.PromptsJobsRepository;
 import com.jobshunter.database.repository.UserContractTypeRepository;
@@ -53,7 +53,7 @@ public class UserDataService {
 
   private final PromptsJobsRepository promptsJobsRepository;
 
-  private final EngineConfigurationRepository engineRepository;
+  private final AiModelRepository aiModelRepository;
 
   private final UserCvRepository userCvRepository;
 
@@ -105,16 +105,16 @@ public class UserDataService {
     return userRepository.save(user);
   }
 
-  public UserJobEntity addJobUrl(UserEntity user, String url, EngineConfigurationEntity engineConfiguration) {
+  public UserJobEntity addJobUrl(UserEntity user, String url, AiModelEntity aiModel) {
     Optional<UserJobEntity> existing = userJobRepository.findByUserIdAndUrl(user.getId(), url);
-    return existing.orElseGet(() -> userJobRepository.save(new UserJobEntity(user, url, engineConfiguration)));
+    return existing.orElseGet(() -> userJobRepository.save(new UserJobEntity(user, url, aiModel)));
   }
 
   @Transactional
   public void updateUser(UserEntity user, SearchJobOrder order, List<Job> jobs) {
     @SuppressWarnings("OptionalGetWithoutIsPresent")
-    EngineConfigurationEntity engineConfig
-        = engineRepository.findByEngineAndModel(order.getEngineSelection().type(), order.getEngineSelection().model()).get();
+    AiModelEntity aiModel
+        = aiModelRepository.findByProviderAndModel(order.getEngineSelection().type(), order.getEngineSelection().model()).get();
 
     user.setLastJobs(Instant.now());
     jobs.forEach(job -> {
@@ -125,7 +125,7 @@ public class UserDataService {
           userPrompt = promptOptional.get();
         }
       }
-      UserJobEntity userJobEntity = addJobUrl(user, job.getUrl(), engineConfig);
+      UserJobEntity userJobEntity = addJobUrl(user, job.getUrl(), aiModel);
       if (userPrompt != null) {
         PromptsJobsEntity promptJob = new PromptsJobsEntity();
         promptJob.setUserJob(userJobEntity);
@@ -236,12 +236,12 @@ public class UserDataService {
   }
 
   @Transactional
-  public JobOrderEntity createJobOrder(UserEntity user, Long engineConfigurationId, boolean searchCompanies) {
-    EngineConfigurationEntity engineConfiguration = engineRepository.findById(engineConfigurationId)
+  public JobOrderEntity createJobOrder(UserEntity user, Long engineConfigurationId, boolean searchCompanies, boolean searchByPrompts) {
+    AiModelEntity aiModel = aiModelRepository.findById(engineConfigurationId)
         .orElseThrow(() -> new BusinessException(HttpStatus.BAD_REQUEST,
-            "Engine configuration with id " + engineConfigurationId + " not found"));
+            "AI model with id " + engineConfigurationId + " not found"));
 
-    JobOrderEntity jobOrder = new JobOrderEntity(user, engineConfiguration, searchCompanies);
+    JobOrderEntity jobOrder = new JobOrderEntity(user, aiModel, searchCompanies, searchByPrompts);
     return jobOrderRepository.save(jobOrder);
   }
 
@@ -253,7 +253,7 @@ public class UserDataService {
   @Transactional(readOnly = true)
   public List<JobOrderEntity> getUserOrders(Long userId) {
     List<JobOrderEntity> orders = jobOrderRepository.findByUserIdOrderByTimestampDescAndStatus(userId);
-    orders.forEach(order -> Hibernate.initialize(order.getEngineConfiguration()));
+    orders.forEach(order -> Hibernate.initialize(order.getAiModel()));
     return orders;
   }
 
@@ -264,7 +264,7 @@ public class UserDataService {
       return Optional.empty();
     }
     initializeUserData(lastOrder.get().getUser());
-    Hibernate.initialize(lastOrder.get().getEngineConfiguration());
+    Hibernate.initialize(lastOrder.get().getAiModel());
     return lastOrder;
   }
 
