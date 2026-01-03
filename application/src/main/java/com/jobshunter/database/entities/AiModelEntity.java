@@ -33,6 +33,15 @@ public class AiModelEntity {
   @Column(name = "model", nullable = false, length = 255)
   private String model;
 
+  @Column(name = "context_window")
+  private Integer contextWindow;
+
+  @Column(name = "enabled", nullable = false)
+  private boolean enabled = true;
+
+  @Column(name = "notes", columnDefinition = "TEXT")
+  private String notes;
+
   public AiModelEntity(EngineType provider, String model) {
     this.provider = provider;
     this.model = model;
