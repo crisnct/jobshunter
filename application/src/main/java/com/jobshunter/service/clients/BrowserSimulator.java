@@ -2,10 +2,10 @@ package com.jobshunter.service.clients;
 
 import com.jobshunter.ApplicationProperties;
 import com.jobshunter.security.JHHeaders;
-import io.github.resilience4j.timelimiter.annotation.TimeLimiter;
 import jakarta.annotation.Nonnull;
 import jakarta.validation.constraints.NotNull;
 import java.net.URI;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
@@ -60,7 +60,6 @@ public class BrowserSimulator {
     this.miscExecutor = miscExecutor;
   }
 
-  @TimeLimiter(name = "browserSimulatorLimiter")
   public CompletionStage<ResponseEntity<String>> openPageAsync(String url) {
     return CompletableFuture.supplyAsync(() -> openPageSync(url), miscExecutor);
   }
@@ -97,27 +96,24 @@ public class BrowserSimulator {
   }
 
   public String getFinalRedirectedURL(@NotNull String url) {
-    if (properties.getJobsHunter().getAllowRedirection()) {
-      return ScopedValue.where(HTTP_CONTEXT, HttpClientContext.create())
-          .call(() -> {
-            try {
-              this.openPageAsync(url).toCompletableFuture().get();
-
-              HttpClientContext context = HTTP_CONTEXT.get();
-              URI finalUri =
-                  context.getRedirectLocations() == null || context.getRedirectLocations().size() == 0
-                      ? context.getRequest().getUri()
-                      : context.getRedirectLocations().get(context.getRedirectLocations().size() - 1);
-
-              return finalUri.toString();
-            } catch (Throwable e) {
-              log.error("Redirection error for url {}: {}", url, e.getMessage());
-              return url;
-            }
-          });
-    } else {
+    if (!properties.getJobsHunter().getAllowRedirection()) {
       return url;
     }
+    return ScopedValue.where(HTTP_CONTEXT, HttpClientContext.create())
+        .call(() -> {
+          try {
+            openPageSync(url);
+
+            HttpClientContext ctx = HTTP_CONTEXT.get();
+            List<URI> redirects = ctx.getRedirectLocations().getAll();
+            URI finalUri = redirects.isEmpty() ? URI.create(url) : redirects.getLast();
+
+            return finalUri.toString();
+          } catch (Throwable e) {
+            log.error("Redirection error {} for url {}", e.getMessage(), url);
+            return url;
+          }
+        });
   }
 
   private RestClient restClientFailFast(ApplicationProperties properties, int responseTimeoutSeconds) {

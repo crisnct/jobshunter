@@ -45,7 +45,6 @@ open module com.jobshunter.application {
 
   requires io.github.resilience4j.annotations;
   requires io.github.resilience4j.ratelimiter;
-  requires io.github.resilience4j.timelimiter;
   requires io.github.resilience4j.bulkhead;
   requires io.github.resilience4j.circuitbreaker;
 

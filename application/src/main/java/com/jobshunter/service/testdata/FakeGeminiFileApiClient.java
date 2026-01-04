@@ -18,15 +18,17 @@ import org.springframework.stereotype.Component;
 public non-sealed class FakeGeminiFileApiClient implements FileClient {
 
   @Override
-  @RateLimiter(name = "geminiLimiter")
   @CircuitBreaker(name = "geminiCircuitBreaker", fallbackMethod = "fallbackUploadFile")
+  @RateLimiter(name = "geminiLimiter")
   @Bulkhead(name = "geminiBulkhead")
   public String uploadFile(Path cvPath) {
-    log.info("File {} uploaded properly", cvPath);
+    log.info("File uploaded properly {}", cvPath);
     return "files/" + (12345678 + System.currentTimeMillis() % 12345678);
   }
 
   @Override
+  @RateLimiter(name = "geminiLimiter")
+  @Bulkhead(name = "geminiBulkhead")
   public void deleteFile(String fileId) {
     log.info("File {} deleted", fileId);
   }

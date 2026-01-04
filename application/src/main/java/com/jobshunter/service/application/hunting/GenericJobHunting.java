@@ -68,9 +68,14 @@ public abstract non-sealed class GenericJobHunting<T extends AIJobSearchRequest>
     return CompletableFuture.supplyAsync(() -> searchCompaniesSync(request, order.getEngineSelection()), executor)
         .exceptionally(throwable -> {
           if (throwable.getCause() != null && throwable.getCause() instanceof RequestNotPermitted) {
-            log.error("❌ Rate limit exceeded for user {} engine {}", user.getUsername(), order.getEngineSelection().type());
+            log.error("❌ Rate limit exceeded for user {} model {}", user.getUsername(), order.getEngineSelection().model());
           } else {
-            log.error("Unexpected error at gathering jobs from engine {}", order.getEngineSelection().type());
+            if (throwable.getCause() != null) {
+              log.error("Unexpected error at gathering jobs from model {}: {}", order.getEngineSelection().model(),
+                  throwable.getCause().getMessage());
+            } else {
+              log.error("Unexpected error at gathering jobs from model {}: {}", order.getEngineSelection().model(), throwable.getMessage());
+            }
           }
           return List.of();
         });

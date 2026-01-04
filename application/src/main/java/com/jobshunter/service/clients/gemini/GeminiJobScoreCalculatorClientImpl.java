@@ -10,6 +10,7 @@ import com.jobshunter.dto.geminiRequest.Part;
 import com.jobshunter.dto.geminiRequest.SafetySetting;
 import com.jobshunter.dto.geminiResponse.GeminiGenerateContentResponse;
 import com.jobshunter.dto.geminiResponse.GeminiGenerateContentResponse.Candidate;
+import com.jobshunter.model.GeminiJobScoreRequest;
 import com.jobshunter.model.PromptType;
 import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.TemplateRenderer;

@@ -76,17 +76,6 @@ resilience4j.ratelimiter:
       timeoutDuration: 10s
       writableStackTraceEnabled: false
 
-# TIME LIMITER ---------------------------------------------------------------------------
-# Enforces maximum execution time for API calls by cancelling requests that exceed the configured timeout threshold,
-# preventing indefinite hangs and ensuring predictable response times.
-
-resilience4j.timelimiter:
-  instances:
-    browserSimulatorLimiter:
-      timeoutDuration: 30s             # Timeout for browser page opening operations
-      cancelRunningFuture: true        # Cancel the future if timeout occurs
-      writableStackTraceEnabled: false
-
 # CIRCUIT BREAKER ---------------------------------------------------------------------------
 # Fault tolerance by monitoring API call failures.
 # Automatically opens the circuit to prevent cascading failures when error threshold is exceeded,

@@ -10,6 +10,7 @@ import com.jobshunter.security.JHHeaders;
 import com.jobshunter.service.clients.FileClient;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import jakarta.validation.constraints.NotBlank;
 import java.io.IOException;
 import java.net.URI;
@@ -48,6 +49,7 @@ public non-sealed class GptFileClientImpl implements FileClient {
   @Override
   @CircuitBreaker(name = "gptCircuitBreaker", fallbackMethod = "fallbackUploadFile")
   @Bulkhead(name = "gptBulkhead")
+  @RateLimiter(name = "gptLimiter")
   public String uploadFile(Path cvPath) throws IOException {
     log.info("Uploading file to GPT {}...", cvPath.getFileName());
     try (var ignored = Files.newInputStream(cvPath)) {
@@ -72,6 +74,8 @@ public non-sealed class GptFileClientImpl implements FileClient {
   }
 
   @Override
+  @Bulkhead(name = "gptBulkhead")
+  @RateLimiter(name = "gptLimiter")
   public void deleteFile(@NotBlank String fileId) {
     HttpHeaders headers = new HttpHeaders();
     headers.set(JHHeaders.AUTHORIZATION, "Bearer " + properties.getGpt().getApiKey());

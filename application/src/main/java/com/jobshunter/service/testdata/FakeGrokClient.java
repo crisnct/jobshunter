@@ -20,8 +20,8 @@ import org.springframework.stereotype.Component;
 public non-sealed class FakeGrokClient implements AiJobsClient<GrokJobSearchRequest, List<Job>> {
 
   @Override
-  @RateLimiter(name = "grokLimiter")
   @CircuitBreaker(name = "grokCircuitBreaker", fallbackMethod = "fallbackSearch")
+  @RateLimiter(name = "grokLimiter")
   @Bulkhead(name = "grokBulkhead")
   public List<Job> searchJobs(GrokJobSearchRequest request) {
     return List.of(
@@ -49,11 +49,15 @@ public non-sealed class FakeGrokClient implements AiJobsClient<GrokJobSearchRequ
   }
 
   @Override
+  @RateLimiter(name = "grokLimiter")
+  @Bulkhead(name = "grokBulkhead")
   public List<CompanyDto> searchCompanies(GrokJobSearchRequest request) {
     return List.of();
   }
 
   @Override
+  @RateLimiter(name = "grokLimiter")
+  @Bulkhead(name = "grokBulkhead")
   public List<Job> searchJobsFromCompanies(GrokJobSearchRequest request, List<CompanyDto> group) {
     return List.of();
   }

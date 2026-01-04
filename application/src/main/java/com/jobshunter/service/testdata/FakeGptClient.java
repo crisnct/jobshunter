@@ -20,8 +20,8 @@ import org.springframework.stereotype.Component;
 public non-sealed class FakeGptClient implements AiJobsClient<GptJobSearchRequest, List<Job>> {
 
   @Override
-  @RateLimiter(name = "gptLimiter")
   @CircuitBreaker(name = "gptCircuitBreaker", fallbackMethod = "fallbackSearch")
+  @RateLimiter(name = "gptLimiter")
   @Bulkhead(name = "gptBulkhead")
   public List<Job> searchJobs(GptJobSearchRequest request) {
     return List.of(
@@ -49,11 +49,15 @@ public non-sealed class FakeGptClient implements AiJobsClient<GptJobSearchReques
   }
 
   @Override
+  @RateLimiter(name = "gptLimiter")
+  @Bulkhead(name = "gptBulkhead")
   public List<CompanyDto> searchCompanies(GptJobSearchRequest request) {
     return List.of();
   }
 
   @Override
+  @RateLimiter(name = "gptLimiter")
+  @Bulkhead(name = "gptBulkhead")
   public List<Job> searchJobsFromCompanies(GptJobSearchRequest request, List<CompanyDto> group) {
     return List.of();
   }

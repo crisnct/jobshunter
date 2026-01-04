@@ -18,8 +18,8 @@ import org.springframework.stereotype.Component;
 public non-sealed class FakeGptFileApiClient implements FileClient {
 
   @Override
-  @RateLimiter(name = "gptLimiter")
   @CircuitBreaker(name = "gptCircuitBreaker", fallbackMethod = "fallbackUpload")
+  @RateLimiter(name = "gptLimiter")
   @Bulkhead(name = "gptBulkhead")
   public String uploadFile(Path cvPath) {
     log.info("File {} uploaded properly", cvPath);
@@ -27,6 +27,8 @@ public non-sealed class FakeGptFileApiClient implements FileClient {
   }
 
   @Override
+  @RateLimiter(name = "gptLimiter")
+  @Bulkhead(name = "gptBulkhead")
   public void deleteFile(String fileId) {
     log.info("File {} deleted", fileId);
   }

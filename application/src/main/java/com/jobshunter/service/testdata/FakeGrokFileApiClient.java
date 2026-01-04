@@ -18,8 +18,8 @@ import org.springframework.stereotype.Component;
 public non-sealed class FakeGrokFileApiClient implements FileClient {
 
   @Override
-  @RateLimiter(name = "grokLimiter")
   @CircuitBreaker(name = "grokCircuitBreaker", fallbackMethod = "fallbackUpload")
+  @RateLimiter(name = "grokLimiter")
   @Bulkhead(name = "grokBulkhead")
   public String uploadFile(Path cvPath) {
     log.info("File {} uploaded properly", cvPath);
@@ -27,6 +27,8 @@ public non-sealed class FakeGrokFileApiClient implements FileClient {
   }
 
   @Override
+  @RateLimiter(name = "grokLimiter")
+  @Bulkhead(name = "grokBulkhead")
   public void deleteFile(String fileId) {
     log.info("File {} deleted", fileId);
   }

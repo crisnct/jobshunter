@@ -20,8 +20,8 @@ import org.springframework.stereotype.Component;
 public non-sealed class FakeGeminiClient implements AiJobsClient<GeminiJobSearchRequest, List<Job>> {
 
   @Override
-  @RateLimiter(name = "geminiLimiter")
   @CircuitBreaker(name = "geminiCircuitBreaker", fallbackMethod = "fallbackSearch")
+  @RateLimiter(name = "geminiLimiter")
   @Bulkhead(name = "geminiBulkhead")
   public List<Job> searchJobs(GeminiJobSearchRequest request) {
     return List.of(
@@ -49,11 +49,15 @@ public non-sealed class FakeGeminiClient implements AiJobsClient<GeminiJobSearch
   }
 
   @Override
+  @RateLimiter(name = "geminiLimiter")
+  @Bulkhead(name = "geminiBulkhead")
   public List<CompanyDto> searchCompanies(GeminiJobSearchRequest request) {
     return List.of();
   }
 
   @Override
+  @RateLimiter(name = "geminiLimiter")
+  @Bulkhead(name = "geminiBulkhead")
   public List<Job> searchJobsFromCompanies(GeminiJobSearchRequest request, List<CompanyDto> group) {
     return List.of();
   }

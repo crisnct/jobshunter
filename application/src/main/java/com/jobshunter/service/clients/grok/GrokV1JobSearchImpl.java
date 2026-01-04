@@ -78,7 +78,9 @@ public non-sealed class GrokV1JobSearchImpl implements AiJobsClient<GrokJobSearc
           .addSystemPrompt(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_JOB_SEARCH));
 
       if (getVersion(request.getOrder().getEngineSelection().model()) > 3) {
+        //TODO web search is billed at $5 per 1,000 tool invocations, in addition to standard token costs.
         payloadBuilder.addTools(Tools.builder().setDeepSearch().build());
+        //TODO Document search is billed at $5 per 1,000 tool invocations, in addition to standard token costs.
         payloadBuilder.addUserPrompt(request.getPrompt().getPrompt(), request.getUser().getCv().getGrokFileId());
       } else {
         payloadBuilder.addUserPrompt(request.getPrompt().getPrompt());

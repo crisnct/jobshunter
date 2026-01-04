@@ -127,54 +127,46 @@ springdoc:
 # RATE LIMITER  ---------------------------------------------------------------------------
 # Throttle API requests to 2 per minute, preventing quota violations and automatic request queueing
 # with transparent permit management.
+# limitForPeriod: 1                # Allow 1 call
+# limitRefreshPeriod: 30s           # Every 30 seconds
+# timeoutDuration: 5m              # Wait up to 5min for a slot
 
 resilience4j.ratelimiter:
   instances:
     gptLimiter:
-      limitForPeriod: 1                # Allow 1 call
-      limitRefreshPeriod: 30s           # Every 30 seconds
-      timeoutDuration: 5m              # Wait up to 5min for a slot
+      limitForPeriod: 1
+      limitRefreshPeriod: 30s
+      timeoutDuration: 5m
       writableStackTraceEnabled: false
     grokLimiter:
-      limitForPeriod: 1                # Allow 1 call
-      limitRefreshPeriod: 30s           # Every 30 seconds
-      timeoutDuration: 5m              # Wait up to 5min for a slot
+      limitForPeriod: 8
+      limitRefreshPeriod: 1s
+      timeoutDuration: 5m
       writableStackTraceEnabled: false
     geminiLimiter:
-      limitForPeriod: 1                # Allow 1 call
-      limitRefreshPeriod: 10s           # Every 10 sec
-      timeoutDuration: 5m              # Wait up to 5min for a slot
+      limitForPeriod: 1
+      limitRefreshPeriod: 10s
+      timeoutDuration: 5m
       writableStackTraceEnabled: false
     serpLimiter:
-      limitForPeriod: 1                # Allow 2 calls
-      limitRefreshPeriod: 30s           # Every 1 minute
-      timeoutDuration: 1m             # Wait up to 1m for a slot
+      limitForPeriod: 1
+      limitRefreshPeriod: 30s
+      timeoutDuration: 1m
       writableStackTraceEnabled: false
     twilioLimiter:
-      limitForPeriod: 10               # Allow 10 calls
-      limitRefreshPeriod: 1m           # Every 1 minute
-      timeoutDuration: 30s             # Wait up to 30s for a slot
+      limitForPeriod: 10
+      limitRefreshPeriod: 1m
+      timeoutDuration: 30s
       writableStackTraceEnabled: false
     tinyurlLimiter:
-      limitForPeriod: 5                # Allow 5 calls
-      limitRefreshPeriod: 1m           # Every 1 minute
-      timeoutDuration: 30s             # Wait up to 30s for a slot
+      limitForPeriod: 5
+      limitRefreshPeriod: 1m
+      timeoutDuration: 30s
       writableStackTraceEnabled: false
     mailtrapLimiter:
-      limitForPeriod: 10               # Allow 10 calls
-      limitRefreshPeriod: 1m           # Every 1 minute
-      timeoutDuration: 30s             # Wait up to 30s for a slot
-      writableStackTraceEnabled: false
-
-# TIME LIMITER ---------------------------------------------------------------------------
-# Enforces maximum execution time for API calls by cancelling requests that exceed the configured timeout threshold,
-# preventing indefinite hangs and ensuring predictable response times.
-
-resilience4j.timelimiter:
-  instances:
-    browserSimulatorLimiter:
-      timeoutDuration: 30s             # Timeout for browser page opening operations
-      cancelRunningFuture: true        # Cancel the future if timeout occurs
+      limitForPeriod: 10
+      limitRefreshPeriod: 1m
+      timeoutDuration: 30s
       writableStackTraceEnabled: false
 
 # CIRCUIT BREAKER ---------------------------------------------------------------------------
@@ -196,72 +188,86 @@ resilience4j.circuitbreaker:
     gptCircuitBreaker:
       registerHealthIndicator: true
       slidingWindowType: COUNT_BASED
-      slidingWindowSize: 1
-      minimumNumberOfCalls: 1
-      failureRateThreshold: 50
-      slowCallRateThreshold: 90
+      minimumNumberOfCalls: 3
+      slidingWindowSize: 3
+
+      failureRateThreshold: 100
+      slowCallRateThreshold: 100
       slowCallDurationThreshold: 2m
+
       waitDurationInOpenState: 2m
       permittedNumberOfCallsInHalfOpenState: 1
     grokCircuitBreaker:
       registerHealthIndicator: true
       slidingWindowType: COUNT_BASED
-      slidingWindowSize: 1
-      minimumNumberOfCalls: 1
-      failureRateThreshold: 50
-      slowCallRateThreshold: 90
+      minimumNumberOfCalls: 3
+      slidingWindowSize: 3
+
+      failureRateThreshold: 100
+      slowCallRateThreshold: 100
       slowCallDurationThreshold: 2m
+
       waitDurationInOpenState: 2m
       permittedNumberOfCallsInHalfOpenState: 1
     geminiCircuitBreaker:
       registerHealthIndicator: true
       slidingWindowType: COUNT_BASED
-      slidingWindowSize: 1
-      minimumNumberOfCalls: 1
-      failureRateThreshold: 50
-      slowCallRateThreshold: 90
+      minimumNumberOfCalls: 3
+      slidingWindowSize: 3
+
+      failureRateThreshold: 100
+      slowCallRateThreshold: 100
       slowCallDurationThreshold: 2m
+
       waitDurationInOpenState: 2m
       permittedNumberOfCallsInHalfOpenState: 1
     serp:
       registerHealthIndicator: true
       slidingWindowType: COUNT_BASED
-      slidingWindowSize: 1
-      minimumNumberOfCalls: 1
-      failureRateThreshold: 50
-      slowCallRateThreshold: 90
-      slowCallDurationThreshold: 30s
-      waitDurationInOpenState: 1m
+      minimumNumberOfCalls: 3
+      slidingWindowSize: 3
+
+      failureRateThreshold: 100
+      slowCallRateThreshold: 100
+      slowCallDurationThreshold: 2m
+
+      waitDurationInOpenState: 2m
       permittedNumberOfCallsInHalfOpenState: 1
     twilio:
       registerHealthIndicator: true
       slidingWindowType: COUNT_BASED
-      slidingWindowSize: 1
-      minimumNumberOfCalls: 1
-      failureRateThreshold: 50
-      slowCallRateThreshold: 50
-      slowCallDurationThreshold: 5s
-      waitDurationInOpenState: 1m
+      minimumNumberOfCalls: 3
+      slidingWindowSize: 3
+
+      failureRateThreshold: 100
+      slowCallRateThreshold: 100
+      slowCallDurationThreshold: 2m
+
+      waitDurationInOpenState: 2m
       permittedNumberOfCallsInHalfOpenState: 1
     mailtrap:
       registerHealthIndicator: true
       slidingWindowType: COUNT_BASED
-      slidingWindowSize: 1
-      minimumNumberOfCalls: 1
-      failureRateThreshold: 50
-      slowCallRateThreshold: 50
-      slowCallDurationThreshold: 5s
-      waitDurationInOpenState: 1m
+      minimumNumberOfCalls: 3
+      slidingWindowSize: 3
+
+      failureRateThreshold: 100
+      slowCallRateThreshold: 100
+      slowCallDurationThreshold: 2m
+
+      waitDurationInOpenState: 2m
       permittedNumberOfCallsInHalfOpenState: 1
     tinyurl:
       registerHealthIndicator: true
       slidingWindowType: COUNT_BASED
-      slidingWindowSize: 1
-      minimumNumberOfCalls: 1
-      failureRateThreshold: 50
-      slowCallRateThreshold: 50
-      slowCallDurationThreshold: 5s
-      waitDurationInOpenState: 1m
+      minimumNumberOfCalls: 3
+      slidingWindowSize: 3
+
+      failureRateThreshold: 100
+      slowCallRateThreshold: 100
+      slowCallDurationThreshold: 2m
+
+      waitDurationInOpenState: 2m
       permittedNumberOfCallsInHalfOpenState: 1
 
 # BULK HEAD  ---------------------------------------------------------------------------

@@ -2,7 +2,7 @@ package com.jobshunter.service.testdata;
 
 import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.clients.JobScoreCalculatorClient;
-import com.jobshunter.service.clients.gemini.GeminiJobScoreRequest;
+import com.jobshunter.model.GeminiJobScoreRequest;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;

@@ -90,6 +90,8 @@ public non-sealed class GeminiFileClientImpl implements FileClient {
   }
 
   @Override
+  @Bulkhead(name = "geminiBulkhead")
+  @RateLimiter(name = "geminiLimiter")
   public void deleteFile(@NotBlank String fileId) {
     restClient.delete()
         .uri(DELETE_URI + "/" + fileId + "?key=" + properties.getGemini().getApiKey())
@@ -124,7 +126,9 @@ public non-sealed class GeminiFileClientImpl implements FileClient {
 
   @SuppressWarnings("unused")
   private String fallbackUploadFile(Path cvPath, Throwable t) {
-    log.error("{} call short-circuited/bulkheaded: {}", getClass().getSimpleName(), t.getMessage());
+    log.error("{} call short-circuited/bulkheaded: {}", getClass().getSimpleName(), 
+        t != null ? t.getMessage() : "unknown error");
     return "";
   }
+
 }
