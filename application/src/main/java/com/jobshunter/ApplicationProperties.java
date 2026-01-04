@@ -1,5 +1,6 @@
 package com.jobshunter;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.Duration;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -14,6 +15,7 @@ public class ApplicationProperties {
   private Grok grok = new Grok();
   private Gemini gemini = new Gemini();
   private Serp serp = new Serp();
+  private Security security = new Security();
 
   @Data
   @ConfigurationProperties(prefix = "jobshunter")
@@ -29,11 +31,32 @@ public class ApplicationProperties {
   }
 
   @Data
+  @ConfigurationProperties(prefix = "security")
+  public static class Security {
+
+    @JsonProperty("jwt")
+    private JwtProperties jwt;
+
+  }
+
+  @Data
+
+  public static class JwtProperties {
+
+    private String secret;
+
+    private long expirationMs;
+
+  }
+
+  @Data
   public static class Scheduler {
 
     private String processOrderFrequency;
 
     private String notifyUsersFrequency;
+
+    private String cleanupFiles;
 
   }
 
@@ -85,6 +108,7 @@ public class ApplicationProperties {
 
   @Data
   public static class RateLimitPolicy {
+
     private long capacity;
     private Duration window;
   }

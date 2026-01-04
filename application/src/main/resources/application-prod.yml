@@ -2,7 +2,3 @@ spring:
   config:
     activate:
       on-profile: prod
-
-security:
-  httpsOnly:
-    enabled: true

@@ -10,6 +10,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.config.ConnectionConfig;
 import org.apache.hc.client5.http.config.RequestConfig;
@@ -70,12 +71,12 @@ public class BrowserSimulator {
       return restClient.get()
           .uri(url)
           .accept(MediaType.ALL)
-          .header(JHHeaders.USER_AGENT, "JobsHunter" + System.currentTimeMillis() + "in64; x64)")
+          .header(JHHeaders.USER_AGENT, "JobsHunter" + System.currentTimeMillis() + "in64; x64)")//This is mandatory hack
           .header(JHHeaders.ACCEPT_LANGUAGE, ACCEPT_LANGUAGE_HEADER)
           .retrieve()
           .toEntity(String.class);
     } catch (Throwable ex) {
-      log.error("First time failure about getting the html");
+      log.warn("First time failure about getting the html for {}", StringUtils.abbreviate(url, 50));
       try {
         return restClient.get()
             .uri(url)
@@ -89,7 +90,7 @@ public class BrowserSimulator {
             .retrieve()
             .toEntity(String.class);
       } catch (Throwable ex2) {
-        log.error("SECOND time failure about getting the html");
+        log.error("SECOND time failure about getting the html for {}", StringUtils.abbreviate(url, 50));
         throw ex2;
       }
     }

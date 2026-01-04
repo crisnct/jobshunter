@@ -42,12 +42,10 @@ public class EngineController {
     log.info("Fetching all engine models");
     List<AiModelEntity> configurations = aiModelRepository.findAll();
     Map<String, List<String>> engineModelsMap = configurations.stream()
+        .filter(AiModelEntity::isEnabled)
         .collect(Collectors.groupingBy(
             config -> config.getProvider().name(),
-            Collectors.mapping(
-                AiModelEntity::getModel,
-                Collectors.toList()
-            )
+            Collectors.mapping(AiModelEntity::getModel, Collectors.toList())
         ));
     return ResponseEntity.ok(engineModelsMap);
   }

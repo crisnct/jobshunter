@@ -9,7 +9,7 @@ import com.jobshunter.security.filters.SecurityHeadersFilter;
 import com.jobshunter.security.rateLimitBucket4J.BlockRegistry;
 import com.jobshunter.security.rateLimitBucket4J.InMemoryRateLimiter;
 import com.jobshunter.security.rateLimitBucket4J.ViolationRegistry;
-import com.jobshunter.service.application.authentication.JwtService;
+import com.jobshunter.service.application.JwtService;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;

@@ -1,12 +1,12 @@
-package com.jobshunter.service.clients.gpt;
+package com.jobshunter.service.clients.grok;
 
 import com.jobshunter.ApplicationProperties;
-import com.jobshunter.ApplicationProperties.Gpt;
-import com.jobshunter.dto.gptRequest.Gpt4ScorePayload;
-import com.jobshunter.dto.gptResponse.ContentItem;
-import com.jobshunter.dto.gptResponse.GptResponse;
-import com.jobshunter.dto.gptResponse.OutputItem;
-import com.jobshunter.model.GptJobScoreRequest;
+import com.jobshunter.ApplicationProperties.Grok;
+import com.jobshunter.dto.grokRequest.GrokScorePayload;
+import com.jobshunter.dto.grokResponse.ContentItem;
+import com.jobshunter.dto.grokResponse.GrokResponse;
+import com.jobshunter.dto.grokResponse.OutputItem;
+import com.jobshunter.model.GrokJobScoreRequest;
 import com.jobshunter.model.PromptType;
 import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.security.JHHeaders;
@@ -24,16 +24,17 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
+
 @Slf4j
-@Component("GptJobScoreCalculator")
-@PackageExpected("com.jobshunter.service.clients.gpt")
-@ConditionalOnProperty(name = "gpt.enabled", havingValue = "true")
+@Component("GrokJobScoreCalculator")
+@PackageExpected("com.jobshunter.service.clients.grok")
+@ConditionalOnProperty(name = "grok.enabled", havingValue = "true")
 @RequiredArgsConstructor
-public non-sealed class GptJobScoreCalculatorClientImpl implements JobScoreCalculatorClient<GptJobScoreRequest> {
+public non-sealed class GrokJobScoreCalculatorClientImpl implements JobScoreCalculatorClient<GrokJobScoreRequest> {
 
-  private static final String AI_MODEL = "gpt-4o-mini";
+  private static final String AI_MODEL = "grok-4-1-fast-non-reasoning";
 
-  private static final URI DEFAULT_URI = URI.create("https://api.openai.com/v1/responses");
+  private static final URI DEFAULT_URI = URI.create("https://api.x.ai/v1/responses");
 
   private final ApplicationProperties properties;
 
@@ -42,38 +43,38 @@ public non-sealed class GptJobScoreCalculatorClientImpl implements JobScoreCalcu
   private final TemplateRenderer templateRenderer;
 
   @Override
-  @RateLimiter(name = "gptLimiter")
-  @CircuitBreaker(name = "gptCircuitBreaker", fallbackMethod = "fallbackComputeScore")
-  @Bulkhead(name = "gptBulkhead")
-  public int computeScore(GptJobScoreRequest request) {
+  @RateLimiter(name = "grokLimiter")
+  @CircuitBreaker(name = "grokCircuitBreaker", fallbackMethod = "fallbackComputeScore")
+  @Bulkhead(name = "grokBulkhead")
+  public int computeScore(GrokJobScoreRequest request) {
     try {
-      Gpt config = properties.getGpt();
+      Grok config = properties.getGrok();
       String userPrompt = templateRenderer.getPrompt(PromptType.USER_PROMPT_MATCH_SCORE, "description", request.getJobDescription());
-      Gpt4ScorePayload payload = Gpt4ScorePayload.builder()
+      GrokScorePayload payload = GrokScorePayload.builder()
           .model(AI_MODEL)
           .temperature(0)
           .max_output_tokens(config.getMaxTokens())
           .addSystemPrompt(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_MATCH_SCORE))
-          .addUserPrompt(userPrompt, request.getUserCV().getGptFileId())
+          .addUserPrompt(userPrompt, request.getUserCV().getGrokFileId())
           .build();
 
-      GptResponse response = restClient.post()
+      GrokResponse response = restClient.post()
           .uri(DEFAULT_URI)
           .header(JHHeaders.AUTHORIZATION, "Bearer " + config.getApiKey())
           .contentType(MediaType.APPLICATION_JSON)
           .body(payload)
           .retrieve()
-          .body(GptResponse.class);
+          .body(GrokResponse.class);
 
       //noinspection DataFlowIssue
       return extractScore(response);
     } catch (Exception e) {
-      log.error("ChatGPT job API call failed", e);
+      log.error("GROK job API call failed", e);
       return 0;
     }
   }
 
-  private int extractScore(GptResponse response) {
+  private int extractScore(GrokResponse response) {
     Optional<OutputItem> item = response.output().stream()
         .filter(p -> Objects.equals(p.type(), "message") && !p.content().isEmpty())
         .findAny();
@@ -90,7 +91,7 @@ public non-sealed class GptJobScoreCalculatorClientImpl implements JobScoreCalcu
   }
 
   @SuppressWarnings("unused")
-  private int fallbackComputeScore(GptJobScoreRequest request, Throwable t) {
+  private int fallbackComputeScore(GrokJobScoreRequest request, Throwable t) {
     log.error("{} call short-circuited/bulkheaded: {}", getClass().getSimpleName(), t.getMessage());
     return -1;
   }

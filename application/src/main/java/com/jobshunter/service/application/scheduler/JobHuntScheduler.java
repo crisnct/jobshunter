@@ -6,6 +6,7 @@ import com.jobshunter.model.EngineSelection;
 import com.jobshunter.model.OrderStatus;
 import com.jobshunter.model.SearchJobOrder;
 import com.jobshunter.service.application.JobHuntService;
+import com.jobshunter.service.application.UserCvService;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Map;
@@ -29,15 +30,19 @@ public class JobHuntScheduler {
 
   private final UserDataService userDataService;
 
+  private final UserCvService userCvService;
+
   private final Executor executor;
 
   public JobHuntScheduler(
       JobHuntService jobHuntService,
       UserDataService userDataService,
+      UserCvService userCvService,
       @Qualifier("miscellaneousExecutor") Executor executor
   ) {
     this.jobHuntService = jobHuntService;
     this.userDataService = userDataService;
+    this.userCvService = userCvService;
     this.executor = executor;
   }
 
@@ -49,6 +54,11 @@ public class JobHuntScheduler {
   @Scheduled(fixedDelayString = "${jobshunter.scheduler.notifyUsersFrequency:60000}")
   public void notifyUsersAsync() {
     this.performActionAsync("notifyUsersAsync", this::notifyUsersSync);
+  }
+
+  @Scheduled(fixedDelayString = "${jobshunter.scheduler.cleanupFiles:86400000}")
+  public void cleanupFilesAsync() {
+    this.performActionAsync("cleanupFiles", this::cleanupFilesSync);
   }
 
   public void processOrderSync() {
@@ -90,6 +100,10 @@ public class JobHuntScheduler {
         }
       }
     }
+  }
+
+  private void cleanupFilesSync() {
+    userCvService.cleanupOldCVs();
   }
 
   private void performActionAsync(String actionName, Runnable runnable) {

@@ -49,6 +49,7 @@ public non-sealed class GptFileClientImpl implements FileClient {
   @CircuitBreaker(name = "gptCircuitBreaker", fallbackMethod = "fallbackUploadFile")
   @Bulkhead(name = "gptBulkhead")
   public String uploadFile(Path cvPath) throws IOException {
+    log.info("Uploading file to GPT {}...", cvPath.getFileName());
     try (var ignored = Files.newInputStream(cvPath)) {
       HttpHeaders headers = new HttpHeaders();
       headers.set(JHHeaders.AUTHORIZATION, "Bearer " + properties.getGpt().getApiKey());

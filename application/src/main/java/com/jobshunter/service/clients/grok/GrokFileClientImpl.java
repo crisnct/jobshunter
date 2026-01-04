@@ -43,6 +43,7 @@ public non-sealed class GrokFileClientImpl implements FileClient {
   @CircuitBreaker(name = "grokCircuitBreaker", fallbackMethod = "fallbackUploadFile")
   @Bulkhead(name = "grokBulkhead")
   public String uploadFile(Path cvPath) throws IOException {
+    log.info("Uploading file to GROK {}...", cvPath.getFileName());
     try (var ignored = Files.newInputStream(cvPath)) {
       MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
       body.add("purpose", "assistants");

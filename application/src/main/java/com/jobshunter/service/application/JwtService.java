@@ -1,5 +1,7 @@
-package com.jobshunter.service.application.authentication;
+package com.jobshunter.service.application;
 
+import com.jobshunter.ApplicationProperties;
+import com.jobshunter.ApplicationProperties.JwtProperties;
 import com.jobshunter.database.entities.UserEntity;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -11,19 +13,19 @@ import java.security.MessageDigest;
 import java.util.Date;
 import java.util.HexFormat;
 import java.util.Map;
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+@Slf4j
 @Service
+@AllArgsConstructor
 public class JwtService {
 
-  private final JwtProperties jwtProperties;
-
-  public JwtService(JwtProperties jwtProperties) {
-    this.jwtProperties = jwtProperties;
-  }
+  private final ApplicationProperties properties;
 
   public String extractUsername(String token) {
     return extractAllClaims(token).getSubject();
@@ -37,7 +39,7 @@ public class JwtService {
             .toList()
     );
     Date now = new Date();
-    Date expiry = new Date(now.getTime() + jwtProperties.getExpirationMs());
+    Date expiry = new Date(now.getTime() + properties.getSecurity().getJwt().getExpirationMs());
 
     return Jwts.builder()
         .setClaims(claims)
@@ -74,13 +76,14 @@ public class JwtService {
   }
 
   private Key getSigningKey() {
-    if (!StringUtils.hasText(jwtProperties.getSecret())) {
+    JwtProperties jwtProps = properties.getSecurity().getJwt();
+    if (!StringUtils.hasText(jwtProps.getSecret())) {
       throw new IllegalStateException("JWT secret (security.jwt.secret) must be configured");
     }
-    if (jwtProperties.getExpirationMs() <= 0) {
+    if (jwtProps.getExpirationMs() <= 0) {
       throw new IllegalStateException("JWT expiration (security.jwt.expiration-ms) must be positive");
     }
-    return Keys.hmacShaKeyFor(jwtProperties.getSecret().getBytes(StandardCharsets.UTF_8));
+    return Keys.hmacShaKeyFor(jwtProps.getSecret().getBytes(StandardCharsets.UTF_8));
   }
 
   public String hashToken(String token) {

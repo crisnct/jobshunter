@@ -130,7 +130,7 @@ public class JobsValidator implements JobProcessor {
       }
       return uri;
     } catch (Exception ex) {
-      log.error("Error at validating url:\n{}", jobURL, ex);
+      log.error("Error at validating url:\n{}", jobURL);
       return null;
     }
   }

@@ -9,7 +9,7 @@ import com.jobshunter.dto.LoginRequest;
 import com.jobshunter.dto.RegisterRequest;
 import com.jobshunter.dto.exceptions.BusinessException;
 import com.jobshunter.dto.exceptions.ValidationException;
-import com.jobshunter.service.application.authentication.JwtService;
+import com.jobshunter.service.application.JwtService;
 import com.jobshunter.service.application.notifiers.EmailNotifierService;
 import java.time.Instant;
 import java.util.List;

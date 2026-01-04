@@ -2,7 +2,7 @@ package com.jobshunter.security.filters;
 
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.security.JHHeaders;
-import com.jobshunter.service.application.authentication.JwtService;
+import com.jobshunter.service.application.JwtService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

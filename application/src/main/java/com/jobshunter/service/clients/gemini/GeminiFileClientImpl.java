@@ -2,6 +2,8 @@ package com.jobshunter.service.clients.gemini;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.jobshunter.ApplicationProperties;
+import com.jobshunter.dto.geminiResponse.FileInfo;
+import com.jobshunter.dto.geminiResponse.FileListResponse;
 import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.clients.FileClient;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
@@ -35,6 +37,8 @@ public non-sealed class GeminiFileClientImpl implements FileClient {
 
   private static final String DELETE_URI = "https://generativelanguage.googleapis.com/v1beta";
 
+  private static final String GET_FILES_URI = "https://generativelanguage.googleapis.com/v1beta/files?key=";
+
   private final RestClient restClient;
 
   private final ApplicationProperties properties;
@@ -44,6 +48,7 @@ public non-sealed class GeminiFileClientImpl implements FileClient {
   @Bulkhead(name = "geminiBulkhead")
   @RateLimiter(name = "geminiLimiter")
   public String uploadFile(Path cvPath) throws IOException {
+    log.info("Uploading file to GEMINI {}...", cvPath.getFileName());
     try (var ignored = Files.newInputStream(cvPath)) {
       MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
 
@@ -94,7 +99,17 @@ public non-sealed class GeminiFileClientImpl implements FileClient {
 
   @Override
   public void deleteAllFilesExcept(List<String> fileIds) {
-    throw new RuntimeException("not implemented");
+    FileListResponse response = restClient.get()
+        .uri(GET_FILES_URI + properties.getGemini().getApiKey())
+        .retrieve()
+        .body(FileListResponse.class);
+    if (response != null && response.files() != null) {
+      List<FileInfo> toDelete = response.files().stream().filter(f -> !fileIds.contains(f.name())).toList();
+      for (FileInfo file : toDelete) {
+        deleteFile(file.name());
+      }
+      log.info("Deleted {} files from GEMINI", toDelete.size());
+    }
   }
 
   @JsonIgnoreProperties(ignoreUnknown = true)
