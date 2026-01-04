@@ -2,10 +2,13 @@ package com.jobshunter.service.clients.grok;
 
 import com.jobshunter.ApplicationProperties;
 import com.jobshunter.ApplicationProperties.Grok;
+import com.jobshunter.database.entities.UserRemoteCvEntity;
+import com.jobshunter.dto.exceptions.ValidationException;
 import com.jobshunter.dto.grokRequest.GrokScorePayload;
 import com.jobshunter.dto.grokResponse.ContentItem;
 import com.jobshunter.dto.grokResponse.GrokResponse;
 import com.jobshunter.dto.grokResponse.OutputItem;
+import com.jobshunter.model.EngineType;
 import com.jobshunter.model.GrokJobScoreRequest;
 import com.jobshunter.model.PromptType;
 import com.jobshunter.processor.PackageExpected;
@@ -48,14 +51,19 @@ public non-sealed class GrokJobScoreCalculatorClientImpl implements JobScoreCalc
   @Bulkhead(name = "grokBulkhead")
   public int computeScore(GrokJobScoreRequest request) {
     try {
+      UserRemoteCvEntity remoteCV = request.getUserCV().getRemoteCvs().stream()
+          .filter(p-> p.getProvider() == EngineType.GROK).findAny()
+          .orElseThrow(()-> new ValidationException("No GROK CV found for user" + request.getUserCV().getUser().getUsername()));
+
       Grok config = properties.getGrok();
       String userPrompt = templateRenderer.getPrompt(PromptType.USER_PROMPT_MATCH_SCORE, "description", request.getJobDescription());
       GrokScorePayload payload = GrokScorePayload.builder()
           .model(AI_MODEL)
+          .store(false)
           .temperature(0)
           .max_output_tokens(config.getMaxTokens())
           .addSystemPrompt(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_MATCH_SCORE))
-          .addUserPrompt(userPrompt, request.getUserCV().getGrokFileId())
+          .addUserPrompt(userPrompt, remoteCV.getFileId())
           .build();
 
       GrokResponse response = restClient.post()

@@ -21,6 +21,7 @@ public record GrokJobsPayload(
     List<Tools> tools,
     String instructions,
     Text text,
+    Boolean store,
     List<Input> input
 ) {
 

@@ -50,7 +50,7 @@ public class JobScoring implements JobProcessor {
           log.info("Computing matching score between {} resume and description of job {}",
               context.getUser().getUsername(), StringUtils.abbreviate(job.getUrl(), 50));
           score = calculator.computeScore(
-              new GeminiJobScoreRequest(context.getResumeFileId(), uploadedFile.getFileId()));
+              new GeminiJobScoreRequest(context.getResumeFileId(), uploadedFile.getFileInfo().fileId()));
         }
       } catch (IOException e) {
         throw new RuntimeException("Unexpected error about creating file on local storage at scoring job  " + job, e);
@@ -65,7 +65,7 @@ public class JobScoring implements JobProcessor {
 
   public String uploadUserCv(UserCvEntity cv) throws IOException {
     Path pdfPath = createPathFromByteArray(cv.getCv(), "resume-" + cv.getUser().getUsername(), ".pdf");
-    return fileClient.uploadFile(pdfPath);
+    return fileClient.uploadFile(pdfPath).fileId();
   }
 
   private Path createPathFromByteArray(byte[] bytearray, String prefix, String extension) throws IOException {

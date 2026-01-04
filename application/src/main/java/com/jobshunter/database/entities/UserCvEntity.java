@@ -2,6 +2,7 @@ package com.jobshunter.database.entities;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Basic;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -10,8 +11,11 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Lob;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -38,21 +42,13 @@ public class UserCvEntity {
   @Column(name = "cv", nullable = false)
   private byte[] cv;
 
-  @Column(name = "gpt_file_id")
-  private String gptFileId;
+  @JsonIgnore
+  @OneToMany(mappedBy = "userCv", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+  private List<UserRemoteCvEntity> remoteCvs = new ArrayList<>();
 
-  @Column(name = "gemini_file_id")
-  private String geminiFileId;
-
-  @Column(name = "grok_file_id")
-  private String grokFileId;
-
-  public UserCvEntity(UserEntity user, byte[] cv, String gptFileId, String geminiFileId, String grokFileId) {
+  public UserCvEntity(UserEntity user, byte[] cv) {
     this.user = user;
     this.cv = cv;
-    this.gptFileId = gptFileId;
-    this.geminiFileId = geminiFileId;
-    this.grokFileId = grokFileId;
   }
 }
 

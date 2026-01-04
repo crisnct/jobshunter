@@ -1,5 +1,6 @@
 package com.jobshunter.service.clients;
 
+import com.jobshunter.model.ResumeFileInfo;
 import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.clients.gemini.GeminiFileClientImpl;
 import com.jobshunter.service.clients.gpt.GptFileClientImpl;
@@ -16,7 +17,7 @@ import java.util.List;
 public sealed interface FileClient permits GeminiFileClientImpl, GptFileClientImpl, GrokFileClientImpl, FakeGeminiFileApiClient, FakeGptFileApiClient,
     FakeGrokFileApiClient {
 
-  String uploadFile(Path cvPath) throws IOException;
+  ResumeFileInfo uploadFile(Path cvPath) throws IOException;
 
   void deleteFile(String fileId);
 

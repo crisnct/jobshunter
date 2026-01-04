@@ -1,5 +1,6 @@
 package com.jobshunter.service.application.processors;
 
+import com.jobshunter.model.ResumeFileInfo;
 import com.jobshunter.service.clients.FileClient;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -16,7 +17,7 @@ public class UploadedFile implements AutoCloseable {
 
   private final FileClient fileClient;
   private final Path filePath;
-  private String fileId;
+  private ResumeFileInfo fileInfo;
 
   /**
    * Uploads the file and stores the returned file ID for later deletion.
@@ -24,9 +25,9 @@ public class UploadedFile implements AutoCloseable {
    * @return the file ID returned by the upload operation
    * @throws IOException if the upload fails
    */
-  public String uploadAndGetFileId() throws IOException {
-    fileId = fileClient.uploadFile(filePath);
-    return fileId;
+  public ResumeFileInfo uploadAndGetFileId() throws IOException {
+    fileInfo = fileClient.uploadFile(filePath);
+    return fileInfo;
   }
 
   /**
@@ -35,11 +36,11 @@ public class UploadedFile implements AutoCloseable {
    * @return the file ID
    * @throws IOException if the file hasn't been uploaded yet
    */
-  public String getFileId() throws IOException {
-    if (fileId == null) {
-      fileId = uploadAndGetFileId();
+  public ResumeFileInfo getFileInfo() throws IOException {
+    if (fileInfo == null) {
+      fileInfo = uploadAndGetFileId();
     }
-    return fileId;
+    return fileInfo;
   }
 
   /**
@@ -47,11 +48,11 @@ public class UploadedFile implements AutoCloseable {
    */
   @Override
   public void close() {
-    if (fileId != null) {
+    if (fileInfo != null) {
       try {
-        fileClient.deleteFile(fileId);
+        fileClient.deleteFile(fileInfo.fileId());
       } catch (Exception e) {
-        log.warn("Failed to delete uploaded file with ID: {}", fileId, e);
+        log.warn("Failed to delete uploaded file with ID: {}", fileInfo.fileId(), e);
       }
     }
   }

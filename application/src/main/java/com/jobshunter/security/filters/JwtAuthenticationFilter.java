@@ -39,6 +39,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
       return;
     }
 
+    log.debug("JWT Filter - URI: {}, Processing JWT token", request.getRequestURI());
     String token = authHeader.substring(BEARER_PREFIX.length());
     String username;
     try {

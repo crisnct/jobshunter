@@ -1,5 +1,6 @@
 package com.jobshunter.service.testdata;
 
+import com.jobshunter.model.ResumeFileInfo;
 import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.clients.FileClient;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
@@ -21,9 +22,9 @@ public non-sealed class FakeGrokFileApiClient implements FileClient {
   @CircuitBreaker(name = "grokCircuitBreaker", fallbackMethod = "fallbackUpload")
   @RateLimiter(name = "grokLimiter")
   @Bulkhead(name = "grokBulkhead")
-  public String uploadFile(Path cvPath) {
+  public ResumeFileInfo uploadFile(Path cvPath) {
     log.info("File {} uploaded properly", cvPath);
-    return "files/" + (12345678 + System.currentTimeMillis() % 12345678);
+    return new ResumeFileInfo("files/" + (12345678 + System.currentTimeMillis() % 12345678), "cv.pdf", null);
   }
 
   @Override
@@ -39,8 +40,8 @@ public non-sealed class FakeGrokFileApiClient implements FileClient {
   }
 
   @SuppressWarnings("unused")
-  private String fallbackUpload(Path cvPat, Throwable t) {
+  private ResumeFileInfo fallbackUpload(Path cvPat, Throwable t) {
     log.error("{} call short-circuited/bulkheaded: {}", getClass().getSimpleName(), t.getMessage());
-    return "";
+    return null;
   }
 }

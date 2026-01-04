@@ -14,7 +14,7 @@ public record UserInfoResponse(
     boolean emailVerified,
     String verificationToken,
     String gptFileId,
-    String geminiFileId,
+    String grokFileId,
     String lastJobs,
     Integer timeInterval,
     List<String> prompts,

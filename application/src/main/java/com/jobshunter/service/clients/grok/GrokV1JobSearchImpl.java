@@ -5,14 +5,17 @@ import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.jobshunter.ApplicationProperties;
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.entities.UserJobRoleEntity;
+import com.jobshunter.database.entities.UserRemoteCvEntity;
 import com.jobshunter.dto.CompanyDto;
 import com.jobshunter.dto.CompanyDtoList;
+import com.jobshunter.dto.exceptions.ValidationException;
 import com.jobshunter.dto.grokRequest.GrokJobsPayload;
 import com.jobshunter.dto.grokRequest.GrokJobsPayload.GrokJobsPayloadBuilder;
 import com.jobshunter.dto.grokRequest.tools.Tools;
 import com.jobshunter.dto.grokResponse.GrokResponse;
 import com.jobshunter.dto.grokResponse.OutputItem;
 import com.jobshunter.model.AiSchemaType;
+import com.jobshunter.model.EngineType;
 import com.jobshunter.model.GrokJobSearchRequest;
 import com.jobshunter.model.Job;
 import com.jobshunter.model.PromptType;
@@ -70,8 +73,13 @@ public non-sealed class GrokV1JobSearchImpl implements AiJobsClient<GrokJobSearc
   @Bulkhead(name = "grokBulkhead")
   public List<Job> searchJobs(GrokJobSearchRequest request) {
     try {
+      UserRemoteCvEntity remoteCV = request.getUser().getCv().getRemoteCvs().stream()
+          .filter(p-> p.getProvider() == EngineType.GROK).findAny()
+          .orElseThrow(()-> new ValidationException("No GROK CV found for user " + request.getUser().getId()));
+
       GrokJobsPayloadBuilder payloadBuilder = GrokJobsPayload.builder()
           .model(request.getOrder().getEngineSelection().model())
+          .store(false)
           //.previous_response_id(prevID)
           .reasoning(request.getReasoning())
           .max_output_tokens(properties.getGrok().getMaxTokens())
@@ -81,7 +89,7 @@ public non-sealed class GrokV1JobSearchImpl implements AiJobsClient<GrokJobSearc
         //TODO web search is billed at $5 per 1,000 tool invocations, in addition to standard token costs.
         payloadBuilder.addTools(Tools.builder().setDeepSearch().build());
         //TODO Document search is billed at $5 per 1,000 tool invocations, in addition to standard token costs.
-        payloadBuilder.addUserPrompt(request.getPrompt().getPrompt(), request.getUser().getCv().getGrokFileId());
+        payloadBuilder.addUserPrompt(request.getPrompt().getPrompt(), remoteCV.getFileId());
       } else {
         payloadBuilder.addUserPrompt(request.getPrompt().getPrompt());
       }
@@ -125,6 +133,7 @@ public non-sealed class GrokV1JobSearchImpl implements AiJobsClient<GrokJobSearc
       UserEntity user = request.getUser();
       GrokJobsPayload payload = GrokJobsPayload.builder()
           .model(request.getOrder().getEngineSelection().model())
+          .store(false)
           .max_output_tokens(properties.getGrok().getMaxTokens())
           .addSystemPrompt(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_COMPANY_SEARCH,
               "city", user.getCity(),
@@ -169,6 +178,7 @@ public non-sealed class GrokV1JobSearchImpl implements AiJobsClient<GrokJobSearc
     GrokJobsPayload payload = GrokJobsPayload.builder()
         .model(request.getOrder().getEngineSelection().model())
         .max_output_tokens(properties.getGrok().getMaxTokens())
+        .store(false)
         .reasoning(request.getReasoning())
         .addTools(Tools.builder().setDeepSearch().build())
         .addSystemPrompt(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_JOB_SEARCH))

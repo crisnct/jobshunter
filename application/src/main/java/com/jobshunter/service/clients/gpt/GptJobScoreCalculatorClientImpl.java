@@ -2,10 +2,13 @@ package com.jobshunter.service.clients.gpt;
 
 import com.jobshunter.ApplicationProperties;
 import com.jobshunter.ApplicationProperties.Gpt;
+import com.jobshunter.database.entities.UserRemoteCvEntity;
+import com.jobshunter.dto.exceptions.ValidationException;
 import com.jobshunter.dto.gptRequest.Gpt4ScorePayload;
 import com.jobshunter.dto.gptResponse.ContentItem;
 import com.jobshunter.dto.gptResponse.GptResponse;
 import com.jobshunter.dto.gptResponse.OutputItem;
+import com.jobshunter.model.EngineType;
 import com.jobshunter.model.GptJobScoreRequest;
 import com.jobshunter.model.PromptType;
 import com.jobshunter.processor.PackageExpected;
@@ -49,12 +52,17 @@ public non-sealed class GptJobScoreCalculatorClientImpl implements JobScoreCalcu
     try {
       Gpt config = properties.getGpt();
       String userPrompt = templateRenderer.getPrompt(PromptType.USER_PROMPT_MATCH_SCORE, "description", request.getJobDescription());
+      UserRemoteCvEntity remoteCV = request.getUserCV().getRemoteCvs().stream()
+          .filter(p-> p.getProvider() == EngineType.GPT).findAny()
+          .orElseThrow(()-> new ValidationException("No GPT CV found for user " + request.getUserCV().getUser().getUsername()));
+
       Gpt4ScorePayload payload = Gpt4ScorePayload.builder()
           .model(AI_MODEL)
           .temperature(0)
+          .store(false)
           .max_output_tokens(config.getMaxTokens())
           .addSystemPrompt(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_MATCH_SCORE))
-          .addUserPrompt(userPrompt, request.getUserCV().getGptFileId())
+          .addUserPrompt(userPrompt, remoteCV.getFileId())
           .build();
 
       GptResponse response = restClient.post()

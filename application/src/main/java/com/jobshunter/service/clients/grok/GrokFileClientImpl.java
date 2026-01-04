@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.jobshunter.ApplicationProperties;
 import com.jobshunter.dto.grokResponse.FileInfo;
 import com.jobshunter.dto.grokResponse.FileListResponse;
+import com.jobshunter.model.ResumeFileInfo;
 import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.security.JHHeaders;
 import com.jobshunter.service.clients.FileClient;
@@ -15,6 +16,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -44,7 +46,7 @@ public non-sealed class GrokFileClientImpl implements FileClient {
   @CircuitBreaker(name = "grokCircuitBreaker", fallbackMethod = "fallbackUploadFile")
   @Bulkhead(name = "grokBulkhead")
   @RateLimiter(name = "grokLimiter")
-  public String uploadFile(Path cvPath) throws IOException {
+  public ResumeFileInfo uploadFile(Path cvPath) throws IOException {
     log.info("Uploading file to GROK {}...", cvPath.getFileName());
     try (var ignored = Files.newInputStream(cvPath)) {
       MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
@@ -62,7 +64,7 @@ public non-sealed class GrokFileClientImpl implements FileClient {
       if (response == null || Strings.isBlank(response.id())) {
         throw new RuntimeException("Fail to upload file to GROK Api: " + cvPath);
       }
-      return response.id();
+      return new ResumeFileInfo(response.id(), response.filename(), response.expires_at());
     }
   }
 
@@ -94,13 +96,13 @@ public non-sealed class GrokFileClientImpl implements FileClient {
   }
 
   @SuppressWarnings("unused")
-  private String fallbackUploadFile(Path cvPath, Throwable t) {
+  private ResumeFileInfo fallbackUploadFile(Path cvPath, Throwable t) {
     log.error("{} call short-circuited/bulkheaded: {}", getClass().getSimpleName(), t.getMessage());
-    return "";
+    return null;
   }
 
   @JsonIgnoreProperties(ignoreUnknown = true)
-  public record UploadFileResponse(String id) {
+  public record UploadFileResponse(String id, String filename, Instant expires_at) {
 
   }
 

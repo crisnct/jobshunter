@@ -5,6 +5,7 @@ import com.jobshunter.ApplicationProperties;
 import com.jobshunter.dto.gptResponse.FileInfo;
 import com.jobshunter.dto.gptResponse.FileListResponse;
 import com.jobshunter.dto.gptResponse.UploadFileResponse;
+import com.jobshunter.model.ResumeFileInfo;
 import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.security.JHHeaders;
 import com.jobshunter.service.clients.FileClient;
@@ -50,7 +51,7 @@ public non-sealed class GptFileClientImpl implements FileClient {
   @CircuitBreaker(name = "gptCircuitBreaker", fallbackMethod = "fallbackUploadFile")
   @Bulkhead(name = "gptBulkhead")
   @RateLimiter(name = "gptLimiter")
-  public String uploadFile(Path cvPath) throws IOException {
+  public ResumeFileInfo uploadFile(Path cvPath) throws IOException {
     log.info("Uploading file to GPT {}...", cvPath.getFileName());
     try (var ignored = Files.newInputStream(cvPath)) {
       HttpHeaders headers = new HttpHeaders();
@@ -69,7 +70,7 @@ public non-sealed class GptFileClientImpl implements FileClient {
       }
 
       UploadFileResponse responseMapper = mapper.readValue(response.getBody(), UploadFileResponse.class);
-      return responseMapper.id();
+      return new ResumeFileInfo(responseMapper.id(), responseMapper.filename(), responseMapper.expires_at());
     }
   }
 
@@ -104,9 +105,9 @@ public non-sealed class GptFileClientImpl implements FileClient {
   }
 
   @SuppressWarnings("unused")
-  private String fallbackUploadFile(Path cvPath, Throwable t) {
+  private ResumeFileInfo fallbackUploadFile(Path cvPath, Throwable t) {
     log.error("{} call short-circuited/bulkheaded: {}", getClass().getSimpleName(), t.getMessage());
-    return "";
+    return null;
   }
 
 }

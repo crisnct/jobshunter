@@ -18,6 +18,7 @@ import com.jobshunter.dto.UserUpdateRequest;
 import com.jobshunter.dto.exceptions.ValidationException;
 import com.jobshunter.model.ContractType;
 import com.jobshunter.model.EngineCategory;
+import com.jobshunter.model.EngineType;
 import com.jobshunter.model.JobType;
 import com.jobshunter.service.application.UserCvService;
 import com.jobshunter.service.application.notifiers.EmailNotifierService;
@@ -132,8 +133,8 @@ public class UserController {
         user.isNotifyEmail(),
         user.isEmailVerified(),
         user.getVerificationToken(),
-        latestCv == null ? "" : latestCv.getGptFileId(),
-        latestCv == null ? "" : latestCv.getGeminiFileId(),
+        latestCv == null ? "" : userDataService.getRemoteCvFileId(latestCv, EngineType.GPT).orElse(""),
+        latestCv == null ? "" : userDataService.getRemoteCvFileId(latestCv, EngineType.GROK).orElse(""),
         formatDateTime(user.getLastJobs()),
         user.getTimeInterval(),
         prompts.stream()

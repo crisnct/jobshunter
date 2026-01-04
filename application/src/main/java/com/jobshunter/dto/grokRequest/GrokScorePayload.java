@@ -7,6 +7,7 @@ import lombok.Builder;
 @Builder
 public record GrokScorePayload(
     String model,
+    Boolean store,
     double temperature,
     int max_output_tokens,
     List<Input> input

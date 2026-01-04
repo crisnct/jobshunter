@@ -5,13 +5,16 @@ import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.jobshunter.ApplicationProperties;
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.entities.UserJobRoleEntity;
+import com.jobshunter.database.entities.UserRemoteCvEntity;
 import com.jobshunter.dto.CompanyDto;
 import com.jobshunter.dto.CompanyDtoList;
+import com.jobshunter.dto.exceptions.ValidationException;
 import com.jobshunter.dto.gptRequest.GptJobsPayload;
 import com.jobshunter.dto.gptRequest.tools.Tools;
 import com.jobshunter.dto.gptResponse.GptResponse;
 import com.jobshunter.dto.gptResponse.OutputItem;
 import com.jobshunter.model.AiSchemaType;
+import com.jobshunter.model.EngineType;
 import com.jobshunter.model.GptJobSearchRequest;
 import com.jobshunter.model.Job;
 import com.jobshunter.model.PromptType;
@@ -64,13 +67,18 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient<GptJobSearchR
   @Bulkhead(name = "gptBulkhead")
   public List<Job> searchJobs(GptJobSearchRequest request) {
     try {
+      UserRemoteCvEntity remoteCV = request.getUser().getCv().getRemoteCvs().stream()
+          .filter(p-> p.getProvider() == EngineType.GPT).findAny()
+          .orElseThrow(()-> new ValidationException("No GPT CV found for user " + request.getUser().getId()));
+
       GptJobsPayload payload = GptJobsPayload.builder()
           .model(request.getOrder().getEngineSelection().model())
           .reasoning(request.getReasoning())
+          .store(false)
           .max_output_tokens(properties.getGpt().getMaxTokens())
           .addTools(Tools.builder().setDeepSearch().build())
           .addSystemPrompt(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_JOB_SEARCH))
-          .addUserPrompt(request.getPrompt().getPrompt(), request.getUser().getCv().getGptFileId())
+          .addUserPrompt(request.getPrompt().getPrompt(), remoteCV.getFileId())
           .build();
 
       GptResponse response = restClient.post()
@@ -99,6 +107,7 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient<GptJobSearchR
       GptJobsPayload payload = GptJobsPayload.builder()
           .model(request.getOrder().getEngineSelection().model())
           .max_output_tokens(properties.getGpt().getMaxTokens())
+          .store(false)
           .addSystemPrompt(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_COMPANY_SEARCH,
               "city", user.getCity(),
               "country", user.getCountry(),
@@ -142,6 +151,7 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient<GptJobSearchR
     GptJobsPayload payload = GptJobsPayload.builder()
         .model(request.getOrder().getEngineSelection().model())
         .max_output_tokens(properties.getGpt().getMaxTokens())
+        .store(false)
         .reasoning(request.getReasoning())
         .addTools(Tools.builder().setDeepSearch().build())
         .addSystemPrompt(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_JOB_SEARCH))

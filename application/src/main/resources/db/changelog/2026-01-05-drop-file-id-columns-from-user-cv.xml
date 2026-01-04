@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="
+        http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.23.xsd">
+
+    <changeSet id="52-drop-file-id-columns-from-user-cv" author="assistant">
+        <preConditions onFail="MARK_RAN">
+            <indexExists indexName="idx_user_cv_grok_file_id" tableName="user_cv"/>
+        </preConditions>
+        <comment>Remove deprecated file_id columns from user_cv table as they are now stored in user_remote_cv table</comment>
+        <dropIndex indexName="idx_user_cv_grok_file_id" tableName="user_cv"/>
+        <dropColumn tableName="user_cv" columnName="gpt_file_id"/>
+        <dropColumn tableName="user_cv" columnName="gemini_file_id"/>
+        <dropColumn tableName="user_cv" columnName="grok_file_id"/>
+        <dropColumn tableName="user_cv" columnName="expire_time_gpt"/>
+        <dropColumn tableName="user_cv" columnName="expire_time_gemini"/>
+        <dropColumn tableName="user_cv" columnName="expire_time_grok"/>
+    </changeSet>
+
+</databaseChangeLog>

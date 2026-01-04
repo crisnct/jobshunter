@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.jobshunter.ApplicationProperties;
 import com.jobshunter.dto.geminiResponse.FileInfo;
 import com.jobshunter.dto.geminiResponse.FileListResponse;
+import com.jobshunter.model.ResumeFileInfo;
 import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.clients.FileClient;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
@@ -13,6 +14,7 @@ import jakarta.validation.constraints.NotBlank;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -47,7 +49,7 @@ public non-sealed class GeminiFileClientImpl implements FileClient {
   @CircuitBreaker(name = "geminiCircuitBreaker", fallbackMethod = "fallbackUploadFile")
   @Bulkhead(name = "geminiBulkhead")
   @RateLimiter(name = "geminiLimiter")
-  public String uploadFile(Path cvPath) throws IOException {
+  public ResumeFileInfo uploadFile(Path cvPath) throws IOException {
     log.info("Uploading file to GEMINI {}...", cvPath.getFileName());
     try (var ignored = Files.newInputStream(cvPath)) {
       MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
@@ -85,7 +87,7 @@ public non-sealed class GeminiFileClientImpl implements FileClient {
       if (response == null || response.file() == null) {
         throw new RuntimeException("Fail to upload file to Gemini Api: " + cvPath);
       }
-      return response.file().name();
+      return new ResumeFileInfo(response.file().name, response.file().displayName, response.file.expirationTime);
     }
   }
 
@@ -120,15 +122,15 @@ public non-sealed class GeminiFileClientImpl implements FileClient {
   }
 
   @JsonIgnoreProperties(ignoreUnknown = true)
-  public record FileResponse(String name) {
+  public record FileResponse(String name, String displayName, Instant expirationTime) {
 
   }
 
   @SuppressWarnings("unused")
-  private String fallbackUploadFile(Path cvPath, Throwable t) {
+  private ResumeFileInfo fallbackUploadFile(Path cvPath, Throwable t) {
     log.error("{} call short-circuited/bulkheaded: {}", getClass().getSimpleName(), 
         t != null ? t.getMessage() : "unknown error");
-    return "";
+    return null;
   }
 
 }

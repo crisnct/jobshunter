@@ -17,6 +17,7 @@ public record GptJobsPayload(
     Reasoning reasoning,
     int max_output_tokens,
     List<Tools> tools,
+    Boolean store,
     String instructions,
     Text text,
     List<Input> input

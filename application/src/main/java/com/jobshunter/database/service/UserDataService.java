@@ -11,6 +11,7 @@ import com.jobshunter.database.entities.UserJobEntity;
 import com.jobshunter.database.entities.UserJobRoleEntity;
 import com.jobshunter.database.entities.UserJobTypeEntity;
 import com.jobshunter.database.entities.UserPromptEntity;
+import com.jobshunter.database.entities.UserRemoteCvEntity;
 import com.jobshunter.database.repository.AiModelRepository;
 import com.jobshunter.database.repository.JobOrderRepository;
 import com.jobshunter.database.repository.PromptsJobsRepository;
@@ -21,16 +22,21 @@ import com.jobshunter.database.repository.UserJobRepository;
 import com.jobshunter.database.repository.UserJobRoleRepository;
 import com.jobshunter.database.repository.UserJobTypeRepository;
 import com.jobshunter.database.repository.UserPromptRepository;
+import com.jobshunter.database.repository.UserRemoteCvRepository;
 import com.jobshunter.database.repository.UserRepository;
 import com.jobshunter.dto.exceptions.BusinessException;
 import com.jobshunter.model.ContractType;
 import com.jobshunter.model.EngineCategory;
+import com.jobshunter.model.EngineType;
 import com.jobshunter.model.Job;
 import com.jobshunter.model.JobType;
 import com.jobshunter.model.OrderStatus;
+import com.jobshunter.model.ResumeFileInfo;
 import com.jobshunter.model.SearchJobOrder;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -67,6 +73,8 @@ public class UserDataService {
 
   private final JobOrderRepository jobOrderRepository;
 
+  private final UserRemoteCvRepository userRemoteCvRepository;
+
   public List<UserJobEntity> getUserJobs(String username) {
     return userJobRepository.findAllByUsernameWithUser(username);
   }
@@ -83,7 +91,12 @@ public class UserDataService {
   private void initializeUserData(UserEntity user) {
     Hibernate.initialize(user.getPrompts());
     Hibernate.initialize(user.getRoles());
-    Hibernate.initialize(user.getCv());
+    if (user.getCv() != null) {
+      Hibernate.initialize(user.getCv());
+      if (user.getCv().getRemoteCvs() != null) {
+        Hibernate.initialize(user.getCv().getRemoteCvs());
+      }
+    }
     Hibernate.initialize(user.getJobRoles());
     Hibernate.initialize(user.getJobTypes());
     Hibernate.initialize(user.getContractTypes());
@@ -173,13 +186,37 @@ public class UserDataService {
   }
 
   @Transactional
-  public UserCvEntity replaceUserCv(UserEntity user, byte[] cvContent, String gptFileId, String grokFileId) {
+  public UserCvEntity replaceUserCv(UserEntity user, byte[] cvContent, Map<EngineType, ResumeFileInfo> result) {
     UserCvEntity entity = userCvRepository.findByUserId(user.getId())
-        .orElseGet(() -> new UserCvEntity(user, cvContent, gptFileId, null, grokFileId));
+        .orElseGet(() -> new UserCvEntity(user, cvContent));
     entity.setCv(cvContent);
-    entity.setGptFileId(gptFileId);
-    entity.setGrokFileId(grokFileId);
-    return userCvRepository.save(entity);
+    entity = userCvRepository.save(entity);
+    for (Entry<EngineType, ResumeFileInfo> entry : result.entrySet()) {
+      this.saveRemoteCvFile(entity, entry.getKey(), entry.getValue());
+    }
+    return entity;
+  }
+
+  @Transactional
+  public void saveRemoteCvFile(
+      UserCvEntity userCv,
+      EngineType provider,
+      ResumeFileInfo fileInfo
+  ) {
+    UserRemoteCvEntity entity = userRemoteCvRepository.findByUserCvIdAndProvider(userCv.getId(), provider)
+        .orElse(new UserRemoteCvEntity(userCv, provider, fileInfo.fileId(), fileInfo.filename()));
+    entity.setFileId(fileInfo.fileId());
+    entity.setFilename(fileInfo.filename());
+    entity.setExpireTime(fileInfo.expireAt());
+    userRemoteCvRepository.save(entity);
+  }
+
+  public Optional<String> getRemoteCvFileId(UserCvEntity userCv, EngineType provider) {
+    if (userCv == null || userCv.getId() == null) {
+      return Optional.empty();
+    }
+    return userRemoteCvRepository.findByUserCvIdAndProvider(userCv.getId(), provider)
+        .map(UserRemoteCvEntity::getFileId);
   }
 
   @Transactional
@@ -270,7 +307,11 @@ public class UserDataService {
 
   @Transactional
   public void updateDeviceId(String username, String deviceId, String ip, String userAgent) {
-    UserDeviceEntity entity = userDeviceRepository.findByUsername(username).orElseThrow();
+    UserDeviceEntity entity = userDeviceRepository.findByUsername(username).orElseGet(() -> {
+      UserDeviceEntity newEntity = new UserDeviceEntity();
+      userRepository.findByUsername(username).ifPresent(newEntity::setUser);
+      return newEntity;
+    });
     entity.setDeviceId(deviceId);
     entity.setIpAddress(ip);
     entity.setUserAgent(userAgent);

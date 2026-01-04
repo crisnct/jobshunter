@@ -1,5 +1,6 @@
 package com.jobshunter.service.testdata;
 
+import com.jobshunter.model.ResumeFileInfo;
 import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.clients.FileClient;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
@@ -21,9 +22,9 @@ public non-sealed class FakeGeminiFileApiClient implements FileClient {
   @CircuitBreaker(name = "geminiCircuitBreaker", fallbackMethod = "fallbackUploadFile")
   @RateLimiter(name = "geminiLimiter")
   @Bulkhead(name = "geminiBulkhead")
-  public String uploadFile(Path cvPath) {
+  public ResumeFileInfo uploadFile(Path cvPath) {
     log.info("File uploaded properly {}", cvPath);
-    return "files/" + (12345678 + System.currentTimeMillis() % 12345678);
+    return new ResumeFileInfo("files/" + (12345678 + System.currentTimeMillis() % 12345678), "cv.pdf", null);
   }
 
   @Override
@@ -39,9 +40,9 @@ public non-sealed class FakeGeminiFileApiClient implements FileClient {
   }
 
   @SuppressWarnings("unused")
-  private String fallbackUploadFile(Path cvPath, Throwable t) {
+  private ResumeFileInfo fallbackUploadFile(Path cvPath, Throwable t) {
     log.error("{} call short-circuited/bulkheaded: {}", getClass().getSimpleName(), t.getMessage());
-    return "";
+    return null;
   }
 
 }
