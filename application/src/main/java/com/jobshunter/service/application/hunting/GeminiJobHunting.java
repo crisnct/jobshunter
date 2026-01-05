@@ -4,6 +4,7 @@ import com.jobshunter.database.entities.UserPromptEntity;
 import com.jobshunter.model.GeminiJobSearchRequest;
 import com.jobshunter.model.Job;
 import com.jobshunter.model.SearchJobOrder;
+import com.jobshunter.service.application.UserCvService;
 import com.jobshunter.service.clients.AiJobsClient;
 import java.util.Base64;
 import java.util.List;
@@ -18,9 +19,10 @@ public class GeminiJobHunting extends GenericJobHunting<GeminiJobSearchRequest> 
 
   public GeminiJobHunting(
       @Qualifier("geminiSearchExecutor") Executor geminiSearchExecutor,
-      @Qualifier("JobsClientGemini") AiJobsClient<GeminiJobSearchRequest, List<Job>> geminiClient
+      @Qualifier("JobsClientGemini") AiJobsClient<GeminiJobSearchRequest, List<Job>> geminiClient,
+      UserCvService userCvService
       ) {
-    super(geminiSearchExecutor, geminiClient);
+    super(geminiSearchExecutor, geminiClient, userCvService);
   }
 
   @Override

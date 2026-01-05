@@ -2,6 +2,8 @@ package com.jobshunter.service.application;
 
 import com.jobshunter.database.entities.UserCvEntity;
 import com.jobshunter.database.entities.UserEntity;
+import com.jobshunter.database.entities.UserRemoteCvEntity;
+import com.jobshunter.database.service.UserCvDataService;
 import com.jobshunter.database.service.UserDataService;
 import com.jobshunter.dto.exceptions.ValidationException;
 import com.jobshunter.model.EngineType;
@@ -13,6 +15,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -42,15 +46,19 @@ public class UserCvService {
 
   private final UserDataService userDataService;
 
+  private final UserCvDataService userCvDataService;
+
   private final Map<EngineType, FileClient> clients;
 
   public UserCvService(
       UserDataService userDataService,
+      UserCvDataService userCvDataService,
       @Qualifier("Gpt") FileClient gptFileClient,
       @Qualifier("Gemini") FileClient geminiFileClient,
       @Qualifier("Grok") FileClient grokFileClient
   ) {
     this.userDataService = userDataService;
+    this.userCvDataService = userCvDataService;
     this.clients = Map.of(
         EngineType.GPT, gptFileClient,
         EngineType.GEMINI, geminiFileClient,
@@ -77,7 +85,7 @@ public class UserCvService {
     try {
       copyWithLimit(file.getInputStream(), tempFile, MAX_CV_BYTES);
       if (user.getCv() != null) {
-        deleteRemoteFiles(user.getCv());
+        deleteRemoteFiles(user);
       }
       byte[] cvContent = Files.readAllBytes(tempFile);
 
@@ -91,8 +99,7 @@ public class UserCvService {
         }
         uploadedResults.put(engine, fileInfo);
       }
-
-      userDataService.replaceUserCv(user, cvContent, uploadedResults);
+      userCvDataService.replaceUserCv(user, cvContent, uploadedResults);
       log.info("CV uploaded successfully for user {}", username);
       return uploadedResults;
     } finally {
@@ -115,7 +122,7 @@ public class UserCvService {
     }
     UserEntity user = userDataService.getUser(username).orElseThrow(() -> new ValidationException("User not found"));
     if (user.getCv() != null) {
-      deleteRemoteFiles(user.getCv());
+      deleteRemoteFiles(user);
       userDataService.deleteUserCv(user);
     }
   }
@@ -139,7 +146,7 @@ public class UserCvService {
       }
 
       for (EngineType engine : providers.keySet()) {
-        userDataService.getRemoteCvFileId(cv, engine)
+        userDataService.getRemoteCvFileId(user, engine)
             .ifPresent(providers.get(engine)::addIfPresent);
       }
     }
@@ -151,12 +158,12 @@ public class UserCvService {
   // Helpers
   // ---------------------------------------------------------------------------
 
-  private void deleteRemoteFiles(@NotNull UserCvEntity cv) {
+  private void deleteRemoteFiles(@NotNull UserEntity user) {
     for (Map.Entry<EngineType, FileClient> entry : clients.entrySet()) {
       EngineType engine = entry.getKey();
       FileClient client = entry.getValue();
 
-      userDataService.getRemoteCvFileId(cv, engine)
+      userDataService.getRemoteCvFileId(user, engine)
           .ifPresent(fileId -> deleteIfPresent(fileId, client, engine));
     }
   }
@@ -214,6 +221,40 @@ public class UserCvService {
     }
 
     return "-" + clean;
+  }
+
+  public void refreshUserCvIfNeeded(UserEntity user, @NotNull EngineType type) {
+    UserRemoteCvEntity remoteCV = user.getRemoteCvs().stream().filter(p -> p.getProvider() == type)
+        .findFirst().orElse(null);
+    if (remoteCV == null || remoteCV.getExpireTime() != null && remoteCV.getExpireTime().isBefore(Instant.now())) {
+      log.info("Refreshing CV for user {} before searching jobs with engine {}", user.getUsername(), type.name());
+      Path tempFile = null;
+      try {
+        FileClient client = clients.get(type);
+        if (remoteCV != null) {
+          client.deleteFile(remoteCV.getFileId());
+        }
+        tempFile = Files.createTempFile("cv-" + user.getUsername() + "-", ".pdf");
+        Files.write(tempFile, user.getCv().getCv(),
+            StandardOpenOption.CREATE,
+            StandardOpenOption.TRUNCATE_EXISTING,
+            StandardOpenOption.WRITE
+        );
+        ResumeFileInfo newFileInfo = client.uploadFile(tempFile);
+        userCvDataService.saveRemoteCvFile(user, type, newFileInfo);
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      } finally {
+        if (tempFile != null) {
+          try {
+            Files.deleteIfExists(tempFile);
+          } catch (IOException e) {
+            //noinspection ThrowFromFinallyBlock
+            throw new RuntimeException(e);
+          }
+        }
+      }
+    }
   }
 
   // ---------------------------------------------------------------------------

@@ -133,8 +133,8 @@ public class UserController {
         user.isNotifyEmail(),
         user.isEmailVerified(),
         user.getVerificationToken(),
-        latestCv == null ? "" : userDataService.getRemoteCvFileId(latestCv, EngineType.GPT).orElse(""),
-        latestCv == null ? "" : userDataService.getRemoteCvFileId(latestCv, EngineType.GROK).orElse(""),
+        userDataService.getRemoteCvFileId(user, EngineType.GPT).orElse(""),
+        userDataService.getRemoteCvFileId(user, EngineType.GROK).orElse(""),
         formatDateTime(user.getLastJobs()),
         user.getTimeInterval(),
         prompts.stream()

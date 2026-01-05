@@ -9,5 +9,6 @@
     <include file="db/changelog/2026-01-03-initial-setup.xml"/>
     <include file="db/changelog/2026-01-04-create-user-remote-cv-table.xml"/>
     <include file="db/changelog/2026-01-05-drop-file-id-columns-from-user-cv.xml"/>
+    <include file="db/changelog/2026-01-04-refactor-user-remote-cv-to-users.xml"/>
 
 </databaseChangeLog>

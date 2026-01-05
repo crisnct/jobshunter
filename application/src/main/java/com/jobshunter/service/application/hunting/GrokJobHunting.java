@@ -5,6 +5,7 @@ import com.jobshunter.dto.grokRequest.Reasoning;
 import com.jobshunter.model.GrokJobSearchRequest;
 import com.jobshunter.model.Job;
 import com.jobshunter.model.SearchJobOrder;
+import com.jobshunter.service.application.UserCvService;
 import com.jobshunter.service.clients.AiJobsClient;
 import java.util.List;
 import java.util.concurrent.Executor;
@@ -18,9 +19,10 @@ public class GrokJobHunting extends GenericJobHunting<GrokJobSearchRequest> {
 
   public GrokJobHunting(
       @Qualifier("grokSearchExecutor") Executor executor,
-      @Qualifier("JobsClientGROK") AiJobsClient<GrokJobSearchRequest, List<Job>> aiClient
+      @Qualifier("JobsClientGROK") AiJobsClient<GrokJobSearchRequest, List<Job>> aiClient,
+      UserCvService userCvService
   ) {
-    super(executor, aiClient);
+    super(executor, aiClient, userCvService);
   }
 
   @Override

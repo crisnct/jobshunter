@@ -73,7 +73,7 @@ public non-sealed class GrokV1JobSearchImpl implements AiJobsClient<GrokJobSearc
   @Bulkhead(name = "grokBulkhead")
   public List<Job> searchJobs(GrokJobSearchRequest request) {
     try {
-      UserRemoteCvEntity remoteCV = request.getUser().getCv().getRemoteCvs().stream()
+      UserRemoteCvEntity remoteCV = request.getUser().getRemoteCvs().stream()
           .filter(p-> p.getProvider() == EngineType.GROK).findAny()
           .orElseThrow(()-> new ValidationException("No GROK CV found for user " + request.getUser().getId()));
 

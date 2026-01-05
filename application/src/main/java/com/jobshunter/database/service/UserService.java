@@ -2,14 +2,13 @@ package com.jobshunter.database.service;
 
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.repository.UserRepository;
+import java.util.List;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.Hibernate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
-import java.util.Optional;
 
 @Slf4j
 @Service
@@ -55,18 +54,13 @@ public class UserService {
   }
 
   /**
-   * Initializes lazy-loaded associations for a user entity.
-   * This method ensures that related entities are loaded before the transaction ends.
+   * Initializes lazy-loaded associations for a user entity. This method ensures that related entities are loaded before the transaction ends.
    */
   public void initializeUserData(UserEntity user) {
     Hibernate.initialize(user.getPrompts());
     Hibernate.initialize(user.getRoles());
-    if (user.getCv() != null) {
-      Hibernate.initialize(user.getCv());
-      if (user.getCv().getRemoteCvs() != null) {
-        Hibernate.initialize(user.getCv().getRemoteCvs());
-      }
-    }
+    Hibernate.initialize(user.getCv());
+    Hibernate.initialize(user.getRemoteCvs());
     Hibernate.initialize(user.getJobRoles());
     Hibernate.initialize(user.getJobTypes());
     Hibernate.initialize(user.getContractTypes());

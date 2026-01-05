@@ -7,13 +7,13 @@ import com.jobshunter.database.repository.UserCvRepository;
 import com.jobshunter.database.repository.UserRemoteCvRepository;
 import com.jobshunter.model.EngineType;
 import com.jobshunter.model.ResumeFileInfo;
+import java.util.Map;
+import java.util.Map.Entry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Optional;
 
 @Slf4j
@@ -22,6 +22,7 @@ import java.util.Optional;
 public class UserCvDataService {
 
   private final UserCvRepository userCvRepository;
+
   private final UserRemoteCvRepository userRemoteCvRepository;
 
   @Transactional(readOnly = true)
@@ -36,19 +37,19 @@ public class UserCvDataService {
     entity.setCv(cvContent);
     entity = userCvRepository.save(entity);
     for (Entry<EngineType, ResumeFileInfo> entry : result.entrySet()) {
-      this.saveRemoteCvFile(entity, entry.getKey(), entry.getValue());
+      this.saveRemoteCvFile(user, entry.getKey(), entry.getValue());
     }
     return entity;
   }
 
   @Transactional
   public void saveRemoteCvFile(
-      UserCvEntity userCv,
+      UserEntity user,
       EngineType provider,
       ResumeFileInfo fileInfo
   ) {
-    UserRemoteCvEntity entity = userRemoteCvRepository.findByUserCvIdAndProvider(userCv.getId(), provider)
-        .orElse(new UserRemoteCvEntity(userCv, provider, fileInfo.fileId(), fileInfo.filename()));
+    UserRemoteCvEntity entity = userRemoteCvRepository.findByUserIdAndProvider(user.getId(), provider)
+        .orElse(new UserRemoteCvEntity(user, provider, fileInfo.fileId(), fileInfo.filename()));
     entity.setFileId(fileInfo.fileId());
     entity.setFilename(fileInfo.filename());
     entity.setExpireTime(fileInfo.expireAt());
@@ -56,11 +57,11 @@ public class UserCvDataService {
   }
 
   @Transactional(readOnly = true)
-  public Optional<String> getRemoteCvFileId(UserCvEntity userCv, EngineType provider) {
-    if (userCv == null || userCv.getId() == null) {
+  public Optional<String> getRemoteCvFileId(UserEntity user, EngineType provider) {
+    if (user == null || user.getId() == null) {
       return Optional.empty();
     }
-    return userRemoteCvRepository.findByUserCvIdAndProvider(userCv.getId(), provider)
+    return userRemoteCvRepository.findByUserIdAndProvider(user.getId(), provider)
         .map(UserRemoteCvEntity::getFileId);
   }
 

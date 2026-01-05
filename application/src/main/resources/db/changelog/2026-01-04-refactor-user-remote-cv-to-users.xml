@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="
+        http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.23.xsd">
+
+    <changeSet id="53-refactor-user-remote-cv-to-users" author="assistant">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="user_remote_cv"/>
+        </preConditions>
+
+        <comment>Refactor user_remote_cv table to link directly to users table instead of user_cv table. Drop id and user_cv_id columns, add user_id as part of composite primary key with provider.</comment>
+
+        <!-- Drop and recreate table with new structure (data is already deleted) -->
+        <dropTable tableName="user_remote_cv" cascadeConstraints="true"/>
+        
+        <createTable tableName="user_remote_cv">
+            <column name="user_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="provider" type="VARCHAR(25)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="file_id" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="filename" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="expire_time" type="TIMESTAMP">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+
+        <!-- Add composite primary key on (user_id, provider) -->
+        <addPrimaryKey tableName="user_remote_cv" columnNames="user_id, provider" constraintName="pk_user_remote_cv"/>
+        
+        <!-- Add foreign key to users table -->
+        <addForeignKeyConstraint constraintName="fk_user_remote_cv_users"
+                                 baseTableName="user_remote_cv"
+                                 baseColumnNames="user_id"
+                                 referencedTableName="users"
+                                 referencedColumnNames="id"
+                                 onDelete="CASCADE"/>
+        
+        <!-- Add index on provider for performance -->
+        <createIndex tableName="user_remote_cv" indexName="idx_user_remote_cv_provider">
+            <column name="provider"/>
+        </createIndex>
+        
+        <!-- Add index on expire_time for performance -->
+        <createIndex tableName="user_remote_cv" indexName="idx_user_remote_cv_expire_time">
+            <column name="expire_time"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

@@ -6,6 +6,7 @@ import com.jobshunter.database.entities.UserPromptEntity;
 import com.jobshunter.dto.serpRequest.SearchWithSerpRequest;
 import com.jobshunter.model.Job;
 import com.jobshunter.model.SearchJobOrder;
+import com.jobshunter.service.application.UserCvService;
 import com.jobshunter.service.clients.AiJobsClient;
 import java.util.List;
 import java.util.concurrent.Executor;
@@ -22,9 +23,10 @@ public class SerpJobHunting extends GenericJobHunting<SearchWithSerpRequest> {
   public SerpJobHunting(
       @Qualifier("JobsClientSerp") AiJobsClient<SearchWithSerpRequest, List<Job>> serpClient,
       @Qualifier("serpExecutor") Executor serpExecutor,
-      JsonMapper mapper
+      JsonMapper mapper,
+      UserCvService userCvService
   ) {
-    super(serpExecutor, serpClient);
+    super(serpExecutor, serpClient, userCvService);
     this.mapper = mapper;
   }
 

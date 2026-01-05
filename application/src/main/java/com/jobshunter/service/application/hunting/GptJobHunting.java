@@ -5,6 +5,7 @@ import com.jobshunter.dto.gptRequest.Reasoning;
 import com.jobshunter.model.GptJobSearchRequest;
 import com.jobshunter.model.Job;
 import com.jobshunter.model.SearchJobOrder;
+import com.jobshunter.service.application.UserCvService;
 import com.jobshunter.service.clients.AiJobsClient;
 import java.util.List;
 import java.util.concurrent.Executor;
@@ -18,9 +19,10 @@ public class GptJobHunting extends GenericJobHunting<GptJobSearchRequest> {
 
   public GptJobHunting(
       @Qualifier("gptSearchExecutor") Executor gptSearchExecutor,
-      @Qualifier("JobsClientGPT") AiJobsClient<GptJobSearchRequest, List<Job>> gptClient
+      @Qualifier("JobsClientGPT") AiJobsClient<GptJobSearchRequest, List<Job>> gptClient,
+      UserCvService userCvService
   ) {
-    super(gptSearchExecutor, gptClient);
+    super(gptSearchExecutor, gptClient, userCvService);
   }
 
   @Override

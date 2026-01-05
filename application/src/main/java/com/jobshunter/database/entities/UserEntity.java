@@ -106,6 +106,10 @@ public class UserEntity implements UserDetails {
   private UserCvEntity cv;
 
   @JsonIgnore
+  @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+  private List<UserRemoteCvEntity> remoteCvs = new ArrayList<>();
+
+  @JsonIgnore
   @Column(name = "jwt_token", length = 64)
   private String jwtToken;
 

@@ -7,13 +7,11 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.IdClass;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
 import java.time.Instant;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -23,19 +21,17 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @Entity
-@Table(name = "user_remote_cv",
-    uniqueConstraints = @UniqueConstraint(name = "uc_user_remote_cv_cv_provider", columnNames = {"user_cv_id", "provider"}))
+@Table(name = "user_remote_cv")
+@IdClass(UserRemoteCvId.class)
 public class UserRemoteCvEntity {
 
   @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private Long id;
-
   @JsonIgnore
   @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "user_cv_id", nullable = false)
-  private UserCvEntity userCv;
+  @JoinColumn(name = "user_id", nullable = false)
+  private UserEntity user;
 
+  @Id
   @Column(name = "provider", nullable = false, length = 25)
   @Enumerated(EnumType.STRING)
   private EngineType provider;
@@ -49,16 +45,16 @@ public class UserRemoteCvEntity {
   @Column(name = "expire_time")
   private Instant expireTime;
 
-  public UserRemoteCvEntity(UserCvEntity userCv, EngineType provider, String fileId, String filename, Instant expireTime) {
-    this.userCv = userCv;
+  public UserRemoteCvEntity(UserEntity user, EngineType provider, String fileId, String filename, Instant expireTime) {
+    this.user = user;
     this.provider = provider;
     this.fileId = fileId;
     this.filename = filename;
     this.expireTime = expireTime;
   }
 
-  public UserRemoteCvEntity(UserCvEntity userCv, EngineType provider, String fileId, String filename) {
-    this.userCv = userCv;
+  public UserRemoteCvEntity(UserEntity user, EngineType provider, String fileId, String filename) {
+    this.user = user;
     this.provider = provider;
     this.fileId = fileId;
     this.filename = filename;

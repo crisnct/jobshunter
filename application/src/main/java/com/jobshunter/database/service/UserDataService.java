@@ -110,23 +110,8 @@ public class UserDataService {
   // ========== User CV Operations (delegated to UserCvDataService) ==========
 
   @Transactional(readOnly = true)
-  public Optional<UserCvEntity> getUserCv(String username) {
-    return userCvDataService.getUserCv(username);
-  }
-
-  @Transactional
-  public UserCvEntity replaceUserCv(UserEntity user, byte[] cvContent, Map<EngineType, ResumeFileInfo> result) {
-    return userCvDataService.replaceUserCv(user, cvContent, result);
-  }
-
-  @Transactional
-  public void saveRemoteCvFile(UserCvEntity userCv, EngineType provider, ResumeFileInfo fileInfo) {
-    userCvDataService.saveRemoteCvFile(userCv, provider, fileInfo);
-  }
-
-  @Transactional(readOnly = true)
-  public Optional<String> getRemoteCvFileId(UserCvEntity userCv, EngineType provider) {
-    return userCvDataService.getRemoteCvFileId(userCv, provider);
+  public Optional<String> getRemoteCvFileId(UserEntity user, EngineType provider) {
+    return userCvDataService.getRemoteCvFileId(user, provider);
   }
 
   @Transactional

@@ -9,6 +9,7 @@ import com.jobshunter.model.EngineSelection;
 import com.jobshunter.model.EngineType;
 import com.jobshunter.model.Job;
 import com.jobshunter.model.SearchJobOrder;
+import com.jobshunter.service.application.UserCvService;
 import com.jobshunter.service.clients.AiJobsClient;
 import io.github.resilience4j.ratelimiter.RequestNotPermitted;
 import jakarta.annotation.Nonnull;
@@ -27,12 +28,16 @@ public abstract non-sealed class GenericJobHunting<T extends AIJobSearchRequest>
 
   private final AiJobsClient<T, List<Job>> jobsClient;
 
+  private final UserCvService userCvService;
+
   public GenericJobHunting(
       Executor executor,
-      AiJobsClient<T, List<Job>> jobsClient
+      AiJobsClient<T, List<Job>> jobsClient,
+      UserCvService userCvService
   ) {
     this.executor = executor;
     this.jobsClient = jobsClient;
+    this.userCvService = userCvService;
   }
 
   public abstract T createRequest(SearchJobOrder order, UserPromptEntity prompt);
@@ -100,6 +105,10 @@ public abstract non-sealed class GenericJobHunting<T extends AIJobSearchRequest>
   private List<Job> searchSync(T request) {
     String model = request.getOrder().getEngineSelection().model();
     log.info("Searching jobs for user {} with model {}", request.getUser().getUsername(), model);
+    if (request.getUser().getCv() != null) {
+      //Upload cv if needed
+      userCvService.refreshUserCvIfNeeded(request.getUser(), request.getOrder().getEngineSelection().type());
+    }
     List<Job> jobsFound = jobsClient.searchJobs(request);
     jobsFound.forEach(job -> {
       job.setPromptId(request.getPrompt().getId());

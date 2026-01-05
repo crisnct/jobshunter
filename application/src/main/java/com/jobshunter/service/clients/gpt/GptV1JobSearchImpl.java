@@ -67,7 +67,7 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient<GptJobSearchR
   @Bulkhead(name = "gptBulkhead")
   public List<Job> searchJobs(GptJobSearchRequest request) {
     try {
-      UserRemoteCvEntity remoteCV = request.getUser().getCv().getRemoteCvs().stream()
+      UserRemoteCvEntity remoteCV = request.getUser().getRemoteCvs().stream()
           .filter(p-> p.getProvider() == EngineType.GPT).findAny()
           .orElseThrow(()-> new ValidationException("No GPT CV found for user " + request.getUser().getId()));
 

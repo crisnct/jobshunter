@@ -52,7 +52,7 @@ public non-sealed class GptJobScoreCalculatorClientImpl implements JobScoreCalcu
     try {
       Gpt config = properties.getGpt();
       String userPrompt = templateRenderer.getPrompt(PromptType.USER_PROMPT_MATCH_SCORE, "description", request.getJobDescription());
-      UserRemoteCvEntity remoteCV = request.getUserCV().getRemoteCvs().stream()
+      UserRemoteCvEntity remoteCV = request.getUserCV().getUser().getRemoteCvs().stream()
           .filter(p-> p.getProvider() == EngineType.GPT).findAny()
           .orElseThrow(()-> new ValidationException("No GPT CV found for user " + request.getUserCV().getUser().getUsername()));
 
