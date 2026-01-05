@@ -11,26 +11,25 @@ import com.jobshunter.database.repository.UserJobRepository;
 import com.jobshunter.database.repository.UserPromptRepository;
 import com.jobshunter.model.Job;
 import com.jobshunter.model.SearchJobOrder;
+import java.time.Instant;
+import java.util.List;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import java.time.Instant;
-import java.util.List;
-import java.util.Optional;
-
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class UserJobService {
+public class UserJobDBService {
 
   private final UserJobRepository userJobRepository;
   private final UserPromptRepository userPromptRepository;
   private final PromptsJobsRepository promptsJobsRepository;
   private final AiModelRepository aiModelRepository;
-  private final UserService userService;
+  private final UserDBService userDBService;
 
   @Transactional(readOnly = true)
   public List<UserJobEntity> getUserJobs(String username) {
@@ -67,7 +66,7 @@ public class UserJobService {
         userPromptRepository.save(userPrompt);
       }
     });
-    userService.updateUser(user);
+    userDBService.updateUser(user);
   }
 
   @Transactional(readOnly = true)

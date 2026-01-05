@@ -1,12 +1,12 @@
 package com.jobshunter.service.application.processors;
 
 import com.jobshunter.database.entities.UserCvEntity;
+import com.jobshunter.model.GeminiJobScoreRequest;
 import com.jobshunter.model.Job;
 import com.jobshunter.model.JobContext;
 import com.jobshunter.model.JobPhase;
 import com.jobshunter.service.clients.FileClient;
 import com.jobshunter.service.clients.JobScoreCalculatorClient;
-import com.jobshunter.model.GeminiJobScoreRequest;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;

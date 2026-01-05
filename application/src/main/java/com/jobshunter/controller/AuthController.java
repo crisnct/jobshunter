@@ -1,8 +1,8 @@
 package com.jobshunter.controller;
 
 import com.jobshunter.database.entities.UserEntity;
-import com.jobshunter.database.service.AuthService;
-import com.jobshunter.database.service.UserDataService;
+import com.jobshunter.database.service.AuthDBService;
+import com.jobshunter.database.service.UserDBService;
 import com.jobshunter.dto.AuthResponse;
 import com.jobshunter.dto.LoginRequest;
 import com.jobshunter.dto.RegisterRequest;
@@ -42,13 +42,13 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class AuthController {
 
-  private final AuthService authService;
+  private final AuthDBService authDBService;
 
   private final EmailNotifierService emailService;
 
   private final CookieCsrfTokenRepository csrfTokenRepository;
 
-  private final UserDataService userDataService;
+  private final UserDBService userDBService;
 
   private final DeviceCookieService deviceCookieService;
 
@@ -58,7 +58,7 @@ public class AuthController {
       @RequestBody
       RegisterRequest request
   ) {
-    UserEntity user = authService.register(request);
+    UserEntity user = authDBService.register(request);
     emailService.sendVerificationToken(user);
     log.info("Verification token for {} is {}", user.getEmail(), user.getVerificationToken());
     return new RegistrationResponse(
@@ -76,11 +76,11 @@ public class AuthController {
 
       HttpServletResponse httpResponse
   ) {
-    String token = authService.login(request);
+    String token = authDBService.login(request);
     String deviceId = deviceCookieService.generateNewDeviceId(httpResponse);
     String ip = httpResponse.getHeader(JHHeaders.IP_HEADER);
     String userAgent = httpRequest.getHeader(JHHeaders.USER_AGENT);
-    userDataService.updateDeviceId(request.username(), deviceId, ip, userAgent);
+    userDBService.updateDeviceId(request.username(), deviceId, ip, userAgent);
     log.info("Login for {} from IP {}", request.username(), httpResponse.getHeader(JHHeaders.IP_HEADER));
     return new AuthResponse(token);
   }
@@ -105,7 +105,7 @@ public class AuthController {
       @Size(max = 128)
       String token
   ) {
-    authService.verifyEmail(token);
+    authDBService.verifyEmail(token);
     return ResponseEntity.ok(Map.of("message", "Email verified. Please wait up to 72h until your account is approved by an admin."));
   }
 

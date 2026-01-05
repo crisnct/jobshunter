@@ -2,7 +2,7 @@ package com.jobshunter.controller;
 
 import com.jobshunter.ApplicationProperties;
 import com.jobshunter.database.entities.UserEntity;
-import com.jobshunter.database.service.UserDataService;
+import com.jobshunter.database.service.UserDBService;
 import com.jobshunter.dto.EmailRequest;
 import com.jobshunter.dto.JobHuntResponse;
 import com.jobshunter.dto.exceptions.BusinessException;
@@ -58,7 +58,7 @@ public class TestController {
 
   private final ApplicationProperties properties;
 
-  private final UserDataService userDataService;
+  private final UserDBService userDBService;
 
   private final RestClient restClient;
 
@@ -68,14 +68,14 @@ public class TestController {
 
   public TestController(
       EmailNotifierService emailNotifierService,
-      UserDataService userDataService,
+      UserDBService userDBService,
       ApplicationProperties properties,
       RestClient restClient,
       @Qualifier("JobsClientSerp") AiJobsClient<SearchWithSerpRequest, List<Job>> serpClient,
       TemplateRenderer templateRenderer
   ) {
     this.emailNotifierService = emailNotifierService;
-    this.userDataService = userDataService;
+    this.userDBService = userDBService;
     this.serpClient = serpClient;
     this.properties = properties;
     this.restClient = restClient;
@@ -104,7 +104,7 @@ public class TestController {
     if (userDetails == null) {
       throw new ValidationException("Authentication required");
     }
-    UserEntity user = userDataService.getUser(userDetails.getUsername())
+    UserEntity user = userDBService.getUser(userDetails.getUsername())
         .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "User not found"));
     emailNotifierService.sendUsingTemplate(jobs.jobsFound(), user);
     return ResponseEntity.ok(Map.of("message", "Email sent successfully"));
@@ -119,7 +119,7 @@ public class TestController {
       @AuthenticationPrincipal
       UserDetails userDetails
   ) {
-    UserEntity user = userDataService.getUser(userDetails.getUsername())
+    UserEntity user = userDBService.getUser(userDetails.getUsername())
         .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "User not found"));
     log.info("Searching jobs for {}", user.getUsername());
     List<Job> jobs = serpClient.searchJobs(request);

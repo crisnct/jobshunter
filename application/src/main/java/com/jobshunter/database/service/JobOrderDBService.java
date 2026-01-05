@@ -7,6 +7,8 @@ import com.jobshunter.database.repository.AiModelRepository;
 import com.jobshunter.database.repository.JobOrderRepository;
 import com.jobshunter.dto.exceptions.BusinessException;
 import com.jobshunter.model.OrderStatus;
+import java.util.List;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.Hibernate;
@@ -14,17 +16,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.Optional;
-
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class JobOrderService {
+public class JobOrderDBService {
 
   private final JobOrderRepository jobOrderRepository;
   private final AiModelRepository aiModelRepository;
-  private final UserService userService;
+  private final UserDBService userDBService;
 
   @Transactional
   public JobOrderEntity createJobOrder(UserEntity user, Long engineConfigurationId, boolean searchCompanies, boolean searchByPrompts) {
@@ -56,7 +55,7 @@ public class JobOrderService {
     }
     UserEntity user = lastOrder.get().getUser();
     if (user != null) {
-      userService.initializeUserData(user);
+      userDBService.initializeUserData(user);
     }
     Hibernate.initialize(lastOrder.get().getAiModel());
     return lastOrder;

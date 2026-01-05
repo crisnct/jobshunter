@@ -2,7 +2,7 @@ package com.jobshunter.service.application;
 
 import com.jobshunter.ApplicationProperties;
 import com.jobshunter.database.entities.UserEntity;
-import com.jobshunter.database.service.UserDataService;
+import com.jobshunter.database.service.UserJobDBService;
 import com.jobshunter.dto.JobHuntResponse;
 import com.jobshunter.model.Job;
 import com.jobshunter.model.JobContext;
@@ -30,7 +30,7 @@ public class JobHuntService {
 
   private final EmailNotifierService emailNotifierService;
 
-  private final UserDataService userDataService;
+  private final UserJobDBService userJobDBService;
 
   private final JobScoring jobScoring;
 
@@ -45,7 +45,7 @@ public class JobHuntService {
     final List<String> existingURLs;
     boolean isEnableOneRealEngine = (properties.getGemini().isEnabled() || properties.getGpt().isEnabled() || properties.getSerp().isEnabled());
     if (isEnableOneRealEngine) {
-      existingURLs = userDataService.getExistingJobUrlsForUser(user.getUsername());
+      existingURLs = userJobDBService.getExistingJobUrlsForUser(user.getUsername());
     } else {
       existingURLs = new ArrayList<>();
     }
@@ -70,7 +70,7 @@ public class JobHuntService {
       List<Job> jobs = jobHuntResponse.jobsFound();
       if (!jobs.isEmpty()) {
         if (isEnableOneRealEngine) {
-          this.userDataService.updateUser(user, order, jobs);
+          this.userJobDBService.updateUserWithJobs(user, order, jobs);
         }
         if (user.isNotifyWhatsapp()) {
           whatsappNotifierService.send(jobs, user);

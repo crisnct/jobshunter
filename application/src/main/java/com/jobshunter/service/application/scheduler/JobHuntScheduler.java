@@ -1,7 +1,8 @@
 package com.jobshunter.service.application.scheduler;
 
 import com.jobshunter.database.entities.JobOrderEntity;
-import com.jobshunter.database.service.UserDataService;
+import com.jobshunter.database.service.JobOrderDBService;
+import com.jobshunter.database.service.UserDBService;
 import com.jobshunter.model.EngineSelection;
 import com.jobshunter.model.OrderStatus;
 import com.jobshunter.model.SearchJobOrder;
@@ -28,7 +29,8 @@ public class JobHuntScheduler {
 
   private final JobHuntService jobHuntService;
 
-  private final UserDataService userDataService;
+  private final UserDBService userDBService;
+  private final JobOrderDBService jobOrderDBService;
 
   private final UserCvService userCvService;
 
@@ -36,12 +38,14 @@ public class JobHuntScheduler {
 
   public JobHuntScheduler(
       JobHuntService jobHuntService,
-      UserDataService userDataService,
+      UserDBService userDBService,
+      JobOrderDBService jobOrderDBService,
       UserCvService userCvService,
       @Qualifier("miscellaneousExecutor") Executor executor
   ) {
     this.jobHuntService = jobHuntService;
-    this.userDataService = userDataService;
+    this.userDBService = userDBService;
+    this.jobOrderDBService = jobOrderDBService;
     this.userCvService = userCvService;
     this.executor = executor;
   }
@@ -62,12 +66,12 @@ public class JobHuntScheduler {
   }
 
   public void processOrderSync() {
-    Optional<JobOrderEntity> jobOrderOp = userDataService.getUserOldestNewOrder();
+    Optional<JobOrderEntity> jobOrderOp = jobOrderDBService.getUserOldestNewOrder();
     if (jobOrderOp.isPresent()) {
       JobOrderEntity jobOrder = jobOrderOp.get();
       log.info("Start processing job order id={} for user {}", jobOrder.getId(), jobOrder.getUser().getUsername());
       jobOrder.setStatus(OrderStatus.PROCESSING);
-      userDataService.saveJobOrder(jobOrder);
+      jobOrderDBService.saveJobOrder(jobOrder);
       try {
         SearchJobOrder searchOrder = new SearchJobOrder();
         searchOrder.setUser(jobOrder.getUser());
@@ -77,19 +81,19 @@ public class JobHuntScheduler {
         jobHuntService.searchJobsForUser(searchOrder);
 
         jobOrder.setStatus(OrderStatus.COMPLETED);
-        userDataService.saveJobOrder(jobOrder);
+        jobOrderDBService.saveJobOrder(jobOrder);
         log.info("Completed processing job order id={} for user {}", jobOrder.getId(), jobOrder.getUser().getUsername());
       } catch (Exception e) {
         log.error("Error processing job order id={} for user {}: {}", jobOrder.getId(), jobOrder.getUser().getUsername(), e.getMessage(), e);
         jobOrder.setStatus(OrderStatus.FAILED);
         jobOrder.setErrorMessage(e.getMessage());
-        userDataService.saveJobOrder(jobOrder);
+        jobOrderDBService.saveJobOrder(jobOrder);
       }
     }
   }
 
   public void notifyUsersSync() {
-    for (var user : userDataService.getAllUsers()) {
+    for (var user : userDBService.getAllUsers()) {
       if (user.isNotifyWhatsapp() || user.isNotifyEmail()) {
         if (user.getTimeInterval() != null
             && user.getTimeInterval() > 0

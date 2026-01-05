@@ -9,8 +9,10 @@ import com.jobshunter.database.entities.UserJobEntity;
 import com.jobshunter.database.entities.UserJobRoleEntity;
 import com.jobshunter.database.entities.UserJobTypeEntity;
 import com.jobshunter.database.entities.UserPromptEntity;
-import com.jobshunter.database.service.AuthService;
-import com.jobshunter.database.service.UserDataService;
+import com.jobshunter.database.service.AuthDBService;
+import com.jobshunter.database.service.UserCvDBService;
+import com.jobshunter.database.service.UserDBService;
+import com.jobshunter.database.service.UserJobDBService;
 import com.jobshunter.dto.ChangePasswordRequest;
 import com.jobshunter.dto.UserInfoResponse;
 import com.jobshunter.dto.UserJobResponse;
@@ -52,9 +54,11 @@ import org.springframework.web.bind.annotation.RestController;
 @PreAuthorize("isAuthenticated()")
 public class UserController {
 
-  private final UserDataService userDataService;
+  private final UserDBService userDBService;
+  private final UserJobDBService userJobDBService;
+  private final UserCvDBService userCvDBService;
 
-  private final AuthService authService;
+  private final AuthDBService authDBService;
 
   private final EmailNotifierService emailService;
 
@@ -67,7 +71,7 @@ public class UserController {
   public ResponseEntity<UserInfoResponse> me(Authentication authentication) {
     log.info("Get user info for {}", authentication.getName());
     //noinspection OptionalGetWithoutIsPresent
-    return userDataService.getUserCompleteInfo(authentication.getName())
+    return userDBService.getUserCompleteInfo(authentication.getName())
         .map(user -> ResponseEntity.ok(toResponse(user)))
         .get();
   }
@@ -75,7 +79,7 @@ public class UserController {
   @GetMapping("/all")
   @PreAuthorize("hasRole('ADMIN')")
   public ResponseEntity<List<UserInfoResponse>> getAllUsers() {
-    List<UserInfoResponse> users = userDataService.getAllUsers().stream()
+    List<UserInfoResponse> users = userDBService.getAllUsers().stream()
         .map(this::toResponse)
         .toList();
     return ResponseEntity.ok(users);
@@ -88,7 +92,7 @@ public class UserController {
       @NotBlank @Size(max = 255)
       String username
   ) {
-    List<UserJobResponse> jobs = userDataService.getUserJobs(username).stream()
+    List<UserJobResponse> jobs = userJobDBService.getUserJobs(username).stream()
         .map(this::toUserJobResponse)
         .toList();
     return ResponseEntity.ok(jobs);
@@ -102,7 +106,7 @@ public class UserController {
 
       Authentication authentication
   ) {
-    UserEntity user = authService.changePassword(authentication.getName(), request);
+    UserEntity user = authDBService.changePassword(authentication.getName(), request);
     emailService.sendVerificationToken(user);
     return ResponseEntity.ok(Map.of("message", "Check for email with token"));
   }
@@ -133,8 +137,8 @@ public class UserController {
         user.isNotifyEmail(),
         user.isEmailVerified(),
         user.getVerificationToken(),
-        userDataService.getRemoteCvFileId(user, EngineType.GPT).orElse(""),
-        userDataService.getRemoteCvFileId(user, EngineType.GROK).orElse(""),
+        userCvDBService.getRemoteCvFileId(user, EngineType.GPT).orElse(""),
+        userCvDBService.getRemoteCvFileId(user, EngineType.GROK).orElse(""),
         formatDateTime(user.getLastJobs()),
         user.getTimeInterval(),
         prompts.stream()
@@ -176,13 +180,13 @@ public class UserController {
       String rejectReason
   ) {
     //noinspection OptionalGetWithoutIsPresent
-    UserEntity user = userDataService.getUser(username).get();
+    UserEntity user = userDBService.getUser(username).get();
     if (Strings.isEmpty(rejectReason)) {
       if (user.isApproved()) {
         return ResponseEntity.badRequest().body(Map.of("error", "User already approved"));
       }
       user.setApproved(true);
-      userDataService.updateUser(user);
+      userDBService.updateUser(user);
       emailService.accountApproved(user);
     } else {
       emailService.accountRejected(user, rejectReason);
@@ -193,7 +197,7 @@ public class UserController {
   @DeleteMapping("/delete")
   public ResponseEntity<?> deleteAccount(Authentication authentication) {
     userCvService.deleteUserCv(authentication.getName());
-    userDataService.deleteUserByUsername(authentication.getName());
+    userDBService.deleteUserByUsername(authentication.getName());
     return ResponseEntity.ok(Map.of("message", "Account deleted successfully"));
   }
 
@@ -201,7 +205,7 @@ public class UserController {
   @PutMapping("/update")
   public ResponseEntity<?> updateUser(@Valid @RequestBody UserUpdateRequest request) {
     @SuppressWarnings("OptionalGetWithoutIsPresent")
-    UserEntity user = userDataService.getUser(request.username()).get();
+    UserEntity user = userDBService.getUser(request.username()).get();
     user.setPhoneNumber(request.phoneNumber());
     user.setTimeInterval(request.timeInterval());
     user.setNotifyWhatsapp(request.notifyWhatsapp());
@@ -213,13 +217,13 @@ public class UserController {
 
     // Update job roles, job types, and contract types through service
     if (request.jobRoles() != null) {
-      userDataService.updateUserJobRoles(user, request.jobRoles());
+      userDBService.updateUserJobRoles(user, request.jobRoles());
     }
     if (request.jobTypes() != null) {
-      userDataService.updateUserJobTypes(user, request.jobTypes());
+      userDBService.updateUserJobTypes(user, request.jobTypes());
     }
     if (request.contractTypes() != null) {
-      userDataService.updateUserContractTypes(user, request.contractTypes());
+      userDBService.updateUserContractTypes(user, request.contractTypes());
     }
 
     List<Long> promptsToDelete = new ArrayList<>(user.getPrompts().stream().map(UserPromptEntity::getId).toList());
@@ -228,7 +232,7 @@ public class UserController {
       request.serpPrompts().forEach(serpPrompt -> {
         try {
           String promptJson = objectMapper.writeValueAsString(serpPrompt);
-          UserPromptEntity prompt = userDataService.updatePrompt(user, EngineCategory.SERP, serpPrompt.id(), promptJson);
+          UserPromptEntity prompt = userDBService.updatePrompt(user, EngineCategory.SERP, serpPrompt.id(), promptJson);
           promptsToDelete.remove(prompt.getId());
         } catch (JsonProcessingException e) {
           throw new ValidationException("Invalid SERP prompt payload", e);
@@ -238,13 +242,13 @@ public class UserController {
 
     if (request.aiPrompts() != null) {
       request.aiPrompts().forEach(aiPrompt -> {
-        UserPromptEntity prompt = userDataService.updatePrompt(user, EngineCategory.AI, aiPrompt.id(), aiPrompt.prompt());
+        UserPromptEntity prompt = userDBService.updatePrompt(user, EngineCategory.AI, aiPrompt.id(), aiPrompt.prompt());
         promptsToDelete.remove(prompt.getId());
       });
     }
 
-    userDataService.deleteUserPrompts(promptsToDelete);
-    userDataService.updateUser(user);
+    userDBService.deleteUserPrompts(promptsToDelete);
+    userDBService.updateUser(user);
     return ResponseEntity.ok(Map.of("user", user.getUsername(), "message", "User updated successfully"));
   }
 

@@ -1,7 +1,7 @@
 package com.jobshunter.security;
 
 import com.jobshunter.ApplicationProperties;
-import com.jobshunter.database.service.UserDataService;
+import com.jobshunter.database.service.UserDBService;
 import com.jobshunter.security.filters.DeviceIdFilter;
 import com.jobshunter.security.filters.JwtAuthenticationFilter;
 import com.jobshunter.security.filters.RateLimitingFilter;
@@ -45,7 +45,7 @@ public class SecurityConfig {
 
   public static final long MAX_AGE_CORS = (int)TimeUnit.HOURS.toSeconds(1);
 
-  private final UserDataService userDataService;
+  private final UserDBService userDBService;
 
   private final JwtService jwtService;
 
@@ -123,7 +123,7 @@ public class SecurityConfig {
 
   @Bean
   public UserDetailsService userDetailsService() {
-    return username -> userDataService.getUser(username)
+    return username -> userDBService.getUser(username)
         .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
   }
 
@@ -148,8 +148,8 @@ public class SecurityConfig {
   }
 
   @Bean
-  public DeviceIdFilter deviceIdFilter(UserDataService userDataService, RestAuthenticationEntryPoint restAuthenticationEntryPoint) {
-    return new DeviceIdFilter(userDataService, restAuthenticationEntryPoint);
+  public DeviceIdFilter deviceIdFilter(UserDBService userDeviceDBService, RestAuthenticationEntryPoint restAuthenticationEntryPoint) {
+    return new DeviceIdFilter(userDeviceDBService, restAuthenticationEntryPoint);
   }
 
   private AuthenticationProvider daoAuthenticationProvider(UserDetailsService userDetailsService, PasswordEncoder passwordEncoder) {

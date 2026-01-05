@@ -3,8 +3,8 @@ package com.jobshunter.service.application;
 import com.jobshunter.database.entities.UserCvEntity;
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.entities.UserRemoteCvEntity;
-import com.jobshunter.database.service.UserCvDataService;
-import com.jobshunter.database.service.UserDataService;
+import com.jobshunter.database.service.UserCvDBService;
+import com.jobshunter.database.service.UserDBService;
 import com.jobshunter.dto.exceptions.ValidationException;
 import com.jobshunter.model.EngineType;
 import com.jobshunter.model.ResumeFileInfo;
@@ -44,21 +44,21 @@ public class UserCvService {
       MediaType.TEXT_PLAIN_VALUE
   );
 
-  private final UserDataService userDataService;
+  private final UserDBService userDBService;
 
-  private final UserCvDataService userCvDataService;
+  private final UserCvDBService userCvDBService;
 
   private final Map<EngineType, FileClient> clients;
 
   public UserCvService(
-      UserDataService userDataService,
-      UserCvDataService userCvDataService,
+      UserDBService userDBService,
+      UserCvDBService userCvDBService,
       @Qualifier("Gpt") FileClient gptFileClient,
       @Qualifier("Gemini") FileClient geminiFileClient,
       @Qualifier("Grok") FileClient grokFileClient
   ) {
-    this.userDataService = userDataService;
-    this.userCvDataService = userCvDataService;
+    this.userDBService = userDBService;
+    this.userCvDBService = userCvDBService;
     this.clients = Map.of(
         EngineType.GPT, gptFileClient,
         EngineType.GEMINI, geminiFileClient,
@@ -79,7 +79,7 @@ public class UserCvService {
     this.validateFile(file);
 
     @SuppressWarnings("OptionalGetWithoutIsPresent")
-    UserEntity user = userDataService.getUser(username).get();
+    UserEntity user = userDBService.getUser(username).get();
 
     Path tempFile = Files.createTempFile("cv-" + username + "-", resolveSafeSuffix(file.getOriginalFilename()));
     try {
@@ -99,7 +99,7 @@ public class UserCvService {
         }
         uploadedResults.put(engine, fileInfo);
       }
-      userCvDataService.replaceUserCv(user, cvContent, uploadedResults);
+      userCvDBService.replaceUserCv(user, cvContent, uploadedResults);
       log.info("CV uploaded successfully for user {}", username);
       return uploadedResults;
     } finally {
@@ -120,10 +120,11 @@ public class UserCvService {
     if (!StringUtils.hasText(username)) {
       throw new ValidationException("User not authenticated");
     }
-    UserEntity user = userDataService.getUser(username).orElseThrow(() -> new ValidationException("User not found"));
+    UserEntity user = userDBService.getUser(username).orElseThrow(() -> new ValidationException("User not found"));
     if (user.getCv() != null) {
       deleteRemoteFiles(user);
-      userDataService.deleteUserCv(user);
+      userCvDBService.deleteUserCv(user);
+      userDBService.updateUser(user);
     }
   }
 
@@ -139,14 +140,14 @@ public class UserCvService {
         providers.put(engine, new ProviderFiles(client))
     );
 
-    for (UserEntity user : userDataService.getAllUsers()) {
+    for (UserEntity user : userDBService.getAllUsers()) {
       UserCvEntity cv = user.getCv();
       if (cv == null) {
         continue;
       }
 
       for (EngineType engine : providers.keySet()) {
-        userDataService.getRemoteCvFileId(user, engine)
+        userCvDBService.getRemoteCvFileId(user, engine)
             .ifPresent(providers.get(engine)::addIfPresent);
       }
     }
@@ -163,7 +164,7 @@ public class UserCvService {
       EngineType engine = entry.getKey();
       FileClient client = entry.getValue();
 
-      userDataService.getRemoteCvFileId(user, engine)
+      userCvDBService.getRemoteCvFileId(user, engine)
           .ifPresent(fileId -> deleteIfPresent(fileId, client, engine));
     }
   }
@@ -241,7 +242,7 @@ public class UserCvService {
             StandardOpenOption.WRITE
         );
         ResumeFileInfo newFileInfo = client.uploadFile(tempFile);
-        userCvDataService.saveRemoteCvFile(user, type, newFileInfo);
+        userCvDBService.saveRemoteCvFile(user, type, newFileInfo);
       } catch (IOException e) {
         throw new RuntimeException(e);
       } finally {

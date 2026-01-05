@@ -12,7 +12,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.jobshunter.database.entities.RoleEntity;
 import com.jobshunter.database.repository.RoleRepository;
-import com.jobshunter.database.service.AuthService;
+import com.jobshunter.database.service.AuthDBService;
 import com.jobshunter.dto.RegisterRequest;
 import com.jobshunter.service.clients.SmtpMailtrapClient;
 import org.junit.jupiter.api.DisplayName;
@@ -53,7 +53,7 @@ class EmailNotifierTest {
   private RoleRepository roleRepository;
 
   @MockitoSpyBean
-  private AuthService authService;
+  private AuthDBService authDBService;
 
   @MockitoSpyBean
   private EmailNotifierService emailNotifierService;
@@ -78,7 +78,7 @@ class EmailNotifierTest {
             .content(mapper.writeValueAsString(request)))
         .andExpect(status().isOk());
 
-    verify(authService).register(request);
+    verify(authDBService).register(request);
     verify(emailNotifierService).sendVerificationToken(argThat(u ->
         u != null && request.username().equals(u.getUsername()) && request.email().equals(u.getEmail())
     ));

@@ -1,7 +1,7 @@
 package com.jobshunter.security.filters;
 
 import com.jobshunter.database.entities.UserDeviceEntity;
-import com.jobshunter.database.service.UserDataService;
+import com.jobshunter.database.service.UserDBService;
 import com.jobshunter.dto.exceptions.DeviceRevokedException;
 import com.jobshunter.security.DeviceCookieService;
 import com.jobshunter.security.RestAuthenticationEntryPoint;
@@ -23,7 +23,7 @@ import org.springframework.web.util.WebUtils;
 @AllArgsConstructor
 public class DeviceIdFilter extends OncePerRequestFilter {
 
-  private final UserDataService userDataService;
+  private final UserDBService userDBService;
 
   private final RestAuthenticationEntryPoint authenticationEntryPoint;
 
@@ -50,7 +50,7 @@ public class DeviceIdFilter extends OncePerRequestFilter {
           authenticationEntryPoint.commence(request, response, exception);
           return;
         }
-        Optional<UserDeviceEntity> activeDeviceOp = userDataService.getActiveDevice(username);
+        Optional<UserDeviceEntity> activeDeviceOp = userDBService.getActiveDevice(username);
         if (activeDeviceOp.isPresent() && !deviceIdCookie.getValue().equals(activeDeviceOp.get().getDeviceId())) {
           this.logout(request);
           DeviceRevokedException exception = new DeviceRevokedException("Logged out because you signed in on another device.");

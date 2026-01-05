@@ -29,7 +29,7 @@ import org.springframework.web.server.ResponseStatusException;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class AuthService {
+public class AuthDBService {
 
   private final UserRepository userRepository;
 

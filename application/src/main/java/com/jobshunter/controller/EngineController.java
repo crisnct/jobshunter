@@ -3,8 +3,9 @@ package com.jobshunter.controller;
 import com.jobshunter.database.entities.AiModelEntity;
 import com.jobshunter.database.entities.JobOrderEntity;
 import com.jobshunter.database.entities.UserEntity;
-import com.jobshunter.database.repository.AiModelRepository;
-import com.jobshunter.database.service.UserDataService;
+import com.jobshunter.database.service.JobOrderDBService;
+import com.jobshunter.database.service.ModelsDBService;
+import com.jobshunter.database.service.UserDBService;
 import com.jobshunter.dto.JobOrderRequest;
 import com.jobshunter.dto.JobOrderResponse;
 import jakarta.validation.Valid;
@@ -32,15 +33,16 @@ import org.springframework.web.bind.annotation.RestController;
 @PreAuthorize("isAuthenticated()")
 public class EngineController {
 
-  private final AiModelRepository aiModelRepository;
+  private final ModelsDBService modelsDBService;
 
-  private final UserDataService userDataService;
+  private final UserDBService userDBService;
+  private final JobOrderDBService jobOrderDBService;
 
   @GetMapping("/models")
   @Transactional(readOnly = true)
   public ResponseEntity<Map<String, List<String>>> getEngineModels() {
     log.info("Fetching all engine models");
-    List<AiModelEntity> configurations = aiModelRepository.findAll();
+    List<AiModelEntity> configurations = modelsDBService.getAllModels();
     Map<String, List<String>> engineModelsMap = configurations.stream()
         .filter(AiModelEntity::isEnabled)
         .collect(Collectors.groupingBy(
@@ -63,8 +65,8 @@ public class EngineController {
         authentication.getName(), request.engineId(), request.searchCompanies(), request.searchWithUserPrompts());
 
     @SuppressWarnings("OptionalGetWithoutIsPresent")
-    UserEntity user = userDataService.getUser(authentication.getName()).get();
-    JobOrderEntity jobOrder = userDataService.createJobOrder(user, request.engineId(), request.searchCompanies(), request.searchWithUserPrompts());
+    UserEntity user = userDBService.getUser(authentication.getName()).get();
+    JobOrderEntity jobOrder = jobOrderDBService.createJobOrder(user, request.engineId(), request.searchCompanies(), request.searchWithUserPrompts());
     return ResponseEntity.status(HttpStatus.CREATED)
         .body(Map.of("id", jobOrder.getId(), "message", "Job order created successfully"));
   }
@@ -74,8 +76,8 @@ public class EngineController {
   public ResponseEntity<List<JobOrderResponse>> getOrders(Authentication authentication) {
     log.info("Fetching job orders for user: {}", authentication.getName());
     @SuppressWarnings("OptionalGetWithoutIsPresent")
-    UserEntity user = userDataService.getUser(authentication.getName()).get();
-    List<JobOrderEntity> orders = userDataService.getUserOrders(user.getId());
+    UserEntity user = userDBService.getUser(authentication.getName()).get();
+    List<JobOrderEntity> orders = jobOrderDBService.getUserOrders(user.getId());
     List<JobOrderResponse> responses = orders.stream()
         .map(this::toJobOrderResponse)
         .toList();
