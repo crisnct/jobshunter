@@ -1,28 +1,20 @@
 package com.jobshunter.model;
 
-import com.jobshunter.database.entities.UserPromptEntity;
-import com.jobshunter.dto.AIJobSearchRequest;
+import com.jobshunter.database.entities.UserEntity;
+import com.jobshunter.dto.AdditionalEffortRequest;
 import com.jobshunter.dto.CompanyDto;
-import com.jobshunter.dto.grokRequest.Reasoning;
 import java.util.List;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class GrokJobSearchRequest extends AIJobSearchRequest {
+public class GrokJobSearchRequest extends AdditionalEffortRequest {
 
   private List<CompanyDto> companies;
 
-  private final Reasoning reasoning;
-
-  public GrokJobSearchRequest(
-      SearchJobOrder order,
-      UserPromptEntity prompt,
-      Reasoning reasoning
-  ) {
-    super(order, prompt);
-    this.reasoning = reasoning;
+  public GrokJobSearchRequest(UserEntity user, EngineSelection engineSelection) {
+    super(user, engineSelection);
   }
 
 }

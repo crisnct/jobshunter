@@ -17,10 +17,11 @@ public record GptJobsPayload(
     Reasoning reasoning,
     int max_output_tokens,
     List<Tools> tools,
-    Boolean store,
     String instructions,
+    Boolean store,
+    String previous_response_id,
     Text text,
-    List<Input> input
+    List<Object> input
 ) {
 
   @SuppressWarnings({"MismatchedQueryAndUpdateOfCollection", "FieldMayBeFinal", "FieldCanBeLocal"})
@@ -28,7 +29,7 @@ public record GptJobsPayload(
 
     private static final JsonMapper JSON_MAPPER = JsonMapper.builder().findAndAddModules().build();
 
-    private List<Input> input = new ArrayList<>();
+    private List<Object> input = new ArrayList<>();
 
     private Text text;
 
@@ -49,6 +50,18 @@ public record GptJobsPayload(
 
     public GptJobsPayloadBuilder addUserPrompt(String userPrompt) {
       input.add(new Input("user", List.of(
+          new InputMessage("input_text", userPrompt)
+      )));
+      return this;
+    }
+
+    public GptJobsPayloadBuilder addAssistantPrompt(String prompt) {
+      input.add(new AssistantInput("assistant", prompt));
+      return this;
+    }
+
+    public GptJobsPayloadBuilder addDeveloperPrompt(String userPrompt) {
+      input.add(new Input("developer", List.of(
           new InputMessage("input_text", userPrompt)
       )));
       return this;

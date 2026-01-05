@@ -25,6 +25,7 @@ final class SerpJobsResponseParser {
     JsonNode jobsResultsNode = findJobsArray(root);
 
     // 3) Normal case: parse jobs_results[]
+    String id = jobsResultsNode.path("id").asText("");
     List<SerpJobHit> jobs = new ArrayList<>();
     for (JsonNode job : jobsResultsNode) {
       String title = job.path("title").asText("");
@@ -48,7 +49,7 @@ final class SerpJobsResponseParser {
       jobs.add(new SerpJobHit(title, company, location, description, highlights, jobId, applyLinks));
     }
 
-    return SerpJobsResult.success(jobs, readNextPageToken(root));
+    return SerpJobsResult.success(id, jobs, readNextPageToken(root));
   }
 
   private String readNextPageToken(JsonNode root) {

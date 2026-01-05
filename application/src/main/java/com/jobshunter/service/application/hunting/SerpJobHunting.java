@@ -4,11 +4,10 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.jobshunter.database.entities.UserPromptEntity;
 import com.jobshunter.dto.serpRequest.SearchWithSerpRequest;
-import com.jobshunter.model.Job;
+import com.jobshunter.model.AiClientResponse;
 import com.jobshunter.model.SearchJobOrder;
 import com.jobshunter.service.application.UserCvService;
 import com.jobshunter.service.clients.AiJobsClient;
-import java.util.List;
 import java.util.concurrent.Executor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -21,7 +20,7 @@ public class SerpJobHunting extends GenericJobHunting<SearchWithSerpRequest> {
   private final JsonMapper mapper;
 
   public SerpJobHunting(
-      @Qualifier("JobsClientSerp") AiJobsClient<SearchWithSerpRequest, List<Job>> serpClient,
+      @Qualifier("JobsClientSerp") AiJobsClient<SearchWithSerpRequest, AiClientResponse> serpClient,
       @Qualifier("serpExecutor") Executor serpExecutor,
       JsonMapper mapper,
       UserCvService userCvService
@@ -34,8 +33,9 @@ public class SerpJobHunting extends GenericJobHunting<SearchWithSerpRequest> {
   public SearchWithSerpRequest createRequest(SearchJobOrder order, UserPromptEntity prompt) {
     try {
       SearchWithSerpRequest request = mapper.readValue(prompt.getPrompt(), SearchWithSerpRequest.class);
-      request.setOrder(order);
-      request.setPrompt(prompt);
+      request.setUser(order.getUser());
+      request.setPromptId(prompt.getId());
+      request.setSearchCompanies(false);
       return request;
     } catch (JsonProcessingException e) {
       throw new RuntimeException(e);

@@ -1,6 +1,7 @@
 package com.jobshunter.service.testdata;
 
 import com.jobshunter.dto.CompanyDto;
+import com.jobshunter.model.AiClientResponse;
 import com.jobshunter.model.GptJobSearchRequest;
 import com.jobshunter.model.Job;
 import com.jobshunter.processor.PackageExpected;
@@ -17,14 +18,15 @@ import org.springframework.stereotype.Component;
 @Component("JobsClientGPT")
 @PackageExpected("com.jobshunter.service.clients.gpt")
 @ConditionalOnProperty(name = "gpt.enabled", havingValue = "false")
-public non-sealed class FakeGptClient implements AiJobsClient<GptJobSearchRequest, List<Job>> {
+public non-sealed class FakeGptClient implements AiJobsClient<GptJobSearchRequest, AiClientResponse> {
 
   @Override
   @CircuitBreaker(name = "gptCircuitBreaker", fallbackMethod = "fallbackSearch")
   @RateLimiter(name = "gptLimiter")
   @Bulkhead(name = "gptBulkhead")
-  public List<Job> searchJobs(GptJobSearchRequest request) {
-    return List.of(
+  public AiClientResponse searchJobs(GptJobSearchRequest request) {
+    AiClientResponse result = new AiClientResponse();
+    result.addAll(List.of(
         new Job(-1,
             "https://br.bebee.com/job/63c331e10c2e5c04df61d25ef8219be8?utm_campaign=google_jobs_apply&utm_source=google_jobs_apply&utm_medium=organic",
             null
@@ -45,7 +47,8 @@ public non-sealed class FakeGptClient implements AiJobsClient<GptJobSearchReques
             "https://weworkremotely.com/remote-jobs/h2corporation-vice-president-of-engineering-usa",
             null
         )
-    );
+    ));
+    return result;
   }
 
   @Override
@@ -58,14 +61,14 @@ public non-sealed class FakeGptClient implements AiJobsClient<GptJobSearchReques
   @Override
   @RateLimiter(name = "gptLimiter")
   @Bulkhead(name = "gptBulkhead")
-  public List<Job> searchJobsFromCompanies(GptJobSearchRequest request, List<CompanyDto> group) {
-    return List.of();
+  public AiClientResponse searchJobsFromCompanies(GptJobSearchRequest request, List<CompanyDto> group) {
+    return new AiClientResponse();
   }
 
   @SuppressWarnings("unused")
-  private List<Job> fallbackSearch(GptJobSearchRequest request, Throwable t) {
+  private AiClientResponse fallbackSearch(GptJobSearchRequest request, Throwable t) {
     log.error("{} call short-circuited/bulkheaded: {}", getClass().getSimpleName(), t.getMessage());
-    return List.of();
+    return new AiClientResponse();
   }
 
 }

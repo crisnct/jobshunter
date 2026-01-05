@@ -28,7 +28,7 @@ public class HuntingOrchestrator {
   public CompletableFuture<List<Job>> startHunting(SearchJobOrder order, List<String> existingURLs) {
     List<CompletableFuture<List<Job>>> allFutureJobs = new ArrayList<>();
 
-    if (order.isSearchByPrompts()) {
+    if (order.isSearchByUserPrompt()) {
       allFutureJobs.add(switch (order.getEngineSelection().type()) {
         case GPT -> gptJobHunting.searchJobsAsync(order);
         case GROK -> grokJobHunting.searchJobsAsync(order);

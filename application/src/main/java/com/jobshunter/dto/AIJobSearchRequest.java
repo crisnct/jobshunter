@@ -3,25 +3,23 @@ package com.jobshunter.dto;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.jobshunter.database.entities.UserEntity;
-import com.jobshunter.database.entities.UserPromptEntity;
-import com.jobshunter.model.SearchJobOrder;
-import lombok.AllArgsConstructor;
+import com.jobshunter.model.EngineSelection;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 @Data
-@AllArgsConstructor
-@NoArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class AIJobSearchRequest {
 
-  private SearchJobOrder order;
+  private UserEntity user;
+  private EngineSelection engineSelection;
+  private long promptId;
+  private String userPrompt;
+  private boolean searchCompanies;
 
-  private UserPromptEntity prompt;
-
-  public UserEntity getUser() {
-    return order.getUser();
+  public AIJobSearchRequest(UserEntity user, EngineSelection engineSelection) {
+    this.user = user;
+    this.engineSelection = engineSelection;
   }
 
 }

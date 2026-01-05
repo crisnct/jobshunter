@@ -3,19 +3,17 @@ package com.jobshunter.dto.serpRequest;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.dto.AIJobSearchRequest;
+import com.jobshunter.model.EngineSelection;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
-@AllArgsConstructor
-@NoArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class SearchWithSerpRequest extends AIJobSearchRequest {
@@ -74,5 +72,9 @@ public class SearchWithSerpRequest extends AIJobSearchRequest {
   @Size(max = 2)
   @Nullable
   private String language;
+
+  public SearchWithSerpRequest(UserEntity user, EngineSelection engineSelection){
+    super(user, engineSelection);
+  }
 
 }

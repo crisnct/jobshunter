@@ -5,6 +5,7 @@ import com.jobshunter.dto.CompanyDto;
 import com.jobshunter.dto.serpRequest.SearchWithSerpRequest;
 import com.jobshunter.dto.serpResponse.SerpJobHit;
 import com.jobshunter.dto.serpResponse.SerpJobsResult;
+import com.jobshunter.model.AiClientResponse;
 import com.jobshunter.model.Job;
 import com.jobshunter.service.clients.AiJobsClient;
 import com.jobshunter.service.clients.BrowserSimulator;
@@ -34,7 +35,7 @@ import org.springframework.stereotype.Component;
 @Component("JobsClientSerp")
 @ConditionalOnProperty(name = "serp.enabled", havingValue = "true")
 @RequiredArgsConstructor
-public non-sealed class SerpClientImpl implements AiJobsClient<SearchWithSerpRequest, List<Job>> {
+public non-sealed class SerpClientImpl implements AiJobsClient<SearchWithSerpRequest, AiClientResponse> {
 
   private static final URI BASE = URI.create("https://serpapi.com/search");
 
@@ -51,7 +52,7 @@ public non-sealed class SerpClientImpl implements AiJobsClient<SearchWithSerpReq
   @RateLimiter(name = "serpLimiter")
   @CircuitBreaker(name = "serp", fallbackMethod = "fallbackSearch")
   @Bulkhead(name = "serpBulkhead")
-  public List<Job> searchJobs(@NotNull SearchWithSerpRequest request) {
+  public AiClientResponse searchJobs(@NotNull SearchWithSerpRequest request) {
     SerpJobsResult results;
     try {
       results = searchJobsPagination(request, null);
@@ -67,14 +68,14 @@ public non-sealed class SerpClientImpl implements AiJobsClient<SearchWithSerpReq
       throw new RuntimeException(e);
     }
 
-    final List<Job> jobs = new ArrayList<>();
+    AiClientResponse response = new AiClientResponse();
+    response.setId(results.id());
     for (SerpJobHit serpJob : results.jobs()) {
-      Job job = new Job(-1, serpJob.applyLinks().getFirst(), request.getOrder().getEngineSelection().model());
+      Job job = new Job(-1, serpJob.applyLinks().getFirst(), request.getEngineSelection().model());
       job.setDescription(serpJob.description() + "\n" + serpJob.highlights());
-      jobs.add(job);
+      response.add(job);
     }
-
-    return jobs;
+    return response;
   }
 
   @Override
@@ -83,8 +84,8 @@ public non-sealed class SerpClientImpl implements AiJobsClient<SearchWithSerpReq
   }
 
   @Override
-  public List<Job> searchJobsFromCompanies(SearchWithSerpRequest request, List<CompanyDto> group) {
-    return List.of();
+  public AiClientResponse searchJobsFromCompanies(SearchWithSerpRequest request, List<CompanyDto> group) {
+    return new AiClientResponse();
   }
 
   @SuppressWarnings("unused")
@@ -96,7 +97,7 @@ public non-sealed class SerpClientImpl implements AiJobsClient<SearchWithSerpReq
   private SerpJobsResult consolidate(SerpJobsResult results1, SerpJobsResult results2) {
     List<SerpJobHit> jobs = new ArrayList<>(results1.jobs());
     jobs.addAll(results2.jobs());
-    return new SerpJobsResult(jobs, results2.nextPageToken());
+    return new SerpJobsResult(results1.id(), jobs, results2.nextPageToken());
   }
 
   private SerpJobsResult searchJobsPagination(SearchWithSerpRequest request, String nextPageToken) throws IOException {
@@ -113,7 +114,7 @@ public non-sealed class SerpClientImpl implements AiJobsClient<SearchWithSerpReq
       return new SerpJobsResponseParser().parse(response.getBody());
     } catch (Throwable e) {
       log.error(e.getMessage());
-      return new SerpJobsResult(List.of(), null);
+      return new SerpJobsResult(null, List.of(), null);
     }
   }
 
@@ -122,7 +123,7 @@ public non-sealed class SerpClientImpl implements AiJobsClient<SearchWithSerpReq
     parameters.add("api_key");
     parameters.add(applicationProperties.getSerp().getApiKey());
     parameters.add("engine");
-    parameters.add(request.getOrder().getEngineSelection().model().toLowerCase());
+    parameters.add(request.getEngineSelection().model().toLowerCase());
     parameters.add("q");
     parameters.add(encode(request.getQuery()));
 
@@ -136,7 +137,7 @@ public non-sealed class SerpClientImpl implements AiJobsClient<SearchWithSerpReq
     }
     if (request.getWorkType() != null) {
       parameters.add("ltype");
-      String value = switch (request.getWorkType()){
+      String value = switch (request.getWorkType()) {
         case ONSITE -> "1";
         case REMOTE -> "2";
         case HYBRID -> "3";

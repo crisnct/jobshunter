@@ -4,6 +4,7 @@ import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.entities.UserPromptEntity;
 import com.jobshunter.dto.AIJobSearchRequest;
 import com.jobshunter.dto.CompanyDto;
+import com.jobshunter.model.AiClientResponse;
 import com.jobshunter.model.EngineCategory;
 import com.jobshunter.model.EngineSelection;
 import com.jobshunter.model.EngineType;
@@ -12,7 +13,6 @@ import com.jobshunter.model.SearchJobOrder;
 import com.jobshunter.service.application.UserCvService;
 import com.jobshunter.service.clients.AiJobsClient;
 import io.github.resilience4j.ratelimiter.RequestNotPermitted;
-import jakarta.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -26,13 +26,13 @@ public abstract non-sealed class GenericJobHunting<T extends AIJobSearchRequest>
 
   private final Executor executor;
 
-  private final AiJobsClient<T, List<Job>> jobsClient;
+  protected final AiJobsClient<T, AiClientResponse> jobsClient;
 
-  private final UserCvService userCvService;
+  protected final UserCvService userCvService;
 
   public GenericJobHunting(
       Executor executor,
-      AiJobsClient<T, List<Job>> jobsClient,
+      AiJobsClient<T, AiClientResponse> jobsClient,
       UserCvService userCvService
   ) {
     this.executor = executor;
@@ -55,10 +55,10 @@ public abstract non-sealed class GenericJobHunting<T extends AIJobSearchRequest>
           || ((prompt.getEngineCategory() != EngineCategory.AI) && !isAImodel)) {
 
         T request = createRequest(order, prompt);
-        CompletableFuture<List<Job>> jobsFound = this.searchAsync(request, executor);
+        CompletableFuture<AiClientResponse> jobsFound = this.searchAsync(request, executor);
         futures = futures.thenCombine(jobsFound, (previousJobs, newJobs) -> {
           List<Job> merged = new ArrayList<>(previousJobs);
-          merged.addAll(newJobs);
+          merged.addAll(newJobs.getJobs());
           return merged;
         });
       }
@@ -86,37 +86,36 @@ public abstract non-sealed class GenericJobHunting<T extends AIJobSearchRequest>
         });
   }
 
-  private CompletableFuture<List<Job>> searchAsync(T request, Executor executor) {
+  private CompletableFuture<AiClientResponse> searchAsync(T request, Executor executor) {
     return CompletableFuture.supplyAsync(() -> searchSync(request), executor)
         .exceptionally(throwable -> {
-          EngineSelection engineConfig = request.getOrder().getEngineSelection();
+          EngineSelection engineConfig = request.getEngineSelection();
           if (throwable.getCause() != null && throwable.getCause() instanceof RequestNotPermitted) {
             log.error("❌ Rate limit exceeded for user {}, engine: {}, eodel: {}",
-                request.getOrder().getUser().getUsername(), engineConfig.type(), engineConfig.model());
+                request.getUser().getUsername(), engineConfig.type(), engineConfig.model());
           } else {
             log.error("Unexpected error at gathering jobs from model {}: {} for prompt {}", engineConfig.model(),
-                throwable.getMessage(), request.getPrompt().getPrompt());
+                throwable.getMessage(), request.getUserPrompt());
           }
-          return List.of();
+          return new AiClientResponse();
         });
   }
 
-  @Nonnull
-  private List<Job> searchSync(T request) {
-    String model = request.getOrder().getEngineSelection().model();
+  protected AiClientResponse searchSync(T request) {
+    String model = request.getEngineSelection().model();
     log.info("Searching jobs for user {} with model {}", request.getUser().getUsername(), model);
     if (request.getUser().getCv() != null) {
       //Upload cv if needed
-      userCvService.refreshUserCvIfNeeded(request.getUser(), request.getOrder().getEngineSelection().type());
+      userCvService.refreshUserCvIfNeeded(request.getUser(), request.getEngineSelection().type());
     }
-    List<Job> jobsFound = jobsClient.searchJobs(request);
-    jobsFound.forEach(job -> {
-      job.setPromptId(request.getPrompt().getId());
+    AiClientResponse response = jobsClient.searchJobs(request);
+    response.getJobs().forEach(job -> {
+      job.setPromptId(request.getPromptId());
       job.setSource(model);
     });
 
-    log.info("{} found {} url's and are going to be validated", model, jobsFound.size());
-    return jobsFound;
+    log.info("{} found {} url's and are going to be validated", model, response.getJobs().size());
+    return response;
   }
 
   private List<Job> searchCompaniesSync(T request, EngineSelection engineSelection) {
@@ -132,8 +131,9 @@ public abstract non-sealed class GenericJobHunting<T extends AIJobSearchRequest>
     for (List<CompanyDto> group : companiesGrouped) {
       log.info("Searching jobs for user {} from companies: {}", request.getUser().getUsername(),
           String.join(", ", group.stream().map(CompanyDto::companyName).toList()));
-      jobsFound.addAll(jobsClient.searchJobsFromCompanies(request, group));
-      log.info("Found {} jobs for user {} from current group of companies.", jobsFound.size(), request.getUser().getUsername());
+      List<Job> jobs = jobsClient.searchJobsFromCompanies(request, group).getJobs();
+      jobsFound.addAll(jobs);
+      log.info("Found {} jobs for user {} from current group of companies.", jobs.size(), request.getUser().getUsername());
     }
     jobsFound.forEach(job -> job.setSource("COMP-" + engineSelection.model()));
     return jobsFound;

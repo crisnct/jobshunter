@@ -2,6 +2,7 @@ package com.jobshunter.service.testdata;
 
 import com.jobshunter.dto.CompanyDto;
 import com.jobshunter.dto.serpRequest.SearchWithSerpRequest;
+import com.jobshunter.model.AiClientResponse;
 import com.jobshunter.model.Job;
 import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.clients.AiJobsClient;
@@ -17,14 +18,15 @@ import org.springframework.stereotype.Component;
 @Component("JobsClientSerp")
 @ConditionalOnProperty(name = "serp.enabled", havingValue = "false")
 @PackageExpected("com.jobshunter.service.clients.serp")
-public non-sealed class FakeSerpClient implements AiJobsClient<SearchWithSerpRequest, List<Job>> {
+public non-sealed class FakeSerpClient implements AiJobsClient<SearchWithSerpRequest, AiClientResponse> {
 
   @Override
   @RateLimiter(name = "serpLimiter")
   @CircuitBreaker(name = "serp", fallbackMethod = "fallbackSearch")
   @Bulkhead(name = "serpBulkhead")
-  public List<Job> searchJobs(SearchWithSerpRequest request) {
-    return List.of(
+  public AiClientResponse searchJobs(SearchWithSerpRequest request) {
+    AiClientResponse result = new AiClientResponse();
+    result.addAll(List.of(
         new Job(-1,
             "https://jobs.digitalhire.com/job-listing/opening/6W2b0Y7QrlHiOrwemePL8C?utm_campaign=google_jobs_apply&utm_source=google_jobs_apply&utm_medium=organic",
             null
@@ -37,7 +39,8 @@ public non-sealed class FakeSerpClient implements AiJobsClient<SearchWithSerpReq
             "https://www.linkedin.com/jobs/collections/recommended/?currentJobId=4263267426",
             null
         )
-    );
+    ));
+    return result;
   }
 
   @Override
@@ -46,14 +49,14 @@ public non-sealed class FakeSerpClient implements AiJobsClient<SearchWithSerpReq
   }
 
   @Override
-  public List<Job> searchJobsFromCompanies(SearchWithSerpRequest request, List<CompanyDto> group) {
-    return List.of();
+  public AiClientResponse searchJobsFromCompanies(SearchWithSerpRequest request, List<CompanyDto> group) {
+    return new AiClientResponse();
   }
 
   @SuppressWarnings("unused")
-  private List<Job> fallbackSearch(SearchWithSerpRequest request, Throwable t) {
+  private AiClientResponse fallbackSearch(SearchWithSerpRequest request, Throwable t) {
     log.error("{} call short-circuited/bulkheaded: {}", getClass().getSimpleName(), t.getMessage());
-    return List.of();
+    return new AiClientResponse();
   }
 
 }

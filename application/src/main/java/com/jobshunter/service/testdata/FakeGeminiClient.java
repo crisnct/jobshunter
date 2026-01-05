@@ -1,6 +1,7 @@
 package com.jobshunter.service.testdata;
 
 import com.jobshunter.dto.CompanyDto;
+import com.jobshunter.model.AiClientResponse;
 import com.jobshunter.model.GeminiJobSearchRequest;
 import com.jobshunter.model.Job;
 import com.jobshunter.processor.PackageExpected;
@@ -17,14 +18,15 @@ import org.springframework.stereotype.Component;
 @Component("JobsClientGemini")
 @PackageExpected("com.jobshunter.service.clients.gemini")
 @ConditionalOnProperty(name = "gemini.enabled", havingValue = "false")
-public non-sealed class FakeGeminiClient implements AiJobsClient<GeminiJobSearchRequest, List<Job>> {
+public non-sealed class FakeGeminiClient implements AiJobsClient<GeminiJobSearchRequest, AiClientResponse> {
 
   @Override
   @CircuitBreaker(name = "geminiCircuitBreaker", fallbackMethod = "fallbackSearch")
   @RateLimiter(name = "geminiLimiter")
   @Bulkhead(name = "geminiBulkhead")
-  public List<Job> searchJobs(GeminiJobSearchRequest request) {
-    return List.of(
+  public AiClientResponse searchJobs(GeminiJobSearchRequest request) {
+    AiClientResponse result = new AiClientResponse();
+    result.addAll(List.of(
         new Job(-1,
             "https://devjob.ro/en/jobs/Evantage-Soft-SRL-Senior-Java-Full-Stack-Developer",
             null
@@ -45,7 +47,8 @@ public non-sealed class FakeGeminiClient implements AiJobsClient<GeminiJobSearch
             "https://weworkremotely.com/remote-jobs/h2corporation-vice-president-of-engineering-usa",
             null
         )
-    );
+    ));
+    return result;
   }
 
   @Override
@@ -58,13 +61,13 @@ public non-sealed class FakeGeminiClient implements AiJobsClient<GeminiJobSearch
   @Override
   @RateLimiter(name = "geminiLimiter")
   @Bulkhead(name = "geminiBulkhead")
-  public List<Job> searchJobsFromCompanies(GeminiJobSearchRequest request, List<CompanyDto> group) {
-    return List.of();
+  public AiClientResponse searchJobsFromCompanies(GeminiJobSearchRequest request, List<CompanyDto> group) {
+    return new AiClientResponse();
   }
 
   @SuppressWarnings("unused")
-  private List<Job> fallbackSearch(GeminiJobSearchRequest request, Throwable t) {
+  private AiClientResponse fallbackSearch(GeminiJobSearchRequest request, Throwable t) {
     log.error("{} call short-circuited/bulkheaded: {}", getClass().getSimpleName(), t.getMessage());
-    return List.of();
+    return new AiClientResponse();
   }
 }

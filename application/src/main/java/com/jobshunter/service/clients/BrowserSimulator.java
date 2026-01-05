@@ -90,7 +90,7 @@ public class BrowserSimulator {
             .toEntity(String.class);
       } catch (Throwable ex2) {
         log.error("SECOND time failure about getting the html for {}", StringUtils.abbreviate(url, 50));
-        throw ex2;
+        return ResponseEntity.ofNullable(null);
       }
     }
   }

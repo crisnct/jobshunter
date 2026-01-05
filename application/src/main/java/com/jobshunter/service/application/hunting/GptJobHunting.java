@@ -2,12 +2,12 @@ package com.jobshunter.service.application.hunting;
 
 import com.jobshunter.database.entities.UserPromptEntity;
 import com.jobshunter.dto.gptRequest.Reasoning;
+import com.jobshunter.model.AiClientResponse;
 import com.jobshunter.model.GptJobSearchRequest;
-import com.jobshunter.model.Job;
 import com.jobshunter.model.SearchJobOrder;
+import com.jobshunter.service.TemplateRenderer;
 import com.jobshunter.service.application.UserCvService;
 import com.jobshunter.service.clients.AiJobsClient;
-import java.util.List;
 import java.util.concurrent.Executor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -15,25 +15,36 @@ import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
-public class GptJobHunting extends GenericJobHunting<GptJobSearchRequest> {
+public class GptJobHunting extends AdditionalEffortJobHunting<GptJobSearchRequest> {
 
   public GptJobHunting(
       @Qualifier("gptSearchExecutor") Executor gptSearchExecutor,
-      @Qualifier("JobsClientGPT") AiJobsClient<GptJobSearchRequest, List<Job>> gptClient,
-      UserCvService userCvService
+      @Qualifier("JobsClientGPT") AiJobsClient<GptJobSearchRequest, AiClientResponse> gptClient,
+      UserCvService userCvService,
+      TemplateRenderer templateRenderer
   ) {
-    super(gptSearchExecutor, gptClient, userCvService);
+    super(gptSearchExecutor, gptClient, userCvService, templateRenderer);
   }
 
   @Override
   public GptJobSearchRequest createRequest(SearchJobOrder order, UserPromptEntity prompt) {
     Reasoning reasoning = order.getEngineSelection().model().startsWith("gpt-5") ? new Reasoning("high") : null;
-    return new GptJobSearchRequest(order, prompt, reasoning);
+    GptJobSearchRequest request
+        = new GptJobSearchRequest(order.getUser(), order.getEngineSelection(), reasoning);
+    request.setUserPrompt(prompt.getPrompt());
+    request.setPromptId(prompt.getId());
+    request.setSearchCompanies(false);
+    request.setStore(true);
+    return request;
   }
 
   @Override
   public GptJobSearchRequest createCompaniesRequest(SearchJobOrder order) {
-    return new GptJobSearchRequest(order, null, null);
+    GptJobSearchRequest request
+        = new GptJobSearchRequest(order.getUser(), order.getEngineSelection(), null);
+    request.setSearchCompanies(true);
+    request.setStore(false);
+    return request;
   }
 
 }

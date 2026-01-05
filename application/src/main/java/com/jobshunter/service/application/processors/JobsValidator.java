@@ -16,6 +16,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.util.Strings;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.springframework.data.util.Pair;
@@ -92,12 +93,18 @@ public class JobsValidator implements JobProcessor {
     try {
       ResponseEntity<String> response = browserSimulator.openPageAsync(uri.toString()).toCompletableFuture().get();
       String body = response.getBody();
-      String html = body.toLowerCase();
-      boolean isExpired = expiredJobsPatterns.stream().anyMatch(pattern -> pattern.matcher(html).find());
-      if (isExpired) {
-        log.warn("Invalid URL");
+      boolean isExpired;
+      if (Strings.isBlank(body)) {
+        isExpired = true;
+        log.error("Invalid URL");
       } else {
-        log.info("URL is valid");
+        String html = body.toLowerCase();
+        isExpired = expiredJobsPatterns.stream().anyMatch(pattern -> pattern.matcher(html).find());
+        if (isExpired) {
+          log.warn("Invalid URL");
+        } else {
+          log.info("URL is valid");
+        }
       }
       return Pair.of(!isExpired, isExpired ? "" : body);
     } catch (Throwable e) {

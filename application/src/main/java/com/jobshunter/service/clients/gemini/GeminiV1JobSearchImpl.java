@@ -10,6 +10,7 @@ import com.jobshunter.dto.geminiRequest.SafetySetting;
 import com.jobshunter.dto.geminiRequest.ThinkingConfig;
 import com.jobshunter.dto.geminiResponse.GeminiGenerateContentResponse;
 import com.jobshunter.dto.geminiResponse.GeminiGenerateContentResponse.Candidate;
+import com.jobshunter.model.AiClientResponse;
 import com.jobshunter.model.GeminiJobSearchRequest;
 import com.jobshunter.model.Job;
 import com.jobshunter.model.PromptType;
@@ -36,7 +37,7 @@ import org.springframework.web.client.RestClient;
 @PackageExpected("com.jobshunter.service.clients.gpt")
 @ConditionalOnProperty(name = "gemini.enabled", havingValue = "true")
 @AllArgsConstructor
-public non-sealed class GeminiV1JobSearchImpl implements AiJobsClient<GeminiJobSearchRequest, List<Job>> {
+public non-sealed class GeminiV1JobSearchImpl implements AiJobsClient<GeminiJobSearchRequest, AiClientResponse> {
 
   public static final String GEMINI_URI = "https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent?key=%s";
 
@@ -52,7 +53,7 @@ public non-sealed class GeminiV1JobSearchImpl implements AiJobsClient<GeminiJobS
   @CircuitBreaker(name = "geminiCircuitBreaker", fallbackMethod = "fallbackSearch")
   @Bulkhead(name = "geminiBulkhead")
   @RateLimiter(name = "geminiLimiter")
-  public List<Job> searchJobs(GeminiJobSearchRequest request) {
+  public AiClientResponse searchJobs(GeminiJobSearchRequest request) {
     try {
       GenerationConfig generationConfig = GenerationConfig.builder()
           .temperature(0.0)
@@ -62,24 +63,29 @@ public non-sealed class GeminiV1JobSearchImpl implements AiJobsClient<GeminiJobS
 
       GeminiJobsPayload payload = GeminiJobsPayload.builder()
           .addSystemInstruction(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_JOB_SEARCH))
-          .addUserContent(request.getPrompt().getPrompt(), "application/pdf", request.getBase64CV())
+          .addUserContent(request.getUserPrompt(), "application/pdf", request.getBase64CV())
           .generationConfig(generationConfig)
           .tools(List.of(new GoogleSearchTool()))
           .safetySettings(List.of(new SafetySetting("HARM_CATEGORY_DANGEROUS_CONTENT", "BLOCK_LOW_AND_ABOVE")))
           .build();
 
       GeminiGenerateContentResponse response = restClient.post()
-          .uri(URI.create(String.format(GEMINI_URI, request.getOrder().getEngineSelection().model(),
+          .uri(URI.create(String.format(GEMINI_URI, request.getEngineSelection().model(),
               properties.getGemini().getApiKey())))
           .contentType(MediaType.APPLICATION_JSON)
           .body(payload)
           .retrieve()
           .body(GeminiGenerateContentResponse.class);
 
-      return extractContentList(response);
+      List<Job> jobs = extractContentList(response);
+      AiClientResponse result = new AiClientResponse();
+      result.addAll(jobs);
+      //noinspection DataFlowIssue
+      result.setId(response.responseId());
+      return result;
     } catch (Exception e) {
       log.error("Gemini job API call failed", e);
-      return List.of();
+      return new AiClientResponse();
     }
   }
 
@@ -89,14 +95,14 @@ public non-sealed class GeminiV1JobSearchImpl implements AiJobsClient<GeminiJobS
   }
 
   @Override
-  public List<Job> searchJobsFromCompanies(GeminiJobSearchRequest request, List<CompanyDto> group) {
-    return List.of();
+  public AiClientResponse searchJobsFromCompanies(GeminiJobSearchRequest request, List<CompanyDto> group) {
+    return new AiClientResponse();
   }
 
   @SuppressWarnings("unused")
-  private List<Job> fallbackSearch(GeminiJobSearchRequest request, Throwable t) {
+  private AiClientResponse fallbackSearch(GeminiJobSearchRequest request, Throwable t) {
     log.error("{} call short-circuited/bulkheaded: {}", getClass().getSimpleName(), t.getMessage());
-    return List.of();
+    return new AiClientResponse();
   }
 
   protected List<Job> extractContentList(GeminiGenerateContentResponse response) {

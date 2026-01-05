@@ -75,8 +75,8 @@ public class JobHuntScheduler {
       try {
         SearchJobOrder searchOrder = new SearchJobOrder();
         searchOrder.setUser(jobOrder.getUser());
-        searchOrder.setSearchByPrompts(jobOrder.isSearchByPrompts());
         searchOrder.setSearchCompanies(jobOrder.isSearchCompanies());
+        searchOrder.setSearchByUserPrompt(jobOrder.isSearchByPrompts());
         searchOrder.setEngineSelection(new EngineSelection(jobOrder.getAiModel().getProvider(), jobOrder.getAiModel().getModel()));
         jobHuntService.searchJobsForUser(searchOrder);
 

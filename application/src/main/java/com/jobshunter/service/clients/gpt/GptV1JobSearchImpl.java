@@ -13,6 +13,7 @@ import com.jobshunter.dto.gptRequest.GptJobsPayload;
 import com.jobshunter.dto.gptRequest.tools.Tools;
 import com.jobshunter.dto.gptResponse.GptResponse;
 import com.jobshunter.dto.gptResponse.OutputItem;
+import com.jobshunter.model.AiClientResponse;
 import com.jobshunter.model.AiSchemaType;
 import com.jobshunter.model.EngineType;
 import com.jobshunter.model.GptJobSearchRequest;
@@ -47,7 +48,7 @@ import org.springframework.web.client.RestClient;
 @PackageExpected("com.jobshunter.service.clients.gpt")
 @ConditionalOnProperty(name = "gpt.enabled", havingValue = "true")
 @AllArgsConstructor
-public non-sealed class GptV1JobSearchImpl implements AiJobsClient<GptJobSearchRequest, List<Job>> {
+public non-sealed class GptV1JobSearchImpl implements AiJobsClient<GptJobSearchRequest, AiClientResponse> {
 
   public static final URI DEFAULT_URI = URI.create("https://api.openai.com/v1/responses");
 
@@ -65,20 +66,22 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient<GptJobSearchR
   @CircuitBreaker(name = "gptCircuitBreaker", fallbackMethod = "fallbackSearch")
   @RateLimiter(name = "gptLimiter")
   @Bulkhead(name = "gptBulkhead")
-  public List<Job> searchJobs(GptJobSearchRequest request) {
+  public AiClientResponse searchJobs(GptJobSearchRequest request) {
     try {
       UserRemoteCvEntity remoteCV = request.getUser().getRemoteCvs().stream()
-          .filter(p-> p.getProvider() == EngineType.GPT).findAny()
-          .orElseThrow(()-> new ValidationException("No GPT CV found for user " + request.getUser().getId()));
+          .filter(p -> p.getProvider() == EngineType.GPT).findAny()
+          .orElseThrow(() -> new ValidationException("No GPT CV found for user " + request.getUser().getId()));
 
       GptJobsPayload payload = GptJobsPayload.builder()
-          .model(request.getOrder().getEngineSelection().model())
+          .model(request.getEngineSelection().model())
           .reasoning(request.getReasoning())
-          .store(false)
+          .store(request.getStore())
+          .previous_response_id(request.getPrevResponseId())
           .max_output_tokens(properties.getGpt().getMaxTokens())
           .addTools(Tools.builder().setDeepSearch().build())
+          .instructions(templateRenderer.getPrompt(PromptType.SYSTEM_INSTRUCTIONS))
           .addSystemPrompt(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_JOB_SEARCH))
-          .addUserPrompt(request.getPrompt().getPrompt(), remoteCV.getFileId())
+          .addUserPrompt(request.getUserPrompt(), remoteCV.getFileId())
           .build();
 
       GptResponse response = restClient.post()
@@ -90,10 +93,14 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient<GptJobSearchR
           .body(GptResponse.class);
 
       //noinspection DataFlowIssue
-      return extractJobs(response);
+      List<Job> jobs = extractJobs(response);
+      AiClientResponse result = new AiClientResponse();
+      result.setId(response.id());
+      result.addAll(jobs);
+      return result;
     } catch (Exception e) {
       log.error("GPT API call failed", e);
-      return List.of();
+      return new AiClientResponse();
     }
   }
 
@@ -105,7 +112,7 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient<GptJobSearchR
     try {
       UserEntity user = request.getUser();
       GptJobsPayload payload = GptJobsPayload.builder()
-          .model(request.getOrder().getEngineSelection().model())
+          .model(request.getEngineSelection().model())
           .max_output_tokens(properties.getGpt().getMaxTokens())
           .store(false)
           .addSystemPrompt(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_COMPANY_SEARCH,
@@ -143,13 +150,13 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient<GptJobSearchR
   @CircuitBreaker(name = "gptCircuitBreaker", fallbackMethod = "fallbackSearchJobsFromCompanies")
   @RateLimiter(name = "gptLimiter")
   @Bulkhead(name = "gptBulkhead")
-  public List<Job> searchJobsFromCompanies(GptJobSearchRequest request, List<CompanyDto> group) {
+  public AiClientResponse searchJobsFromCompanies(GptJobSearchRequest request, List<CompanyDto> group) {
     String userPrompt = templateRenderer.getPrompt(PromptType.USER_PROMPT_JOB,
         "positions", request.getUser().getJobRoles().stream().map(UserJobRoleEntity::getJobRole).toList().toString(),
         "companies", StringUtils.join(group.stream().map(CompanyDto::companyName).toList())
     );
     GptJobsPayload payload = GptJobsPayload.builder()
-        .model(request.getOrder().getEngineSelection().model())
+        .model(request.getEngineSelection().model())
         .max_output_tokens(properties.getGpt().getMaxTokens())
         .store(false)
         .reasoning(request.getReasoning())
@@ -166,19 +173,23 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient<GptJobSearchR
         .retrieve()
         .body(GptResponse.class);
     //noinspection DataFlowIssue
-    return extractJobs(response);
+    List<Job> jobs = extractJobs(response);
+    AiClientResponse result = new AiClientResponse();
+    result.addAll(jobs);
+    result.setId(result.getId());
+    return result;
   }
 
   @SuppressWarnings("unused")
-  private List<Job> fallbackSearchJobsFromCompanies(GptJobSearchRequest request, List<CompanyDto> group, Throwable t) {
+  private AiClientResponse fallbackSearchJobsFromCompanies(GptJobSearchRequest request, List<CompanyDto> group, Throwable t) {
     log.error("{} call short-circuited/bulkheaded: {}", getClass().getSimpleName(), t.getMessage());
-    return List.of();
+    return new AiClientResponse();
   }
 
   @SuppressWarnings("unused")
-  private List<Job> fallbackSearch(GptJobSearchRequest request, Throwable t) {
+  private AiClientResponse fallbackSearch(GptJobSearchRequest request, Throwable t) {
     log.error("{} call short-circuited/bulkheaded: {}", getClass().getSimpleName(), t.getMessage());
-    return List.of();
+    return new AiClientResponse();
   }
 
   @SuppressWarnings("unused")

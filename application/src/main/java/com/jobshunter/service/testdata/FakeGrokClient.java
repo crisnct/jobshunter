@@ -1,6 +1,7 @@
 package com.jobshunter.service.testdata;
 
 import com.jobshunter.dto.CompanyDto;
+import com.jobshunter.model.AiClientResponse;
 import com.jobshunter.model.GrokJobSearchRequest;
 import com.jobshunter.model.Job;
 import com.jobshunter.processor.PackageExpected;
@@ -17,14 +18,15 @@ import org.springframework.stereotype.Component;
 @Component("JobsClientGROK")
 @PackageExpected("com.jobshunter.service.clients.grok")
 @ConditionalOnProperty(name = "grok.enabled", havingValue = "false")
-public non-sealed class FakeGrokClient implements AiJobsClient<GrokJobSearchRequest, List<Job>> {
+public non-sealed class FakeGrokClient implements AiJobsClient<GrokJobSearchRequest, AiClientResponse> {
 
   @Override
   @CircuitBreaker(name = "grokCircuitBreaker", fallbackMethod = "fallbackSearch")
   @RateLimiter(name = "grokLimiter")
   @Bulkhead(name = "grokBulkhead")
-  public List<Job> searchJobs(GrokJobSearchRequest request) {
-    return List.of(
+  public AiClientResponse searchJobs(GrokJobSearchRequest request) {
+    AiClientResponse result = new AiClientResponse();
+    result.addAll(List.of(
         new Job(-1,
             "https://br.bebee.com/job/63c331e10c2e5c04df61d25ef8219be8?utm_campaign=google_jobs_apply&utm_source=google_jobs_apply&utm_medium=organic",
             null
@@ -45,7 +47,8 @@ public non-sealed class FakeGrokClient implements AiJobsClient<GrokJobSearchRequ
             "https://weworkremotely.com/remote-jobs/h2corporation-vice-president-of-engineering-usa",
             null
         )
-    );
+    ));
+    return result;
   }
 
   @Override
@@ -58,14 +61,14 @@ public non-sealed class FakeGrokClient implements AiJobsClient<GrokJobSearchRequ
   @Override
   @RateLimiter(name = "grokLimiter")
   @Bulkhead(name = "grokBulkhead")
-  public List<Job> searchJobsFromCompanies(GrokJobSearchRequest request, List<CompanyDto> group) {
-    return List.of();
+  public AiClientResponse searchJobsFromCompanies(GrokJobSearchRequest request, List<CompanyDto> group) {
+    return new AiClientResponse();
   }
 
   @SuppressWarnings("unused")
-  private List<Job> fallbackSearch(GrokJobSearchRequest request, Throwable t) {
+  private AiClientResponse fallbackSearch(GrokJobSearchRequest request, Throwable t) {
     log.error("{} call short-circuited/bulkheaded: {}", getClass().getSimpleName(), t.getMessage());
-    return List.of();
+    return new AiClientResponse();
   }
 
 }

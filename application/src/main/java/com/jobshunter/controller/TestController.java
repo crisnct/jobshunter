@@ -15,7 +15,7 @@ import com.jobshunter.dto.gptRequest.GptJobsPayload;
 import com.jobshunter.dto.gptRequest.tools.Tools;
 import com.jobshunter.dto.gptResponse.GptResponse;
 import com.jobshunter.dto.serpRequest.SearchWithSerpRequest;
-import com.jobshunter.model.Job;
+import com.jobshunter.model.AiClientResponse;
 import com.jobshunter.model.PromptType;
 import com.jobshunter.security.JHHeaders;
 import com.jobshunter.service.TemplateRenderer;
@@ -62,7 +62,7 @@ public class TestController {
 
   private final RestClient restClient;
 
-  private final AiJobsClient<SearchWithSerpRequest, List<Job>> serpClient;
+  private final AiJobsClient<SearchWithSerpRequest, AiClientResponse> serpClient;
 
   private final TemplateRenderer templateRenderer;
 
@@ -71,7 +71,7 @@ public class TestController {
       UserDBService userDBService,
       ApplicationProperties properties,
       RestClient restClient,
-      @Qualifier("JobsClientSerp") AiJobsClient<SearchWithSerpRequest, List<Job>> serpClient,
+      @Qualifier("JobsClientSerp") AiJobsClient<SearchWithSerpRequest, AiClientResponse> serpClient,
       TemplateRenderer templateRenderer
   ) {
     this.emailNotifierService = emailNotifierService;
@@ -122,8 +122,7 @@ public class TestController {
     UserEntity user = userDBService.getUser(userDetails.getUsername())
         .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "User not found"));
     log.info("Searching jobs for {}", user.getUsername());
-    List<Job> jobs = serpClient.searchJobs(request);
-    return ResponseEntity.ok(jobs);
+    return ResponseEntity.ok(serpClient.searchJobs(request));
   }
 
   @PostMapping(value = "/testGptModels", consumes = MediaType.APPLICATION_JSON_VALUE)

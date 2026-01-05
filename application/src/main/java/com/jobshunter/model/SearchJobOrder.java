@@ -7,9 +7,9 @@ import lombok.Data;
 public class SearchJobOrder {
 
   private UserEntity user;
-  private boolean searchCompanies;
-  private boolean searchByPrompts;
   private EngineSelection engineSelection;
+  private boolean searchByUserPrompt;
+  private boolean searchCompanies;
 
   public SearchJobOrder() {
 
