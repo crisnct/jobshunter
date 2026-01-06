@@ -22,16 +22,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.io.FileSystemResource;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClient;
-import org.springframework.web.client.RestTemplate;
 
 @Slf4j
 @Component("Gpt")
@@ -42,7 +37,6 @@ public non-sealed class GptFileClientImpl implements FileClient {
 
   private static final String API_URI = "https://api.openai.com/v1/files";
 
-  private final RestTemplate restTemplate;
   private final RestClient restClient;
   private final ApplicationProperties properties;
   private final JsonMapper mapper;
@@ -54,23 +48,26 @@ public non-sealed class GptFileClientImpl implements FileClient {
   public ResumeFileInfo uploadFile(Path cvPath) throws IOException {
     log.info("Uploading file to GPT {}...", cvPath.getFileName());
     try (var ignored = Files.newInputStream(cvPath)) {
-      HttpHeaders headers = new HttpHeaders();
-      headers.set(JHHeaders.AUTHORIZATION, "Bearer " + properties.getGpt().getApiKey());
-      headers.setContentType(MediaType.MULTIPART_FORM_DATA);
-
       MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
       body.add("purpose", "assistants");
       body.add("file", new FileSystemResource(cvPath));
 
-      ResponseEntity<String> response
-          = restTemplate.postForEntity(URI.create(API_URI), new HttpEntity<>(body, headers), String.class);
-      if (response.getStatusCode().isError()) {
-        log.warn("ChatGPT job API returned {} - {}", response.getStatusCode().value(), response.getBody());
+      UploadFileResponse uploadResponse = restClient
+              .post()
+              .uri(URI.create(API_URI))
+              .headers(h-> h.setBearerAuth(properties.getGpt().getApiKey()))
+              .contentType(MediaType.MULTIPART_FORM_DATA)
+              .body(body)
+              .retrieve()
+              .onStatus(HttpStatusCode::isError,(req, res) -> {
+                log.warn("ChatGPT job API returned {} - {}", res.getStatusCode().value(), res.getBody());
+              })
+              .body(UploadFileResponse.class);
+
+      if (uploadResponse == null) {
         return null;
       }
-
-      UploadFileResponse responseMapper = mapper.readValue(response.getBody(), UploadFileResponse.class);
-      return new ResumeFileInfo(responseMapper.id(), responseMapper.filename(), responseMapper.expires_at());
+      return new ResumeFileInfo(uploadResponse.id(), uploadResponse.filename(), uploadResponse.expires_at());
     }
   }
 
@@ -78,14 +75,13 @@ public non-sealed class GptFileClientImpl implements FileClient {
   @Bulkhead(name = "gptBulkhead")
   @RateLimiter(name = "gptLimiter")
   public void deleteFile(@NotBlank String fileId) {
-    HttpHeaders headers = new HttpHeaders();
-    headers.set(JHHeaders.AUTHORIZATION, "Bearer " + properties.getGpt().getApiKey());
-    restTemplate.exchange(
-        URI.create(API_URI + "/" + fileId),
-        HttpMethod.DELETE,
-        new HttpEntity<>(headers),
-        String.class
-    );
+    String bodyResponse = restClient
+            .delete()
+            .uri(URI.create(API_URI + "/" + fileId))
+            .headers(h -> h.setBearerAuth(properties.getGpt().getApiKey()))
+            .retrieve()
+            .body(String.class);
+    log.info("gpt Deleted fileId:{} with bodyResponse: {}", fileId, bodyResponse);
   }
 
   @Override

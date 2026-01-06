@@ -6,7 +6,7 @@ import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import java.net.URI;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.RestClient;
 import org.springframework.web.util.UriComponentsBuilder;
 
 @Component
@@ -14,17 +14,21 @@ import org.springframework.web.util.UriComponentsBuilder;
 @RequiredArgsConstructor
 public class TinyUrlClient {
 
-  private final RestTemplate restTemplate;
+  public static final String TINY_URL = "https://tinyurl.com/api-create.php";
+  private final RestClient restClient;
 
   @RateLimiter(name = "tinyurlLimiter")
   @CircuitBreaker(name = "tinyurl", fallbackMethod = "fallbackShorten")
   public String shorten(String longUrl) {
     String apiUrl = UriComponentsBuilder
-        .fromUri(URI.create("https://tinyurl.com/api-create.php"))
+        .fromUri(URI.create(TINY_URL))
         .queryParam("url", longUrl)
         .toUriString();
 
-    return restTemplate.getForObject(apiUrl, String.class);
+    return restClient.get()
+            .uri(apiUrl)
+            .retrieve()
+            .body(String.class);
   }
 
   @SuppressWarnings("unused")
