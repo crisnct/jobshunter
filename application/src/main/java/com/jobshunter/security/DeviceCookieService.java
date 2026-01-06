@@ -16,7 +16,7 @@ public class DeviceCookieService {
   public DeviceCookieService(
       @Value("${security.jwt.expiration-ms:}") String jwtExpirationMs
   ) {
-    this.maxAge = (int)(Long.parseLong(jwtExpirationMs) / 1000);
+    this.maxAge = (int) (Long.parseLong(jwtExpirationMs) / 1000);
   }
 
   public String generateNewDeviceId(HttpServletResponse response) {

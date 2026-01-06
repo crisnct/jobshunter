@@ -13,11 +13,16 @@
             "type": "string"
           }
         },
-        "required": ["company_name","company_location"],
+        "required": [
+          "company_name",
+          "company_location"
+        ],
         "additionalProperties": false
       }
     }
   },
-  "required": ["results"],
+  "required": [
+    "results"
+  ],
   "additionalProperties": false
 }

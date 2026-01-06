@@ -9,17 +9,18 @@ import org.springframework.web.multipart.MultipartFile;
 
 @Data
 public class EmailRequest {
-    @NotBlank
-    private String email;
 
-    @Nullable
-    @Size(max = 255)
-    private String subject;
+  @NotBlank
+  private String email;
 
-    @NotBlank
-    @Size(max = 10000)
-    private String message;
+  @Nullable
+  @Size(max = 255)
+  private String subject;
 
-    @Nullable
-    private MultipartFile file;
+  @NotBlank
+  @Size(max = 10000)
+  private String message;
+
+  @Nullable
+  private MultipartFile file;
 }

@@ -6,6 +6,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import org.springframework.stereotype.Component;
+
 //TODO refactor to use something like AiMessage
 @Component
 public class UserMessagesFactory {

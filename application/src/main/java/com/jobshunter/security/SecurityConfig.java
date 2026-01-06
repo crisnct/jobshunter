@@ -41,10 +41,8 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-  private static final int MAX_AGE_HSTS = (int)TimeUnit.DAYS.toSeconds(30);
-
-  public static final long MAX_AGE_CORS = (int)TimeUnit.HOURS.toSeconds(1);
-
+  public static final long MAX_AGE_CORS = (int) TimeUnit.HOURS.toSeconds(1);
+  private static final int MAX_AGE_HSTS = (int) TimeUnit.DAYS.toSeconds(30);
   private final UserDBService userDBService;
 
   private final JwtService jwtService;

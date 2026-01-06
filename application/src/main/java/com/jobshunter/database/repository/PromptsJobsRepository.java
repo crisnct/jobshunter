@@ -14,22 +14,22 @@ import org.springframework.transaction.annotation.Transactional;
 @PackageExpected("com.jobshunter.database.service")
 public interface PromptsJobsRepository extends JpaRepository<PromptsJobsEntity, PromptsJobsEntity.PromptsJobsId> {
 
-    @Query("select pj from PromptsJobsEntity pj where pj.prompt.id = :promptId")
-    List<PromptsJobsEntity> findByPromptId(@Param("promptId") Long promptId);
+  @Query("select pj from PromptsJobsEntity pj where pj.prompt.id = :promptId")
+  List<PromptsJobsEntity> findByPromptId(@Param("promptId") Long promptId);
 
-    @Query("select pj from PromptsJobsEntity pj where pj.userJob.id = :userJobId")
-    List<PromptsJobsEntity> findByUserJobId(@Param("userJobId") Long userJobId);
+  @Query("select pj from PromptsJobsEntity pj where pj.userJob.id = :userJobId")
+  List<PromptsJobsEntity> findByUserJobId(@Param("userJobId") Long userJobId);
 
-    @Query("select count(pj) > 0 from PromptsJobsEntity pj where pj.prompt.id = :promptId and pj.userJob.id = :userJobId")
-    boolean existsByPromptIdAndUserJobId(@Param("promptId") Long promptId, @Param("userJobId") Long userJobId);
+  @Query("select count(pj) > 0 from PromptsJobsEntity pj where pj.prompt.id = :promptId and pj.userJob.id = :userJobId")
+  boolean existsByPromptIdAndUserJobId(@Param("promptId") Long promptId, @Param("userJobId") Long userJobId);
 
-    @Modifying
-    @Transactional
-    @Query("delete from PromptsJobsEntity pj where pj.prompt.id = :promptId")
-    void deleteByPromptId(@Param("promptId") Long promptId);
+  @Modifying
+  @Transactional
+  @Query("delete from PromptsJobsEntity pj where pj.prompt.id = :promptId")
+  void deleteByPromptId(@Param("promptId") Long promptId);
 
-    @Modifying
-    @Transactional
-    @Query("delete from PromptsJobsEntity pj where pj.userJob.id = :userJobId")
-    void deleteByUserJobId(@Param("userJobId") Long userJobId);
+  @Modifying
+  @Transactional
+  @Query("delete from PromptsJobsEntity pj where pj.userJob.id = :userJobId")
+  void deleteByUserJobId(@Param("userJobId") Long userJobId);
 }

@@ -11,5 +11,5 @@ import org.springframework.stereotype.Repository;
 @PackageExpected("com.jobshunter.database.service")
 public interface RoleRepository extends JpaRepository<RoleEntity, Long> {
 
-    Optional<RoleEntity> findByName(@SqlInjectionSafe String name);
+  Optional<RoleEntity> findByName(@SqlInjectionSafe String name);
 }

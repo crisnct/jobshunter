@@ -57,38 +57,52 @@ public non-sealed class FakeGrokClient implements AiJobsClient<GrokJobSearchRequ
               null
           )
       );
-      result.add(new Job(-1, "https://www.hipo.ro/locuri-de-munca/cautajob/Toate-Domeniile/Toate-Orasele/Java-Developer%2C-Timisoara?utm_source=openai", null));
+      result.add(
+          new Job(-1, "https://www.hipo.ro/locuri-de-munca/cautajob/Toate-Domeniile/Toate-Orasele/Java-Developer%2C-Timisoara?utm_source=openai",
+              null));
       result.add(new Job(-1, "https://jobs.talentswipe.careers/timisoara/2023-05-31/java-developer-gcILGF/", null));
       result.add(new Job(-1, "https://itjobslist.ro/jobs/tech/Java?utm_source=openai", null));
       result.add(new Job(-1, "https://elysian-software.com/wp-content/uploads/2023/03/Java-SW-Developer-and-Integrator.pdf?utm_source=openai", null));
       result.add(new Job(-1, "https://www.linkedin.com/jobs/java-software-engineer-jobs-bucharest?utm_source=openai", null));
-      result.add(new Job(-1, "https://www.hipo.ro/locuri-de-munca/cautajob/Toate-Domeniile/Toate-Orasele/Java-Developer-%5BSpring%5D?utm_source=openai", null));
+      result.add(
+          new Job(-1, "https://www.hipo.ro/locuri-de-munca/cautajob/Toate-Domeniile/Toate-Orasele/Java-Developer-%5BSpring%5D?utm_source=openai",
+              null));
       result.add(new Job(-1, "https://ro.linkedin.com/jobs/java-developer-jobs?utm_source=openai", null));
       result.add(new Job(-1, "https://devjob.ro/en/jobs/CTP-GROUP-Senior-Java-Developer?utm_source=openai", null));
       result.add(new Job(-1, "https://www.epam.com/content/dam/epam/careers/romania/Java_Developer.pdf?utm_source=openai", null));
-      result.add(new Job(-1, "https://www.hipo.ro/locuri-de-munca/cautajob/Toate-Domeniile/Toate-Orasele/Developer-Java-Spring?utm_source=openai", null));
+      result.add(
+          new Job(-1, "https://www.hipo.ro/locuri-de-munca/cautajob/Toate-Domeniile/Toate-Orasele/Developer-Java-Spring?utm_source=openai", null));
 
-      result.add(new Job(-1, "https://jobera.com/remote-job/senior-java-developer-1-globant-commerce-studio-remote-romania/?utm_source=openai", null));
-      result.add(new Job(-1, "https://www.hipo.ro/locuri-de-munca/cautajob/Toate-Domeniile/Toate-Orasele/Java-Developer%2C-Remote-Romania?utm_source=openai", null));
+      result.add(
+          new Job(-1, "https://jobera.com/remote-job/senior-java-developer-1-globant-commerce-studio-remote-romania/?utm_source=openai", null));
+      result.add(
+          new Job(-1, "https://www.hipo.ro/locuri-de-munca/cautajob/Toate-Domeniile/Toate-Orasele/Java-Developer%2C-Remote-Romania?utm_source=openai",
+              null));
       result.add(new Job(-1, "https://devjob.ro/en/jobs/Nlight-Media-Senior-Java-developer?utm_source=openai", null));
       result.add(new Job(-1, "https://remotive.com/remote/jobs/software-dev/mid-senior-java-developer-2563083?utm_source=openai", null));
       result.add(new Job(-1, "https://devjob.ro/jobs/Java/remote?utm_source=openai", null));
       result.add(new Job(-1, "https://devjob.ro/en/jobs/Evantage-Soft-SRL-Senior-Java-Full-Stack-Developer?utm_source=openai", null));
 
       result.add(new Job(-1, "https://www.indeed.com/viewjob?jk=584d7870dab31e79", null));
-      result.add(new Job(-1, "https://www.linkedin.com/jobs/view/senior-full-stack-java-developers-remote-at-the-dignify-solutions-llc-4351107084", null));
+      result.add(
+          new Job(-1, "https://www.linkedin.com/jobs/view/senior-full-stack-java-developers-remote-at-the-dignify-solutions-llc-4351107084", null));
       result.add(new Job(-1, "https://remotive.com/remote/jobs/software-development/senior-java-api-developer-3284334", null));
-      result.add(new Job(-1, "https://www.linkedin.com/jobs/view/senior-backend-software-engineer-java-vert-x-aws-tech-lead-remote-us-at-revvity-4312648002", null));
-      result.add(new Job(-1, "https://www.linkedin.com/jobs/view/senior-java-developer-with-react-js-remote-fulltime-at-the-dignify-solutions-llc-4351097177", null));
+      result.add(
+          new Job(-1, "https://www.linkedin.com/jobs/view/senior-backend-software-engineer-java-vert-x-aws-tech-lead-remote-us-at-revvity-4312648002",
+              null));
+      result.add(new Job(-1,
+          "https://www.linkedin.com/jobs/view/senior-java-developer-with-react-js-remote-fulltime-at-the-dignify-solutions-llc-4351097177", null));
 
       result.add(new Job(-1, "https://www.eurotechjobs.com/jobs/java_developer", null));
       result.add(new Job(-1, "https://www.indeed.com/q-senior-java-developer-remote-jobs.html", null));
       result.add(new Job(-1, "https://www.indeed.com/viewjob?jk=34b9495b15edc089", null));
       result.add(new Job(-1, "https://www.remotefront.com/remote-jobs/citi-lead-java-backend-engineer-vice-president-6tiuh", null));
 
-      result.add(new Job(-1, "https://jobs.haufegroup.com/stelle/senior-java-entwickler-d-m-w/60052eb9-b8ad-4f8c-a3a4-fe460f75cb40?utm_source=openai", null));
+      result.add(new Job(-1, "https://jobs.haufegroup.com/stelle/senior-java-entwickler-d-m-w/60052eb9-b8ad-4f8c-a3a4-fe460f75cb40?utm_source=openai",
+          null));
       result.add(new Job(-1, "https://jobs.sap.com/job/Gliwice-Senior-Java-Developer-44-100/1276626001/?utm_source=openai", null));
-      result.add(new Job(-1, "https://jobs.sap.com/job/Bangalore-Senior-Java-Developer-%28-8%2B-Years%29-560066/1272784301/?utm_source=openai", null));
+      result.add(
+          new Job(-1, "https://jobs.sap.com/job/Bangalore-Senior-Java-Developer-%28-8%2B-Years%29-560066/1272784301/?utm_source=openai", null));
       result.add(new Job(-1, "https://career.luxoft.com/jobs/senior-java-developer-18693?utm_source=openai", null));
       result.add(new Job(-1, "https://www.azets.com/sv-se/karriar/lediga-tjanster?utm_source=openai", null));
       result.add(new Job(-1, "https://www.oss.com/company/careers.html?utm_source=openai", null));
@@ -104,7 +118,9 @@ public non-sealed class FakeGrokClient implements AiJobsClient<GrokJobSearchRequ
       result.add(new Job(-1, "https://www.reddit.com/r/surveys4cash/comments/yl5cyj?utm_source=openai", null));
       result.add(new Job(-1, "https://jobs.smartrecruiters.com/Endava/744000092939376", null));
       result.add(new Job(-1, "https://www.boschservicesolutions.com/en/career/who-we-are-looking-for/?utm_source=openai", null));
-      result.add(new Job(-1, "https://vn.linkedin.com/jobs/view/web-development-specialist-backend-fullstack-java-react-focused-at-bosch-service-solutions-vietnam-4279248852?utm_source=openai", null));
+      result.add(new Job(-1,
+          "https://vn.linkedin.com/jobs/view/web-development-specialist-backend-fullstack-java-react-focused-at-bosch-service-solutions-vietnam-4279248852?utm_source=openai",
+          null));
       result.add(new Job(-1, "https://www.steelcase.com/about/steelcase/careers/?utm_source=openai", null));
       result.add(new Job(-1, "https://jobs.siemens.com/es_ES/externaljobs/JobDetail/458881?utm_source=openai", null));
       result.add(new Job(-1, "https://jobs.siemens.com/en_US/externaljobs/JobDetail/480292?utm_source=openai", null));

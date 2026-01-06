@@ -58,6 +58,13 @@ public class JobOrderEntity {
   @Column(name = "error_message", columnDefinition = "TEXT")
   private String errorMessage;
 
+  public JobOrderEntity(UserEntity user, AiModelEntity aiModel, boolean searchCompanies, boolean searchByPrompts) {
+    this.user = user;
+    this.aiModel = aiModel;
+    this.searchCompanies = searchCompanies;
+    this.searchByPrompts = searchByPrompts;
+  }
+
   @PrePersist
   @PreUpdate
   void prePersist() {
@@ -65,12 +72,5 @@ public class JobOrderEntity {
     if (status == null) {
       status = OrderStatus.NEW;
     }
-  }
-
-  public JobOrderEntity(UserEntity user, AiModelEntity aiModel, boolean searchCompanies, boolean searchByPrompts) {
-    this.user = user;
-    this.aiModel = aiModel;
-    this.searchCompanies = searchCompanies;
-    this.searchByPrompts = searchByPrompts;
   }
 }

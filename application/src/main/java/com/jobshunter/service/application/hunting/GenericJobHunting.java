@@ -24,11 +24,9 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public abstract non-sealed class GenericJobHunting<T extends AIJobSearchRequest> implements JobHunting {
 
-  private final Executor executor;
-
   protected final AiJobsClient<T, AiClientResponse> jobsClient;
-
   protected final UserCvService userCvService;
+  private final Executor executor;
 
   public GenericJobHunting(
       Executor executor,

@@ -12,5 +12,6 @@ public record FileListResponse(
     @JsonProperty("first_id") String firstId,
     @JsonProperty("last_id") String lastId
 ) {
+
 }
 

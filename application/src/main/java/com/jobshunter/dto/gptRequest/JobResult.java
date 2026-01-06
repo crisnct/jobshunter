@@ -8,4 +8,5 @@ package com.jobshunter.dto.gptRequest;
 public record JobResult(
     String job_url
 ) {
+
 }

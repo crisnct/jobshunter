@@ -12,8 +12,8 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(callSuper = true)
 public class GptJobSearchRequest extends AdditionalEffortRequest {
 
-  private List<CompanyDto> companies;
   private final Reasoning reasoning;
+  private List<CompanyDto> companies;
 
   public GptJobSearchRequest(UserEntity user, EngineSelection engineSelection, Reasoning reasoning) {
     super(user, engineSelection);

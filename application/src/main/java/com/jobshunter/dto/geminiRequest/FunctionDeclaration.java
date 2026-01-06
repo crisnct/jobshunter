@@ -12,5 +12,6 @@ public record FunctionDeclaration(
     String description,
     Parameters parameters
 ) {
+
 }
 

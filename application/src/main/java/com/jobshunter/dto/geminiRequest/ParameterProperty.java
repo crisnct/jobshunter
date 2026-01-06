@@ -14,5 +14,6 @@ public record ParameterProperty(
     @JsonProperty("enum")
     List<String> allowedValues
 ) {
+
 }
 

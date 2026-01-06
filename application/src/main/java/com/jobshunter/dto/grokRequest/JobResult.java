@@ -8,4 +8,5 @@ package com.jobshunter.dto.grokRequest;
 public record JobResult(
     String job_url
 ) {
+
 }

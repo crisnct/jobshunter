@@ -1,8 +1,8 @@
 package com.jobshunter.model;
 
 public enum JobPhase {
-    NEW,
-    REDIRECTED,
-    VALIDATED,
-    SCORED
+  NEW,
+  REDIRECTED,
+  VALIDATED,
+  SCORED
 }

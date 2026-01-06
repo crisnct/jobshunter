@@ -116,6 +116,13 @@ public non-sealed class GeminiFileClientImpl implements FileClient {
     }
   }
 
+  @SuppressWarnings("unused")
+  private ResumeFileInfo fallbackUploadFile(Path cvPath, Throwable t) {
+    log.error("{} call short-circuited/bulkheaded: {}", getClass().getSimpleName(),
+        t != null ? t.getMessage() : "unknown error");
+    return null;
+  }
+
   @JsonIgnoreProperties(ignoreUnknown = true)
   public record UploadFileResponse(FileResponse file) {
 
@@ -124,13 +131,6 @@ public non-sealed class GeminiFileClientImpl implements FileClient {
   @JsonIgnoreProperties(ignoreUnknown = true)
   public record FileResponse(String name, String displayName, Instant expirationTime) {
 
-  }
-
-  @SuppressWarnings("unused")
-  private ResumeFileInfo fallbackUploadFile(Path cvPath, Throwable t) {
-    log.error("{} call short-circuited/bulkheaded: {}", getClass().getSimpleName(), 
-        t != null ? t.getMessage() : "unknown error");
-    return null;
   }
 
 }

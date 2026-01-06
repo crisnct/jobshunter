@@ -27,10 +27,8 @@ import org.springframework.stereotype.Service;
 public class JobsValidator implements JobProcessor {
 
   private final BrowserSimulator browserSimulator;
-
-  private List<Pattern> expiredJobsPatterns;
-
   private final Set<String> blacklistDomains;
+  private List<Pattern> expiredJobsPatterns;
 
   public JobsValidator(
       ApplicationProperties properties,

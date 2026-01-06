@@ -48,7 +48,7 @@ public record GeminiJobsPayload(
       if (text != null && !text.isBlank()) {
         parts.add(Part.text(text));
       }
-      for (FileData fileData: files){
+      for (FileData fileData : files) {
         parts.add(Part.file(fileData.fileUri(), fileData.mimeType()));
       }
       if (!parts.isEmpty()) {

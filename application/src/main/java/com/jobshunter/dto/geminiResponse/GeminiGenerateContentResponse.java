@@ -21,6 +21,7 @@ public record GeminiGenerateContentResponse(
       String finishReason,
       Integer index
   ) {
+
   }
 
   @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -31,6 +32,7 @@ public record GeminiGenerateContentResponse(
       Integer totalTokenCount,
       List<PromptTokensDetail> promptTokensDetails
   ) {
+
   }
 
   @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -39,6 +41,7 @@ public record GeminiGenerateContentResponse(
       String modality,
       Integer tokenCount
   ) {
+
   }
 }
 

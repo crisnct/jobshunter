@@ -52,8 +52,8 @@ public non-sealed class GrokJobScoreCalculatorClientImpl implements JobScoreCalc
   public int computeScore(GrokJobScoreRequest request) {
     try {
       UserRemoteCvEntity remoteCV = request.getUserCV().getUser().getRemoteCvs().stream()
-          .filter(p-> p.getProvider() == EngineType.GROK).findAny()
-          .orElseThrow(()-> new ValidationException("No GROK CV found for user" + request.getUserCV().getUser().getUsername()));
+          .filter(p -> p.getProvider() == EngineType.GROK).findAny()
+          .orElseThrow(() -> new ValidationException("No GROK CV found for user" + request.getUserCV().getUser().getUsername()));
 
       Grok config = properties.getGrok();
       String userPrompt = templateRenderer.getPrompt(PromptType.USER_PROMPT_MATCH_SCORE, "description", request.getJobDescription());

@@ -21,4 +21,5 @@ public record GenerationConfig(
     Object responseJsonSchema,
     ThinkingConfig thinkingConfig
 ) {
+
 }

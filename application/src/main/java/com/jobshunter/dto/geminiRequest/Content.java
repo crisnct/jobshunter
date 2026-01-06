@@ -18,7 +18,7 @@ public record Content(
 
     private List<Part> parts = new ArrayList<>();
 
-    public ContentBuilder addPart(Part part){
+    public ContentBuilder addPart(Part part) {
       parts.add(part);
       return this;
     }

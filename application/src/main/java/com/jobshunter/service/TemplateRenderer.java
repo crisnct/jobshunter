@@ -16,7 +16,7 @@ public class TemplateRenderer {
   private final MustacheFactory factory = new DefaultMustacheFactory();
 
   @PostConstruct
-  private void validate(){
+  private void validate() {
     // Validate that all templates are present
     for (PromptType type : PromptType.values()) {
       getPrompt(type);
@@ -42,15 +42,15 @@ public class TemplateRenderer {
     return getPrompt(type, Map.of());
   }
 
-  public String getPrompt(PromptType type, String param1, String value1) {
-    return getPrompt(type, Map.of(param1, value1));
+  public String getPrompt(PromptType type, String param1, Object value1) {
+    return getPrompt(type, Map.of(param1, value1.toString()));
   }
 
-  public String getPrompt(PromptType type, String param1, String value1, String param2, String value2) {
-    return getPrompt(type, Map.of(param1, value1, param2, value2));
+  public String getPrompt(PromptType type, String param1, Object value1, String param2, Object value2) {
+    return getPrompt(type, Map.of(param1, value1.toString(), param2, value2.toString()));
   }
 
-  public String getPrompt(PromptType type, String param1, String value1, String param2, String value2, String param3, String value3) {
+  public String getPrompt(PromptType type, String param1, Object value1, String param2, Object value2, String param3, Object value3) {
     return getPrompt(type, Map.of(param1, value1, param2, value2, param3, value3));
   }
 

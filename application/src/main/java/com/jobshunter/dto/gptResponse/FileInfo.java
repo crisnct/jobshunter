@@ -15,5 +15,6 @@ public record FileInfo(
     String status,
     @JsonProperty("status_details") String statusDetails
 ) {
+
 }
 

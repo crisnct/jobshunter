@@ -15,4 +15,5 @@ public record JobOrderResponse(
     Instant timestamp,
     String errorMessage
 ) {
+
 }

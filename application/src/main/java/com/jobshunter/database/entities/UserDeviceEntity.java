@@ -55,6 +55,16 @@ public class UserDeviceEntity {
   @Column(name = "last_seen_at", nullable = false)
   private Instant lastSeenAt;
 
+  public UserDeviceEntity(UserEntity user, String deviceId, String userAgent, String ipAddress) {
+    this.user = user;
+    this.deviceId = deviceId;
+    this.userAgent = userAgent;
+    this.ipAddress = ipAddress;
+    this.status = DeviceStatus.ACTIVE;
+    this.createdAt = Instant.now();
+    this.lastSeenAt = Instant.now();
+  }
+
   @PrePersist
   void prePersist() {
     if (createdAt == null) {
@@ -74,15 +84,5 @@ public class UserDeviceEntity {
   @PreUpdate
   void preUpdate() {
     lastSeenAt = Instant.now();
-  }
-
-  public UserDeviceEntity(UserEntity user, String deviceId, String userAgent, String ipAddress) {
-    this.user = user;
-    this.deviceId = deviceId;
-    this.userAgent = userAgent;
-    this.ipAddress = ipAddress;
-    this.status = DeviceStatus.ACTIVE;
-    this.createdAt = Instant.now();
-    this.lastSeenAt = Instant.now();
   }
 }

@@ -19,12 +19,12 @@ public record Tools(String type, UserLocation userLocation) {
 
     private FunctionDefinition function;
 
-    public ToolsBuilder setLightweightSearch(){
+    public ToolsBuilder setLightweightSearch() {
       type = "web_search_preview";
       return this;
     }
 
-    public ToolsBuilder setDeepSearch(){
+    public ToolsBuilder setDeepSearch() {
       type = "web_search";
       return this;
     }

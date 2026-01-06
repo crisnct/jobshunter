@@ -3,7 +3,6 @@ package com.jobshunter.service.application.scheduler;
 import com.jobshunter.database.entities.JobOrderEntity;
 import com.jobshunter.database.service.JobOrderDBService;
 import com.jobshunter.database.service.UserDBService;
-import com.jobshunter.model.EngineSelection;
 import com.jobshunter.model.OrderStatus;
 import com.jobshunter.model.SearchJobOrder;
 import com.jobshunter.service.application.JobHuntService;

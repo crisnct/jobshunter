@@ -41,12 +41,12 @@ public class JobPipeline {
     jobs.stream()
         .map(job ->
             job.thenApplyAsync(JobPipeline::validateJob, executor)
-            .thenApplyAsync(JobPipeline::processJob, executor)
-            .thenApplyAsync(JobPipeline::finalizeJob, executor)
-            .exceptionally(ex -> {
-              System.err.println("Pipeline failed: " + ex.getMessage());
-              return null;
-            }))
+                .thenApplyAsync(JobPipeline::processJob, executor)
+                .thenApplyAsync(JobPipeline::finalizeJob, executor)
+                .exceptionally(ex -> {
+                  System.err.println("Pipeline failed: " + ex.getMessage());
+                  return null;
+                }))
         .collect(Collectors.toList());
 
     CompletableFuture.allOf(jobs.toArray(new CompletableFuture[0])).join();

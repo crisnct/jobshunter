@@ -17,10 +17,10 @@ import lombok.Setter;
 @Table(name = "roles")
 public class RoleEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @Column(nullable = false, unique = true, length = 50)
-    private String name;
+  @Column(nullable = false, unique = true, length = 50)
+  private String name;
 }

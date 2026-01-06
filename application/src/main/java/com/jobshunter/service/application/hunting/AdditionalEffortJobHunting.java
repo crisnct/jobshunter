@@ -6,7 +6,7 @@ import com.jobshunter.model.PromptType;
 import com.jobshunter.service.TemplateRenderer;
 import com.jobshunter.service.application.UserCvService;
 import com.jobshunter.service.clients.AiJobsClient;
-import java.util.ArrayList;
+import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.Executor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,7 +15,7 @@ import org.apache.commons.lang3.StringUtils;
 @Slf4j
 public abstract class AdditionalEffortJobHunting<T extends AdditionalEffortRequest> extends GenericJobHunting<T> {
 
-  private final List<String> additionalPrompts;
+  private final TemplateRenderer templateRenderer;
 
   public AdditionalEffortJobHunting(Executor executor,
       AiJobsClient<T, AiClientResponse> jobsClient,
@@ -23,10 +23,7 @@ public abstract class AdditionalEffortJobHunting<T extends AdditionalEffortReque
       TemplateRenderer templateRenderer
   ) {
     super(executor, jobsClient, userCvService);
-    this.additionalPrompts = new ArrayList<>();
-    this.additionalPrompts.add(templateRenderer.getPrompt(PromptType.USER_PROMPT_JOB_SERIES_1));
-    this.additionalPrompts.add(templateRenderer.getPrompt(PromptType.USER_PROMPT_JOB_SERIES_2));
-    this.additionalPrompts.add(templateRenderer.getPrompt(PromptType.USER_PROMPT_JOB_SERIES_3));
+    this.templateRenderer = templateRenderer;
   }
 
   @Override
@@ -38,12 +35,19 @@ public abstract class AdditionalEffortJobHunting<T extends AdditionalEffortReque
     }
 
     request.setStore(true);
-    log.info("Searching jobs for user {} with model {} with prompt {}", request.getUser().getUsername(), model, StringUtils.abbreviate(request.getUserPrompt(), 50));
+    log.info("Searching jobs for user {} with model {} with prompt {}", request.getUser().getUsername(), model,
+        StringUtils.abbreviate(request.getUserPrompt(), 50));
     AiClientResponse response = jobsClient.searchJobs(request);
     log.info("Found {} jobs for {}", response.getJobs().size(), request.getUser().getUsername());
 
     String prevId = response.getId();
-    for (String prompt : additionalPrompts) {
+    for (PromptType promptType : List.of(
+        PromptType.USER_PROMPT_JOB_SERIES_1,
+        PromptType.USER_PROMPT_JOB_SERIES_2,
+        PromptType.USER_PROMPT_JOB_SERIES_3
+    )) {
+      String prompt = templateRenderer.getPrompt(promptType, "timestamp", Instant.now());
+
       log.info("Searching jobs for user {} with model {} with prompt {}", request.getUser().getUsername(), model, StringUtils.abbreviate(prompt, 50));
       request.setUserPrompt(prompt);
       request.setPrevResponseId(prevId);

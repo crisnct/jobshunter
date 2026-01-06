@@ -10,4 +10,5 @@ import java.util.List;
 public record JobSearchResponse(
     List<JobResult> results
 ) {
+
 }

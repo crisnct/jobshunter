@@ -24,37 +24,42 @@ import lombok.Setter;
 @IdClass(PromptsJobsEntity.PromptsJobsId.class)
 public class PromptsJobsEntity {
 
-    @Id
-    @JsonIgnore
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "prompt_id", nullable = false)
-    private UserPromptEntity prompt;
+  @Id
+  @JsonIgnore
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "prompt_id", nullable = false)
+  private UserPromptEntity prompt;
 
-    @Id
-    @JsonIgnore
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_jobs_id", nullable = false)
-    private UserJobEntity userJob;
+  @Id
+  @JsonIgnore
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "user_jobs_id", nullable = false)
+  private UserJobEntity userJob;
 
-    @Getter
-    @Setter
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class PromptsJobsId implements Serializable {
-        private Long prompt;
-        private Long userJob;
+  @Getter
+  @Setter
+  @NoArgsConstructor
+  @AllArgsConstructor
+  public static class PromptsJobsId implements Serializable {
 
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            PromptsJobsId that = (PromptsJobsId) o;
-            return Objects.equals(prompt, that.prompt) && Objects.equals(userJob, that.userJob);
-        }
+    private Long prompt;
+    private Long userJob;
 
-        @Override
-        public int hashCode() {
-            return Objects.hash(prompt, userJob);
-        }
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      PromptsJobsId that = (PromptsJobsId) o;
+      return Objects.equals(prompt, that.prompt) && Objects.equals(userJob, that.userJob);
     }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(prompt, userJob);
+    }
+  }
 }

@@ -71,8 +71,8 @@ final class SerpJobsResponseParser {
   }
 
   /**
-   * Serp sometimes returns the jobs array as "jobs_results" (documented) but there are payloads seen in the wild using "job_results". Try both so
-   * we do not silently drop results.
+   * Serp sometimes returns the jobs array as "jobs_results" (documented) but there are payloads seen in the wild using "job_results". Try both so we
+   * do not silently drop results.
    */
   private JsonNode findJobsArray(JsonNode root) {
     JsonNode jobs = root.get("jobs_results");

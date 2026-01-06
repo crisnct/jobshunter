@@ -85,7 +85,7 @@ public non-sealed class SmtpMailtrapClientImpl implements SmtpMailtrapClient {
 
   @SuppressWarnings("unused")
   private void fallbackSendEmailWithAttachment(List<String> to, String subject, String body,
-                                               MultipartFile attachment, Throwable throwable) {
+      MultipartFile attachment, Throwable throwable) {
     log.error("Mailtrap SMTP send (with attachment) failed for {}: {}", to, throwable.getMessage());
   }
 

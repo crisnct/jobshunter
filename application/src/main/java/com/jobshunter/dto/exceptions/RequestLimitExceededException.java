@@ -4,9 +4,8 @@ import lombok.Getter;
 import org.springframework.http.HttpStatus;
 
 /**
- * Exception thrown when request rate limit or quota is exceeded.
- * Used when rate limiting or quota enforcement is triggered.
- * Returns HTTP 429 Too Many Requests.
+ * Exception thrown when request rate limit or quota is exceeded. Used when rate limiting or quota enforcement is triggered. Returns HTTP 429 Too Many
+ * Requests.
  */
 @Getter
 public class RequestLimitExceededException extends BusinessException {

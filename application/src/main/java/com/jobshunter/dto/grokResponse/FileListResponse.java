@@ -7,5 +7,6 @@ import java.util.List;
 public record FileListResponse(
     List<FileInfo> data
 ) {
+
 }
 

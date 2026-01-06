@@ -1,88 +1,67 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration scan="true" scanPeriod="60 seconds">
-  <property name="LOG_DIR" value="${LOG_DIR:-logs}"/>
-
-  <!-- Patterns for different log levels -->
-  <property name="ERROR_PATTERN" value="%d{ISO8601} ❌ ERROR [%thread] %logger{36}.%M:%line - %msg%n"/>
-  <property name="WARN_PATTERN" value="%d{ISO8601} ⚠️  WARN [%thread] %logger{36}.%M:%line - %msg%n"/>
-  <property name="INFO_PATTERN" value="%d{ISO8601} ✅ INFO  [%thread] %logger{36}.%M:%line - %msg%n"/>
-  <property name="DEBUG_PATTERN" value="%d{ISO8601} 🔧 DEBUG [%thread] %logger{36}.%M:%line - %msg%n"/>
-  <property name="TRACE_PATTERN" value="%d{ISO8601} 🔍 TRACE [%thread] %logger{36}.%M:%line - %msg%n"/>
-
-  <!-- Generic pattern for file logging -->
-  <property name="FILE_PATTERN" value="%d{ISO8601} %-5level [%thread] %logger{36}.%M:%line - %msg%n"/>
-
-  <!-- Console Appender with different patterns per level -->
-  <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+  <appender class="ch.qos.logback.core.ConsoleAppender" name="CONSOLE">
+    <encoder>
+      <pattern>${INFO_PATTERN}</pattern>
+    </encoder>
     <filter class="ch.qos.logback.classic.filter.LevelFilter">
       <level>INFO</level>
       <onMatch>ACCEPT</onMatch>
       <onMismatch>DENY</onMismatch>
     </filter>
-    <encoder>
-      <pattern>${INFO_PATTERN}</pattern>
-    </encoder>
   </appender>
 
-  <!-- Error-specific console appender -->
-  <appender name="CONSOLE_ERROR" class="ch.qos.logback.core.ConsoleAppender">
-    <target>System.err</target>
+  <!-- Patterns for different log levels -->
+  <appender class="ch.qos.logback.core.ConsoleAppender" name="CONSOLE_ERROR">
+    <encoder>
+      <pattern>${ERROR_PATTERN}</pattern>
+    </encoder>
     <filter class="ch.qos.logback.classic.filter.LevelFilter">
       <level>ERROR</level>
       <onMatch>ACCEPT</onMatch>
       <onMismatch>DENY</onMismatch>
     </filter>
-    <encoder>
-      <pattern>${ERROR_PATTERN}</pattern>
-    </encoder>
+    <target>System.err</target>
   </appender>
-
-  <!-- Warn-specific console appender -->
-  <appender name="CONSOLE_WARN" class="ch.qos.logback.core.ConsoleAppender">
+  <appender class="ch.qos.logback.core.ConsoleAppender" name="CONSOLE_WARN">
+    <encoder>
+      <pattern>${WARN_PATTERN}</pattern>
+    </encoder>
     <filter class="ch.qos.logback.classic.filter.LevelFilter">
       <level>WARN</level>
       <onMatch>ACCEPT</onMatch>
       <onMismatch>DENY</onMismatch>
     </filter>
-    <encoder>
-      <pattern>${WARN_PATTERN}</pattern>
-    </encoder>
   </appender>
-
-  <!-- Debug-specific console appender -->
-  <appender name="CONSOLE_DEBUG" class="ch.qos.logback.core.ConsoleAppender">
+  <appender class="ch.qos.logback.core.ConsoleAppender" name="CONSOLE_DEBUG">
+    <encoder>
+      <pattern>${DEBUG_PATTERN}</pattern>
+    </encoder>
     <filter class="ch.qos.logback.classic.filter.LevelFilter">
       <level>DEBUG</level>
       <onMatch>ACCEPT</onMatch>
       <onMismatch>DENY</onMismatch>
     </filter>
-    <encoder>
-      <pattern>${DEBUG_PATTERN}</pattern>
-    </encoder>
   </appender>
-
-  <!-- File Appender for all logs -->
-  <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-    <file>${LOG_DIR}/application.log</file>
+  <appender class="ch.qos.logback.core.rolling.RollingFileAppender" name="FILE">
     <encoder>
       <pattern>${FILE_PATTERN}</pattern>
     </encoder>
+    <file>${LOG_DIR}/application.log</file>
     <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
       <fileNamePattern>${LOG_DIR}/application-%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
       <maxFileSize>10MB</maxFileSize>
       <maxHistory>20</maxHistory>
     </rollingPolicy>
   </appender>
-
-  <!-- Separate file for errors only -->
-  <appender name="FILE_ERROR" class="ch.qos.logback.core.rolling.RollingFileAppender">
+  <appender class="ch.qos.logback.core.rolling.RollingFileAppender" name="FILE_ERROR">
+    <encoder>
+      <pattern>${FILE_PATTERN}</pattern>
+    </encoder>
     <file>${LOG_DIR}/error.log</file>
     <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
       <level>ERROR</level>
     </filter>
-    <encoder>
-      <pattern>${FILE_PATTERN}</pattern>
-    </encoder>
     <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
       <fileNamePattern>${LOG_DIR}/error-%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
       <maxFileSize>10MB</maxFileSize>
@@ -90,14 +69,51 @@
     </rollingPolicy>
   </appender>
 
-  <!-- Async appender for better performance -->
-  <appender name="ASYNC_FILE" class="ch.qos.logback.classic.AsyncAppender">
-    <queueSize>512</queueSize>
-    <discardingThreshold>0</discardingThreshold>
+  <!-- Generic pattern for file logging -->
+  <appender class="ch.qos.logback.classic.AsyncAppender" name="ASYNC_FILE">
     <appender-ref ref="FILE"/>
+    <discardingThreshold>0</discardingThreshold>
+    <queueSize>512</queueSize>
   </appender>
 
+  <!-- Console Appender with different patterns per level -->
+  <logger level="WARN" name="org.springframework"/>
+
+  <!-- Error-specific console appender -->
+  <logger level="INFO" name="org.springframework.boot.autoconfigure.logging"/>
+
+  <!-- Warn-specific console appender -->
+  <logger level="INFO" name="io.github.resilience4j"/>
+
+  <!-- Debug-specific console appender -->
+  <logger level="DEBUG" name="com.jobshunter"/>
+
+  <!-- File Appender for all logs -->
+  <property name="LOG_DIR" value="${LOG_DIR:-logs}"/>
+
+  <!-- Separate file for errors only -->
+  <property name="ERROR_PATTERN"
+    value="%d{ISO8601} ❌ ERROR [%thread] %logger{36}.%M:%line - %msg%n"/>
+
+  <!-- Async appender for better performance -->
+  <property name="WARN_PATTERN"
+    value="%d{ISO8601} ⚠️  WARN [%thread] %logger{36}.%M:%line - %msg%n"/>
+
   <!-- Root logger configuration -->
+  <property name="INFO_PATTERN"
+    value="%d{ISO8601} ✅ INFO  [%thread] %logger{36}.%M:%line - %msg%n"/>
+
+  <!-- Spring Framework logging (reduce noise) -->
+  <property name="DEBUG_PATTERN"
+    value="%d{ISO8601} 🔧 DEBUG [%thread] %logger{36}.%M:%line - %msg%n"/>
+  <property name="TRACE_PATTERN"
+    value="%d{ISO8601} 🔍 TRACE [%thread] %logger{36}.%M:%line - %msg%n"/>
+
+  <!-- Resilience4j logging -->
+  <property name="FILE_PATTERN"
+    value="%d{ISO8601} %-5level [%thread] %logger{36}.%M:%line - %msg%n"/>
+
+  <!-- Your application logging -->
   <root level="INFO">
     <appender-ref ref="CONSOLE"/>
     <appender-ref ref="CONSOLE_WARN"/>
@@ -106,14 +122,4 @@
     <appender-ref ref="ASYNC_FILE"/>
     <appender-ref ref="FILE_ERROR"/>
   </root>
-
-  <!-- Spring Framework logging (reduce noise) -->
-  <logger name="org.springframework" level="WARN"/>
-  <logger name="org.springframework.boot.autoconfigure.logging" level="INFO"/>
-
-  <!-- Resilience4j logging -->
-  <logger name="io.github.resilience4j" level="INFO"/>
-
-  <!-- Your application logging -->
-  <logger name="com.jobshunter" level="DEBUG"/>
 </configuration>

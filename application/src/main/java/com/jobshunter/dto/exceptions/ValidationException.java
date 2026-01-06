@@ -4,9 +4,7 @@ import lombok.Getter;
 import org.springframework.http.HttpStatus;
 
 /**
- * Exception thrown when validation of input data fails.
- * Used for input validation errors from controllers or services.
- * Returns HTTP 400 Bad Request.
+ * Exception thrown when validation of input data fails. Used for input validation errors from controllers or services. Returns HTTP 400 Bad Request.
  */
 @Getter
 public class ValidationException extends BusinessException {

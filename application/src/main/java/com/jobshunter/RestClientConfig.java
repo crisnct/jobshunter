@@ -20,9 +20,9 @@ import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.web.client.RestClient;
 
 /**
- * Centralized RestClient configuration using Apache HttpClient 5.
- * Provides singleton beans for connection pooling, HttpClient, and RestClient instances.
- * 
+ * Centralized RestClient configuration using Apache HttpClient 5. Provides singleton beans for connection pooling, HttpClient, and RestClient
+ * instances.
+ *
  * <p>This configuration ensures:
  * <ul>
  *   <li>Shared connection pool across all HTTP clients</li>
@@ -35,8 +35,7 @@ import org.springframework.web.client.RestClient;
 public class RestClientConfig {
 
   /**
-   * Shared connection pool for all HTTP clients.
-   * Singleton bean to ensure efficient resource usage across the application.
+   * Shared connection pool for all HTTP clients. Singleton bean to ensure efficient resource usage across the application.
    */
   @Bean
   public PoolingHttpClientConnectionManager httpClientConnectionManager() {
@@ -52,8 +51,8 @@ public class RestClientConfig {
   }
 
   /**
-   * Singleton HttpClient instance using the shared connection pool.
-   * Configured with connection eviction and redirect strategy based on application properties.
+   * Singleton HttpClient instance using the shared connection pool. Configured with connection eviction and redirect strategy based on application
+   * properties.
    */
   @Bean
   public HttpClient httpClient(
@@ -80,9 +79,8 @@ public class RestClientConfig {
   }
 
   /**
-   * Default RestClient bean for general API calls.
-   * Uses a 5-minute response timeout suitable for long-running API operations.
-   * 
+   * Default RestClient bean for general API calls. Uses a 5-minute response timeout suitable for long-running API operations.
+   *
    * <p>Marked as {@link Primary} so that classes injecting {@link RestClient} without a qualifier
    * will receive this bean by default.
    */
@@ -108,9 +106,9 @@ public class RestClientConfig {
   }
 
   /**
-   * RestClient bean specifically configured for web scraping operations.
-   * Uses a 5-second response timeout for fast-fail scenarios when scraping web pages.
-   * 
+   * RestClient bean specifically configured for web scraping operations. Uses a 5-second response timeout for fast-fail scenarios when scraping web
+   * pages.
+   *
    * <p>This bean is used by {@link BrowserSimulator} for fetching HTML content.
    */
   @Bean("webScrapingRestClient")

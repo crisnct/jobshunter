@@ -14,20 +14,20 @@ import org.springframework.stereotype.Repository;
 @PackageExpected("com.jobshunter.database.service")
 public interface UserJobRepository extends JpaRepository<UserJobEntity, Long> {
 
-    Optional<UserJobEntity> findByUserIdAndUrl(Long userId, @SqlInjectionSafe String url);
+  Optional<UserJobEntity> findByUserIdAndUrl(Long userId, @SqlInjectionSafe String url);
 
-    @Query("select uj.url from UserJobEntity uj where lower(uj.user.username) = lower(:username)")
-    List<String> findJobUrlsByUsernameIgnoreCase(
-        @Param("username")
-        @SqlInjectionSafe
-        String username
-    );
+  @Query("select uj.url from UserJobEntity uj where lower(uj.user.username) = lower(:username)")
+  List<String> findJobUrlsByUsernameIgnoreCase(
+      @Param("username")
+      @SqlInjectionSafe
+      String username
+  );
 
-    @Query("select uj from UserJobEntity uj join fetch uj.user u where lower(u.username) = lower(:username)")
-    List<UserJobEntity> findAllByUsernameWithUser(
-        @Param("username")
-        @SqlInjectionSafe
-        String username
-    );
+  @Query("select uj from UserJobEntity uj join fetch uj.user u where lower(u.username) = lower(:username)")
+  List<UserJobEntity> findAllByUsernameWithUser(
+      @Param("username")
+      @SqlInjectionSafe
+      String username
+  );
 
 }

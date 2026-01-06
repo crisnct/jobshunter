@@ -19,6 +19,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
  * - Information disclosure (X-Permitted-Cross-Domain-Policies)
  * - Referrer information leakage (Referrer-Policy)
  *}
+ *
  * @author Security Team
  */
 public class SecurityHeadersFilter extends OncePerRequestFilter {
@@ -58,7 +59,7 @@ public class SecurityHeadersFilter extends OncePerRequestFilter {
     response.setHeader(JHHeaders.X_XSS_PROTECTION, "1; mode=block");
 
     // 4. Strict-Transport-Security: Force HTTPS (only for HTTPS requests)
-    if (request.isSecure() || "https".equalsIgnoreCase(request.getHeader(JHHeaders.X_FORWARDED_PROTO))) {
+    if (request.isSecure() || "https" .equalsIgnoreCase(request.getHeader(JHHeaders.X_FORWARDED_PROTO))) {
       response.setHeader(JHHeaders.STRICT_TRANSPORT_SECURITY, "max-age=31536000; includeSubDomains; preload");
     }
 

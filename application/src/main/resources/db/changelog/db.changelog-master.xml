@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <databaseChangeLog
-    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xsi:schemaLocation="
         http://www.liquibase.org/xml/ns/dbchangelog
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.23.xsd">
 
-    <include file="db/changelog/2026-01-03-initial-setup.xml"/>
-    <include file="db/changelog/2026-01-04-create-user-remote-cv-table.xml"/>
-    <include file="db/changelog/2026-01-05-drop-file-id-columns-from-user-cv.xml"/>
-    <include file="db/changelog/2026-01-04-refactor-user-remote-cv-to-users.xml"/>
-    <include file="db/changelog/2026-01-06-drop-job-order-result-add-job-order-id.xml"/>
+  <include file="db/changelog/2026-01-03-initial-setup.xml"/>
+  <include file="db/changelog/2026-01-04-create-user-remote-cv-table.xml"/>
+  <include file="db/changelog/2026-01-05-drop-file-id-columns-from-user-cv.xml"/>
+  <include file="db/changelog/2026-01-04-refactor-user-remote-cv-to-users.xml"/>
+  <include file="db/changelog/2026-01-06-drop-job-order-result-add-job-order-id.xml"/>
 
 </databaseChangeLog>

@@ -15,8 +15,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.server.ResponseStatusException;
 
 /**
- * Global exception handler for all REST controller advice.
- * Centralized exception handling with consistent error response format.
+ * Global exception handler for all REST controller advice. Centralized exception handling with consistent error response format.
  */
 @Slf4j
 @RestControllerAdvice

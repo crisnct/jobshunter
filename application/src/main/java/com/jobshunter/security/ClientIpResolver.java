@@ -104,7 +104,7 @@ public final class ClientIpResolver {
     ip = ip.trim();
 
     // Exclude values like "unknown"
-    if ("unknown".equalsIgnoreCase(ip)) {
+    if ("unknown" .equalsIgnoreCase(ip)) {
       return false;
     }
 

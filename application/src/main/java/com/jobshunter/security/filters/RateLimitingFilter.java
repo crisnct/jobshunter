@@ -90,7 +90,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         || path.startsWith("/swagger")
         || path.startsWith("/v3/api-docs")
         || path.startsWith("/api/auth")
-        || "OPTIONS".equalsIgnoreCase(request.getMethod());
+        || "OPTIONS" .equalsIgnoreCase(request.getMethod());
   }
 
 }

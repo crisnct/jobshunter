@@ -73,7 +73,7 @@ public class SearchWithSerpRequest extends AIJobSearchRequest {
   @Nullable
   private String language;
 
-  public SearchWithSerpRequest(UserEntity user, EngineSelection engineSelection){
+  public SearchWithSerpRequest(UserEntity user, EngineSelection engineSelection) {
     super(user, engineSelection);
   }
 

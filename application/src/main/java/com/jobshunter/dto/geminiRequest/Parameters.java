@@ -14,5 +14,6 @@ public record Parameters(
     Map<String, ParameterProperty> properties,
     List<String> required
 ) {
+
 }
 

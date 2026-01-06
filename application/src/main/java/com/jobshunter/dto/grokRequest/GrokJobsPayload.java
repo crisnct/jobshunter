@@ -7,7 +7,6 @@ import com.jobshunter.dto.grokRequest.tools.Tools;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import lombok.Builder;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)

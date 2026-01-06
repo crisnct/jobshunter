@@ -15,4 +15,5 @@ public record LoginRequest(
     @SqlInjectionSafe
     String password
 ) {
+
 }

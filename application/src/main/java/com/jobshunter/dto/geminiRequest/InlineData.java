@@ -9,5 +9,6 @@ public record InlineData(
     String mimeType,
     String data
 ) {
+
 }
 

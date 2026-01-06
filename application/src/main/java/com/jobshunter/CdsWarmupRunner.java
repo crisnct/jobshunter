@@ -7,8 +7,8 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 /**
- * When {@code app.cds.warmup=true}, starts the Spring context to load application classes for AppCDS
- * generation, then exits cleanly so the JVM can write the archive.
+ * When {@code app.cds.warmup=true}, starts the Spring context to load application classes for AppCDS generation, then exits cleanly so the JVM can
+ * write the archive.
  */
 @Slf4j
 @Component

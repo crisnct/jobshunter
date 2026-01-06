@@ -17,4 +17,5 @@ public record SearchJobsRequest(
     @Size(max = 20)
     Set<@Valid @NotNull EngineSelection> engines
 ) {
+
 }

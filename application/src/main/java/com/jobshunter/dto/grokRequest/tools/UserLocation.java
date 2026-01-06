@@ -8,7 +8,8 @@ import lombok.Data;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class UserLocation {
-  private String type="approximate";
+
+  private String type = "approximate";
   private String country;
   private String city;
   private String region;

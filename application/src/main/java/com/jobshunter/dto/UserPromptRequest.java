@@ -9,12 +9,13 @@ import jakarta.validation.constraints.Size;
 public record UserPromptRequest(
     long id,
     @NotBlank(message = "Prompt cannot be blank")
-    @Size(max=3000)
+    @Size(max = 3000)
     @SqlInjectionSafe
     String prompt,
 
     @NotNull
     EngineType engine
 ) {
+
 }
 

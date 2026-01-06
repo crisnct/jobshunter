@@ -4,9 +4,8 @@ import lombok.Getter;
 import org.springframework.http.HttpStatus;
 
 /**
- * Exception thrown when a requested resource is not found.
- * Used when querying for entities by ID or other identifiers that don't exist.
- * Returns HTTP 404 Not Found.
+ * Exception thrown when a requested resource is not found. Used when querying for entities by ID or other identifiers that don't exist. Returns HTTP
+ * 404 Not Found.
  */
 @Getter
 public class ResourceNotFoundException extends BusinessException {

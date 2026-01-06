@@ -13,6 +13,7 @@ public record Part(
     InlineData inlineData,
     FunctionCall functionCall
 ) {
+
   public static Part text(String value) {
     return Part.builder().text(value).build();
   }

@@ -27,6 +27,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
+
 @Slf4j
 @Component("GptJobScoreCalculator")
 @PackageExpected("com.jobshunter.service.clients.gpt")
@@ -53,8 +54,8 @@ public non-sealed class GptJobScoreCalculatorClientImpl implements JobScoreCalcu
       Gpt config = properties.getGpt();
       String userPrompt = templateRenderer.getPrompt(PromptType.USER_PROMPT_MATCH_SCORE, "description", request.getJobDescription());
       UserRemoteCvEntity remoteCV = request.getUserCV().getUser().getRemoteCvs().stream()
-          .filter(p-> p.getProvider() == EngineType.GPT).findAny()
-          .orElseThrow(()-> new ValidationException("No GPT CV found for user " + request.getUserCV().getUser().getUsername()));
+          .filter(p -> p.getProvider() == EngineType.GPT).findAny()
+          .orElseThrow(() -> new ValidationException("No GPT CV found for user " + request.getUserCV().getUser().getUsername()));
 
       Gpt4ScorePayload payload = Gpt4ScorePayload.builder()
           .model(AI_MODEL)

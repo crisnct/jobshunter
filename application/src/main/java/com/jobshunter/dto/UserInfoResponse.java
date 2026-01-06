@@ -28,4 +28,5 @@ public record UserInfoResponse(
     Relocation relocation,
     List<ContractType> contractTypes
 ) {
+
 }

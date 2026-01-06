@@ -53,7 +53,7 @@ public non-sealed class FakeMailtrapSmtpClient implements SmtpMailtrapClient {
 
   @SuppressWarnings("unused")
   private void fallbackSendEmailWithAttachment(List<String> to, String subject, String body,
-                                               MultipartFile attachment, Throwable throwable) {
+      MultipartFile attachment, Throwable throwable) {
     log.error("{} call short-circuited/bulkheaded: {}", getClass().getSimpleName(), throwable.getMessage());
   }
 

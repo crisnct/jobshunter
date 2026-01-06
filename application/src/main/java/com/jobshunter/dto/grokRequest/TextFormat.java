@@ -8,4 +8,5 @@ public record TextFormat(
     String type,
     Object schema
 ) {
+
 }
