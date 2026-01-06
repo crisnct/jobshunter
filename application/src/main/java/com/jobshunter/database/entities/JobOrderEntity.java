@@ -11,13 +11,10 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -60,10 +57,6 @@ public class JobOrderEntity {
 
   @Column(name = "error_message", columnDefinition = "TEXT")
   private String errorMessage;
-
-  @JsonIgnore
-  @OneToMany(mappedBy = "jobOrder", fetch = FetchType.LAZY)
-  private List<JobOrderResultEntity> results = new ArrayList<>();
 
   @PrePersist
   @PreUpdate

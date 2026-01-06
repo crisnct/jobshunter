@@ -72,13 +72,7 @@ public class JobHuntScheduler {
       JobOrderEntity jobOrder = jobOrderDBService.getJobOrder(jobId.get());
       log.info("Start processing job order id={} for user {}", jobOrder.getId(), jobOrder.getUser().getUsername());
       try {
-        SearchJobOrder searchOrder = new SearchJobOrder();
-        searchOrder.setUser(jobOrder.getUser());
-        searchOrder.setSearchCompanies(jobOrder.isSearchCompanies());
-        searchOrder.setSearchByUserPrompt(jobOrder.isSearchByPrompts());
-        searchOrder.setEngineSelection(new EngineSelection(jobOrder.getAiModel().getProvider(), jobOrder.getAiModel().getModel()));
-        jobHuntService.searchJobsForUser(searchOrder);
-
+        jobHuntService.searchJobsForUser(new SearchJobOrder(jobOrder));
         jobOrder.setStatus(OrderStatus.COMPLETED);
         jobOrderDBService.saveJobOrder(jobOrder);
         log.info("Completed processing job order id={} for user {}", jobOrder.getId(), jobOrder.getUser().getUsername());

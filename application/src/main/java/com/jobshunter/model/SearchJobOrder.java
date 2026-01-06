@@ -1,18 +1,24 @@
 package com.jobshunter.model;
 
+import com.jobshunter.database.entities.JobOrderEntity;
 import com.jobshunter.database.entities.UserEntity;
-import lombok.Data;
+import lombok.Getter;
 
-@Data
+@Getter
 public class SearchJobOrder {
 
-  private UserEntity user;
-  private EngineSelection engineSelection;
-  private boolean searchByUserPrompt;
-  private boolean searchCompanies;
+  private final UserEntity user;
+  private final EngineSelection engineSelection;
+  private final boolean searchByUserPrompt;
+  private final boolean searchCompanies;
+  private final JobOrderEntity jobOrder;
 
-  public SearchJobOrder() {
-
+  public SearchJobOrder(JobOrderEntity jobOrder) {
+    this.jobOrder = jobOrder;
+    this.user = jobOrder.getUser();
+    this.searchCompanies = jobOrder.isSearchCompanies();
+    this.searchByUserPrompt = jobOrder.isSearchByPrompts();
+    this.engineSelection = new EngineSelection(jobOrder.getAiModel().getProvider(), jobOrder.getAiModel().getModel());
   }
 
 }

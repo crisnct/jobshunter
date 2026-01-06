@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="
+        http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.23.xsd">
+
+    <changeSet id="drop-job-order-result-table" author="assistant">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="job_order_result"/>
+        </preConditions>
+        <comment>Drop job_order_result table as it will be replaced by job_order_id column in user_jobs table</comment>
+        <!-- Drop foreign key constraints first (must be done before dropping table) -->
+        <sql>
+            SET @fk_exists = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS 
+                              WHERE CONSTRAINT_SCHEMA = DATABASE() 
+                              AND TABLE_NAME = 'job_order_result' 
+                              AND CONSTRAINT_NAME = 'fk_job_order_result_job_order' 
+                              AND CONSTRAINT_TYPE = 'FOREIGN KEY');
+            SET @sql = IF(@fk_exists > 0, 
+                         'ALTER TABLE job_order_result DROP FOREIGN KEY fk_job_order_result_job_order', 
+                         'SELECT 1');
+            PREPARE stmt FROM @sql;
+            EXECUTE stmt;
+            DEALLOCATE PREPARE stmt;
+        </sql>
+        
+        <sql>
+            SET @fk_exists = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS 
+                              WHERE CONSTRAINT_SCHEMA = DATABASE() 
+                              AND TABLE_NAME = 'job_order_result' 
+                              AND CONSTRAINT_NAME = 'fk_job_order_result_user_job' 
+                              AND CONSTRAINT_TYPE = 'FOREIGN KEY');
+            SET @sql = IF(@fk_exists > 0, 
+                         'ALTER TABLE job_order_result DROP FOREIGN KEY fk_job_order_result_user_job', 
+                         'SELECT 1');
+            PREPARE stmt FROM @sql;
+            EXECUTE stmt;
+            DEALLOCATE PREPARE stmt;
+        </sql>
+        
+        <!-- Drop the table (cascadeConstraints will handle any remaining constraints) -->
+        <dropTable tableName="job_order_result" cascadeConstraints="true"/>
+    </changeSet>
+
+    <changeSet id="add-job-order-id-to-user-jobs" author="assistant">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists tableName="user_jobs"/>
+                <tableExists tableName="job_order"/>
+                <not>
+                    <columnExists tableName="user_jobs" columnName="job_order_id"/>
+                </not>
+                <not>
+                    <foreignKeyConstraintExists foreignKeyName="fk_user_jobs_job_order"/>
+                </not>
+                <not>
+                    <indexExists tableName="user_jobs" indexName="idx_user_jobs_job_order"/>
+                </not>
+            </and>
+        </preConditions>
+
+        <comment>Add job_order_id column to user_jobs table to directly link jobs to job orders</comment>
+        <!-- Add job_order_id column -->
+        <addColumn tableName="user_jobs">
+            <column name="job_order_id" type="BIGINT">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+
+        <addForeignKeyConstraint constraintName="fk_user_jobs_job_order"
+                                 baseTableName="user_jobs"
+                                 baseColumnNames="job_order_id"
+                                 referencedTableName="job_order"
+                                 referencedColumnNames="id"
+                                 onDelete="SET NULL"/>
+
+        <createIndex tableName="user_jobs" indexName="idx_user_jobs_job_order">
+            <column name="job_order_id"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

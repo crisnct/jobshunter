@@ -1,6 +1,7 @@
 package com.jobshunter.database.service;
 
 import com.jobshunter.database.entities.AiModelEntity;
+import com.jobshunter.database.entities.JobOrderEntity;
 import com.jobshunter.database.entities.PromptsJobsEntity;
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.entities.UserJobEntity;
@@ -37,13 +38,13 @@ public class UserJobDBService {
   }
 
   @Transactional
-  public UserJobEntity addJobUrl(UserEntity user, String url, AiModelEntity aiModel) {
+  public UserJobEntity addJobUrl(UserEntity user, String url, AiModelEntity aiModel, JobOrderEntity jobOrder) {
     Optional<UserJobEntity> existing = userJobRepository.findByUserIdAndUrl(user.getId(), url);
     if (existing.isPresent()) {
       log.debug("Job URL already exists for user {}: {} (id: {})", user.getId(), url, existing.get().getId());
       return existing.get();
     }
-    UserJobEntity newJob = new UserJobEntity(user, url, aiModel);
+    UserJobEntity newJob = new UserJobEntity(user, url, aiModel, jobOrder);
     return userJobRepository.saveAndFlush(newJob);
   }
 
@@ -62,7 +63,7 @@ public class UserJobDBService {
           userPrompt = promptOptional.get();
         }
       }
-      UserJobEntity userJobEntity = addJobUrl(user, job.getUrl(), aiModel);
+      UserJobEntity userJobEntity = addJobUrl(user, job.getUrl(), aiModel, order.getJobOrder());
       if (userPrompt != null) {
         PromptsJobsEntity promptJob = new PromptsJobsEntity();
         promptJob.setUserJob(userJobEntity);
