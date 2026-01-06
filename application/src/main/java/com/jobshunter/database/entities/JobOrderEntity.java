@@ -2,7 +2,6 @@ package com.jobshunter.database.entities;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.jobshunter.model.OrderStatus;
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Enumerated;
@@ -63,7 +62,7 @@ public class JobOrderEntity {
   private String errorMessage;
 
   @JsonIgnore
-  @OneToMany(mappedBy = "jobOrder", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+  @OneToMany(mappedBy = "jobOrder", fetch = FetchType.LAZY)
   private List<JobOrderResultEntity> results = new ArrayList<>();
 
   @PrePersist

@@ -40,6 +40,7 @@ public abstract class AdditionalEffortJobHunting<T extends AdditionalEffortReque
     request.setStore(true);
     log.info("Searching jobs for user {} with model {} with prompt {}", request.getUser().getUsername(), model, StringUtils.abbreviate(request.getUserPrompt(), 50));
     AiClientResponse response = jobsClient.searchJobs(request);
+    log.info("Found {} jobs for {}", response.getJobs().size(), request.getUser().getUsername());
 
     String prevId = response.getId();
     for (String prompt : additionalPrompts) {
@@ -47,6 +48,7 @@ public abstract class AdditionalEffortJobHunting<T extends AdditionalEffortReque
       request.setUserPrompt(prompt);
       request.setPrevResponseId(prevId);
       AiClientResponse otherResponse = jobsClient.searchJobs(request);
+      log.info("Found {} jobs for {}", otherResponse.getJobs().size(), request.getUser().getUsername());
       response.addAll(otherResponse);
       prevId = otherResponse.getId();
     }

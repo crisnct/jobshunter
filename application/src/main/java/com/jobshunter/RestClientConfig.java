@@ -15,6 +15,7 @@ import org.apache.hc.client5.http.protocol.HttpClientContext;
 import org.apache.hc.core5.util.Timeout;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.web.client.RestClient;
 
@@ -81,8 +82,12 @@ public class RestClientConfig {
   /**
    * Default RestClient bean for general API calls.
    * Uses a 5-minute response timeout suitable for long-running API operations.
+   * 
+   * <p>Marked as {@link Primary} so that classes injecting {@link RestClient} without a qualifier
+   * will receive this bean by default.
    */
   @Bean
+  @Primary
   public RestClient restClient(HttpClient httpClient) {
     RestClient.Builder restBuilder = RestClient.builder()
         .defaultHeader(JHHeaders.ACCEPT, "application/json");

@@ -9,7 +9,6 @@ import com.jobshunter.database.repository.AiModelRepository;
 import com.jobshunter.database.repository.PromptsJobsRepository;
 import com.jobshunter.database.repository.UserJobRepository;
 import com.jobshunter.database.repository.UserPromptRepository;
-import com.jobshunter.database.repository.UserRepository;
 import com.jobshunter.model.Job;
 import com.jobshunter.model.SearchJobOrder;
 import java.time.Instant;
@@ -31,7 +30,6 @@ public class UserJobDBService {
   private final PromptsJobsRepository promptsJobsRepository;
   private final AiModelRepository aiModelRepository;
   private final UserDBService userDBService;
-  private final UserRepository userRepository;
 
   @Transactional(readOnly = true)
   public List<UserJobEntity> getUserJobs(String username) {
@@ -42,12 +40,11 @@ public class UserJobDBService {
   public UserJobEntity addJobUrl(UserEntity user, String url, AiModelEntity aiModel) {
     Optional<UserJobEntity> existing = userJobRepository.findByUserIdAndUrl(user.getId(), url);
     if (existing.isPresent()) {
+      log.debug("Job URL already exists for user {}: {} (id: {})", user.getId(), url, existing.get().getId());
       return existing.get();
     }
-    // Get a managed reference to the user entity to ensure proper persistence
-    UserEntity managedUser = userRepository.getReferenceById(user.getId());
-    UserJobEntity newJob = new UserJobEntity(managedUser, url, aiModel);
-    return userJobRepository.save(newJob);
+    UserJobEntity newJob = new UserJobEntity(user, url, aiModel);
+    return userJobRepository.saveAndFlush(newJob);
   }
 
   @Transactional

@@ -2,7 +2,6 @@ package com.jobshunter.database.entities;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.jobshunter.model.Relocation;
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -94,19 +93,19 @@ public class UserEntity implements UserDetails {
   private Set<RoleEntity> roles = new HashSet<>();
 
   @JsonIgnore
-  @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+  @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
   private List<UserJobEntity> jobs = new ArrayList<>();
 
   @JsonIgnore
-  @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+  @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
   private List<UserPromptEntity> prompts = new ArrayList<>();
 
   @JsonIgnore
-  @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+  @OneToOne(mappedBy = "user")
   private UserCvEntity cv;
 
   @JsonIgnore
-  @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+  @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
   private List<UserRemoteCvEntity> remoteCvs = new ArrayList<>();
 
   @JsonIgnore
@@ -127,23 +126,23 @@ public class UserEntity implements UserDetails {
   private Relocation relocation;
 
   @JsonIgnore
-  @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+  @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
   private List<UserJobRoleEntity> jobRoles = new ArrayList<>();
 
   @JsonIgnore
-  @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+  @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
   private List<UserJobTypeEntity> jobTypes = new ArrayList<>();
 
   @JsonIgnore
-  @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+  @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
   private List<UserContractTypeEntity> contractTypes = new ArrayList<>();
 
   @JsonIgnore
-  @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+  @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
   private List<JobOrderEntity> jobOrders = new ArrayList<>();
 
   @JsonIgnore
-  @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+  @OneToOne(mappedBy = "user")
   private UserDeviceEntity device;
 
   @Override

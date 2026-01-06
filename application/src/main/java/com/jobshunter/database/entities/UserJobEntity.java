@@ -1,6 +1,5 @@
 package com.jobshunter.database.entities;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -29,7 +28,6 @@ public class UserJobEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private UserEntity user;
@@ -41,7 +39,7 @@ public class UserJobEntity {
     @JoinColumn(name = "model_id")
     private AiModelEntity aiModel;
 
-    @Column(name = "created_at")
+    @Column(name = "created_at", updatable = false)
     private Instant createdAt;
 
     public UserJobEntity(UserEntity user, String url) {
