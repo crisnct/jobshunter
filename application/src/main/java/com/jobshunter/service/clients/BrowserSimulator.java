@@ -10,7 +10,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.config.ConnectionConfig;
 import org.apache.hc.client5.http.config.RequestConfig;
@@ -65,7 +64,7 @@ public class BrowserSimulator {
   }
 
   @Nonnull
-  private ResponseEntity<String> openPageSync(String url) {
+  public ResponseEntity<String> openPageSync(String url) {
     try {
       return restClient.get()
           .uri(url)
@@ -75,7 +74,7 @@ public class BrowserSimulator {
           .retrieve()
           .toEntity(String.class);
     } catch (Throwable ex) {
-      log.warn("First time failure about getting the html for {}", StringUtils.abbreviate(url, 50));
+      log.warn("First time failure about getting the html for {}", url);
       try {
         return restClient.get()
             .uri(url)
@@ -89,7 +88,7 @@ public class BrowserSimulator {
             .retrieve()
             .toEntity(String.class);
       } catch (Throwable ex2) {
-        log.error("SECOND time failure about getting the html for {}", StringUtils.abbreviate(url, 50));
+        log.error("SECOND time failure about getting the html for {}", url);
         return ResponseEntity.ofNullable(null);
       }
     }
@@ -117,10 +116,12 @@ public class BrowserSimulator {
   }
 
   private RestClient restClientFailFast(ApplicationProperties properties, int responseTimeoutSeconds) {
+    // 1. Connection-level config (TCP + TLS)
     ConnectionConfig connectionConfig = ConnectionConfig.custom()
-        .setConnectTimeout(Timeout.ofSeconds(20))
+        .setConnectTimeout(Timeout.ofSeconds(10))
         .build();
 
+    // 2. Connection pool (shared, bounded)
     PoolingHttpClientConnectionManager connectionManager =
         PoolingHttpClientConnectionManagerBuilder.create()
             .setDefaultConnectionConfig(connectionConfig)
@@ -128,35 +129,44 @@ public class BrowserSimulator {
             .setMaxConnPerRoute(30)
             .build();
 
+    // 3. Request-level timeouts + redirect safety
     RequestConfig requestConfig = RequestConfig.custom()
+        .setConnectionRequestTimeout(Timeout.ofSeconds(2))          // wait for pool
         .setResponseTimeout(Timeout.ofSeconds(responseTimeoutSeconds))
+        .setMaxRedirects(5)                                         // critical safety
         .build();
 
-    HttpClientBuilder builder = HttpClients.custom()
+    // 4. HttpClient (single instance, no duplication)
+    HttpClientBuilder clientBuilder = HttpClients.custom()
         .setConnectionManager(connectionManager)
-        .setDefaultRequestConfig(requestConfig);
-    if (properties.getJobsHunter().getAllowRedirection()) {
-      builder.setRedirectStrategy(new LaxRedirectStrategy());
-    }
-    HttpClient httpClient = builder.evictIdleConnections(Timeout.ofMinutes(5))
+        .setDefaultRequestConfig(requestConfig)
         .evictExpiredConnections()
-        .build();
+        .evictIdleConnections(Timeout.ofMinutes(5));
 
-    RestClient.Builder restBuilder = RestClient.builder();
     if (properties.getJobsHunter().getAllowRedirection()) {
-      HttpComponentsClientHttpRequestFactory requestFactory =
-          new HttpComponentsClientHttpRequestFactory(httpClient);
-      requestFactory.setHttpContextFactory((_, _) -> {
-        // Reuse a scoped HttpClientContext if present, otherwise create a fresh one.
-        if (BrowserSimulator.HTTP_CONTEXT.isBound()) {
-          return BrowserSimulator.HTTP_CONTEXT.get();
-        } else {
-          return HttpClientContext.create();
-        }
-      });
-      restBuilder.requestFactory(requestFactory);
+      clientBuilder.setRedirectStrategy(new LaxRedirectStrategy());
     }
 
-    return restBuilder.defaultHeader(JHHeaders.ACCEPT, "application/json").build();
+    HttpClient httpClient = clientBuilder.build();
+
+    // 5. RestClient wiring
+    RestClient.Builder restBuilder = RestClient.builder()
+        .defaultHeader(JHHeaders.ACCEPT, "application/json");
+
+    // 6. HttpContext propagation (for redirects, diagnostics)
+    HttpComponentsClientHttpRequestFactory requestFactory =
+        new HttpComponentsClientHttpRequestFactory(httpClient);
+
+    requestFactory.setHttpContextFactory((request, context) -> {
+      if (BrowserSimulator.HTTP_CONTEXT.isBound()) {
+        return BrowserSimulator.HTTP_CONTEXT.get();
+      }
+      return HttpClientContext.create();
+    });
+
+    restBuilder.requestFactory(requestFactory);
+
+    return restBuilder.build();
   }
+
 }

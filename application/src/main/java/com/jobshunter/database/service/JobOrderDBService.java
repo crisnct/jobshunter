@@ -50,6 +50,7 @@ public class JobOrderDBService {
 
   @Transactional
   public Optional<Long> acquireJobId() {
+    //noinspection unchecked
     List<Long> ids = entityManager
         .createNativeQuery("""
               SELECT id

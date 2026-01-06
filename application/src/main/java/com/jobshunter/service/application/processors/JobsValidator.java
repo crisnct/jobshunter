@@ -15,7 +15,6 @@ import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.util.Strings;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -54,7 +53,7 @@ public class JobsValidator implements JobProcessor {
   @Override
   public JobContext processAsync(JobContext context) {
     Job job = context.getJob();
-    Pair<Boolean, String> validJob = isValidJob(job.getUrl());
+    Pair<Boolean, String> validJob = isValidJobSync(job.getUrl());
     if (validJob.getFirst()) {
       String desc = job.getDescription() != null ? job.getDescription() : "";
       desc += "\n" + cleanupHTML(validJob.getSecond());
@@ -74,8 +73,8 @@ public class JobsValidator implements JobProcessor {
     return document.text();
   }
 
-  private Pair<Boolean, String> isValidJob(String jobURL) {
-    log.info("Validating URL: {}", StringUtils.abbreviate(jobURL, 50));
+  private Pair<Boolean, String> isValidJobSync(String jobURL) {
+    log.info("Validating URL: {}", jobURL);
     URI uri = toSafeHttpUri(jobURL);
     if (uri == null) {
       log.error("Skipping URL because it is not a permitted HTTP/HTTPS target");
@@ -89,9 +88,10 @@ public class JobsValidator implements JobProcessor {
       log.error("URL is blacklisted {}", jobURL);
       return Pair.of(false, "");
     }
-    log.info("Getting body from URL");
+    log.info("Getting body from URL {}", jobURL);
     try {
-      ResponseEntity<String> response = browserSimulator.openPageAsync(uri.toString()).toCompletableFuture().get();
+      // Use sync method directly to avoid blocking executor threads
+      ResponseEntity<String> response = browserSimulator.openPageSync(uri.toString());
       String body = response.getBody();
       boolean isExpired;
       if (Strings.isBlank(body)) {

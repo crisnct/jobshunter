@@ -48,7 +48,7 @@ public class JobScoring implements JobProcessor {
             "jd-user-" + context.getUser().getUsername(), ".txt");
         try (var uploadedFile = new UploadedFile(fileClient, path)) {
           log.info("Computing matching score between {} resume and description of job {}",
-              context.getUser().getUsername(), StringUtils.abbreviate(job.getUrl(), 50));
+              context.getUser().getUsername(), job.getUrl());
           score = calculator.computeScore(
               new GeminiJobScoreRequest(context.getResumeFileId(), uploadedFile.getFileInfo().fileId()));
         }

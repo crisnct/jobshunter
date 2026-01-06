@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 
 @Slf4j
 public abstract class AdditionalEffortJobHunting<T extends AdditionalEffortRequest> extends GenericJobHunting<T> {
@@ -31,17 +32,18 @@ public abstract class AdditionalEffortJobHunting<T extends AdditionalEffortReque
   @Override
   protected AiClientResponse searchSync(T request) {
     String model = request.getEngineSelection().model();
-    log.info("Searching jobs for user {} with model {}", request.getUser().getUsername(), model);
     if (request.getUser().getCv() != null) {
       //Upload cv if needed
       userCvService.refreshUserCvIfNeeded(request.getUser(), request.getEngineSelection().type());
     }
 
     request.setStore(true);
+    log.info("Searching jobs for user {} with model {} with prompt {}", request.getUser().getUsername(), model, StringUtils.abbreviate(request.getUserPrompt(), 50));
     AiClientResponse response = jobsClient.searchJobs(request);
 
     String prevId = response.getId();
     for (String prompt : additionalPrompts) {
+      log.info("Searching jobs for user {} with model {} with prompt {}", request.getUser().getUsername(), model, StringUtils.abbreviate(prompt, 50));
       request.setUserPrompt(prompt);
       request.setPrevResponseId(prevId);
       AiClientResponse otherResponse = jobsClient.searchJobs(request);

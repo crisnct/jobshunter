@@ -51,7 +51,7 @@ resilience4j.ratelimiter:
       timeoutDuration: 10s             # Wait up to 10s for a slot
       writableStackTraceEnabled: false
     geminiLimiter:
-      limitForPeriod: 1
+      limitForPeriod: 10
       limitRefreshPeriod: 1s
       timeoutDuration: 10s
       writableStackTraceEnabled: false

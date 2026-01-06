@@ -36,10 +36,12 @@ public class ApplicationConfig {
 
   @Bean
   public RestClient restClient(ApplicationProperties properties) {
+    // 1. Connection-level config (TCP + TLS)
     ConnectionConfig connectionConfig = ConnectionConfig.custom()
-        .setConnectTimeout(Timeout.ofSeconds(20))
+        .setConnectTimeout(Timeout.ofSeconds(10))
         .build();
 
+    // 2. Connection pool (shared, bounded)
     PoolingHttpClientConnectionManager connectionManager =
         PoolingHttpClientConnectionManagerBuilder.create()
             .setDefaultConnectionConfig(connectionConfig)
@@ -47,36 +49,44 @@ public class ApplicationConfig {
             .setMaxConnPerRoute(30)
             .build();
 
+    // 3. Request-level timeouts + redirect safety
     RequestConfig requestConfig = RequestConfig.custom()
+        .setConnectionRequestTimeout(Timeout.ofSeconds(2))          // wait for pool
         .setResponseTimeout(Timeout.ofMinutes(5))
+        .setMaxRedirects(5)                                         // critical safety
         .build();
 
-    HttpClientBuilder builder = HttpClients.custom()
+    // 4. HttpClient (single instance, no duplication)
+    HttpClientBuilder clientBuilder = HttpClients.custom()
         .setConnectionManager(connectionManager)
-        .setDefaultRequestConfig(requestConfig);
-    if (properties.getJobsHunter().getAllowRedirection()) {
-      builder.setRedirectStrategy(new LaxRedirectStrategy());
-    }
-    HttpClient httpClient = builder.evictIdleConnections(Timeout.ofMinutes(5))
+        .setDefaultRequestConfig(requestConfig)
         .evictExpiredConnections()
-        .build();
+        .evictIdleConnections(Timeout.ofMinutes(5));
 
-    RestClient.Builder restBuilder = RestClient.builder();
     if (properties.getJobsHunter().getAllowRedirection()) {
-      HttpComponentsClientHttpRequestFactory requestFactory =
-          new HttpComponentsClientHttpRequestFactory(httpClient);
-      requestFactory.setHttpContextFactory((_, _) -> {
-        // Reuse a scoped HttpClientContext if present, otherwise create a fresh one.
-        if (BrowserSimulator.HTTP_CONTEXT.isBound()) {
-          return BrowserSimulator.HTTP_CONTEXT.get();
-        } else {
-          return HttpClientContext.create();
-        }
-      });
-      restBuilder.requestFactory(requestFactory);
+      clientBuilder.setRedirectStrategy(new LaxRedirectStrategy());
     }
 
-    return restBuilder.defaultHeader(JHHeaders.ACCEPT, "application/json").build();
+    HttpClient httpClient = clientBuilder.build();
+
+    // 5. RestClient wiring
+    RestClient.Builder restBuilder = RestClient.builder()
+        .defaultHeader(JHHeaders.ACCEPT, "application/json");
+
+    // 6. HttpContext propagation (for redirects, diagnostics)
+    HttpComponentsClientHttpRequestFactory requestFactory =
+        new HttpComponentsClientHttpRequestFactory(httpClient);
+
+    requestFactory.setHttpContextFactory((request, context) -> {
+      if (BrowserSimulator.HTTP_CONTEXT.isBound()) {
+        return BrowserSimulator.HTTP_CONTEXT.get();
+      }
+      return HttpClientContext.create();
+    });
+
+    restBuilder.requestFactory(requestFactory);
+
+    return restBuilder.build();
   }
 
   @Bean
