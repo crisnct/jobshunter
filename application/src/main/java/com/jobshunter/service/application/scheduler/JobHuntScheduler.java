@@ -30,6 +30,7 @@ public class JobHuntScheduler {
   private final JobHuntService jobHuntService;
 
   private final UserDBService userDBService;
+
   private final JobOrderDBService jobOrderDBService;
 
   private final UserCvService userCvService;
@@ -66,12 +67,10 @@ public class JobHuntScheduler {
   }
 
   public void processOrderSync() {
-    Optional<JobOrderEntity> jobOrderOp = jobOrderDBService.getUserOldestNewOrder();
-    if (jobOrderOp.isPresent()) {
-      JobOrderEntity jobOrder = jobOrderOp.get();
+    Optional<Long> jobId = jobOrderDBService.acquireJobId();
+    if (jobId.isPresent()) {
+      JobOrderEntity jobOrder = jobOrderDBService.getJobOrder(jobId.get());
       log.info("Start processing job order id={} for user {}", jobOrder.getId(), jobOrder.getUser().getUsername());
-      jobOrder.setStatus(OrderStatus.PROCESSING);
-      jobOrderDBService.saveJobOrder(jobOrder);
       try {
         SearchJobOrder searchOrder = new SearchJobOrder();
         searchOrder.setUser(jobOrder.getUser());

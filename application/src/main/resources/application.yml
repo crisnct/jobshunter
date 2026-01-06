@@ -115,6 +115,8 @@ logging:
     root: INFO
     com.jobshunter: DEBUG
     io.github.resilience4j.ratelimiter: DEBUG
+    org.hibernate.SQL: WARN
+    org.hibernate.orm.jdbc.bind: WARN
 
 springdoc:
   api-docs:

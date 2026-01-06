@@ -6,7 +6,7 @@ import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.repository.AiModelRepository;
 import com.jobshunter.database.repository.JobOrderRepository;
 import com.jobshunter.dto.exceptions.BusinessException;
-import com.jobshunter.model.OrderStatus;
+import jakarta.persistence.EntityManager;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +24,7 @@ public class JobOrderDBService {
   private final JobOrderRepository jobOrderRepository;
   private final AiModelRepository aiModelRepository;
   private final UserDBService userDBService;
+  private final EntityManager entityManager;
 
   @Transactional
   public JobOrderEntity createJobOrder(UserEntity user, Long engineConfigurationId, boolean searchCompanies, boolean searchByPrompts) {
@@ -47,17 +48,44 @@ public class JobOrderDBService {
     return orders;
   }
 
-  @Transactional(readOnly = true)
-  public Optional<JobOrderEntity> getUserOldestNewOrder() {
-    Optional<JobOrderEntity> lastOrder = jobOrderRepository.findOldestByStatus(OrderStatus.NEW);
-    if (lastOrder.isEmpty()) {
+  @Transactional
+  public Optional<Long> acquireJobId() {
+    List<Long> ids = entityManager
+        .createNativeQuery("""
+              SELECT id
+              FROM job_order
+              WHERE status = 'NEW'
+              ORDER BY timestamp ASC
+              LIMIT 1
+              FOR UPDATE SKIP LOCKED
+            """)
+        .getResultList();
+
+    if (ids.isEmpty()) {
       return Optional.empty();
     }
-    UserEntity user = lastOrder.get().getUser();
-    if (user != null) {
-      userDBService.initializeUserData(user);
-    }
-    Hibernate.initialize(lastOrder.get().getAiModel());
-    return lastOrder;
+
+    Long jobId = ids.get(0);
+
+    entityManager.createNativeQuery("""
+                UPDATE job_order
+                SET status = 'PROCESSING'
+                WHERE id = :id
+            """)
+        .setParameter("id", jobId)
+        .executeUpdate();
+
+    return Optional.of(jobId);
   }
+
+  @Transactional(readOnly = true)
+  public JobOrderEntity getJobOrder(Long jobId) {
+    JobOrderEntity order = jobOrderRepository.findById(jobId).orElseThrow();
+    Hibernate.initialize(order);
+    Hibernate.initialize(order.getResults());
+    userDBService.initializeUserData(order.getUser());
+    Hibernate.initialize(order.getAiModel());
+    return order;
+  }
+
 }

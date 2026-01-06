@@ -67,6 +67,7 @@ public class EngineController {
     @SuppressWarnings("OptionalGetWithoutIsPresent")
     UserEntity user = userDBService.getUser(authentication.getName()).get();
     JobOrderEntity jobOrder = jobOrderDBService.createJobOrder(user, request.engineId(), request.searchCompanies(), request.searchWithUserPrompts());
+    log.info("Job order created successfully");
     return ResponseEntity.status(HttpStatus.CREATED)
         .body(Map.of("id", jobOrder.getId(), "message", "Job order created successfully"));
   }
