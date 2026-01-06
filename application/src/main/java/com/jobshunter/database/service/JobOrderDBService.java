@@ -5,6 +5,7 @@ import com.jobshunter.database.entities.JobOrderEntity;
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.repository.AiModelRepository;
 import com.jobshunter.database.repository.JobOrderRepository;
+import com.jobshunter.dto.JobOrderRequest;
 import com.jobshunter.dto.exceptions.BusinessException;
 import jakarta.persistence.EntityManager;
 import java.util.List;
@@ -27,12 +28,10 @@ public class JobOrderDBService {
   private final EntityManager entityManager;
 
   @Transactional
-  public JobOrderEntity createJobOrder(UserEntity user, Long engineConfigurationId, boolean searchCompanies, boolean searchByPrompts) {
-    AiModelEntity aiModel = aiModelRepository.findById(engineConfigurationId)
-        .orElseThrow(() -> new BusinessException(HttpStatus.BAD_REQUEST,
-            "AI model with id " + engineConfigurationId + " not found"));
-
-    JobOrderEntity jobOrder = new JobOrderEntity(user, aiModel, searchCompanies, searchByPrompts);
+  public JobOrderEntity createJobOrder(UserEntity user, JobOrderRequest request) {
+    AiModelEntity aiModel = aiModelRepository.findByProviderAndModel(request.provider(), request.model())
+        .orElseThrow(() -> new BusinessException(HttpStatus.BAD_REQUEST, "AI model " + request.model() + " not found"));
+    JobOrderEntity jobOrder = new JobOrderEntity(user, aiModel, request.searchCompanies(), request.searchWithUserPrompts());
     return jobOrderRepository.save(jobOrder);
   }
 
@@ -66,7 +65,7 @@ public class JobOrderDBService {
       return Optional.empty();
     }
 
-    Long jobId = ids.get(0);
+    Long jobId = ids.getFirst();
 
     entityManager.createNativeQuery("""
                 UPDATE job_order

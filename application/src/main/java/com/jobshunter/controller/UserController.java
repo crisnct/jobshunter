@@ -57,13 +57,9 @@ public class UserController {
   private final UserDBService userDBService;
   private final UserJobDBService userJobDBService;
   private final UserCvDBService userCvDBService;
-
   private final AuthDBService authDBService;
-
   private final EmailNotifierService emailService;
-
   private final UserCvService userCvService;
-
   private final ObjectMapper objectMapper;
 
   @GetMapping("/me")
@@ -116,7 +112,6 @@ public class UserController {
         .map(RoleEntity::getName)
         .toList();
     List<UserPromptEntity> prompts = user.getPrompts();
-    var latestCv = user.getCv();
 
     // Initialize lazy collections
     List<String> jobRoles = user.getJobRoles().stream()

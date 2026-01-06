@@ -66,6 +66,7 @@ open module com.jobshunter.application {
   requires static com.jobshunter.processor;
   requires org.aspectj.weaver;
   requires ch.qos.logback.core;
+  requires kotlin.stdlib;
 
 }
 

@@ -8,6 +8,7 @@ import com.jobshunter.database.service.ModelsDBService;
 import com.jobshunter.database.service.UserDBService;
 import com.jobshunter.dto.JobOrderRequest;
 import com.jobshunter.dto.JobOrderResponse;
+import com.jobshunter.model.AiModel;
 import jakarta.validation.Valid;
 import jakarta.validation.ValidationException;
 import java.util.List;
@@ -34,22 +35,25 @@ import org.springframework.web.bind.annotation.RestController;
 public class EngineController {
 
   private final ModelsDBService modelsDBService;
-
   private final UserDBService userDBService;
   private final JobOrderDBService jobOrderDBService;
 
   @GetMapping("/models")
   @Transactional(readOnly = true)
-  public ResponseEntity<Map<String, List<String>>> getEngineModels() {
+  public ResponseEntity<Map<String, List<AiModel>>> getEngineModels() {
     log.info("Fetching all engine models");
     List<AiModelEntity> configurations = modelsDBService.getAllModels();
-    Map<String, List<String>> engineModelsMap = configurations.stream()
+    Map<String, List<AiModel>> engineModelsMap = configurations.stream()
         .filter(AiModelEntity::isEnabled)
         .collect(Collectors.groupingBy(
             config -> config.getProvider().name(),
-            Collectors.mapping(AiModelEntity::getModel, Collectors.toList())
+            Collectors.mapping(this::toModel, Collectors.toList())
         ));
     return ResponseEntity.ok(engineModelsMap);
+  }
+
+  private AiModel toModel(AiModelEntity aiModelEntity) {
+    return new AiModel(aiModelEntity.getModel(), aiModelEntity.isEnabled(), aiModelEntity.getNotes());
   }
 
   @PostMapping("/order")
@@ -61,12 +65,12 @@ public class EngineController {
     if (!request.searchWithUserPrompts() && !request.searchCompanies()) {
       throw new ValidationException("At least one of searchWithUserPrompts or searchCompanies must be true");
     }
-    log.info("Creating job order for user: {}, engineId: {}, searchCompanies: {}, searchWithUserPrompts: {}",
-        authentication.getName(), request.engineId(), request.searchCompanies(), request.searchWithUserPrompts());
+    log.info("Creating job order for user: {}, model: {}, searchCompanies: {}, searchWithUserPrompts: {}",
+        authentication.getName(), request.model(), request.searchCompanies(), request.searchWithUserPrompts());
 
     @SuppressWarnings("OptionalGetWithoutIsPresent")
     UserEntity user = userDBService.getUser(authentication.getName()).get();
-    JobOrderEntity jobOrder = jobOrderDBService.createJobOrder(user, request.engineId(), request.searchCompanies(), request.searchWithUserPrompts());
+    JobOrderEntity jobOrder = jobOrderDBService.createJobOrder(user, request);
     log.info("Job order created successfully");
     return ResponseEntity.status(HttpStatus.CREATED)
         .body(Map.of("id", jobOrder.getId(), "message", "Job order created successfully"));
