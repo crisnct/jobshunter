@@ -44,14 +44,14 @@ public class DeviceIdFilter extends OncePerRequestFilter {
       if (!requestPath.equals("/api/auth/login")) {
         Optional<String> deviceIdCookieOp = cookieService.getCookie(request, CookieService.DEVICE_ID_COOKIE);
         if (deviceIdCookieOp.isEmpty()) {
-          this.logout(request);
+          this.logout(request, response);
           DeviceRevokedException exception = new DeviceRevokedException("From security reason once in a while you have to re-login again.");
           authenticationEntryPoint.commence(request, response, exception);
           return;
         }
         Optional<String> activeDeviceIdOp = userDBService.getActiveDeviceId(username);
         if (activeDeviceIdOp.isPresent() && !deviceIdCookieOp.get().equals(activeDeviceIdOp.get())) {
-          this.logout(request);
+          this.logout(request, response);
           DeviceRevokedException exception = new DeviceRevokedException("Logged out because you signed in on another device.");
           authenticationEntryPoint.commence(request, response, exception);
           return;
@@ -62,12 +62,13 @@ public class DeviceIdFilter extends OncePerRequestFilter {
     filterChain.doFilter(request, response);
   }
 
-  private void logout(HttpServletRequest request) {
+  private void logout(HttpServletRequest request, HttpServletResponse response) {
     SecurityContextHolder.clearContext();
     HttpSession session = request.getSession(false);
     if (session != null) {
       session.invalidate();
     }
+    cookieService.expireCookies(response);
   }
 
 }

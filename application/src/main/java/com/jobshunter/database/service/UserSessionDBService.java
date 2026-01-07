@@ -121,18 +121,6 @@ public class UserSessionDBService {
   }
 
   /**
-   * Deletes expired or revoked sessions (for cleanup job).
-   *
-   * @return Number of sessions deleted
-   */
-  @Transactional
-  public int cleanupExpiredSessions() {
-    int count = userSessionRepository.deleteExpiredOrRevokedSessions(Instant.now());
-    log.info("Cleaned up {} expired or revoked sessions", count);
-    return count;
-  }
-
-  /**
    * Saves a session entity (for updates after token rotation).
    *
    * @param session The session entity to save

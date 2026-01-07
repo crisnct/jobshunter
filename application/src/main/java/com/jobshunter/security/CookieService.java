@@ -20,9 +20,7 @@ public class CookieService {
 
   private final ApplicationProperties properties;
 
-  public CookieService(
-      ApplicationProperties properties
-  ) {
+  public CookieService(ApplicationProperties properties) {
     this.properties = properties;
   }
 
