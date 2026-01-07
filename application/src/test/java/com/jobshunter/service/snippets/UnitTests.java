@@ -9,13 +9,11 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import com.jobshunter.security.JHHeaders;
 import org.junit.jupiter.api.Test;
-import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestClient;
-import org.springframework.web.client.RestTemplate;
 
 public class UnitTests {
 
@@ -45,7 +43,6 @@ public class UnitTests {
       HttpHeaders headers = new HttpHeaders();
       headers.set("User-Agent", "Mozilla/5.0");
       headers.setAccept(List.of(MediaType.TEXT_HTML));
-      HttpEntity<Void> entity = new HttpEntity<>(headers);
       try {
         ResponseEntity<String> response = restClient
                 .get()
