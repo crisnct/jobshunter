@@ -7,6 +7,7 @@ import com.jobshunter.database.service.UserDBService;
 import com.jobshunter.database.service.UserSessionDBService;
 import com.jobshunter.dto.AuthResponse;
 import com.jobshunter.dto.LoginRequest;
+import com.jobshunter.dto.LoginResult;
 import com.jobshunter.dto.RegisterRequest;
 import com.jobshunter.dto.RegistrationResponse;
 import com.jobshunter.processor.SqlInjectionSafe;
@@ -95,7 +96,7 @@ public class AuthController {
     String userAgent = httpRequest.getHeader(JHHeaders.USER_AGENT);
 
     // Perform login and create session
-    AuthDBService.LoginResult loginResult = authDBService.login(request, deviceId, userAgent, ip);
+    LoginResult loginResult = authDBService.login(request, deviceId, userAgent, ip);
 
     // Set refresh token cookie
     cookieService.setRefreshTokenCookie(httpResponse, loginResult.refreshToken());
