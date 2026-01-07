@@ -16,7 +16,6 @@ public record UserInfoResponse(
     String gptFileId,
     String grokFileId,
     String lastJobs,
-    Integer timeInterval,
     List<String> prompts,
     String createdAt,
     List<String> roles,

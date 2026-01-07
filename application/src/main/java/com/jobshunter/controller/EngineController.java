@@ -101,7 +101,7 @@ public class EngineController {
         order.isSearchByPrompts(),
         order.getStatus(),
         order.isNotified(),
-        order.getTimestamp(),
+        order.getModifiedAt(),
         order.getErrorMessage()
     );
   }

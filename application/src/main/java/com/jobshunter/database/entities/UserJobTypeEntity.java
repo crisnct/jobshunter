@@ -13,6 +13,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -21,7 +22,8 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @Entity
-@Table(name = "user_job_types")
+@Table(name = "user_job_types",
+    uniqueConstraints = @UniqueConstraint(name = "uc_user_job_type", columnNames = {"user_id", "job_type"}))
 public class UserJobTypeEntity {
 
   @Id

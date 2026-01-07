@@ -1,6 +1,5 @@
 package com.jobshunter.security.filters;
 
-import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.security.JHHeaders;
 import com.jobshunter.service.application.JwtService;
 import jakarta.servlet.FilterChain;
@@ -51,12 +50,20 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-      UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-      if (userDetails instanceof UserEntity userEntity && jwtService.isTokenValid(token, userEntity)) {
+      if (jwtService.isTokenValid(token)) {
+        UserDetails userDetails = userDetailsService.loadUserByUsername(username);
         UsernamePasswordAuthenticationToken authToken =
             new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
         authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
         SecurityContextHolder.getContext().setAuthentication(authToken);
+        
+        // Extract session ID for audit (optional)
+        Long sessionId = jwtService.extractSessionId(token);
+        if (sessionId != null) {
+          log.debug("JWT Filter - Session ID: {}", sessionId);
+        }
+      } else {
+        log.debug("JWT Filter - Invalid or expired token for user: {}", username);
       }
     }
 

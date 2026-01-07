@@ -43,8 +43,9 @@ public class SecurityConfig {
 
   public static final long MAX_AGE_CORS = (int) TimeUnit.HOURS.toSeconds(1);
   private static final int MAX_AGE_HSTS = (int) TimeUnit.DAYS.toSeconds(30);
-  private final UserDBService userDBService;
 
+  private final UserDBService userDBService;
+  private final CookieService cookieService;
   private final JwtService jwtService;
 
   @Bean
@@ -147,7 +148,7 @@ public class SecurityConfig {
 
   @Bean
   public DeviceIdFilter deviceIdFilter(UserDBService userDeviceDBService, RestAuthenticationEntryPoint restAuthenticationEntryPoint) {
-    return new DeviceIdFilter(userDeviceDBService, restAuthenticationEntryPoint);
+    return new DeviceIdFilter(userDeviceDBService, cookieService, restAuthenticationEntryPoint);
   }
 
   private AuthenticationProvider daoAuthenticationProvider(UserDetailsService userDetailsService, PasswordEncoder passwordEncoder) {

@@ -1,0 +1,464 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="
+        http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.23.xsd">
+
+    <changeSet id="update-job-order-status-type" author="assistant">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="job_order" columnName="status"/>
+        </preConditions>
+        <comment>Change status column from TEXT to VARCHAR(20) NOT NULL</comment>
+        <modifyDataType tableName="job_order" columnName="status" newDataType="VARCHAR(20)"/>
+        <addNotNullConstraint tableName="job_order" columnName="status" columnDataType="VARCHAR(20)"/>
+    </changeSet>
+
+    <changeSet id="create-composite-index-job-order" author="assistant">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists tableName="job_order"/>
+                <not>
+                    <indexExists tableName="job_order" indexName="idx_job_order_status_timestamp"/>
+                </not>
+            </and>
+        </preConditions>
+        <comment>Create composite index on job_order(status, timestamp, id)</comment>
+        <createIndex tableName="job_order" indexName="idx_job_order_status_timestamp">
+            <column name="status"/>
+            <column name="timestamp"/>
+            <column name="id"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="add-locking-columns-job-order" author="assistant">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists tableName="job_order"/>
+                <not>
+                    <columnExists tableName="job_order" columnName="locked_by"/>
+                </not>
+                <not>
+                    <columnExists tableName="job_order" columnName="locked_at"/>
+                </not>
+            </and>
+        </preConditions>
+        <comment>Add locked_by and locked_at columns to job_order table</comment>
+        <addColumn tableName="job_order">
+            <column name="locked_by" type="VARCHAR(64)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="locked_at" type="TIMESTAMP">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="add-unique-constraints-user-selections" author="assistant">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists tableName="user_job_types"/>
+                <tableExists tableName="user_job_roles"/>
+                <tableExists tableName="user_contract_types"/>
+                <not>
+                    <indexExists tableName="user_job_types" indexName="uc_user_job_type"/>
+                </not>
+                <not>
+                    <indexExists tableName="user_job_roles" indexName="uc_user_job_role"/>
+                </not>
+                <not>
+                    <indexExists tableName="user_contract_types" indexName="uc_user_contract_type"/>
+                </not>
+            </and>
+        </preConditions>
+        <comment>Add unique constraints to user selection tables</comment>
+        <addUniqueConstraint tableName="user_job_types"
+                             columnNames="user_id, job_type"
+                             constraintName="uc_user_job_type"/>
+        <addUniqueConstraint tableName="user_job_roles"
+                             columnNames="user_id, job_role"
+                             constraintName="uc_user_job_role"/>
+        <addUniqueConstraint tableName="user_contract_types"
+                             columnNames="user_id, contract_type"
+                             constraintName="uc_user_contract_type"/>
+    </changeSet>
+
+    <changeSet id="ensure-url-not-null-user-jobs" author="assistant">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="user_jobs" columnName="url"/>
+        </preConditions>
+        <comment>Ensure url column is NOT NULL in user_jobs</comment>
+        <addNotNullConstraint tableName="user_jobs" columnName="url" columnDataType="VARCHAR(2048)"/>
+    </changeSet>
+
+    <changeSet id="update-ai-models-constraints" author="assistant">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists tableName="ai_models"/>
+                <columnExists tableName="ai_models" columnName="provider"/>
+                <columnExists tableName="ai_models" columnName="model"/>
+                <not>
+                    <indexExists tableName="ai_models" indexName="uc_provider_model"/>
+                </not>
+            </and>
+        </preConditions>
+        <comment>Update ai_models: modify provider to VARCHAR(50) NOT NULL and add unique constraint</comment>
+        <modifyDataType tableName="ai_models" columnName="provider" newDataType="VARCHAR(50)"/>
+        <addNotNullConstraint tableName="ai_models" columnName="provider" columnDataType="VARCHAR(50)"/>
+        <addUniqueConstraint tableName="ai_models"
+                             columnNames="provider, model"
+                             constraintName="uc_provider_model"/>
+    </changeSet>
+
+    <changeSet id="add-unique-constraint-models-capability" author="assistant">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists tableName="models_capability"/>
+                <not>
+                    <indexExists tableName="models_capability" indexName="uc_model_capability"/>
+                </not>
+            </and>
+        </preConditions>
+        <comment>Add unique constraint to models_capability</comment>
+        <addUniqueConstraint tableName="models_capability"
+                             columnNames="model_id, capability"
+                             constraintName="uc_model_capability"/>
+    </changeSet>
+
+    <changeSet id="update-users-created-at" author="assistant">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="users" columnName="created_at"/>
+        </preConditions>
+        <comment>Make created_at NOT NULL with DEFAULT CURRENT_TIMESTAMP</comment>
+        <addDefaultValue tableName="users" columnName="created_at" defaultValueComputed="CURRENT_TIMESTAMP"/>
+        <addNotNullConstraint tableName="users" columnName="created_at" columnDataType="TIMESTAMP"/>
+    </changeSet>
+
+    <changeSet id="remove-default-last-jobs" author="assistant">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="users" columnName="last_jobs"/>
+        </preConditions>
+        <comment>Remove default value from last_jobs and make it nullable</comment>
+        <dropDefaultValue tableName="users" columnName="last_jobs"/>
+    </changeSet>
+
+    <changeSet id="create-user-sessions-table" author="assistant">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="user_sessions"/>
+            </not>
+        </preConditions>
+        <comment>Create user_sessions table</comment>
+        <createTable tableName="user_sessions">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false" primaryKeyName="pk_user_sessions"/>
+            </column>
+            <column name="user_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="device_id" type="BIGINT">
+                <constraints nullable="true"/>
+            </column>
+            <column name="refresh_token_hash" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="expires_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revoked_at" type="TIMESTAMP">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+        <addForeignKeyConstraint constraintName="fk_user_sessions_user"
+                                 baseTableName="user_sessions"
+                                 baseColumnNames="user_id"
+                                 referencedTableName="users"
+                                 referencedColumnNames="id"
+                                 onDelete="CASCADE"/>
+        <addForeignKeyConstraint constraintName="fk_user_sessions_device"
+                                 baseTableName="user_sessions"
+                                 baseColumnNames="device_id"
+                                 referencedTableName="user_devices"
+                                 referencedColumnNames="id"
+                                 onDelete="SET NULL"/>
+        <createIndex tableName="user_sessions" indexName="idx_user_sessions_user">
+            <column name="user_id"/>
+        </createIndex>
+        <createIndex tableName="user_sessions" indexName="idx_user_sessions_device">
+            <column name="device_id"/>
+        </createIndex>
+        <createIndex tableName="user_sessions" indexName="idx_user_sessions_refresh_token">
+            <column name="refresh_token_hash"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="update-user-sessions-table-structure" author="assistant">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists tableName="user_sessions"/>
+                <indexExists tableName="user_sessions" indexName="idx_user_sessions_refresh_token"/>
+                <columnExists tableName="user_sessions" columnName="expires_at"/>
+                <not>
+                    <columnExists tableName="user_sessions" columnName="refresh_expires_at"/>
+                </not>
+                <not>
+                    <indexExists tableName="user_sessions" indexName="uc_user_device"/>
+                </not>
+                <not>
+                    <indexExists tableName="user_sessions" indexName="idx_user_sessions_refresh_expires"/>
+                </not>
+                <not>
+                    <indexExists tableName="user_sessions" indexName="idx_user_sessions_revoked"/>
+                </not>
+            </and>
+        </preConditions>
+        <comment>Update user_sessions table: rename expires_at, add new columns, add constraints and indexes</comment>
+        <renameColumn tableName="user_sessions"
+                     oldColumnName="expires_at"
+                     newColumnName="refresh_expires_at"
+                     columnDataType="TIMESTAMP"/>
+        <addColumn tableName="user_sessions">
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last_used_at" type="TIMESTAMP">
+                <constraints nullable="true"/>
+            </column>
+            <column name="revoke_reason" type="VARCHAR(50)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="user_agent" type="VARCHAR(255)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="ip_address" type="VARCHAR(45)">
+                <constraints nullable="true"/>
+            </column>
+
+        </addColumn>
+
+        <dropIndex tableName="user_sessions" indexName="idx_user_sessions_refresh_token"/>
+        <addUniqueConstraint tableName="user_sessions"
+                             columnNames="user_id, device_id"
+                             constraintName="uc_user_device"/>
+        <createIndex tableName="user_sessions" indexName="idx_user_sessions_refresh_expires">
+            <column name="refresh_expires_at"/>
+        </createIndex>
+        <createIndex tableName="user_sessions" indexName="idx_user_sessions_revoked">
+            <column name="revoked_at"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="add-prompt-id-to-user-jobs" author="assistant">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists tableName="user_jobs"/>
+                <tableExists tableName="user_prompts"/>
+                <not>
+                    <columnExists tableName="user_jobs" columnName="prompt_id"/>
+                </not>
+            </and>
+        </preConditions>
+        <comment>Add prompt_id column to user_jobs table</comment>
+        <addColumn tableName="user_jobs">
+            <column name="prompt_id" type="BIGINT">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+        <addForeignKeyConstraint constraintName="fk_user_jobs_prompt"
+                                 baseTableName="user_jobs"
+                                 baseColumnNames="prompt_id"
+                                 referencedTableName="user_prompts"
+                                 referencedColumnNames="id"
+                                 onDelete="SET NULL"/>
+        <createIndex tableName="user_jobs" indexName="idx_user_jobs_prompt">
+            <column name="prompt_id"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="rename-timestamp-to-modified-at-job-order" author="assistant">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <not>
+                    <columnExists tableName="job_order" columnName="modified_at"/>
+                </not>
+                <not>
+                    <indexExists tableName="job_order" indexName="idx_job_order_status_modified_at"/>
+                </not>
+                <not>
+                    <indexExists tableName="job_order" indexName="idx_job_order_modified_at"/>
+                </not>
+                <columnExists tableName="job_order" columnName="timestamp"/>
+                <indexExists tableName="job_order" indexName="idx_job_order_timestamp"/>
+                <indexExists tableName="job_order" indexName="idx_job_order_status_timestamp"/>
+            </and>
+        </preConditions>
+        <comment>Rename timestamp column to modified_at in job_order table</comment>
+        <renameColumn tableName="job_order"
+                     oldColumnName="timestamp"
+                     newColumnName="modified_at"
+                     columnDataType="TIMESTAMP"/>
+        <dropIndex tableName="job_order" indexName="idx_job_order_timestamp"/>
+        <createIndex tableName="job_order" indexName="idx_job_order_modified_at">
+            <column name="modified_at"/>
+        </createIndex>
+        <dropIndex tableName="job_order" indexName="idx_job_order_status_timestamp"/>
+        <createIndex tableName="job_order" indexName="idx_job_order_status_modified_at">
+            <column name="status"/>
+            <column name="modified_at"/>
+            <column name="id"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="drop-prompt-jobs-table" author="assistant">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="prompt_jobs"/>
+        </preConditions>
+        <comment>Drop prompt_jobs table</comment>
+        <dropTable tableName="prompt_jobs" cascadeConstraints="true"/>
+    </changeSet>
+
+    <changeSet id="drop-columns-from-users" author="assistant">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists tableName="users"/>
+                <or>
+                    <columnExists tableName="users" columnName="time_interval"/>
+                    <columnExists tableName="users" columnName="jwt_token"/>
+                </or>
+            </and>
+        </preConditions>
+        <comment>Drop time_interval and jwt_token columns from users table</comment>
+        <sql>
+            SET @col_exists = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS 
+                              WHERE TABLE_SCHEMA = DATABASE() 
+                              AND TABLE_NAME = 'users' 
+                              AND COLUMN_NAME = 'time_interval');
+            SET @sql = IF(@col_exists > 0, 
+                         'ALTER TABLE users DROP COLUMN time_interval', 
+                         'SELECT 1');
+            PREPARE stmt FROM @sql;
+            EXECUTE stmt;
+            DEALLOCATE PREPARE stmt;
+        </sql>
+        <sql>
+            SET @col_exists = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS 
+                              WHERE TABLE_SCHEMA = DATABASE() 
+                              AND TABLE_NAME = 'users' 
+                              AND COLUMN_NAME = 'jwt_token');
+            SET @sql = IF(@col_exists > 0, 
+                         'ALTER TABLE users DROP COLUMN jwt_token', 
+                         'SELECT 1');
+            PREPARE stmt FROM @sql;
+            EXECUTE stmt;
+            DEALLOCATE PREPARE stmt;
+        </sql>
+    </changeSet>
+
+    <changeSet id="refactor-user-devices-to-user-sessions" author="assistant">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists tableName="user_sessions"/>
+                <tableExists tableName="user_devices"/>
+                <foreignKeyConstraintExists foreignKeyName="fk_user_sessions_device"/>
+            </and>
+        </preConditions>
+        <comment>Refactor: migrate device_id from user_devices to user_sessions, drop user_devices table</comment>
+        
+        <!-- Step 1: Add temporary column to store VARCHAR device_id -->
+        <addColumn tableName="user_sessions">
+            <column name="device_id_temp" type="VARCHAR(36)">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+        
+        <!-- Step 2: Migrate device_id data from user_devices to temporary column -->
+        <sql>
+            UPDATE user_sessions us
+            INNER JOIN user_devices ud ON us.device_id = ud.id
+            SET us.device_id_temp = ud.device_id
+            WHERE us.device_id IS NOT NULL AND ud.device_id IS NOT NULL;
+        </sql>
+        
+        <!-- Step 3: Delete orphaned sessions that don't have a valid device_id reference or device_id_temp is NULL -->
+        <sql>
+            DELETE FROM user_sessions 
+            WHERE device_id_temp IS NULL;
+        </sql>
+        
+        <!-- Step 4: Drop foreign key constraint -->
+        <dropForeignKeyConstraint baseTableName="user_sessions" constraintName="fk_user_sessions_device"/>
+        
+        <!-- Step 6: Drop unique constraint on (user_id, device_id) if exists -->
+        <dropUniqueConstraint tableName="user_sessions" constraintName="uc_user_device"/>
+        
+        <!-- Step 7: Drop index on device_id if exists -->
+        <dropIndex tableName="user_sessions" indexName="idx_user_sessions_device"/>
+        
+        <!-- Step 8: Drop old device_id column (BIGINT FK) -->
+        <dropColumn tableName="user_sessions" columnName="device_id"/>
+        
+        <!-- Step 9: Rename temporary column to device_id -->
+        <renameColumn tableName="user_sessions"
+                     oldColumnName="device_id_temp"
+                     newColumnName="device_id"
+                     columnDataType="VARCHAR(36)"/>
+        
+        <!-- Step 10: Add NOT NULL constraint to device_id -->
+        <addNotNullConstraint tableName="user_sessions" columnName="device_id" columnDataType="VARCHAR(36)"/>
+        
+        <!-- Step 11: Add unique constraint on user_id to enforce one device per user -->
+        <addUniqueConstraint tableName="user_sessions"
+                             columnNames="user_id"
+                             constraintName="uc_user_sessions_user"/>
+        
+        <!-- Step 12: Create index on device_id for lookups -->
+        <createIndex tableName="user_sessions" indexName="idx_user_sessions_device_id">
+            <column name="device_id"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="drop-user-devices-table" author="assistant">
+        <preConditions onFail="MARK_RAN">
+            <and>
+                <tableExists tableName="user_devices"/>
+                <not>
+                    <foreignKeyConstraintExists foreignKeyName="fk_user_sessions_device"/>
+                </not>
+            </and>
+        </preConditions>
+        <comment>Drop user_devices table after migration to user_sessions</comment>
+        <dropTable tableName="user_devices" cascadeConstraints="true"/>
+    </changeSet>
+
+    <changeSet id="convert-timestamp-to-datetime" author="assistant">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="users"/>
+        </preConditions>
+        <comment>Convert all TIMESTAMP columns to DATETIME across all tables</comment>
+
+        <modifyDataType tableName="users" columnName="created_at" newDataType="DATETIME"/>
+        <modifyDataType tableName="users" columnName="last_jobs" newDataType="DATETIME"/>
+        
+        <!-- user_jobs table -->
+        <modifyDataType tableName="user_jobs" columnName="created_at" newDataType="DATETIME"/>
+        
+        <!-- user_prompts table -->
+        <modifyDataType tableName="user_prompts" columnName="modified_at" newDataType="DATETIME"/>
+        
+        <!-- job_order table -->
+        <modifyDataType tableName="job_order" columnName="modified_at" newDataType="DATETIME"/>
+        <modifyDataType tableName="job_order" columnName="locked_at" newDataType="DATETIME"/>
+        
+        <!-- user_sessions table -->
+        <modifyDataType tableName="user_sessions" columnName="refresh_expires_at" newDataType="DATETIME"/>
+        <modifyDataType tableName="user_sessions" columnName="created_at" newDataType="DATETIME"/>
+        <modifyDataType tableName="user_sessions" columnName="last_used_at" newDataType="DATETIME"/>
+        
+        <modifyDataType tableName="user_sessions" columnName="revoked_at" newDataType="DATETIME"/>
+        
+        <!-- user_remote_cv table -->
+        <modifyDataType tableName="user_remote_cv" columnName="expire_time" newDataType="DATETIME"/>
+    </changeSet>
+
+</databaseChangeLog>

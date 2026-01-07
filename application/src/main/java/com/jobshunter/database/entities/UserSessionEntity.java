@@ -1,5 +1,6 @@
 package com.jobshunter.database.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -10,7 +11,6 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
 import java.time.Instant;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -20,42 +20,44 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @Entity
-@Table(name = "user_jobs",
-    uniqueConstraints = @UniqueConstraint(name = "uc_user_jobs_user_url", columnNames = {"user_id", "url"}))
-public class UserJobEntity {
+@Table(name = "user_sessions")
+public class UserSessionEntity {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
+  @JsonIgnore
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "user_id", nullable = false)
   private UserEntity user;
 
-  @Column(name = "url", nullable = false, length = 2048)
-  private String url;
+  @Column(name = "device_id", nullable = false, length = 36)
+  private String deviceId;
 
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "model_id")
-  private AiModelEntity aiModel;
+  @Column(name = "refresh_token_hash", nullable = false, length = 255)
+  private String refreshTokenHash;
 
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "job_order_id")
-  private JobOrderEntity jobOrder;
+  @Column(name = "refresh_expires_at", nullable = false)
+  private Instant refreshExpiresAt;
 
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "prompt_id")
-  private UserPromptEntity prompt;
-
-  @Column(name = "created_at", updatable = false)
+  @Column(name = "created_at", nullable = false, updatable = false)
   private Instant createdAt;
 
-  public UserJobEntity(UserEntity user, String url, AiModelEntity aiModel, JobOrderEntity jobOrder) {
-    this.user = user;
-    this.url = url;
-    this.aiModel = aiModel;
-    this.jobOrder = jobOrder;
-  }
+  @Column(name = "last_used_at")
+  private Instant lastUsedAt;
+
+  @Column(name = "revoked_at")
+  private Instant revokedAt;
+
+  @Column(name = "revoke_reason", length = 50)
+  private String revokeReason;
+
+  @Column(name = "user_agent", length = 255)
+  private String userAgent;
+
+  @Column(name = "ip_address", length = 45)
+  private String ipAddress;
 
   @PrePersist
   void prePersist() {

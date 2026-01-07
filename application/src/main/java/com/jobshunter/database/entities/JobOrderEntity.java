@@ -45,15 +45,21 @@ public class JobOrderEntity {
   @Column(name = "search_by_prompts", nullable = false)
   private boolean searchByPrompts = false;
 
-  @Column(name = "status", columnDefinition = "TEXT")
+  @Column(name = "status", nullable = false, length = 20)
   @Enumerated(jakarta.persistence.EnumType.STRING)
   private OrderStatus status;
 
   @Column(name = "notified", nullable = false)
   private boolean notified = false;
 
-  @Column(name = "timestamp", nullable = false)
-  private Instant timestamp;
+  @Column(name = "modified_at", nullable = false)
+  private Instant modifiedAt;
+
+  @Column(name = "locked_by", length = 64)
+  private String lockedBy;
+
+  @Column(name = "locked_at")
+  private Instant lockedAt;
 
   @Column(name = "error_message", columnDefinition = "TEXT")
   private String errorMessage;
@@ -68,7 +74,7 @@ public class JobOrderEntity {
   @PrePersist
   @PreUpdate
   void prePersist() {
-    timestamp = Instant.now();
+    modifiedAt = Instant.now();
     if (status == null) {
       status = OrderStatus.NEW;
     }

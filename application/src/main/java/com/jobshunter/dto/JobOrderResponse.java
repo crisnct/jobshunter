@@ -12,7 +12,7 @@ public record JobOrderResponse(
     boolean searchByPrompts,
     OrderStatus status,
     boolean notified,
-    Instant timestamp,
+    Instant modifiedAt,
     String errorMessage
 ) {
 

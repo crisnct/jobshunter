@@ -30,7 +30,13 @@ serp:
 security:
   jwt:
     secret: ${JWT_SECRET:change-me-dev-secret-please-keep-long}
-    expiration-ms: ${JWT_EXPIRATION_MS:2592000000} # 30 days
+    expiration-sec: 86400 # 24h
+  refresh-token:
+    pepper: ${REFRESH_TOKEN_PEPPER:VXjjT1rcofkUX9JpdHrdlA==} # generate using openssl rand -base64 48
+    expiration-sec: 2592000 # 30 days
+  cookie:
+    device-id:
+      expiration-sec: 2592000 # 30 days
   httpsOnly:
     enabled: false
 

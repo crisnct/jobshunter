@@ -1,15 +1,19 @@
 package com.jobshunter.controller;
 
+import com.jobshunter.ApplicationProperties;
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.service.AuthDBService;
 import com.jobshunter.database.service.UserDBService;
+import com.jobshunter.database.service.UserSessionDBService;
 import com.jobshunter.dto.AuthResponse;
 import com.jobshunter.dto.LoginRequest;
 import com.jobshunter.dto.RegisterRequest;
 import com.jobshunter.dto.RegistrationResponse;
 import com.jobshunter.processor.SqlInjectionSafe;
-import com.jobshunter.security.DeviceCookieService;
+import com.jobshunter.security.CookieService;
 import com.jobshunter.security.JHHeaders;
+import com.jobshunter.service.application.JwtService;
+import com.jobshunter.service.application.RefreshTokenService;
 import com.jobshunter.service.application.notifiers.EmailNotifierService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -21,10 +25,12 @@ import jakarta.validation.constraints.Size;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfToken;
@@ -35,6 +41,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 @Slf4j
 @RestController
@@ -50,7 +57,15 @@ public class AuthController {
 
   private final UserDBService userDBService;
 
-  private final DeviceCookieService deviceCookieService;
+  private final CookieService cookieService;
+
+  private final RefreshTokenService refreshTokenService;
+
+  private final UserSessionDBService userSessionDBService;
+
+  private final JwtService jwtService;
+
+  private final ApplicationProperties properties;
 
   @PostMapping("/register")
   public RegistrationResponse register(
@@ -71,30 +86,102 @@ public class AuthController {
       @Valid
       @RequestBody
       LoginRequest request,
-
       HttpServletRequest httpRequest,
-
       HttpServletResponse httpResponse
   ) {
-    String token = authDBService.login(request);
-    String deviceId = deviceCookieService.generateNewDeviceId(httpResponse);
+    // Get or generate device ID
+    String deviceId = getOrGenerateDeviceId(httpRequest, httpResponse);
     String ip = httpResponse.getHeader(JHHeaders.IP_HEADER);
     String userAgent = httpRequest.getHeader(JHHeaders.USER_AGENT);
-    userDBService.updateDeviceId(request.username(), deviceId, ip, userAgent);
-    log.info("Login for {} from IP {}", request.username(), httpResponse.getHeader(JHHeaders.IP_HEADER));
-    return new AuthResponse(token);
+
+    // Perform login and create session
+    AuthDBService.LoginResult loginResult = authDBService.login(request, deviceId, userAgent, ip);
+
+    // Set refresh token cookie
+    cookieService.setRefreshTokenCookie(httpResponse, loginResult.refreshToken());
+
+    log.info("Login for {} from IP {}", request.username(), ip);
+    return new AuthResponse(loginResult.accessToken());
+  }
+
+  @PostMapping("/refresh")
+  public AuthResponse refresh(
+      HttpServletRequest httpRequest,
+      HttpServletResponse httpResponse
+  ) {
+    // Get refresh token from cookie
+    Optional<String> refreshTokenOp = cookieService.getCookie(httpRequest, CookieService.REFRESH_TOKEN_COOKIE);
+    if (refreshTokenOp.isEmpty()) {
+      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Refresh token not found");
+    }
+
+    // Get device ID from cookie
+    String deviceId = getDeviceIdFromCookie(httpRequest);
+    if (deviceId == null) {
+      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Device ID not found");
+    }
+
+    // Get user from valid refresh token (endpoint is public, no security context)
+    UserEntity user = refreshTokenService.validateAndGetUser(deviceId, refreshTokenOp.get());
+
+    // Validate and rotate refresh token
+    String newRefreshToken = refreshTokenService.validateAndRotate(user, deviceId, refreshTokenOp.get());
+
+    // Generate new access token
+    String jwtToken = jwtService.generateToken(user);
+
+    // Set new refresh token cookie
+    cookieService.setRefreshTokenCookie(httpResponse, newRefreshToken);
+
+    log.debug("Token refreshed for user: {}", user.getUsername());
+    return new AuthResponse(jwtToken);
   }
 
   @PostMapping("/logout")
   public void logout(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    // Get current user
+    String username = SecurityContextHolder.getContext().getAuthentication() != null
+        ? SecurityContextHolder.getContext().getAuthentication().getName()
+        : null;
+
+    if (username != null) {
+      // Get device ID
+      String deviceId = getDeviceIdFromCookie(request);
+      if (deviceId != null) {
+        userDBService.getUser(username)
+            .ifPresent(user -> userSessionDBService.revokeSession(user, deviceId, "LOGOUT"));
+      }
+    }
+
     SecurityContextHolder.clearContext();
     HttpSession session = request.getSession(false);
     if (session != null) {
       session.invalidate();
     }
-    expireCookie(response, "JSESSIONID");
-    deviceCookieService.expireDeviceCookie(response);
-    response.setStatus(HttpServletResponse.SC_OK);
+    cookieService.expireCookies(response);
+    response.setStatus(HttpServletResponse.SC_NO_CONTENT);
+  }
+
+  @PostMapping("/logout-all")
+  @PreAuthorize("hasRole('ADMIN')")
+  public void logoutAll(HttpServletRequest request, HttpServletResponse response) {
+    // Get current user
+    String username = SecurityContextHolder.getContext().getAuthentication() != null
+        ? SecurityContextHolder.getContext().getAuthentication().getName()
+        : null;
+
+    if (username != null) {
+      userDBService.getUser(username)
+          .ifPresent(user -> userSessionDBService.revokeAllUserSessions(user, "LOGOUT_ALL"));
+    }
+
+    SecurityContextHolder.clearContext();
+    HttpSession session = request.getSession(false);
+    if (session != null) {
+      session.invalidate();
+    }
+    cookieService.expireCookies(response);
+    response.setStatus(HttpServletResponse.SC_NO_CONTENT);
   }
 
   @PatchMapping("/verify")
@@ -128,13 +215,16 @@ public class AuthController {
     return new ResponseEntity<>(tokenMap, HttpStatus.OK);
   }
 
-  private void expireCookie(HttpServletResponse response, String name) {
-    Cookie c = new Cookie(name, "");
-    c.setPath("/");
-    c.setMaxAge(0);
-    c.setHttpOnly(true);
-    c.setSecure(true);
-    response.addCookie(c);
+  private String getOrGenerateDeviceId(HttpServletRequest request, HttpServletResponse response) {
+    String deviceId = getDeviceIdFromCookie(request);
+    if (deviceId == null) {
+      deviceId = cookieService.generateNewDeviceId(response);
+    }
+    return deviceId;
+  }
+
+  private String getDeviceIdFromCookie(HttpServletRequest request) {
+    return cookieService.getCookie(request, CookieService.DEVICE_ID_COOKIE).orElse(null);
   }
 
 }

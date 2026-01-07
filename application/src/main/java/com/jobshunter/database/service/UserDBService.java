@@ -1,17 +1,17 @@
 package com.jobshunter.database.service;
 
 import com.jobshunter.database.entities.UserContractTypeEntity;
-import com.jobshunter.database.entities.UserDeviceEntity;
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.entities.UserJobRoleEntity;
 import com.jobshunter.database.entities.UserJobTypeEntity;
 import com.jobshunter.database.entities.UserPromptEntity;
+import com.jobshunter.database.entities.UserSessionEntity;
 import com.jobshunter.database.repository.UserContractTypeRepository;
-import com.jobshunter.database.repository.UserDeviceRepository;
 import com.jobshunter.database.repository.UserJobRoleRepository;
 import com.jobshunter.database.repository.UserJobTypeRepository;
 import com.jobshunter.database.repository.UserPromptRepository;
 import com.jobshunter.database.repository.UserRepository;
+import com.jobshunter.database.repository.UserSessionRepository;
 import com.jobshunter.model.ContractType;
 import com.jobshunter.model.EngineCategory;
 import com.jobshunter.model.JobType;
@@ -33,7 +33,7 @@ public class UserDBService {
   private final UserJobTypeRepository userJobTypeRepository;
   private final UserContractTypeRepository userContractTypeRepository;
   private final UserPromptRepository userPromptRepository;
-  private final UserDeviceRepository userDeviceRepository;
+  private final UserSessionRepository userSessionRepository;
 
   @Transactional(readOnly = true)
   public Optional<UserEntity> getUser(String username) {
@@ -133,22 +133,17 @@ public class UserDBService {
   }
 
 
-  @Transactional
-  public void updateDeviceId(String username, String deviceId, String ip, String userAgent) {
-    UserDeviceEntity entity = userDeviceRepository.findByUsername(username).orElseGet(() -> {
-      UserDeviceEntity newEntity = new UserDeviceEntity();
-      userRepository.findByUsername(username).ifPresent(newEntity::setUser);
-      return newEntity;
-    });
-    entity.setDeviceId(deviceId);
-    entity.setIpAddress(ip);
-    entity.setUserAgent(userAgent);
-    userDeviceRepository.save(entity);
-  }
-
+  /**
+   * Gets the active device ID for a user from their active session.
+   *
+   * @param username The username
+   * @return Optional device ID if user has an active session
+   */
   @Transactional(readOnly = true)
-  public Optional<UserDeviceEntity> getActiveDevice(String username) {
-    return userDeviceRepository.findActiveByUsername(username);
+  public Optional<String> getActiveDeviceId(String username) {
+    return userRepository.findByUsername(username)
+        .flatMap(user -> userSessionRepository.findByUser(user)
+            .map(UserSessionEntity::getDeviceId));
   }
 
   /**

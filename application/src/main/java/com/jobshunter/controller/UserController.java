@@ -135,7 +135,6 @@ public class UserController {
         userCvDBService.getRemoteCvFileId(user, EngineType.GPT).orElse(""),
         userCvDBService.getRemoteCvFileId(user, EngineType.GROK).orElse(""),
         formatDateTime(user.getLastJobs()),
-        user.getTimeInterval(),
         prompts.stream()
             .map(p -> String.format("id: %d, prompt: %s", p.getId(), p.getPrompt()))
             .toList(),
@@ -202,7 +201,6 @@ public class UserController {
     @SuppressWarnings("OptionalGetWithoutIsPresent")
     UserEntity user = userDBService.getUser(request.username()).get();
     user.setPhoneNumber(request.phoneNumber());
-    user.setTimeInterval(request.timeInterval());
     user.setNotifyWhatsapp(request.notifyWhatsapp());
     user.setNotifyEmail(request.notifyEmail());
     user.setCity(request.city());

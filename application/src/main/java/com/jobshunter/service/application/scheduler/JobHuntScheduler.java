@@ -87,10 +87,7 @@ public class JobHuntScheduler {
   public void notifyUsersSync() {
     for (var user : userDBService.getAllUsers()) {
       if (user.isNotifyWhatsapp() || user.isNotifyEmail()) {
-        if (user.getTimeInterval() != null
-            && user.getTimeInterval() > 0
-            && user.getLastJobs() != null
-            && user.getLastJobs().plus(Duration.ofMinutes(user.getTimeInterval())).isBefore(Instant.now())) {
+        if (user.getLastJobs() != null && user.getLastJobs().plus(Duration.ofDays(1)).isBefore(Instant.now())) {
           //log.info("Notifying user {} about new jobs found", user.getUsername());
           // TODO: implement notification logic if needed
         }

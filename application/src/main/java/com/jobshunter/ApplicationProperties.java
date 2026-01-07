@@ -37,15 +37,43 @@ public class ApplicationProperties {
     @JsonProperty("jwt")
     private JwtProperties jwt;
 
+    @JsonProperty("refresh-token")
+    private RefreshTokenProperties refreshToken;
+
+    @JsonProperty("cookie")
+    private CookieProperties cookie;
+
   }
 
   @Data
-
   public static class JwtProperties {
 
     private String secret;
 
-    private long expirationMs;
+    private long expirationSec;
+
+  }
+
+  @Data
+  public static class RefreshTokenProperties {
+
+    private int expirationSec;
+
+    private String pepper;
+
+  }
+
+  @Data
+  public static class CookieProperties {
+
+    private DeviceIdProperties deviceId;
+
+  }
+
+  @Data
+  public static class DeviceIdProperties {
+
+    private int expirationSec;
 
   }
 

@@ -88,7 +88,7 @@ components:
 
     EngineType:
       type: string
-      enum: [ GPT, GEMINI, SERP ]
+      enum: [ GPT, GROK, GEMINI, SERP ]
 
     EngineSelection:
       type: object
@@ -459,15 +459,15 @@ components:
         notified:
           type: boolean
           description: Whether the user has been notified
-        timestamp:
+        modifiedAt:
           type: string
           format: date-time
-          description: Order creation timestamp
+          description: Order last modification timestamp
         errorMessage:
           type: string
           nullable: true
           description: Error message if the order failed
-      required: [ id, engineConfigurationId, provider, model, searchCompanies, searchByPrompts, status, notified, timestamp ]
+      required: [ id, engineConfigurationId, provider, model, searchCompanies, searchByPrompts, status, notified, modifiedAt ]
 
     OrderStatus:
       type: string
@@ -598,8 +598,9 @@ paths:
 
   /api/auth/login:
     post:
-      summary: Obtain JWT token
+      summary: Obtain JWT access token and refresh token
       tags: [ Auth ]
+      description: Returns access token in response body. Refresh token is set as HttpOnly cookie.
       requestBody:
         required: true
         content:
@@ -608,13 +609,66 @@ paths:
               $ref: '#/components/schemas/LoginRequest'
       responses:
         '200':
-          description: Login succeeded.
+          description: Login succeeded. Access token in response, refresh token in HttpOnly cookie.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/AuthResponse'
         '401':
           description: Invalid credentials.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/auth/refresh:
+    post:
+      summary: Refresh access token using refresh token
+      tags: [ Auth ]
+      description: Validates refresh token from HttpOnly cookie, rotates it, and returns new access token. New refresh token is set as HttpOnly cookie.
+      responses:
+        '200':
+          description: Tokens refreshed successfully. New access token in response, new refresh token in HttpOnly cookie.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: Invalid, expired, or revoked refresh token.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/auth/logout:
+    post:
+      summary: Logout current session
+      tags: [ Auth ]
+      description: Revokes current session and expires refresh token cookie. Requires authentication.
+      security:
+        - bearerAuth: [ ]
+      responses:
+        '204':
+          description: Logout successful. Session revoked and cookies expired.
+        '401':
+          description: Unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/auth/logout-all:
+    post:
+      summary: Logout all sessions for authenticated user
+      tags: [ Auth ]
+      description: Revokes all active sessions for the authenticated user and expires refresh token cookie. Requires authentication.
+      security:
+        - bearerAuth: [ ]
+      responses:
+        '204':
+          description: All sessions revoked successfully. Cookies expired.
+        '401':
+          description: Unauthorized.
           content:
             application/json:
               schema:
@@ -1003,19 +1057,34 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
 
   /api/test/testGptModels:
-    get:
+    post:
       summary: Test GPT models (admin only)
       tags: [ Test ]
-      description: Requires ROLE_ADMIN. Tests GPT API connection and models.
+      description: Requires ROLE_ADMIN. Tests GPT API connection and models. Returns list of supported models.
       security:
         - bearerAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                models:
+                  type: array
+                  items:
+                    type: string
+                  description: Set of model names to test
+              required: [ models ]
       responses:
         '200':
-          description: GPT API response
+          description: List of supported models
           content:
             application/json:
               schema:
-                type: object
+                type: array
+                items:
+                  type: string
         '401':
           description: Unauthorized
           content:
@@ -1029,37 +1098,108 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
-  /api/models:
-    get:
-      summary: Get available models for an engine
-      tags: [ Models ]
-      description: Returns list of all available models for the specified engine type. Requires authentication.
+  /api/test/testGeminiModels:
+    post:
+      summary: Test Gemini models (admin only)
+      tags: [ Test ]
+      description: Requires ROLE_ADMIN. Tests Gemini API connection and models. Returns list of supported models.
       security:
         - bearerAuth: [ ]
-      parameters:
-        - in: query
-          name: engine
-          required: true
-          schema:
-            $ref: '#/components/schemas/EngineType'
-          description: Engine type to filter models by
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                models:
+                  type: array
+                  items:
+                    type: string
+                  description: Set of model names to test
+              required: [ models ]
       responses:
         '200':
-          description: List of models for the specified engine
+          description: List of supported models
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/ModelResponse'
-        '400':
-          description: Invalid engine parameter
+                  type: string
+        '401':
+          description: Unauthorized
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - requires ROLE_ADMIN
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/test/testGPT:
+    post:
+      summary: Test GPT search with file and location (admin only)
+      tags: [ Test ]
+      description: Requires ROLE_ADMIN. Tests GPT API with file ID, city, country, and custom payload.
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - in: query
+          name: model
+          required: true
+          schema:
+            type: string
+          description: GPT model name to test
+        - in: query
+          name: fileId
+          required: true
+          schema:
+            type: string
+          description: File ID for context
+        - in: query
+          name: city
+          required: true
+          schema:
+            type: string
+          description: City for search context
+        - in: query
+          name: country
+          required: true
+          schema:
+            type: string
+          description: Country for search context
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: string
+              description: Custom prompt payload
+      responses:
+        '200':
+          description: GPT API response
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: Bad request or API error
+          content:
+            application/json:
+              schema:
+                type: string
         '401':
           description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - requires ROLE_ADMIN
           content:
             application/json:
               schema:
@@ -1151,7 +1291,7 @@ paths:
     get:
       summary: Get job orders for authenticated user
       tags: [ Engine ]
-      description: Returns all job orders for the authenticated user, sorted by timestamp (descending) and then by status. Requires authentication.
+      description: Returns all job orders for the authenticated user, sorted by modifiedAt (descending) and then by status. Requires authentication.
       security:
         - bearerAuth: [ ]
       responses:
@@ -1176,40 +1316,34 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
-  /api/engine:
+  /api/monitoring/executors:
     get:
-      summary: Get models for a specific engine
-      tags: [ Engine ]
-      description: Returns a list of model names available for the specified engine type. Requires authentication.
+      summary: Get executor pool status (admin only)
+      tags: [ Monitoring ]
+      description: Requires ROLE_ADMIN. Returns status of all thread pool executors.
       security:
         - bearerAuth: [ ]
-      parameters:
-        - in: query
-          name: engine
-          required: true
-          schema:
-            $ref: '#/components/schemas/EngineType'
-          description: Engine type to get models for
       responses:
         '200':
-          description: List of model names for the specified engine
+          description: Executor status map
           content:
             application/json:
               schema:
-                type: array
-                items:
+                type: object
+                additionalProperties:
                   type: string
+                description: Map of executor names to their status strings (active, queued, completed counts)
                 example:
-                  - gpt-4o-mini
-                  - gpt-5.2
-        '400':
-          description: Invalid engine parameter
+                  Gpt: "active: 2, queued: 5, completed: 100"
+                  Grok: "active: 1, queued: 3, completed: 50"
+        '401':
+          description: Unauthorized
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-        '401':
-          description: Unauthorized
+        '403':
+          description: Forbidden - requires ROLE_ADMIN
           content:
             application/json:
               schema:

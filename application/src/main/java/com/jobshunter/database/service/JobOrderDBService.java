@@ -42,7 +42,7 @@ public class JobOrderDBService {
 
   @Transactional(readOnly = true)
   public List<JobOrderEntity> getUserOrders(Long userId) {
-    List<JobOrderEntity> orders = jobOrderRepository.findByUserIdOrderByTimestampDescAndStatus(userId);
+    List<JobOrderEntity> orders = jobOrderRepository.findByUserIdOrderByModifiedAtDescAndStatus(userId);
     orders.forEach(order -> Hibernate.initialize(order.getAiModel()));
     return orders;
   }
@@ -55,7 +55,7 @@ public class JobOrderDBService {
               SELECT id
               FROM job_order
               WHERE status = 'NEW'
-              ORDER BY timestamp ASC
+              ORDER BY modified_at ASC
               LIMIT 1
               FOR UPDATE SKIP LOCKED
             """)

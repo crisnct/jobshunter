@@ -1,20 +1,23 @@
 package com.jobshunter.database.service;
 
+import com.jobshunter.ApplicationProperties;
 import com.jobshunter.database.entities.RoleEntity;
 import com.jobshunter.database.entities.UserEntity;
+import com.jobshunter.database.entities.UserSessionEntity;
 import com.jobshunter.database.repository.RoleRepository;
 import com.jobshunter.database.repository.UserRepository;
 import com.jobshunter.dto.ChangePasswordRequest;
 import com.jobshunter.dto.LoginRequest;
+import com.jobshunter.dto.LoginResult;
 import com.jobshunter.dto.RegisterRequest;
 import com.jobshunter.dto.exceptions.BusinessException;
 import com.jobshunter.dto.exceptions.ValidationException;
 import com.jobshunter.service.application.JwtService;
+import com.jobshunter.service.application.RefreshTokenService;
 import com.jobshunter.service.application.notifiers.EmailNotifierService;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -38,6 +41,12 @@ public class AuthDBService {
   private final PasswordEncoder passwordEncoder;
 
   private final JwtService jwtService;
+
+  private final RefreshTokenService refreshTokenService;
+
+  private final UserSessionDBService userSessionDBService;
+
+  private final ApplicationProperties properties;
 
   private final AuthenticationManager authenticationManager;
 
@@ -66,7 +75,6 @@ public class AuthDBService {
     user.setEmailVerified(false);
     user.setCreatedAt(Instant.now());
     user.setNotifyEmail(true);
-    user.setTimeInterval((int) TimeUnit.DAYS.toMinutes(1));
     user.setVerificationToken(UUID.randomUUID().toString());
     user.getRoles().add(userRole);
 
@@ -74,10 +82,10 @@ public class AuthDBService {
   }
 
   @Transactional
-  public String login(LoginRequest request) {
+  public LoginResult login(LoginRequest request, String deviceId, String userAgent, String ipAddress) {
+    //Validations
     UserEntity user = userRepository.findByUsername(request.username())
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials"));
-
     if (!user.isEmailVerified()) {
       throw new ValidationException("Email not verified");
     }
@@ -85,17 +93,26 @@ public class AuthDBService {
       throw new ValidationException("Account was not approved yet. Approval process might takes 72h!");
     }
 
+    //Authentication
     try {
-      authenticationManager.authenticate(
-          new UsernamePasswordAuthenticationToken(request.username(), request.password()));
+      authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.username(), request.password()));
     } catch (BadCredentialsException ex) {
       throw new ValidationException("Invalid credentials");
     }
 
-    String token = jwtService.generateToken(user);
-    user.setJwtToken(jwtService.hashToken(token));
-    userRepository.save(user);
-    return token;
+    // Generate refresh token and hash it
+    String refreshToken = refreshTokenService.generateRefreshToken();
+    String refreshTokenHash = refreshTokenService.hashRefreshToken(refreshToken);
+    int expiration = properties.getSecurity().getRefreshToken().getExpirationSec();
+    Instant expiresAt = Instant.now().plusSeconds(expiration);
+
+    // Create or update session (unique constraint on user_id ensures one device per user)
+    UserSessionEntity session = userSessionDBService.createOrUpdateSession(user, deviceId, refreshTokenHash, expiresAt, userAgent, ipAddress);
+
+    // Generate access token with session ID
+    String jwtToken = jwtService.generateToken(user, session.getId());
+
+    return new LoginResult(jwtToken, refreshToken);
   }
 
   @Transactional

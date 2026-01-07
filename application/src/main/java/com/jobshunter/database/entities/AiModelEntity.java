@@ -9,6 +9,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -18,7 +19,8 @@ import lombok.ToString;
 @Setter
 @NoArgsConstructor
 @Entity
-@Table(name = "ai_models")
+@Table(name = "ai_models",
+    uniqueConstraints = @UniqueConstraint(name = "uc_provider_model", columnNames = {"provider", "model"}))
 @ToString
 public class AiModelEntity {
 
@@ -27,7 +29,7 @@ public class AiModelEntity {
   private Long id;
 
   @Enumerated(EnumType.STRING)
-  @Column(name = "provider", nullable = false, length = 255)
+  @Column(name = "provider", nullable = false, length = 50)
   private EngineType provider;
 
   @Column(name = "model", nullable = false, length = 255)

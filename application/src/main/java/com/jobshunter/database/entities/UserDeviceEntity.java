@@ -32,7 +32,7 @@ public class UserDeviceEntity {
   private Long id;
 
   @JsonIgnore
-  @OneToOne(fetch = FetchType.LAZY)
+  @OneToOne(fetch = FetchType.EAGER)
   @JoinColumn(name = "user_id", nullable = false, unique = true)
   private UserEntity user;
 
@@ -54,16 +54,6 @@ public class UserDeviceEntity {
 
   @Column(name = "last_seen_at", nullable = false)
   private Instant lastSeenAt;
-
-  public UserDeviceEntity(UserEntity user, String deviceId, String userAgent, String ipAddress) {
-    this.user = user;
-    this.deviceId = deviceId;
-    this.userAgent = userAgent;
-    this.ipAddress = ipAddress;
-    this.status = DeviceStatus.ACTIVE;
-    this.createdAt = Instant.now();
-    this.lastSeenAt = Instant.now();
-  }
 
   @PrePersist
   void prePersist() {

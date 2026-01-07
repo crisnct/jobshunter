@@ -15,6 +15,7 @@ import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import java.time.Instant;
@@ -74,10 +75,7 @@ public class UserEntity implements UserDetails {
   @Column(name = "last_jobs")
   private Instant lastJobs;
 
-  @Column(name = "time_interval")
-  private Integer timeInterval;
-
-  @Column(name = "created_at")
+  @Column(name = "created_at", nullable = false, updatable = false)
   private Instant createdAt;
 
   @Column(name = "approved", nullable = false)
@@ -108,10 +106,6 @@ public class UserEntity implements UserDetails {
   @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
   private List<UserRemoteCvEntity> remoteCvs = new ArrayList<>();
 
-  @JsonIgnore
-  @Column(name = "jwt_token", length = 64)
-  private String jwtToken;
-
   @Column(name = "city", length = 64)
   private String city;
 
@@ -141,9 +135,12 @@ public class UserEntity implements UserDetails {
   @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
   private List<JobOrderEntity> jobOrders = new ArrayList<>();
 
-  @JsonIgnore
-  @OneToOne(mappedBy = "user")
-  private UserDeviceEntity device;
+  @PrePersist
+  void prePersist() {
+    if (createdAt == null) {
+      createdAt = Instant.now();
+    }
+  }
 
   @Override
   @JsonIgnore

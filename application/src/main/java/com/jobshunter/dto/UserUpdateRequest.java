@@ -20,7 +20,6 @@ import java.util.List;
 public record UserUpdateRequest(
     @NotBlank @Size(max = 50) @SqlInjectionSafe String username,
     @NotBlank @Size(max = 30) @SqlInjectionSafe String phoneNumber,
-    @NotNull @Positive Integer timeInterval,
     boolean notifyWhatsapp,
     boolean notifyEmail,
     List<SerpPromptUpdate> serpPrompts,
