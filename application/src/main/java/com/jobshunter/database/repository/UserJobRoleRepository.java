@@ -16,6 +16,9 @@ public interface UserJobRoleRepository extends JpaRepository<UserJobRoleEntity, 
   List<UserJobRoleEntity> findByUserId(Long userId);
 
   @Modifying
-  @Query("DELETE FROM UserJobRoleEntity ujr WHERE ujr.user.id = :userId")
+  @Query("""
+      DELETE FROM UserJobRoleEntity ujr 
+      WHERE ujr.user.id = :userId
+      """)
   void deleteByUserId(@Param("userId") Long userId);
 }

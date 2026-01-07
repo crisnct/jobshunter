@@ -16,14 +16,21 @@ public interface UserJobRepository extends JpaRepository<UserJobEntity, Long> {
 
   Optional<UserJobEntity> findByUserIdAndUrl(Long userId, @SqlInjectionSafe String url);
 
-  @Query("select uj.url from UserJobEntity uj where lower(uj.user.username) = lower(:username)")
+  @Query("""
+      SELECT uj.url FROM UserJobEntity uj 
+      WHERE LOWER(uj.user.username) = LOWER(:username)
+      """)
   List<String> findJobUrlsByUsernameIgnoreCase(
       @Param("username")
       @SqlInjectionSafe
       String username
   );
 
-  @Query("select uj from UserJobEntity uj join fetch uj.user u where lower(u.username) = lower(:username)")
+  @Query("""
+      SELECT uj FROM UserJobEntity uj 
+      JOIN FETCH uj.user u 
+      WHERE LOWER(u.username) = LOWER(:username)
+      """)
   List<UserJobEntity> findAllByUsernameWithUser(
       @Param("username")
       @SqlInjectionSafe

@@ -53,15 +53,20 @@ public interface UserSessionRepository extends JpaRepository<UserSessionEntity, 
   Optional<UserSessionEntity> findByUser(UserEntity user);
 
   @Modifying
-  @Query("UPDATE UserSessionEntity us SET us.revokedAt = :revokedAt, us.revokeReason = :reason " +
-      "WHERE us.user = :user AND us.revokedAt IS NULL")
+  @Query("""
+      UPDATE UserSessionEntity us 
+      SET us.revokedAt = :revokedAt, us.revokeReason = :reason 
+      WHERE us.user = :user AND us.revokedAt IS NULL
+      """)
   int revokeAllUserSessions(@Param("user") UserEntity user,
       @Param("revokedAt") Instant revokedAt,
       @Param("reason") String reason);
 
   @Modifying
-  @Query("DELETE FROM UserSessionEntity us " +
-      "WHERE us.refreshExpiresAt < UTC_TIMESTAMP() OR us.revokedAt IS NOT NULL")
+  @Query("""
+      DELETE FROM UserSessionEntity us 
+      WHERE us.refreshExpiresAt < UTC_TIMESTAMP() OR us.revokedAt IS NOT NULL
+      """)
   int deleteExpiredOrRevokedSessions();
 
 }

@@ -16,6 +16,9 @@ public interface UserJobTypeRepository extends JpaRepository<UserJobTypeEntity, 
   List<UserJobTypeEntity> findByUserId(Long userId);
 
   @Modifying
-  @Query("DELETE FROM UserJobTypeEntity ujt WHERE ujt.user.id = :userId")
+  @Query("""
+      DELETE FROM UserJobTypeEntity ujt 
+      WHERE ujt.user.id = :userId
+      """)
   void deleteByUserId(@Param("userId") Long userId);
 }

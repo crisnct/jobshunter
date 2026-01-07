@@ -24,7 +24,11 @@ public interface UserRepository extends JpaRepository<UserEntity, Long> {
 
   boolean existsByPhoneNumberIgnoreCase(@SqlInjectionSafe String phonedNumber);
 
-  @Query("SELECT u.email FROM UserEntity u JOIN u.roles r WHERE r.name = :roleName")
+  @Query("""
+      SELECT u.email FROM UserEntity u 
+      JOIN u.roles r 
+      WHERE r.name = :roleName
+      """)
   List<String> findEmailsByRole(
       @Param("roleName")
       @SqlInjectionSafe

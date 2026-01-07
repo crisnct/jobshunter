@@ -12,7 +12,11 @@ import org.springframework.stereotype.Repository;
 @PackageExpected("com.jobshunter.database.service")
 public interface JobOrderRepository extends JpaRepository<JobOrderEntity, Long> {
 
-  @Query("SELECT jo FROM JobOrderEntity jo WHERE jo.user.id = :userId ORDER BY jo.modifiedAt DESC, jo.status ASC")
+  @Query("""
+      SELECT jo FROM JobOrderEntity jo 
+      WHERE jo.user.id = :userId 
+      ORDER BY jo.modifiedAt DESC, jo.status ASC
+      """)
   List<JobOrderEntity> findByUserIdOrderByModifiedAtDescAndStatus(@Param("userId") Long userId);
 
 }

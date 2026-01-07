@@ -21,10 +21,16 @@ public interface UserDeviceRepository extends JpaRepository<UserDeviceEntity, Lo
 
   Optional<UserDeviceEntity> findByUserIdAndDeviceId(Long userId, String deviceId);
 
-  @Query("SELECT ud FROM UserDeviceEntity ud WHERE ud.user.username = :username AND ud.status = 'ACTIVE'")
+  @Query("""
+      SELECT ud FROM UserDeviceEntity ud 
+      WHERE ud.user.username = :username AND ud.status = 'ACTIVE'
+      """)
   Optional<UserDeviceEntity> findActiveByUsername(@Param("username") String username);
 
-  @Query("SELECT ud FROM UserDeviceEntity ud WHERE ud.user.username = :username")
+  @Query("""
+      SELECT ud FROM UserDeviceEntity ud 
+      WHERE ud.user.username = :username
+      """)
   Optional<UserDeviceEntity> findByUsername(@Param("username") String username);
 
 }

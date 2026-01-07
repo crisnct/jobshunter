@@ -16,6 +16,9 @@ public interface UserContractTypeRepository extends JpaRepository<UserContractTy
   List<UserContractTypeEntity> findByUserId(Long userId);
 
   @Modifying
-  @Query("DELETE FROM UserContractTypeEntity uct WHERE uct.user.id = :userId")
+  @Query("""
+      DELETE FROM UserContractTypeEntity uct 
+      WHERE uct.user.id = :userId
+      """)
   void deleteByUserId(@Param("userId") Long userId);
 }
