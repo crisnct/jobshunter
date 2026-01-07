@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+  xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="
+        http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.23.xsd">
+
+  <changeSet id="convert-timestamp-to-datetime" author="assistant">
+    <preConditions onFail="MARK_RAN">
+      <tableExists tableName="users"/>
+    </preConditions>
+    <comment>Convert all DATETIME columns to TIMESTAMP across all tables</comment>
+
+    <modifyDataType tableName="users" columnName="created_at" newDataType="TIMESTAMP"/>
+    <modifyDataType tableName="users" columnName="last_jobs" newDataType="TIMESTAMP"/>
+
+    <!-- user_jobs table -->
+    <modifyDataType tableName="user_jobs" columnName="created_at" newDataType="TIMESTAMP"/>
+
+    <!-- user_prompts table -->
+    <modifyDataType tableName="user_prompts" columnName="modified_at" newDataType="TIMESTAMP"/>
+
+    <!-- job_order table -->
+    <modifyDataType tableName="job_order" columnName="modified_at" newDataType="TIMESTAMP"/>
+    <modifyDataType tableName="job_order" columnName="locked_at" newDataType="TIMESTAMP"/>
+
+    <!-- user_sessions table -->
+    <modifyDataType tableName="user_sessions" columnName="refresh_expires_at" newDataType="TIMESTAMP"/>
+    <modifyDataType tableName="user_sessions" columnName="created_at" newDataType="TIMESTAMP"/>
+    <modifyDataType tableName="user_sessions" columnName="last_used_at" newDataType="TIMESTAMP"/>
+
+    <modifyDataType tableName="user_sessions" columnName="revoked_at" newDataType="TIMESTAMP"/>
+
+    <!-- user_remote_cv table -->
+    <modifyDataType tableName="user_remote_cv" columnName="expire_time" newDataType="TIMESTAMP"/>
+  </changeSet>
+
+</databaseChangeLog>

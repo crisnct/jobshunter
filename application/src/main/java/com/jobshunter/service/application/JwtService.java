@@ -98,7 +98,7 @@ public class JwtService {
     if (!StringUtils.hasText(jwtProps.getSecret())) {
       throw new IllegalStateException("JWT secret (security.jwt.secret) must be configured");
     }
-    if (jwtProps.getExpirationSec() <= 0 || jwtProps.getExpirationSec() > 3600) {
+    if (jwtProps.getExpirationSec() <= 0 || jwtProps.getExpirationSec() > 86400) {
       throw new IllegalStateException("JWT expiration (security.jwt.expiration-ms) invalid");
     }
     return Keys.hmacShaKeyFor(jwtProps.getSecret().getBytes(StandardCharsets.UTF_8));
