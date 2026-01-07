@@ -61,6 +61,7 @@ public interface UserSessionRepository extends JpaRepository<UserSessionEntity, 
 
   @Modifying
   @Query("DELETE FROM UserSessionEntity us " +
-      "WHERE us.refreshExpiresAt < :now OR us.revokedAt IS NOT NULL")
-  int deleteExpiredOrRevokedSessions(@Param("now") Instant now);
+      "WHERE us.refreshExpiresAt < UTC_TIMESTAMP() OR us.revokedAt IS NOT NULL")
+  int deleteExpiredOrRevokedSessions();
+
 }
