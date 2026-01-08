@@ -1,7 +1,8 @@
 package com.jobshunter;
 
 import com.jobshunter.security.JHHeaders;
-import com.jobshunter.service.clients.BrowserSimulator;
+import com.jobshunter.service.application.processors.JobBodyExtractor;
+import com.jobshunter.service.clients.browser.BrowserSimulator;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -73,10 +74,7 @@ public class RestClientConfig {
    * properties.
    */
   @Bean
-  public HttpClient httpClient(
-      PoolingHttpClientConnectionManager connectionManager,
-      ApplicationProperties properties
-  ) {
+  public HttpClient httpClient(PoolingHttpClientConnectionManager connectionManager) {
     RequestConfig requestConfig = RequestConfig.custom()
         .setConnectionRequestTimeout(Timeout.ofSeconds(2))
         .setResponseTimeout(Timeout.ofMinutes(5)) // Default timeout, can be overridden per RestClient
@@ -90,9 +88,7 @@ public class RestClientConfig {
         .evictExpiredConnections()
         .evictIdleConnections(Timeout.ofMinutes(5));
 
-    if (properties.getJobsHunter().getAllowRedirection()) {
-      clientBuilder.setRedirectStrategy(new LaxRedirectStrategy());
-    }
+    clientBuilder.setRedirectStrategy(new LaxRedirectStrategy());
 
     return clientBuilder.build();
   }
@@ -109,12 +105,11 @@ public class RestClientConfig {
     RestClient.Builder restBuilder = RestClient.builder()
         .defaultHeader(JHHeaders.ACCEPT, "application/json");
 
-    HttpComponentsClientHttpRequestFactory requestFactory =
-        new HttpComponentsClientHttpRequestFactory(httpClient);
+    HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory(httpClient);
 
     requestFactory.setHttpContextFactory((request, context) -> {
-      if (BrowserSimulator.HTTP_CONTEXT.isBound()) {
-        return BrowserSimulator.HTTP_CONTEXT.get();
+      if (JobBodyExtractor.HTTP_CONTEXT.isBound()) {
+        return JobBodyExtractor.HTTP_CONTEXT.get();
       }
       return HttpClientContext.create();
     });
@@ -155,14 +150,6 @@ public class RestClientConfig {
 
     HttpComponentsClientHttpRequestFactory requestFactory =
         new HttpComponentsClientHttpRequestFactory(httpClient);
-
-    requestFactory.setHttpContextFactory((request, context) -> {
-      if (BrowserSimulator.HTTP_CONTEXT.isBound()) {
-        return BrowserSimulator.HTTP_CONTEXT.get();
-      }
-      return HttpClientContext.create();
-    });
-
     restBuilder.requestFactory(requestFactory);
 
     return restBuilder.build();

@@ -25,9 +25,8 @@ public class ApplicationProperties {
     private String expiredExpressions;
     private Scheduler scheduler = new Scheduler();
     private RateLimitPolicy rateLimit = new RateLimitPolicy();
-    private Boolean allowRedirection;
     private String blacklist;
-
+    private String whitelistSkipValidation;
   }
 
   @Data

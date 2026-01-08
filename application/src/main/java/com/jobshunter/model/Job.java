@@ -4,7 +4,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 import lombok.Data;
 
@@ -15,16 +16,15 @@ public class Job {
   @Max(100)
   private int score;
 
-  @Size(max = 255)
   @NotNull
   private String url;
-
-  @JsonIgnore
-  private String description;
 
   private String source;
 
   private Long promptId;
+
+  @JsonIgnore
+  private final Map<JobMetadataType, Object> metadata = new HashMap<>();
 
   public Job(int score, String url, String source) {
     this.score = score;
@@ -44,6 +44,15 @@ public class Job {
   @Override
   public int hashCode() {
     return Objects.hashCode(url);
+  }
+
+  public void addMetadata(JobMetadataType type, Object value) {
+    this.metadata.put(type, value);
+  }
+
+  public <T> T getMetadata(JobMetadataType type){
+    //noinspection unchecked
+    return (T) metadata.get(type);
   }
 
 }

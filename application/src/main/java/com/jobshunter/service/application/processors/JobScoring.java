@@ -43,7 +43,7 @@ public class JobScoring implements JobProcessor {
     int score;
     if (context.isAccepted()) {
       try {
-        Path path = createPathFromByteArray(job.getDescription().getBytes(StandardCharsets.UTF_8),
+        Path path = createPathFromByteArray(context.getDescription().getBytes(StandardCharsets.UTF_8),
             "jd-user-" + context.getUser().getUsername(), ".txt");
         try (var uploadedFile = new UploadedFile(fileClient, path)) {
           log.info("Computing matching score between {} resume and description of job {}",

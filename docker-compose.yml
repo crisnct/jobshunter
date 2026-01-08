@@ -28,7 +28,9 @@ services:
     restart: always
     networks:
       - jobshunter-net
-#    depends_on:
+    volumes:
+      - playwright-cache:/root/.cache/ms-playwright
+    #    depends_on:
 #      mysql:
 #        condition: service_healthy
     environment:
@@ -75,3 +77,6 @@ services:
 networks:
   jobshunter-net:
     driver: bridge
+
+volumes:
+  playwright-cache:

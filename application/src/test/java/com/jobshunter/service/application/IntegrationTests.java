@@ -1,18 +1,39 @@
 package com.jobshunter.service.application;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.verify;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import com.fasterxml.jackson.databind.json.JsonMapper;
+import com.jobshunter.database.entities.RoleEntity;
+import com.jobshunter.database.repository.RoleRepository;
+import com.jobshunter.database.service.AuthDBService;
+import com.jobshunter.dto.RegisterRequest;
 import com.jobshunter.service.UrlAffinityExecutor;
-import com.jobshunter.service.clients.BrowserSimulator;
+import com.jobshunter.service.application.notifiers.EmailNotifierService;
+import com.jobshunter.service.clients.SmtpMailtrapClient;
+import com.jobshunter.service.clients.browser.BrowserSimulator;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
+import org.springframework.test.web.servlet.MockMvc;
 
 @Slf4j
 @SpringBootTest(
@@ -29,7 +50,25 @@ import org.springframework.test.context.ActiveProfiles;
 )
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
-public class UrlAffinityExecutorTest {
+public class IntegrationTests {
+
+  @Autowired
+  private MockMvc mockMvc;
+
+  @Autowired
+  private JsonMapper mapper;
+
+  @Autowired
+  private RoleRepository roleRepository;
+
+  @MockitoSpyBean
+  private AuthDBService authDBService;
+
+  @MockitoSpyBean
+  private EmailNotifierService emailNotifierService;
+
+  @MockitoSpyBean
+  private SmtpMailtrapClient smtpMailtrapClient;
 
   @Autowired
   private BrowserSimulator browserSimulator;
@@ -37,7 +76,32 @@ public class UrlAffinityExecutorTest {
   @Autowired
   private UrlAffinityExecutor executor;
 
- // @Test
+  @Test
+  @DisplayName("Should register user via HTTP and trigger email notifier without touching DB")
+  void shouldSendEmailWithFormattedJobs() throws Exception {
+    RegisterRequest request = new RegisterRequest(
+        "dummy.user", "test@test.com", "test1909test", "+40710221441");
+
+    RoleEntity role = new RoleEntity();
+    role.setName("USER");
+    roleRepository.save(role);
+
+    doNothing().when(smtpMailtrapClient).sendEmail(anyString(), any(), anyString());
+
+    mockMvc.perform(post("/api/auth/register")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(mapper.writeValueAsString(request)))
+        .andExpect(status().isOk());
+
+    verify(authDBService).register(request);
+    verify(emailNotifierService).sendVerificationToken(argThat(u ->
+        u != null && request.username().equals(u.getUsername()) && request.email().equals(u.getEmail())
+    ));
+    verify(smtpMailtrapClient).sendEmail(eq(request.email()), any(), any());
+  }
+
+  @Test
+  @Disabled
   public void testSameHosts() {
     for (int i = 0; i < 2; i++) {
       long startTime = System.currentTimeMillis();
@@ -68,50 +132,71 @@ public class UrlAffinityExecutorTest {
   }
 
   @Test
+  @Disabled
   public void testDifferentHosts() {
-    long startTime = System.currentTimeMillis();
+    for (int i = 0; i < 1; i++) {
+      long startTime = System.currentTimeMillis();
+      List<CompletionStage<ResponseEntity<String>>> list = new ArrayList<>();
+      list.add(browserSimulator.openPageAsync(
+          "https://www.linkedin.com/jobs/view/4340490377/?alternateChannel=search&eBP=CwEAAAGbmZoR9vJgMa2RnK6BJQ3zLQpl7RFATF4Pfz7cYeX75SHOzEzTPTOZISBoZC0h0OfzxnsPei126MJJUL1_gqJhv6wHXDYvSdc2QL_xfa0MLAUzRDYQDIbZ71PiEVmAL-UwhI3UNKIzS7Y8JCenKYbKgMC-tGm_oZHIQs1PYqvsoU9TR9S0T6WqqXYdfYDpwap8QEIC4d4Hz7lffJSZ6xgHAE1A-gGDriCZlG-6jmCtEPNedgN5a-mrTfVfjlTkCQwQ5cdSNN85a_DfMn4xYoAk4MvP7p-_9rOkM_59DsX-r-4NdNNLdvHkKcQPc2kqRk8GXENGMYaOhTp6MqMZf2maVJuQ2S-faaXZJtmCl51yOmTBBz1NstPVH7cYp1sYbwWghqaydUJdWPid0l9p5qze2bAgILFZxnRgybn3V5nG206GrzYuDiQmdwb0Wt7RBUvmne2c5ZuVHnU3QMWQEeNgtgJ4iXwwehZnnKEa_piVyoqMvCrQK_09LEhFNKc_cjg&refId=7WEPxO81TSXPY6FEDKzhEA%3D%3D&trackingId=aiIgWGFG98TStDzAZk5%2Bkw%3D%3D&trk=d_flagship3_search_srp_jobs"));
+      list.add(browserSimulator.openPageAsync(
+          "https://www.bestjobs.eu/loc-de-munca/telecom-engineer-timisoara?rid=743c2183-0e7e-4595-b985-49f19391b84d&pos=47&selectedJobSlug=telecom-engineer-timisoara"));
+      list.add(browserSimulator.openPageAsync("https://www.techtalent.ro/careers/java-developer/"));
+      list.add(browserSimulator.openPageAsync("https://wellfound.com/jobs/3709274-senior-java-backend-developer"));
+      list.add(
+          browserSimulator.openPageAsync("https://www.accenture.com/ro-en/careers/jobdetails?id=R00300960_en&title=PharmaSuite+MES+Workstream+Lead"));
+      list.add(browserSimulator.openPageAsync("https://devjob.ro/en/jobs/Showpad-Senior-Data-Platform--Cloud-Engineer"));
+      list.add(browserSimulator.openPageAsync("https://careers.google.com/jobs/results/"));
+      list.add(browserSimulator.openPageAsync("https://www.amazon.jobs/en/"));
+      list.add(browserSimulator.openPageAsync("https://jobs.apple.com/en-us/search?location=united-states-USA"));
+      list.add(browserSimulator.openPageAsync("https://careers.microsoft.com/v2/global/en/search"));
+      list.add(browserSimulator.openPageAsync("https://www.oracle.com/corporate/careers/"));
+      list.add(browserSimulator.openPageAsync("https://jobs.sap.com/"));
+      list.add(browserSimulator.openPageAsync("https://www.redhat.com/en/jobs"));
+      list.add(browserSimulator.openPageAsync("https://www.lifeatspotify.com/jobs/gm-surfaces-personalization"));
+      list.add(browserSimulator.openPageAsync("https://jobs.bytedance.com/en/"));
+      list.add(browserSimulator.openPageAsync("https://careers.booking.com/"));
+      list.add(browserSimulator.openPageAsync("https://jobs.lever.co/"));
+      list.add(browserSimulator.openPageAsync("https://boards.greenhouse.io/"));
+      list.add(browserSimulator.openPageAsync("https://jobs.workable.com/"));
+      list.add(browserSimulator.openPageAsync("https://jobs.smartrecruiters.com/"));
+      list.add(browserSimulator.openPageAsync("https://www.glassdoor.com/Job/index.htm"));
+      list.add(browserSimulator.openPageAsync("https://www.indeed.com/jobs"));
+      list.add(browserSimulator.openPageAsync("https://www.monster.com/jobs/"));
+      list.add(browserSimulator.openPageAsync("https://www.simplyhired.com/"));
+      list.add(browserSimulator.openPageAsync("https://remote.com/jobs"));
+      list.add(browserSimulator.openPageAsync("https://otta.com/jobs"));
+      list.add(browserSimulator.openPageAsync("https://startup.jobs/"));
+      list.add(browserSimulator.openPageAsync("https://angel.co/jobs"));
+      list.add(browserSimulator.openPageAsync("https://www.totaljobs.com/jobs"));
+      list.add(browserSimulator.openPageAsync("https://hired.com/jobs"));
+      list.add(
+          browserSimulator.openPageAsync("https://apply.careers.microsoft.com/careers?query=java&start=0&pid=1970393556623182&sort_by=relevance"));
+
+      list.forEach(l -> l.toCompletableFuture().join());
+      log.info("LOG STATUS {}", i);
+      logStatus(startTime);
+    }
+  }
+
+  @Test
+  @Disabled
+  public void testPlaywright() {
     List<CompletionStage<ResponseEntity<String>>> list = new ArrayList<>();
-    list.add(browserSimulator.openPageAsync(
-        "https://www.linkedin.com/jobs/view/4340490377/?alternateChannel=search&eBP=CwEAAAGbmZoR9vJgMa2RnK6BJQ3zLQpl7RFATF4Pfz7cYeX75SHOzEzTPTOZISBoZC0h0OfzxnsPei126MJJUL1_gqJhv6wHXDYvSdc2QL_xfa0MLAUzRDYQDIbZ71PiEVmAL-UwhI3UNKIzS7Y8JCenKYbKgMC-tGm_oZHIQs1PYqvsoU9TR9S0T6WqqXYdfYDpwap8QEIC4d4Hz7lffJSZ6xgHAE1A-gGDriCZlG-6jmCtEPNedgN5a-mrTfVfjlTkCQwQ5cdSNN85a_DfMn4xYoAk4MvP7p-_9rOkM_59DsX-r-4NdNNLdvHkKcQPc2kqRk8GXENGMYaOhTp6MqMZf2maVJuQ2S-faaXZJtmCl51yOmTBBz1NstPVH7cYp1sYbwWghqaydUJdWPid0l9p5qze2bAgILFZxnRgybn3V5nG206GrzYuDiQmdwb0Wt7RBUvmne2c5ZuVHnU3QMWQEeNgtgJ4iXwwehZnnKEa_piVyoqMvCrQK_09LEhFNKc_cjg&refId=7WEPxO81TSXPY6FEDKzhEA%3D%3D&trackingId=aiIgWGFG98TStDzAZk5%2Bkw%3D%3D&trk=d_flagship3_search_srp_jobs"));
-    list.add(browserSimulator.openPageAsync(
-        "https://www.bestjobs.eu/loc-de-munca/telecom-engineer-timisoara?rid=743c2183-0e7e-4595-b985-49f19391b84d&pos=47&selectedJobSlug=telecom-engineer-timisoara"));
     list.add(browserSimulator.openPageAsync("https://www.techtalent.ro/careers/java-developer/"));
-    list.add(browserSimulator.openPageAsync("https://wellfound.com/jobs/3709274-senior-java-backend-developer"));
-    list.add(
-        browserSimulator.openPageAsync("https://www.accenture.com/ro-en/careers/jobdetails?id=R00300960_en&title=PharmaSuite+MES+Workstream+Lead"));
     list.add(browserSimulator.openPageAsync("https://devjob.ro/en/jobs/Showpad-Senior-Data-Platform--Cloud-Engineer"));
-    list.add(browserSimulator.openPageAsync("https://stackoverflow.com/jobs"));
-    list.add(browserSimulator.openPageAsync("https://jobs.github.com/"));
     list.add(browserSimulator.openPageAsync("https://careers.google.com/jobs/results/"));
     list.add(browserSimulator.openPageAsync("https://www.amazon.jobs/en/"));
-    list.add(browserSimulator.openPageAsync("https://jobs.apple.com/en-us/search"));
-    list.add(browserSimulator.openPageAsync("https://careers.microsoft.com/v2/global/en/search"));
-    list.add(browserSimulator.openPageAsync("https://careers.netflix.com/"));
-    list.add(browserSimulator.openPageAsync("https://www.meta.com/careers/jobs/"));
-    list.add(browserSimulator.openPageAsync("https://www.oracle.com/corporate/careers/"));
-    list.add(browserSimulator.openPageAsync("https://jobs.sap.com/"));
-    list.add(browserSimulator.openPageAsync("https://careers.ibm.com/job/search"));
-    list.add(browserSimulator.openPageAsync("https://www.redhat.com/en/jobs"));
-    list.add(browserSimulator.openPageAsync("https://www.lifeatspotify.com/jobs/gm-surfaces-personalization"));
-    list.add(browserSimulator.openPageAsync("https://jobs.bytedance.com/en/"));
-    list.add(browserSimulator.openPageAsync("https://careers.booking.com/"));
-    list.add(browserSimulator.openPageAsync("https://jobs.lever.co/"));
-    list.add(browserSimulator.openPageAsync("https://boards.greenhouse.io/"));
-    list.add(browserSimulator.openPageAsync("https://jobs.workable.com/"));
-    list.add(browserSimulator.openPageAsync("https://jobs.smartrecruiters.com/"));
-    list.add(browserSimulator.openPageAsync("https://www.glassdoor.com/Job/index.htm"));
-    list.add(browserSimulator.openPageAsync("https://www.indeed.com/jobs"));
-    list.add(browserSimulator.openPageAsync("https://www.monster.com/jobs/"));
-    list.add(browserSimulator.openPageAsync("https://www.simplyhired.com/"));
-    list.add(browserSimulator.openPageAsync("https://jobs.turing.com/"));
+    list.add(browserSimulator.openPageAsync("https://www.dice.com/job-detail/ae2a6fe3-0215-4fa6-a9ee-2c2245a01ef8"));
     list.add(browserSimulator.openPageAsync("https://remote.com/jobs"));
     list.add(browserSimulator.openPageAsync("https://otta.com/jobs"));
     list.add(browserSimulator.openPageAsync("https://startup.jobs/"));
     list.add(browserSimulator.openPageAsync("https://angel.co/jobs"));
-    list.add(browserSimulator.openPageAsync("https://hired.com/jobs"));
     list.add(browserSimulator.openPageAsync("https://www.totaljobs.com/jobs"));
+    list.add(browserSimulator.openPageAsync("https://hired.com/jobs"));
+    list.add(
+        browserSimulator.openPageAsync("https://apply.careers.microsoft.com/careers?query=java&start=0&pid=1970393556623182&sort_by=relevance"));
     list.forEach(l -> l.toCompletableFuture().join());
-    logStatus(startTime);
   }
 
   private void logStatus(long startTime) {

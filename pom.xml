@@ -13,6 +13,7 @@
 
     <properties>
         <maven.compiler.release>25</maven.compiler.release>
+        <maven.compiler.plugin>3.13.0</maven.compiler.plugin>
         <spring.boot.version>4.0.0</spring.boot.version>
         <resilience4j.version>2.3.0</resilience4j.version>
         <spring.web>7.0.1</spring.web>
@@ -37,6 +38,21 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>${maven.compiler.plugin}</version>
+                    <configuration>
+                        <release>${maven.compiler.release}</release>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
 
     <modules>
         <module>annotation-processor</module>

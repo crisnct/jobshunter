@@ -13,6 +13,7 @@
     <packaging>jar</packaging>
     <name>annotation-processor</name>
     <description>Annotation processor enforcing package usage rules</description>
+
 </project>
 
 

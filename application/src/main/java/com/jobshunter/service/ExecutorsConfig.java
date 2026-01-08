@@ -37,6 +37,13 @@ public class ExecutorsConfig {
     return executor;
   }
 
+  @Bean(name = "playwrightExecutor")
+  public ThreadPoolExecutor playwrightExecutor() {
+    ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(1);
+    executor.setThreadFactory(Thread.ofVirtual().name("playwright-", 0).factory());
+    return executor;
+  }
+
   @Bean(name = "miscellaneousExecutor")
   public ThreadPoolExecutor miscellaneousExecutor(@Value("${jobshunter.miscellaneousExecutorThreads:}") String threads) {
     ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(Integer.parseInt(threads));

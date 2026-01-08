@@ -19,7 +19,9 @@ public class JobsStateMachine {
 
   private final JobsValidator jobsValidator;
 
-  private final JobRedirection jobRedirection;
+  private final JobBodyExtractor jobBodyExtractor;
+
+  private final JobFakelUrFilter jobFakeUrlFilter;
 
   private final Executor miscExecutor;
 
@@ -28,14 +30,16 @@ public class JobsStateMachine {
   public JobsStateMachine(
       JobScoring jobScoring,
       JobsValidator jobsValidator,
-      JobRedirection jobRedirection,
+      JobBodyExtractor jobBodyExtractor,
+      JobFakelUrFilter jobFakeUrlFilter,
       @Qualifier("miscellaneousExecutor") Executor miscExecutor,
       @Qualifier("geminiSearchExecutor") Executor geminiExecutor
   ) {
     this.jobScoring = jobScoring;
     this.jobsValidator = jobsValidator;
-    this.jobRedirection = jobRedirection;
+    this.jobBodyExtractor = jobBodyExtractor;
     this.miscExecutor = miscExecutor;
+    this.jobFakeUrlFilter = jobFakeUrlFilter;
     this.geminiExecutor = geminiExecutor;
   }
 
@@ -110,7 +114,8 @@ public class JobsStateMachine {
 
   private CompletableFuture<JobContext> applyJobPipeline(Job job, UserEntity user, String resumeFileId) {
     return CompletableFuture.supplyAsync(() -> new JobContext(job, user, resumeFileId), miscExecutor)
-        .thenApplyAsync(jobRedirection::processAsync, miscExecutor)
+        .thenApplyAsync(jobFakeUrlFilter::processAsync, miscExecutor)
+        .thenApplyAsync(jobBodyExtractor::processAsync, miscExecutor)
         .thenApplyAsync(jobsValidator::processAsync, miscExecutor)
         .thenApplyAsync(jobScoring::processAsync, geminiExecutor)
         .handleAsync((jc, ex) -> {

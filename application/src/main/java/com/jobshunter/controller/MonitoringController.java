@@ -32,6 +32,8 @@ public class MonitoringController {
 
   private final ThreadPoolExecutor miscellaneousExecutor;
 
+  private final ThreadPoolExecutor playwrightExecutor;
+
   private final TaskScheduler scheduler;
 
   private final UrlAffinityExecutor urlAffinityExecutor;
@@ -42,12 +44,14 @@ public class MonitoringController {
       @Qualifier("geminiSearchExecutor") ThreadPoolExecutor geminiSearchExecutor,
       @Qualifier("serpExecutor") ThreadPoolExecutor serpExecutor,
       @Qualifier("miscellaneousExecutor") ThreadPoolExecutor miscellaneousExecutor,
+      @Qualifier("playwrightExecutor") ThreadPoolExecutor playwrightExecutor,
       TaskScheduler scheduler,
       UrlAffinityExecutor urlAffinityExecutor
   ) {
     this.gptSearchExecutor = gptSearchExecutor;
     this.grokSearchExecutor = grokSearchExecutor;
     this.geminiSearchExecutor = geminiSearchExecutor;
+    this.playwrightExecutor = playwrightExecutor;
     this.serpExecutor = serpExecutor;
     this.miscellaneousExecutor = miscellaneousExecutor;
     this.scheduler = scheduler;
@@ -62,6 +66,7 @@ public class MonitoringController {
     engineModelsMap.put("Grok", formatMessage(grokSearchExecutor));
     engineModelsMap.put("Gemini", formatMessage(geminiSearchExecutor));
     engineModelsMap.put("Serp", formatMessage(serpExecutor));
+    engineModelsMap.put("Playwright", formatMessage(playwrightExecutor));
     engineModelsMap.put("Miscellaneous", formatMessage(miscellaneousExecutor));
     engineModelsMap.put("Scheduler", formatMessage(((ThreadPoolTaskScheduler) scheduler).getScheduledThreadPoolExecutor()));
 

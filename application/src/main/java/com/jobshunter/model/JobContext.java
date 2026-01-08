@@ -1,6 +1,7 @@
 package com.jobshunter.model;
 
 import com.jobshunter.database.entities.UserEntity;
+import java.net.URI;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
@@ -9,10 +10,15 @@ import lombok.extern.slf4j.Slf4j;
 public class JobContext {
 
   private final Job job;
+  private String rawBody;
+
   private final UserEntity user;
   private final String resumeFileId;
 
+  private String host;
+  private String description;
   private boolean accepted;
+  private boolean realUrl;
   private volatile JobPhase phase;
   private boolean failed;
   private String failureMessage;

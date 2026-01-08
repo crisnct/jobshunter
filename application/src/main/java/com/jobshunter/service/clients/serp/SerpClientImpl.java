@@ -7,8 +7,9 @@ import com.jobshunter.dto.serpResponse.SerpJobHit;
 import com.jobshunter.dto.serpResponse.SerpJobsResult;
 import com.jobshunter.model.AiClientResponse;
 import com.jobshunter.model.Job;
+import com.jobshunter.model.JobMetadataType;
 import com.jobshunter.service.clients.AiJobsClient;
-import com.jobshunter.service.clients.BrowserSimulator;
+import com.jobshunter.service.clients.browser.BrowserSimulator;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
@@ -76,7 +77,7 @@ public non-sealed class SerpClientImpl implements AiJobsClient<SearchWithSerpReq
     response.setId(results.id());
     for (SerpJobHit serpJob : results.jobs()) {
       Job job = new Job(-1, serpJob.applyLinks().getFirst(), request.getEngineSelection().model());
-      job.setDescription(serpJob.description() + "\n" + serpJob.highlights());
+      job.addMetadata(JobMetadataType.SERP_DESCRIPTION, serpJob.description() + "\n" + serpJob.highlights());
       response.add(job);
     }
     return response;

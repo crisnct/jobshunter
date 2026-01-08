@@ -68,6 +68,7 @@ open module com.jobshunter.application {
   requires ch.qos.logback.core;
   requires kotlin.stdlib;
   requires com.github.benmanes.caffeine;
+  requires playwright;
 
 }
 

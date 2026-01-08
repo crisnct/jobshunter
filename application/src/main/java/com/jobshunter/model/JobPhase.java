@@ -2,7 +2,8 @@ package com.jobshunter.model;
 
 public enum JobPhase {
   NEW,
-  REDIRECTED,
+  REAL_URL,
+  GETBODY,
   VALIDATED,
   SCORED
 }

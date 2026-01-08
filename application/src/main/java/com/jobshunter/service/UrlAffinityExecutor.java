@@ -21,10 +21,9 @@ public final class UrlAffinityExecutor {
 
   private static final int MAX_CONCURRENT_TASKS = 50;
 
-  //minutes
-  public static final int LIFETIME_IN_CACHE = 3;
+  public static final int REFRESH_PERIOD_SAME_HOST = 5; //sec
 
-  public static final int REFRESH_PERIOD_SAME_HOST = 5000;
+  public static final int LIFETIME_IN_CACHE = 15; //minutes
 
   private final Semaphore globalSemaphore = new Semaphore(MAX_CONCURRENT_TASKS, true);
 
@@ -92,6 +91,10 @@ public final class UrlAffinityExecutor {
 
   public List<ExecutorService> getAllExecutors() {
     return cache.asMap().values().stream().map(p -> p.executor).toList();
+  }
+
+  public int getCacheSize() {
+    return cache.asMap().size();
   }
 
   // =========================

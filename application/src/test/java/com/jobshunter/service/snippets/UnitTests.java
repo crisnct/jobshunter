@@ -1,5 +1,7 @@
 package com.jobshunter.service.snippets;
 
+import com.microsoft.playwright.Browser;
+import com.microsoft.playwright.Playwright;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
@@ -15,6 +17,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
 public class UnitTests {
+
+  @Test
+  public void testPlaywright() {
+    try (Playwright pw = Playwright.create()) {
+      Browser browser = pw.chromium().launch();
+      System.out.println("Playwright: Chromium launched OK");
+    }
+  }
 
   @Test
   public void testExpiredPages() {
