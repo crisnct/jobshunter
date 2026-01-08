@@ -7,7 +7,6 @@ import com.jobshunter.security.rateLimitBucket4J.BlockRegistry;
 import com.jobshunter.security.rateLimitBucket4J.InMemoryRateLimiter;
 import com.jobshunter.security.rateLimitBucket4J.ViolationRegistry;
 import io.github.bucket4j.Bucket;
-import io.github.bucket4j.ConsumptionProbe;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -25,6 +24,9 @@ public class RateLimitingFilter extends OncePerRequestFilter {
 
   private static final Duration BLOCK_48_HOURS = Duration.ofHours(48);
 
+  //backforce - put clients to wait too much if they exceed rate limit
+  private static final Duration MAX_WAIT = Duration.ofMinutes(2);
+
   private final InMemoryRateLimiter rateLimiter;
   private final ViolationRegistry violationRegistry;
   private final BlockRegistry blockRegistry;
@@ -34,26 +36,35 @@ public class RateLimitingFilter extends OncePerRequestFilter {
   protected void doFilterInternal(
       HttpServletRequest request,
       HttpServletResponse response,
-      FilterChain filterChain) throws ServletException, IOException {
+      FilterChain filterChain
+  ) throws ServletException, IOException {
 
     String clientKey = ClientIpResolver.resolveClientIp(request);
 
-    // 🔴 1. Check hard blocks
+    // 🔴 1. Hard block
     if (blockRegistry.isBlocked(clientKey)) {
       reject(response, blockRegistry.secondsLeft(clientKey));
       return;
     }
 
-    // 🟢 2. Normal rate limiting
     Bucket bucket = rateLimiter.resolveBucket(clientKey);
-    ConsumptionProbe probe = bucket.tryConsumeAndReturnRemaining(1);
 
-    if (probe.isConsumed()) {
+    boolean allowed;
+    try {
+      // 🟢 2. WAIT instead of reject
+      allowed = bucket.asBlocking().tryConsume(1, MAX_WAIT);
+    } catch (InterruptedException ex) {
+      Thread.currentThread().interrupt();
+      reject(response, 1);
+      return;
+    }
+
+    if (allowed) {
       filterChain.doFilter(request, response);
       return;
     }
 
-    // 🔥 3. Violation detected
+    // 🔥 3. Only now it's a violation (client waited but still abusive)
     int violations = violationRegistry.increment(clientKey);
 
     if (violations == 2) {
@@ -68,7 +79,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
       return;
     }
 
-    // Prima încălcare → doar rate limit normal
+    // Prima violare → 429 simplu
     reject(response, properties.getJobsHunter().getRateLimit().getCapacity());
   }
 
@@ -77,7 +88,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     response.setHeader(JHHeaders.RETRY_AFTER, String.valueOf(retryAfterSeconds));
     response.setContentType("application/json");
     response.getWriter().write(
-        "{\"message\":\"Rate LLimit Exceeded. Access temporarily restricted.\"}"
+        "{\"message\":\"Rate limit exceeded. Please slow down.\"}"
     );
   }
 
@@ -90,7 +101,6 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         || path.startsWith("/swagger")
         || path.startsWith("/v3/api-docs")
         || path.startsWith("/api/auth")
-        || "OPTIONS" .equalsIgnoreCase(request.getMethod());
+        || "OPTIONS".equalsIgnoreCase(request.getMethod());
   }
-
 }

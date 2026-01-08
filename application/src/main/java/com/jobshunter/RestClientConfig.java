@@ -2,7 +2,12 @@ package com.jobshunter;
 
 import com.jobshunter.security.JHHeaders;
 import com.jobshunter.service.clients.BrowserSimulator;
+import java.net.Inet4Address;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hc.client5.http.DnsResolver;
 import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.config.ConnectionConfig;
 import org.apache.hc.client5.http.config.RequestConfig;
@@ -47,6 +52,19 @@ public class RestClientConfig {
         .setDefaultConnectionConfig(connectionConfig)
         .setMaxConnTotal(100)
         .setMaxConnPerRoute(30)
+        .setDnsResolver(new DnsResolver() {
+          @Override
+          public InetAddress[] resolve(String host) throws UnknownHostException {
+            return Arrays.stream(InetAddress.getAllByName(host))
+                .filter(addr -> addr instanceof Inet4Address)
+                .toArray(InetAddress[]::new);
+          }
+
+          @Override
+          public String resolveCanonicalHostname(String host) {
+            return host;
+          }
+        })
         .build();
   }
 
@@ -63,6 +81,7 @@ public class RestClientConfig {
         .setConnectionRequestTimeout(Timeout.ofSeconds(2))
         .setResponseTimeout(Timeout.ofMinutes(5)) // Default timeout, can be overridden per RestClient
         .setMaxRedirects(5)
+        .setRedirectsEnabled(true)
         .build();
 
     HttpClientBuilder clientBuilder = HttpClients.custom()
@@ -113,14 +132,14 @@ public class RestClientConfig {
    */
   @Bean("webScrapingRestClient")
   public RestClient webScrapingRestClient(
-      PoolingHttpClientConnectionManager connectionManager,
-      ApplicationProperties properties
+      PoolingHttpClientConnectionManager connectionManager
   ) {
     // Create a separate RequestConfig with shorter timeout for web scraping
     RequestConfig requestConfig = RequestConfig.custom()
         .setConnectionRequestTimeout(Timeout.ofSeconds(2))
+        .setRedirectsEnabled(false)
+        .setMaxRedirects(0)
         .setResponseTimeout(Timeout.ofSeconds(5)) // Fast timeout for web scraping
-        .setMaxRedirects(5)
         .build();
 
     HttpClientBuilder clientBuilder = HttpClients.custom()
@@ -128,10 +147,6 @@ public class RestClientConfig {
         .setDefaultRequestConfig(requestConfig)
         .evictExpiredConnections()
         .evictIdleConnections(Timeout.ofMinutes(5));
-
-    if (properties.getJobsHunter().getAllowRedirection()) {
-      clientBuilder.setRedirectStrategy(new LaxRedirectStrategy());
-    }
 
     HttpClient httpClient = clientBuilder.build();
 

@@ -89,7 +89,7 @@ public class JobsValidator implements JobProcessor {
     log.info("Getting body from URL {}", jobURL);
     try {
       // Use sync method directly to avoid blocking executor threads
-      ResponseEntity<String> response = browserSimulator.openPageSync(uri.toString());
+      ResponseEntity<String> response = browserSimulator.openPageAsync(uri.toString()).toCompletableFuture().get();
       String body = response.getBody();
       boolean isExpired;
       if (Strings.isBlank(body)) {

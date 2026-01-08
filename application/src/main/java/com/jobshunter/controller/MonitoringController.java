@@ -1,7 +1,10 @@
 package com.jobshunter.controller;
 
+import com.jobshunter.service.UrlAffinityExecutor;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -31,13 +34,16 @@ public class MonitoringController {
 
   private final TaskScheduler scheduler;
 
+  private final UrlAffinityExecutor urlAffinityExecutor;
+
   public MonitoringController(
       @Qualifier("gptSearchExecutor") ThreadPoolExecutor gptSearchExecutor,
       @Qualifier("grokSearchExecutor") ThreadPoolExecutor grokSearchExecutor,
       @Qualifier("geminiSearchExecutor") ThreadPoolExecutor geminiSearchExecutor,
       @Qualifier("serpExecutor") ThreadPoolExecutor serpExecutor,
       @Qualifier("miscellaneousExecutor") ThreadPoolExecutor miscellaneousExecutor,
-      TaskScheduler scheduler
+      TaskScheduler scheduler,
+      UrlAffinityExecutor urlAffinityExecutor
   ) {
     this.gptSearchExecutor = gptSearchExecutor;
     this.grokSearchExecutor = grokSearchExecutor;
@@ -45,6 +51,7 @@ public class MonitoringController {
     this.serpExecutor = serpExecutor;
     this.miscellaneousExecutor = miscellaneousExecutor;
     this.scheduler = scheduler;
+    this.urlAffinityExecutor = urlAffinityExecutor;
   }
 
   @GetMapping("/executors")
@@ -57,6 +64,10 @@ public class MonitoringController {
     engineModelsMap.put("Serp", formatMessage(serpExecutor));
     engineModelsMap.put("Miscellaneous", formatMessage(miscellaneousExecutor));
     engineModelsMap.put("Scheduler", formatMessage(((ThreadPoolTaskScheduler) scheduler).getScheduledThreadPoolExecutor()));
+
+    List<ExecutorService> executors = urlAffinityExecutor.getAllExecutors();
+    engineModelsMap.put("URL executors", "" + executors.size());
+
     return ResponseEntity.ok(engineModelsMap);
   }
 
