@@ -14,10 +14,17 @@ import com.jobshunter.database.entities.RoleEntity;
 import com.jobshunter.database.repository.RoleRepository;
 import com.jobshunter.database.service.AuthDBService;
 import com.jobshunter.dto.RegisterRequest;
+import com.jobshunter.model.Job;
+import com.jobshunter.model.JobContext;
 import com.jobshunter.service.UrlAffinityExecutor;
 import com.jobshunter.service.application.notifiers.EmailNotifierService;
+import com.jobshunter.service.application.processors.JobBodyExtractorProcessor;
+import com.jobshunter.service.application.processors.JobFakelUrFilter;
+import com.jobshunter.service.application.processors.JobFetchProcessor;
+import com.jobshunter.service.application.processors.JobValidator;
 import com.jobshunter.service.clients.SmtpMailtrapClient;
 import com.jobshunter.service.clients.browser.BrowserSimulator;
+import io.jsonwebtoken.lang.Assert;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
@@ -75,6 +82,18 @@ public class IntegrationTests {
 
   @Autowired
   private UrlAffinityExecutor executor;
+
+  @Autowired
+  private JobFakelUrFilter jobFakelUrFilter;
+
+  @Autowired
+  private JobValidator jobValidator;
+
+  @Autowired
+  private JobFetchProcessor jobFetchProcessor;
+
+  @Autowired
+  private JobBodyExtractorProcessor jobBodyExtractorProcessor;
 
   @Test
   @DisplayName("Should register user via HTTP and trigger email notifier without touching DB")
@@ -203,4 +222,21 @@ public class IntegrationTests {
     long duration = System.currentTimeMillis() - startTime;
     log.info("Executors: {}, Duration: {}ms", executor.getAllExecutors().size(), duration);
   }
+
+  @Test
+  @Disabled
+  public void testJobFakelUrFilter(){
+    Job job = new Job(-1, "https://www.bestjobs.eu/en/job/accounts-receivable-accountant-with-german-cabs-continental-automotive-romania-srl-timisoara-5b5f5e5e-5b5f-5e5e-5b5f-5b5f5e5e5b5f", null );
+
+    JobContext jc = new JobContext(job, null, "cv");
+    jc = jobFakelUrFilter.processAsync(jc);
+    jc = jobFetchProcessor.processAsync(jc);
+    jc = jobBodyExtractorProcessor.processAsync(jc);
+    jc = jobValidator.processAsync(jc);
+
+    Assert.isTrue(jc.isRealUrl(), "IP is accessible");
+    Assert.isTrue(jc.getFetchResult().statusCode() == 200, "URL is reacheble");
+    Assert.isTrue(!jc.isAccepted(), "URL is not valid");
+  }
+
 }

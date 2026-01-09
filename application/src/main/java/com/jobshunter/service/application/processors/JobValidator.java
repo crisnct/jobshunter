@@ -33,8 +33,11 @@ public class JobValidator implements JobProcessor {
 
     expiredJobsPatterns = new ArrayList<>();
     for (String keyword : properties.getJobsHunter().getExpiredExpressions().split(",")) {
-      expiredJobsPatterns.add(Pattern.compile(">[^<]{0,500}" + Pattern.quote(keyword) + "[^<]{0,500}<",
-          Pattern.CASE_INSENSITIVE | Pattern.DOTALL));
+      expiredJobsPatterns.add(
+          Pattern.compile("(?i)[^a-zA-Z0-9]{0,20}" + Pattern.quote(keyword.toLowerCase()) + "[^a-zA-Z0-9]{0,20}",
+              Pattern.DOTALL
+          )
+      );
     }
     expiredJobsPatterns = Collections.unmodifiableList(expiredJobsPatterns);
   }
