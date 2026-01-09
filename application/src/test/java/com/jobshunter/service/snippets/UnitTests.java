@@ -7,14 +7,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import com.jobshunter.security.JHHeaders;
 import org.junit.jupiter.api.Test;
-import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.RestClient;
 
 public class UnitTests {
 
@@ -28,7 +27,11 @@ public class UnitTests {
 
   @Test
   public void testExpiredPages() {
-    RestTemplate restTemplate = new RestTemplate();
+    RestClient.Builder restBuilder = RestClient.builder();
+    RestClient restClient = restBuilder
+            .defaultHeader(JHHeaders.USER_AGENT,"Mozilla/5.0")
+            .build();
+
     List<String> jobs = new ArrayList<>();
 
     jobs.add("https://allremote.jobs/remote-job/global-talents-hub-senior-java-engineer-36870af5-14a4-4aa2-b55c-d280439fb5e7");
@@ -40,14 +43,13 @@ public class UnitTests {
       HttpHeaders headers = new HttpHeaders();
       headers.set("User-Agent", "Mozilla/5.0");
       headers.setAccept(List.of(MediaType.TEXT_HTML));
-      HttpEntity<Void> entity = new HttpEntity<>(headers);
       try {
-        ResponseEntity<String> response = restTemplate.exchange(
-            URI.create(jobURL),
-            HttpMethod.GET,
-            entity,
-            String.class
-        );
+        ResponseEntity<String> response = restClient
+                .get()
+                .uri(URI.create(jobURL))
+                .accept(MediaType.TEXT_HTML)
+                .retrieve()
+                .toEntity(String.class);
 
         boolean wasRedirect = response.getStatusCode().is3xxRedirection() && response.getHeaders().getLocation() != null;
         if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null && !wasRedirect) {

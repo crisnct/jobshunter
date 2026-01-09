@@ -935,6 +935,14 @@
     </changeSet>
 
     <changeSet id="43-add-status-to-user-devices" author="assistant">
+        <preConditions onFail="MARK_RAN" onError="HALT">
+            <and>
+                <tableExists tableName="user_devices"/>
+                <not>
+                    <columnExists tableName="user_devices" columnName="status"/>
+                </not>
+            </and>
+        </preConditions>
         <comment>Add status column to user_devices table if it doesn't exist (ACTIVE/REVOKED/EXPIRED)</comment>
         <addColumn tableName="user_devices">
             <column name="status" type="VARCHAR(20)">

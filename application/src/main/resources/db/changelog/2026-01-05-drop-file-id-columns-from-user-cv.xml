@@ -6,17 +6,81 @@
         http://www.liquibase.org/xml/ns/dbchangelog
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.23.xsd">
 
-    <changeSet id="52-drop-file-id-columns-from-user-cv" author="assistant">
-        <preConditions onFail="MARK_RAN">
+    <changeSet id="52-drop-idx_user_cv_grok_file_id" author="assistant">
+        <preConditions onFail="MARK_RAN" onError="HALT">
             <indexExists indexName="idx_user_cv_grok_file_id" tableName="user_cv"/>
         </preConditions>
-        <comment>Remove deprecated file_id columns from user_cv table as they are now stored in user_remote_cv table</comment>
+        <comment>Remove index based on deprecated file_id columns from user_cv table as they are now stored in user_remote_cv table</comment>
         <dropIndex indexName="idx_user_cv_grok_file_id" tableName="user_cv"/>
+    </changeSet>
+
+
+
+    <changeSet id="53-drop-file-id-columns-from-user-cv" author="assistant">
+        <preConditions onFail="MARK_RAN" onError="HALT">
+            <and>
+                <tableExists tableName="user_cv"/>
+                <columnExists tableName="user_cv" columnName="gpt_file_id"/>
+            </and>
+        </preConditions>
+        <comment>Remove deprecated file_id columns from user_cv table as they are now stored in user_remote_cv table</comment>
         <dropColumn tableName="user_cv" columnName="gpt_file_id"/>
+    </changeSet>
+
+    <changeSet id="54-drop-file-id-columns-from-user-cv" author="assistant">
+        <preConditions onFail="MARK_RAN" onError="HALT">
+            <and>
+                <tableExists tableName="user_cv"/>
+                <columnExists tableName="user_cv" columnName="gemini_file_id"/>
+            </and>
+        </preConditions>
+        <comment>Remove deprecated file_id columns from user_cv table as they are now stored in user_remote_cv table</comment>
         <dropColumn tableName="user_cv" columnName="gemini_file_id"/>
+    </changeSet>
+
+    <changeSet id="55-drop-file-id-columns-from-user-cv" author="assistant">
+        <preConditions onFail="MARK_RAN" onError="HALT">
+            <and>
+                <tableExists tableName="user_cv"/>
+                <columnExists tableName="user_cv" columnName="grok_file_id"/>
+            </and>
+        </preConditions>
+        <comment>Remove deprecated file_id columns from user_cv table as they are now stored in user_remote_cv table</comment>
         <dropColumn tableName="user_cv" columnName="grok_file_id"/>
+    </changeSet>
+
+
+
+    <changeSet id="56-drop-expire_time-columns-from-user-cv" author="assistant">
+        <preConditions onFail="MARK_RAN" onError="HALT">
+            <and>
+                <tableExists tableName="user_cv"/>
+                <columnExists tableName="user_cv" columnName="expire_time_gpt"/>
+            </and>
+        </preConditions>
+        <comment>Remove deprecated file_id columns from user_cv table as they are now stored in user_remote_cv table</comment>
         <dropColumn tableName="user_cv" columnName="expire_time_gpt"/>
+    </changeSet>
+
+    <changeSet id="57-drop-expire_time-columns-from-user-cv" author="assistant">
+        <preConditions onFail="MARK_RAN" onError="HALT">
+            <and>
+                <tableExists tableName="user_cv"/>
+                <columnExists tableName="user_cv" columnName="expire_time_gemini"/>
+            </and>
+        </preConditions>
+        <comment>Remove deprecated file_id columns from user_cv table as they are now stored in user_remote_cv table</comment>
         <dropColumn tableName="user_cv" columnName="expire_time_gemini"/>
+    </changeSet>
+
+    <changeSet id="58-drop-expire_time-columns-from-user-cv" author="assistant">
+        <preConditions onFail="MARK_RAN" onError="HALT">
+            <and>
+                <tableExists tableName="user_cv"/>
+                <columnExists tableName="user_cv" columnName="expire_time_grok"/>
+            </and>
+        </preConditions>
+        <comment>Remove deprecated file_id columns from user_cv table as they are now stored in user_remote_cv table</comment>
         <dropColumn tableName="user_cv" columnName="expire_time_grok"/>
     </changeSet>
 

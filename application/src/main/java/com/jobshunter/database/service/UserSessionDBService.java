@@ -41,7 +41,9 @@ public class UserSessionDBService {
     UserSessionEntity session = userSessionRepository.findByUser(user)
         .orElseGet(() -> {
           log.debug("Created new session for user: {}, device: {}", user.getUsername(), deviceId);
-          return new UserSessionEntity();
+          UserSessionEntity userSessionEntity = new UserSessionEntity();
+          userSessionEntity.setUser(user);
+          return userSessionEntity;
         });
     session.setDeviceId(deviceId);
     session.setRefreshTokenHash(refreshTokenHash);
