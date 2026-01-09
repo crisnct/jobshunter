@@ -24,6 +24,7 @@ public class JobContext {
   private JobPhase phase;
   private boolean failed;
   private String failureMessage;
+  private boolean skipProcessors;
 
   public JobContext(Job job, UserEntity user, String resumeFileId) {
     this.job = job;

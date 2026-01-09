@@ -55,7 +55,7 @@ public non-sealed class GrokFileClientImpl implements FileClient {
 
       UploadFileResponse response = restClient.post()
           .uri(URI.create(API_URI))
-          .header(JHHeaders.AUTHORIZATION, "Bearer " + properties.getGrok().getApiKey())
+          .headers((h) -> h.setBearerAuth(properties.getGrok().getApiKey()))
           .contentType(MediaType.MULTIPART_FORM_DATA)
           .body(body)
           .retrieve()
@@ -74,7 +74,7 @@ public non-sealed class GrokFileClientImpl implements FileClient {
   public void deleteFile(@NotBlank String fileId) {
     restClient.delete()
         .uri(API_URI + "/" + fileId)
-        .header(JHHeaders.AUTHORIZATION, "Bearer " + properties.getGrok().getApiKey())
+        .headers((h) -> h.setBearerAuth(properties.getGrok().getApiKey()))
         .retrieve()
         .body(Void.class);
   }
@@ -83,7 +83,7 @@ public non-sealed class GrokFileClientImpl implements FileClient {
   public void deleteAllFilesExcept(@NotBlank List<String> fileIds) {
     FileListResponse response = restClient.get()
         .uri(API_URI)
-        .header(JHHeaders.AUTHORIZATION, "Bearer " + properties.getGrok().getApiKey())
+        .headers((h) -> h.setBearerAuth(properties.getGrok().getApiKey()))
         .retrieve()
         .body(FileListResponse.class);
     if (response != null && response.data() != null) {

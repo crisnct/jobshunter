@@ -40,6 +40,8 @@ public class JobFakelUrFilter implements JobProcessor {
     if (whitelistDomains.contains(host)) {
       context.setRealUrl(true);
       context.setAccepted(true);
+      context.getJob().setScore(50);
+      context.setSkipProcessors(true);
     } else {
       if (isValidAddress(context, host)) {
         try (Socket socket = new Socket()) {
@@ -48,9 +50,11 @@ public class JobFakelUrFilter implements JobProcessor {
         } catch (IOException e) {
           log.error("Not reachable url {}", context.getJob().getUrl());
           context.setRealUrl(false);
+          context.setSkipProcessors(true);
         }
       } else {
         context.setRealUrl(false);
+        context.setSkipProcessors(true);
       }
     }
     context.setPhase(JobPhase.REALURL);

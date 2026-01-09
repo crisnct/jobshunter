@@ -86,7 +86,7 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient<GptJobSearchR
 
       GptResponse response = restClient.post()
           .uri(DEFAULT_URI)
-          .header(JHHeaders.AUTHORIZATION, "Bearer " + properties.getGpt().getApiKey())
+          .headers((h) -> h.setBearerAuth(properties.getGpt().getApiKey()))
           .contentType(MediaType.APPLICATION_JSON)
           .body(payload)
           .retrieve()
@@ -132,7 +132,7 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient<GptJobSearchR
 
       GptResponse response = restClient.post()
           .uri(DEFAULT_URI)
-          .header(JHHeaders.AUTHORIZATION, "Bearer " + properties.getGpt().getApiKey())
+          .headers((h) -> h.setBearerAuth(properties.getGpt().getApiKey()))
           .contentType(MediaType.APPLICATION_JSON)
           .body(payload)
           .retrieve()
@@ -167,7 +167,7 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient<GptJobSearchR
 
     GptResponse response = restClient.post()
         .uri(DEFAULT_URI)
-        .header(JHHeaders.AUTHORIZATION, "Bearer " + properties.getGpt().getApiKey())
+        .headers((h) -> h.setBearerAuth(properties.getGpt().getApiKey()))
         .contentType(MediaType.APPLICATION_JSON)
         .body(payload)
         .retrieve()

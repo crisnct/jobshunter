@@ -97,7 +97,7 @@ public non-sealed class GrokV1JobSearchImpl implements AiJobsClient<GrokJobSearc
       GrokJobsPayload payload = payloadBuilder.build();
       GrokResponse response = restClient.post()
           .uri(DEFAULT_URI)
-          .header(JHHeaders.AUTHORIZATION, "Bearer " + properties.getGrok().getApiKey())
+          .headers((h) -> h.setBearerAuth(properties.getGrok().getApiKey()))
           .contentType(MediaType.APPLICATION_JSON)
           .body(payload)
           .retrieve()
@@ -156,7 +156,7 @@ public non-sealed class GrokV1JobSearchImpl implements AiJobsClient<GrokJobSearc
 
       GrokResponse response = restClient.post()
           .uri(DEFAULT_URI)
-          .header(JHHeaders.AUTHORIZATION, "Bearer " + properties.getGrok().getApiKey())
+          .headers((h) -> h.setBearerAuth(properties.getGrok().getApiKey()))
           .contentType(MediaType.APPLICATION_JSON)
           .body(payload)
           .retrieve()
@@ -191,7 +191,7 @@ public non-sealed class GrokV1JobSearchImpl implements AiJobsClient<GrokJobSearc
 
     GrokResponse response = restClient.post()
         .uri(DEFAULT_URI)
-        .header(JHHeaders.AUTHORIZATION, "Bearer " + properties.getGrok().getApiKey())
+        .headers((h) -> h.setBearerAuth(properties.getGrok().getApiKey()))
         .contentType(MediaType.APPLICATION_JSON)
         .body(payload)
         .retrieve()

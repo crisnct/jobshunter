@@ -40,7 +40,7 @@ Java 25 + Spring Boot 4.0.0 service that keeps a user profile (prompt, CV, phone
 ---
 ## [Ionel Vochin](https://github.com/ionel-vochin)
 #### Senior Full-Stack Developer
-• 
+• Technical task: switched from RestTemplate to RestClient and fixed Liquibase scripts so they run correctly on fresh databases. <br>
 
 ---
 ## License

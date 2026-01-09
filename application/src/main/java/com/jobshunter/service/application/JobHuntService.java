@@ -59,7 +59,7 @@ public class JobHuntService {
       List<JobContext> result = jobsStateMachine.processAsync(futureJobs, user, resumeFileId);
 
       List<Job> validatedJobs = result.stream()
-          .filter(JobContext::isAccepted)
+          .filter(ctx -> !ctx.isFailed() && ctx.isAccepted() && ctx.getJob().getScore() >= 50)
           .map(JobContext::getJob)
           .toList();
 

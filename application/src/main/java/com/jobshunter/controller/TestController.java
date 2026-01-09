@@ -140,7 +140,7 @@ public class TestController {
       try {
         ResponseEntity<GptResponse> response = restClient.post()
             .uri(GptV1JobSearchImpl.DEFAULT_URI)
-            .header(JHHeaders.AUTHORIZATION, "Bearer " + properties.getGpt().getApiKey())
+            .headers((h) -> h.setBearerAuth(properties.getGpt().getApiKey()))
             .contentType(MediaType.APPLICATION_JSON)
             .body(payload)
             .retrieve()
@@ -243,7 +243,7 @@ public class TestController {
     try {
       return restClient.post()
           .uri(GptV1JobSearchImpl.DEFAULT_URI)
-          .header(JHHeaders.AUTHORIZATION, "Bearer " + properties.getGpt().getApiKey())
+          .headers((h) -> h.setBearerAuth(properties.getGpt().getApiKey()))
           .contentType(MediaType.APPLICATION_JSON)
           .body(gptPayload)
           .retrieve()

@@ -44,16 +44,6 @@ public class JobValidator implements JobProcessor {
 
   @Override
   public JobContext processAsync(JobContext context) {
-    if (context.isAccepted()) {
-      context.setPhase(JobPhase.VALIDATED);
-      return context;
-    }
-    if (!context.isRealUrl()) {
-      context.setAccepted(false);
-      context.setPhase(JobPhase.VALIDATED);
-      return context;
-    }
-
     Job job = context.getJob();
     if (this.isValidJobSync(context.getHost(), job.getUrl(), context.getBody())) {
       String desc = context.getDescription() != null ? context.getDescription() : "";
@@ -66,6 +56,7 @@ public class JobValidator implements JobProcessor {
       context.setAccepted(true);
     } else {
       context.setAccepted(false);
+      context.setSkipProcessors(true);
     }
     context.setPhase(JobPhase.VALIDATED);
     return context;

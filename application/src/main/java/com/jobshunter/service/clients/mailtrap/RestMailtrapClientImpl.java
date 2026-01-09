@@ -64,7 +64,7 @@ public non-sealed class RestMailtrapClientImpl implements RestMailtrapClient {
 
     restClient.post()
         .uri(MAILTRAP_URI)
-        .header(JHHeaders.AUTHORIZATION, "Bearer " + apiKey)
+        .headers((h) -> h.setBearerAuth(apiKey))
         .contentType(MediaType.APPLICATION_JSON)
         .body(payload)
         .retrieve()

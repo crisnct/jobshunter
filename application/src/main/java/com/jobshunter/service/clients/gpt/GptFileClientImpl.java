@@ -1,13 +1,12 @@
 package com.jobshunter.service.clients.gpt;
 
-import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.jobshunter.ApplicationProperties;
+import com.jobshunter.dto.exceptions.BusinessException;
 import com.jobshunter.dto.gptResponse.FileInfo;
 import com.jobshunter.dto.gptResponse.FileListResponse;
 import com.jobshunter.dto.gptResponse.UploadFileResponse;
 import com.jobshunter.model.ResumeFileInfo;
 import com.jobshunter.processor.PackageExpected;
-import com.jobshunter.security.JHHeaders;
 import com.jobshunter.service.clients.FileClient;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
@@ -22,7 +21,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.core.io.FileSystemResource;
-import org.springframework.http.*;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -39,7 +40,6 @@ public non-sealed class GptFileClientImpl implements FileClient {
 
   private final RestClient restClient;
   private final ApplicationProperties properties;
-  private final JsonMapper mapper;
 
   @Override
   @CircuitBreaker(name = "gptCircuitBreaker", fallbackMethod = "fallbackUploadFile")
@@ -53,16 +53,18 @@ public non-sealed class GptFileClientImpl implements FileClient {
       body.add("file", new FileSystemResource(cvPath));
 
       UploadFileResponse uploadResponse = restClient
-              .post()
-              .uri(URI.create(API_URI))
-              .headers(h-> h.setBearerAuth(properties.getGpt().getApiKey()))
-              .contentType(MediaType.MULTIPART_FORM_DATA)
-              .body(body)
-              .retrieve()
-              .onStatus(HttpStatusCode::isError,(req, res) -> {
-                log.warn("ChatGPT job API returned {} - {}", res.getStatusCode().value(), res.getBody());
-              })
-              .body(UploadFileResponse.class);
+          .post()
+          .uri(URI.create(API_URI))
+          .headers(h -> h.setBearerAuth(properties.getGpt().getApiKey()))
+          .contentType(MediaType.MULTIPART_FORM_DATA)
+          .body(body)
+          .retrieve()
+          .onStatus(HttpStatusCode::isError, (req, res) -> {
+            log.error("ChatGPT job API returned {} - {}", res.getStatusCode().value(), res.getBody());
+            throw new BusinessException(HttpStatus.INTERNAL_SERVER_ERROR,
+                "Fail to upload file to GPT error code " + res.getStatusCode() + ", " + res.getStatusText());
+          })
+          .body(UploadFileResponse.class);
 
       if (uploadResponse == null) {
         return null;
@@ -76,11 +78,11 @@ public non-sealed class GptFileClientImpl implements FileClient {
   @RateLimiter(name = "gptLimiter")
   public void deleteFile(@NotBlank String fileId) {
     String bodyResponse = restClient
-            .delete()
-            .uri(URI.create(API_URI + "/" + fileId))
-            .headers(h -> h.setBearerAuth(properties.getGpt().getApiKey()))
-            .retrieve()
-            .body(String.class);
+        .delete()
+        .uri(URI.create(API_URI + "/" + fileId))
+        .headers(h -> h.setBearerAuth(properties.getGpt().getApiKey()))
+        .retrieve()
+        .body(String.class);
     log.info("gpt Deleted fileId:{} with bodyResponse: {}", fileId, bodyResponse);
   }
 
@@ -88,7 +90,7 @@ public non-sealed class GptFileClientImpl implements FileClient {
   public void deleteAllFilesExcept(@NotBlank List<String> fileIds) {
     FileListResponse response = restClient.get()
         .uri(API_URI)
-        .header(JHHeaders.AUTHORIZATION, "Bearer " + properties.getGpt().getApiKey())
+        .headers((h) -> h.setBearerAuth(properties.getGpt().getApiKey()))
         .retrieve()
         .body(FileListResponse.class);
     if (response != null && response.data() != null) {

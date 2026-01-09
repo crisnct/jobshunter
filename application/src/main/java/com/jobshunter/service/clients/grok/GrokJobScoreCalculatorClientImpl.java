@@ -68,7 +68,7 @@ public non-sealed class GrokJobScoreCalculatorClientImpl implements JobScoreCalc
 
       GrokResponse response = restClient.post()
           .uri(DEFAULT_URI)
-          .header(JHHeaders.AUTHORIZATION, "Bearer " + config.getApiKey())
+          .headers((h) -> h.setBearerAuth(properties.getGrok().getApiKey()))
           .contentType(MediaType.APPLICATION_JSON)
           .body(payload)
           .retrieve()

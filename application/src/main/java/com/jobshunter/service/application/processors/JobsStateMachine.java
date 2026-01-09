@@ -122,11 +122,11 @@ public class JobsStateMachine {
 
   private CompletableFuture<JobContext> applyJobPipeline(Job job, UserEntity user, String resumeFileId) {
     return CompletableFuture.supplyAsync(() -> new JobContext(job, user, resumeFileId), jobProcessingExecutor)
-        .thenApplyAsync(fakeUrlFilterProcessor::processAsync, jobProcessingExecutor)
-        .thenApplyAsync(fetchPageProcessor::processAsync, urlFetchRestClientExecutor)
-        .thenApplyAsync(bodyExtractorProcessor::processAsync, jobProcessingExecutor)
-        .thenApplyAsync(validatorProcessor::processAsync, jobProcessingExecutor)
-        .thenApplyAsync(scoringProcessor::processAsync, geminiExecutor)
+        .thenApplyAsync(ctx -> ctx.isSkipProcessors() ? ctx : fakeUrlFilterProcessor.processAsync(ctx), jobProcessingExecutor)
+        .thenApplyAsync(ctx -> ctx.isSkipProcessors() ? ctx : fetchPageProcessor.processAsync(ctx), urlFetchRestClientExecutor)
+        .thenApplyAsync(ctx -> ctx.isSkipProcessors() ? ctx : bodyExtractorProcessor.processAsync(ctx), jobProcessingExecutor)
+        .thenApplyAsync(ctx -> ctx.isSkipProcessors() ? ctx : validatorProcessor.processAsync(ctx), jobProcessingExecutor)
+        .thenApplyAsync(ctx -> ctx.isSkipProcessors() ? ctx : scoringProcessor.processAsync(ctx), geminiExecutor)
         .handle((jc, ex) -> {
           if (ex != null) {
             log.error("Pipeline failed for job {}", job != null ? job.getUrl() : "unknown", ex);
