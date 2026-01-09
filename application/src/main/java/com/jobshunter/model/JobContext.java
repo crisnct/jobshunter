@@ -1,25 +1,27 @@
 package com.jobshunter.model;
 
 import com.jobshunter.database.entities.UserEntity;
-import java.net.URI;
+import com.jobshunter.service.clients.browser.HttpFetchResult;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.logging.log4j.util.Strings;
 
 @Data
 @Slf4j
 public class JobContext {
 
   private final Job job;
-  private String rawBody;
+  private String body;
 
   private final UserEntity user;
   private final String resumeFileId;
 
+  private HttpFetchResult fetchResult;
   private String host;
   private String description;
   private boolean accepted;
   private boolean realUrl;
-  private volatile JobPhase phase;
+  private JobPhase phase;
   private boolean failed;
   private String failureMessage;
 
@@ -43,5 +45,9 @@ public class JobContext {
       log.error("Unexpected job order processing old: {}, new: {}", this.phase.name(), phase.name());
     }
     this.phase = phase;
+  }
+
+  public boolean hasFetchResult() {
+    return fetchResult != null && Strings.isNotBlank(fetchResult.body());
   }
 }

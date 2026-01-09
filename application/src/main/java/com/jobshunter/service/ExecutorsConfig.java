@@ -1,8 +1,6 @@
 package com.jobshunter.service;
 
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadPoolExecutor;
-import org.springframework.beans.factory.annotation.Value;
+import com.jobshunter.ApplicationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -10,45 +8,63 @@ import org.springframework.context.annotation.Configuration;
 public class ExecutorsConfig {
 
   @Bean(name = "gptSearchExecutor")
-  public ThreadPoolExecutor gptSearchExecutor(@Value("${gpt.threads:}") String threads) {
-    ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(Integer.parseInt(threads));
-    executor.setThreadFactory(Thread.ofVirtual().name("gpt-search-", 0).factory());
-    return executor;
+  public LimitedVirtualThreadExecutor gptSearchExecutor(ApplicationProperties properties) {
+    return new LimitedVirtualThreadExecutor("gpt",
+        properties.getGpt().getThreads());
   }
 
   @Bean(name = "grokSearchExecutor")
-  public ThreadPoolExecutor grokSearchExecutor(@Value("${grok.threads:}") String threads) {
-    ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(Integer.parseInt(threads));
-    executor.setThreadFactory(Thread.ofVirtual().name("grok-search-", 0).factory());
-    return executor;
+  public LimitedVirtualThreadExecutor grokSearchExecutor(ApplicationProperties properties) {
+    return new LimitedVirtualThreadExecutor("grok",
+        properties.getGrok().getThreads());
   }
 
   @Bean(name = "geminiSearchExecutor")
-  public ThreadPoolExecutor geminiSearchExecutor(@Value("${gemini.threads:}") String threads) {
-    ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(Integer.parseInt(threads));
-    executor.setThreadFactory(Thread.ofVirtual().name("gemini-search-", 0).factory());
-    return executor;
+  public LimitedVirtualThreadExecutor geminiSearchExecutor(ApplicationProperties properties) {
+    return new LimitedVirtualThreadExecutor("gemini",
+        properties.getGemini().getThreads());
   }
 
   @Bean(name = "serpExecutor")
-  public ThreadPoolExecutor serpExecutor(@Value("${serp.threads:}") String threads) {
-    ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(Integer.parseInt(threads));
-    executor.setThreadFactory(Thread.ofVirtual().name("serp-search-", 0).factory());
-    return executor;
+  public LimitedVirtualThreadExecutor serpExecutor(ApplicationProperties properties) {
+    return new LimitedVirtualThreadExecutor("serp",
+        properties.getJobsHunter().getThreads().getUrlFetchPlaywright());
   }
 
-  @Bean(name = "playwrightExecutor")
-  public ThreadPoolExecutor playwrightExecutor() {
-    ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(1);
-    executor.setThreadFactory(Thread.ofVirtual().name("playwright-", 0).factory());
-    return executor;
+  @Bean(name = "urlFetchPlaywrightExecutor")
+  public LimitedVirtualThreadExecutor urlFetchPlaywrightExecutor(ApplicationProperties properties) {
+    return new LimitedVirtualThreadExecutor("url-fetch-playwright",
+        properties.getJobsHunter().getThreads().getUrlFetchPlaywright());
   }
 
-  @Bean(name = "miscellaneousExecutor")
-  public ThreadPoolExecutor miscellaneousExecutor(@Value("${jobshunter.miscellaneousExecutorThreads:}") String threads) {
-    ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(Integer.parseInt(threads));
-    executor.setThreadFactory(Thread.ofVirtual().name("miscellaneous-", 0).factory());
-    return executor;
+  @Bean(name = "urlFetchRestClientExecutor")
+  public LimitedVirtualThreadExecutor urlFetchRestClientExecutor(ApplicationProperties properties) {
+    return new LimitedVirtualThreadExecutor("url-fetch-rest-client",
+        properties.getJobsHunter().getThreads().getUrlFetchRestClient());
+  }
+
+  @Bean(name = "jobProcessingExecutor")
+  public LimitedVirtualThreadExecutor jobProcessingExecutor(ApplicationProperties properties) {
+    return new LimitedVirtualThreadExecutor("job-processing",
+        properties.getJobsHunter().getThreads().getJobProcessing());
+  }
+
+  @Bean(name = "ordersExecutor")
+  public LimitedVirtualThreadExecutor ordersExecutor(ApplicationProperties properties) {
+    return new LimitedVirtualThreadExecutor("order-processing",
+        properties.getJobsHunter().getThreads().getOrders());
+  }
+
+  @Bean(name = "notificationsExecutor")
+  public LimitedVirtualThreadExecutor notificationsExecutor(ApplicationProperties properties) {
+    return new LimitedVirtualThreadExecutor("notifications-processing",
+        properties.getJobsHunter().getThreads().getNotifications());
+  }
+
+  @Bean(name = "maintenanceExecutor")
+  public LimitedVirtualThreadExecutor maintenanceExecutor(ApplicationProperties properties) {
+    return new LimitedVirtualThreadExecutor("maintenance",
+        properties.getJobsHunter().getThreads().getMaintenance());
   }
 
 }

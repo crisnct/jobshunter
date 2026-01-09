@@ -41,7 +41,7 @@ public class JobScoring implements JobProcessor {
   public JobContext processAsync(JobContext context) {
     Job job = context.getJob();
     int score;
-    if (context.isAccepted()) {
+    if (context.isAccepted() && context.getDescription() != null) {
       try {
         Path path = createPathFromByteArray(context.getDescription().getBytes(StandardCharsets.UTF_8),
             "jd-user-" + context.getUser().getUsername(), ".txt");

@@ -14,18 +14,16 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
 import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
-public class JobsValidator implements JobProcessor {
+public class JobValidator implements JobProcessor {
 
   private final Set<String> blacklistDomains;
   private List<Pattern> expiredJobsPatterns;
 
-  public JobsValidator(
+  public JobValidator(
       ApplicationProperties properties
   ) {
     this.blacklistDomains = Arrays.stream(properties.getJobsHunter().getBlacklist().split(","))
@@ -54,13 +52,13 @@ public class JobsValidator implements JobProcessor {
     }
 
     Job job = context.getJob();
-    if (this.isValidJobSync(context.getHost(), job.getUrl(), context.getRawBody())) {
+    if (this.isValidJobSync(context.getHost(), job.getUrl(), context.getBody())) {
       String desc = context.getDescription() != null ? context.getDescription() : "";
       String serpJobDesc = job.getMetadata(JobMetadataType.SERP_DESCRIPTION);
       if (serpJobDesc != null) {
         desc += "\n" + serpJobDesc;
       }
-      desc += "\n" + cleanupHTML(context.getRawBody());
+      desc += "\n" + context.getBody();
       context.setDescription(desc);
       context.setAccepted(true);
     } else {
@@ -68,13 +66,6 @@ public class JobsValidator implements JobProcessor {
     }
     context.setPhase(JobPhase.VALIDATED);
     return context;
-  }
-
-  private String cleanupHTML(String body) {
-    Document document = Jsoup.parse(body);
-    document.select("script, style, nav, footer, header, aside").remove();
-    document.select("button, a").remove();
-    return document.text();
   }
 
   private boolean isValidJobSync(String host, String url, String rawBody) {

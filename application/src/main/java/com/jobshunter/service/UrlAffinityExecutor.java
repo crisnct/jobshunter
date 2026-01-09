@@ -21,8 +21,10 @@ public final class UrlAffinityExecutor {
 
   private static final int MAX_CONCURRENT_TASKS = 50;
 
-  public static final int REFRESH_PERIOD_SAME_HOST = 5; //sec
+  // Delay which is applied for tasks from same host
+  public static final int DELAY_SAME_HOST_URL = 5; //sec
 
+  //lifetime of threads in the cache
   public static final int LIFETIME_IN_CACHE = 15; //minutes
 
   private final Semaphore globalSemaphore = new Semaphore(MAX_CONCURRENT_TASKS, true);
@@ -77,7 +79,7 @@ public final class UrlAffinityExecutor {
             RateLimiterConfig.custom()
                 // 1 request at 5 seconds per host
                 .limitForPeriod(1)
-                .limitRefreshPeriod(Duration.ofSeconds(REFRESH_PERIOD_SAME_HOST))
+                .limitRefreshPeriod(Duration.ofSeconds(DELAY_SAME_HOST_URL))
                 .timeoutDuration(Duration.ofMinutes(LIFETIME_IN_CACHE))
                 .build()
         );

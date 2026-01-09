@@ -53,7 +53,7 @@ public class JobFakelUrFilter implements JobProcessor {
         context.setRealUrl(false);
       }
     }
-    context.setPhase(JobPhase.REAL_URL);
+    context.setPhase(JobPhase.REALURL);
     return context;
   }
 

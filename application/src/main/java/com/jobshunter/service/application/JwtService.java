@@ -9,6 +9,7 @@ import io.jsonwebtoken.security.Keys;
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,7 +34,7 @@ public class JwtService {
   }
 
   public String generateToken(UserDetails userDetails, Long sessionId) {
-    Map<String, Object> claimsMap = new java.util.HashMap<>();
+    Map<String, Object> claimsMap = new HashMap<>();
     claimsMap.put("roles",
         userDetails.getAuthorities().stream()
             .map(GrantedAuthority::getAuthority)

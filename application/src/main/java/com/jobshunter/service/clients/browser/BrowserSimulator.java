@@ -4,12 +4,13 @@ import com.jobshunter.security.JHHeaders;
 import com.jobshunter.service.UrlAffinityExecutor;
 import com.microsoft.playwright.BrowserContext;
 import com.microsoft.playwright.Page;
+import com.microsoft.playwright.PlaywrightException;
 import com.microsoft.playwright.options.WaitUntilState;
 import jakarta.annotation.Nonnull;
 import java.net.URI;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import lombok.extern.slf4j.Slf4j;
@@ -22,7 +23,6 @@ import org.springframework.web.client.RestClient;
 @Slf4j
 @Component
 public class BrowserSimulator {
-
 
   private static final MediaType[] BROWSER_ACCEPT = {
       MediaType.TEXT_HTML,
@@ -45,12 +45,12 @@ public class BrowserSimulator {
 
   private final PlaywrightManager playwrightManager;
 
-  private final ExecutorService playwrightExecutor;
+  private final Executor playwrightExecutor;
 
   public BrowserSimulator(
       @Qualifier("restClient") RestClient restClientWithRedirection,
       @Qualifier("webScrapingRestClient") RestClient restClientNoRedirection,
-      @Qualifier("playwrightExecutor") ExecutorService playwrightExecutor,
+      @Qualifier("urlFetchPlaywrightExecutor") Executor playwrightExecutor,
       UrlAffinityExecutor executor,
       PlaywrightManager playwrightManager
   ) {
@@ -123,18 +123,30 @@ public class BrowserSimulator {
   public ResponseEntity<String> openPageSyncPlaywright(String url) {
     try (BrowserContext context = playwrightManager.newContext();
         Page page = context.newPage()) {
-
-      page.navigate(
-          url,
-          new Page.NavigateOptions()
-              .setWaitUntil(WaitUntilState.LOAD)
-              .setTimeout(TimeUnit.SECONDS.toMillis(TIMEOUT))
-      );
+      try {
+        navigate(url, page);
+      } catch (PlaywrightException e) {
+        if (e.getMessage().contains("ERR_HTTP2_PROTOCOL_ERROR")) {
+          log.warn("Retrying navigation without HTTP/2");
+          navigate(url, page);
+        } else {
+          throw e;
+        }
+      }
 
       ResponseEntity<String> body = ResponseEntity.ok(page.content());
       log.info("Successfully got the body of page with playwright {}", url);
       return body;
     }
+  }
+
+  private void navigate(String url, Page page) {
+    page.navigate(
+        url,
+        new Page.NavigateOptions()
+            .setWaitUntil(WaitUntilState.DOMCONTENTLOADED)
+            .setTimeout(TimeUnit.SECONDS.toMillis(TIMEOUT))
+    );
   }
 
 }

@@ -1,7 +1,7 @@
 package com.jobshunter;
 
 import com.jobshunter.security.JHHeaders;
-import com.jobshunter.service.application.processors.JobBodyExtractor;
+import com.jobshunter.service.clients.browser.RedirectFetchPage;
 import com.jobshunter.service.clients.browser.BrowserSimulator;
 import java.net.Inet4Address;
 import java.net.InetAddress;
@@ -108,8 +108,8 @@ public class RestClientConfig {
     HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory(httpClient);
 
     requestFactory.setHttpContextFactory((request, context) -> {
-      if (JobBodyExtractor.HTTP_CONTEXT.isBound()) {
-        return JobBodyExtractor.HTTP_CONTEXT.get();
+      if (RedirectFetchPage.HTTP_CONTEXT.isBound()) {
+        return RedirectFetchPage.HTTP_CONTEXT.get();
       }
       return HttpClientContext.create();
     });

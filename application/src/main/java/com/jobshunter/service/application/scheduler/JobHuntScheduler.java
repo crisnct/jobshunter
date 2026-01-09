@@ -1,6 +1,7 @@
 package com.jobshunter.service.application.scheduler;
 
 import com.jobshunter.database.entities.JobOrderEntity;
+import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.service.JobOrderDBService;
 import com.jobshunter.database.service.UserDBService;
 import com.jobshunter.model.OrderStatus;
@@ -9,6 +10,8 @@ import com.jobshunter.service.application.JobHuntService;
 import com.jobshunter.service.application.UserCvService;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -34,72 +37,84 @@ public class JobHuntScheduler {
 
   private final UserCvService userCvService;
 
-  private final Executor executor;
+  private final Executor ordersExecutor;
+
+  private final Executor notificationsExecutor;
+
+  private final Executor maintenanceExecutor;
 
   public JobHuntScheduler(
       JobHuntService jobHuntService,
       UserDBService userDBService,
       JobOrderDBService jobOrderDBService,
       UserCvService userCvService,
-      @Qualifier("miscellaneousExecutor") Executor executor
+      @Qualifier("ordersExecutor") Executor ordersExecutor,
+      @Qualifier("notificationsExecutor") Executor notificationsExecutor,
+      @Qualifier("maintenanceExecutor") Executor maintenanceExecutor
   ) {
     this.jobHuntService = jobHuntService;
     this.userDBService = userDBService;
     this.jobOrderDBService = jobOrderDBService;
     this.userCvService = userCvService;
-    this.executor = executor;
+    this.ordersExecutor = ordersExecutor;
+    this.notificationsExecutor = notificationsExecutor;
+    this.maintenanceExecutor = maintenanceExecutor;
   }
 
   @Scheduled(fixedDelayString = "${jobshunter.scheduler.processOrderFrequency:5000}")
   public void processOrderAsync() {
-    this.performActionAsync("processOrderAsync", this::processOrderSync);
+    Optional<Long> jobId = jobOrderDBService.acquireJobId();
+    if (jobId.isPresent()) {
+      this.performActionAsync("processOrderAsync", () -> processOrderSync(jobId.get()), ordersExecutor);
+    }
   }
 
   @Scheduled(fixedDelayString = "${jobshunter.scheduler.notifyUsersFrequency:60000}")
   public void notifyUsersAsync() {
-    this.performActionAsync("notifyUsersAsync", this::notifyUsersSync);
+    final List<UserEntity> usersToNotify = new ArrayList<>();
+    for (var user : userDBService.getAllUsers()) {
+      if (user.isNotifyWhatsapp() || user.isNotifyEmail()) {
+        if (user.getLastJobs() != null && user.getLastJobs().plus(Duration.ofDays(1)).isBefore(Instant.now())) {
+          usersToNotify.add(user);
+        }
+      }
+    }
+    if (!usersToNotify.isEmpty()) {
+      this.performActionAsync("notifyUsersAsync", () -> notifyUsersSync(usersToNotify), notificationsExecutor);
+    }
   }
 
   @Scheduled(fixedDelayString = "${jobshunter.scheduler.cleanupFiles:86400000}")
   public void cleanupFilesAsync() {
-    this.performActionAsync("cleanupFiles", this::cleanupFilesSync);
+    this.performActionAsync("cleanupFiles", this::cleanupFilesSync, maintenanceExecutor);
   }
 
-  public void processOrderSync() {
-    Optional<Long> jobId = jobOrderDBService.acquireJobId();
-    if (jobId.isPresent()) {
-      JobOrderEntity jobOrder = jobOrderDBService.getJobOrder(jobId.get());
-      log.info("Start processing job order id={} for user {}", jobOrder.getId(), jobOrder.getUser().getUsername());
-      try {
-        jobHuntService.searchJobsForUser(new SearchJobOrder(jobOrder));
-        jobOrder.setStatus(OrderStatus.COMPLETED);
-        jobOrderDBService.saveJobOrder(jobOrder);
-        log.info("Completed processing job order id={} for user {}", jobOrder.getId(), jobOrder.getUser().getUsername());
-      } catch (Exception e) {
-        log.error("Error processing job order id={} for user {}: {}", jobOrder.getId(), jobOrder.getUser().getUsername(), e.getMessage(), e);
-        jobOrder.setStatus(OrderStatus.FAILED);
-        jobOrder.setErrorMessage(e.getMessage());
-        jobOrderDBService.saveJobOrder(jobOrder);
-      }
+  public void processOrderSync(Long jobId) {
+    JobOrderEntity jobOrder = jobOrderDBService.getJobOrder(jobId);
+    log.info("Start processing job order id={} for user {}", jobOrder.getId(), jobOrder.getUser().getUsername());
+    try {
+      jobHuntService.searchJobsForUser(new SearchJobOrder(jobOrder));
+      jobOrder.setStatus(OrderStatus.COMPLETED);
+      jobOrderDBService.saveJobOrder(jobOrder);
+      log.info("Completed processing job order id={} for user {}", jobOrder.getId(), jobOrder.getUser().getUsername());
+    } catch (Exception e) {
+      log.error("Error processing job order id={} for user {}: {}", jobOrder.getId(), jobOrder.getUser().getUsername(), e.getMessage(), e);
+      jobOrder.setStatus(OrderStatus.FAILED);
+      jobOrder.setErrorMessage(e.getMessage());
+      jobOrderDBService.saveJobOrder(jobOrder);
     }
   }
 
-  public void notifyUsersSync() {
-    for (var user : userDBService.getAllUsers()) {
-      if (user.isNotifyWhatsapp() || user.isNotifyEmail()) {
-        if (user.getLastJobs() != null && user.getLastJobs().plus(Duration.ofDays(1)).isBefore(Instant.now())) {
-          //log.info("Notifying user {} about new jobs found", user.getUsername());
-          // TODO: implement notification logic if needed
-        }
-      }
-    }
+  public void notifyUsersSync(List<UserEntity> usersToNotify) {
+    //log.info("Notifying user {} about new jobs found", user.getUsername());
+    // TODO: implement notification logic if needed
   }
 
   private void cleanupFilesSync() {
     userCvService.cleanupOldCVs();
   }
 
-  private void performActionAsync(String actionName, Runnable runnable) {
+  private void performActionAsync(String actionName, Runnable runnable, Executor executor) {
     if (!isRunning(actionName)) {
       return;
     }

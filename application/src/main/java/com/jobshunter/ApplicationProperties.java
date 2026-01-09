@@ -27,6 +27,19 @@ public class ApplicationProperties {
     private RateLimitPolicy rateLimit = new RateLimitPolicy();
     private String blacklist;
     private String whitelistSkipValidation;
+    private AppThreads threads = new AppThreads();
+  }
+
+  @Data
+  public static class AppThreads {
+
+    private int urlFetchRestClient;
+    private int urlFetchPlaywright;
+    private int jobProcessing;
+    private int orders;
+    private int notifications;
+    private int maintenance;
+
   }
 
   @Data
@@ -104,6 +117,7 @@ public class ApplicationProperties {
     private String apiKey;
     private int maxTokens;
     private boolean enabled;
+    private int threads;
   }
 
   @Data
@@ -113,6 +127,7 @@ public class ApplicationProperties {
     private String apiKey;
     private int maxTokens;
     private boolean enabled;
+    private int threads;
   }
 
   @Data
@@ -122,6 +137,7 @@ public class ApplicationProperties {
     private String apiKey;
     private int maxTokens;
     private boolean enabled;
+    private int threads;
   }
 
   @Data

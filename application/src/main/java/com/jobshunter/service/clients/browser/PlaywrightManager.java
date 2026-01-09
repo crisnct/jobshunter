@@ -33,7 +33,9 @@ public final class PlaywrightManager {
                 .setHeadless(true)
                 .setArgs(List.of(
                     "--disable-blink-features=AutomationControlled",
-                    "--start-maximized"
+                    "--start-maximized",
+                    "--disable-http2",
+                    "--disable-quic"
                 ))
         );
   }
@@ -46,6 +48,7 @@ public final class PlaywrightManager {
     return browser.newContext(
         new Browser.NewContextOptions()
             .setUserAgent(RandomBrowserUserAgent.pick())
+            .setTimezoneId("Europe/Bucharest")
             .setViewportSize(1366, 768)
             .setLocale("en-US")
     );

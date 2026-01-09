@@ -15,31 +15,39 @@ import org.springframework.stereotype.Service;
 @Service
 public class JobsStateMachine {
 
-  private final JobScoring jobScoring;
+  private final JobFakelUrFilter fakeUrlFilterProcessor;
 
-  private final JobsValidator jobsValidator;
+  private final JobFetchProcessor fetchPageProcessor;
 
-  private final JobBodyExtractor jobBodyExtractor;
+  private final JobBodyExtractorProcessor bodyExtractorProcessor;
 
-  private final JobFakelUrFilter jobFakeUrlFilter;
+  private final JobValidator validatorProcessor;
 
-  private final Executor miscExecutor;
+  private final JobScoring scoringProcessor;
+
+  private final Executor urlFetchRestClientExecutor;
 
   private final Executor geminiExecutor;
 
+  private final Executor jobProcessingExecutor;
+
   public JobsStateMachine(
-      JobScoring jobScoring,
-      JobsValidator jobsValidator,
-      JobBodyExtractor jobBodyExtractor,
-      JobFakelUrFilter jobFakeUrlFilter,
-      @Qualifier("miscellaneousExecutor") Executor miscExecutor,
-      @Qualifier("geminiSearchExecutor") Executor geminiExecutor
+      JobScoring scoringProcessor,
+      JobValidator validatorProcessor,
+      JobFetchProcessor fetchPageProcessor,
+      JobFakelUrFilter fakeUrlFilterProcessor,
+      JobBodyExtractorProcessor bodyExtractorProcessor,
+      @Qualifier("urlFetchRestClientExecutor") Executor urlFetchRestClientExecutor,
+      @Qualifier("geminiSearchExecutor") Executor geminiExecutor,
+      @Qualifier("jobProcessingExecutor") Executor jobProcessingExecutor
   ) {
-    this.jobScoring = jobScoring;
-    this.jobsValidator = jobsValidator;
-    this.jobBodyExtractor = jobBodyExtractor;
-    this.miscExecutor = miscExecutor;
-    this.jobFakeUrlFilter = jobFakeUrlFilter;
+    this.scoringProcessor = scoringProcessor;
+    this.validatorProcessor = validatorProcessor;
+    this.fetchPageProcessor = fetchPageProcessor;
+    this.urlFetchRestClientExecutor = urlFetchRestClientExecutor;
+    this.bodyExtractorProcessor = bodyExtractorProcessor;
+    this.fakeUrlFilterProcessor = fakeUrlFilterProcessor;
+    this.jobProcessingExecutor = jobProcessingExecutor;
     this.geminiExecutor = geminiExecutor;
   }
 
@@ -113,22 +121,24 @@ public class JobsStateMachine {
   }
 
   private CompletableFuture<JobContext> applyJobPipeline(Job job, UserEntity user, String resumeFileId) {
-    return CompletableFuture.supplyAsync(() -> new JobContext(job, user, resumeFileId), miscExecutor)
-        .thenApplyAsync(jobFakeUrlFilter::processAsync, miscExecutor)
-        .thenApplyAsync(jobBodyExtractor::processAsync, miscExecutor)
-        .thenApplyAsync(jobsValidator::processAsync, miscExecutor)
-        .thenApplyAsync(jobScoring::processAsync, geminiExecutor)
-        .handleAsync((jc, ex) -> {
+    return CompletableFuture.supplyAsync(() -> new JobContext(job, user, resumeFileId), jobProcessingExecutor)
+        .thenApplyAsync(fakeUrlFilterProcessor::processAsync, jobProcessingExecutor)
+        .thenApplyAsync(fetchPageProcessor::processAsync, urlFetchRestClientExecutor)
+        .thenApplyAsync(bodyExtractorProcessor::processAsync, jobProcessingExecutor)
+        .thenApplyAsync(validatorProcessor::processAsync, jobProcessingExecutor)
+        .thenApplyAsync(scoringProcessor::processAsync, geminiExecutor)
+        .handle((jc, ex) -> {
           if (ex != null) {
-            log.error("Pipeline failed for job {}: {}", job != null ? job.getUrl() : "unknown", ex.getMessage(), ex);
+            log.error("Pipeline failed for job {}", job != null ? job.getUrl() : "unknown", ex);
             return JobContext.failed(job, user, resumeFileId, ex);
           }
           if (jc == null) {
+            IllegalStateException error = new IllegalStateException("Pipeline returned null JobContext");
             log.error("Pipeline returned null context for job {}", job != null ? job.getUrl() : "unknown");
-            return JobContext.failed(job, user, resumeFileId, new IllegalStateException("Pipeline returned null JobContext"));
+            return JobContext.failed(job, user, resumeFileId, error);
           }
           return jc;
-        }, miscExecutor);
+        });
   }
 
 }
