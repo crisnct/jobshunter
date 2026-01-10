@@ -1,6 +1,5 @@
 package com.jobshunter.security.filters;
 
-import com.jobshunter.security.ClientIpResolver;
 import com.jobshunter.security.JHHeaders;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -47,8 +46,6 @@ public class SecurityHeadersFilter extends OncePerRequestFilter {
    */
   private void addSecurityHeaders(HttpServletRequest request, HttpServletResponse response) {
 
-    response.setHeader(JHHeaders.IP_HEADER, ClientIpResolver.resolveClientIp(request));
-
     // 1. X-Frame-Options: Prevent clickjacking attacks
     response.setHeader(JHHeaders.X_FRAME_OPTIONS, "DENY");
 
@@ -59,7 +56,7 @@ public class SecurityHeadersFilter extends OncePerRequestFilter {
     response.setHeader(JHHeaders.X_XSS_PROTECTION, "1; mode=block");
 
     // 4. Strict-Transport-Security: Force HTTPS (only for HTTPS requests)
-    if (request.isSecure() || "https" .equalsIgnoreCase(request.getHeader(JHHeaders.X_FORWARDED_PROTO))) {
+    if (request.isSecure() || "https".equalsIgnoreCase(request.getHeader(JHHeaders.X_FORWARDED_PROTO))) {
       response.setHeader(JHHeaders.STRICT_TRANSPORT_SECURITY, "max-age=31536000; includeSubDomains; preload");
     }
 

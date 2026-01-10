@@ -91,7 +91,7 @@ public class AuthController {
   ) {
     // Get or generate device ID
     String deviceId = getOrGenerateDeviceId(httpRequest, httpResponse);
-    String ip = httpResponse.getHeader(JHHeaders.IP_HEADER);
+    String ip = httpResponse.getHeader(JHHeaders.X_REAL_IP);
     String userAgent = httpRequest.getHeader(JHHeaders.USER_AGENT);
 
     // Perform login and create session
@@ -211,7 +211,7 @@ public class AuthController {
     tokenMap.put("headerName", csrfToken.getHeaderName());
     tokenMap.put("parameterName", csrfToken.getParameterName());
 
-    log.info("Generated new csrf token for {}", response.getHeader(JHHeaders.IP_HEADER));
+    log.info("Generated new csrf token for {}", response.getHeader(JHHeaders.X_REAL_IP));
     return new ResponseEntity<>(tokenMap, HttpStatus.OK);
   }
 

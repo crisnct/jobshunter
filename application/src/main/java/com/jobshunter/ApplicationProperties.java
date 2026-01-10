@@ -16,6 +16,7 @@ public class ApplicationProperties {
   private Gemini gemini = new Gemini();
   private Serp serp = new Serp();
   private Security security = new Security();
+  private IpInfo ipInfo = new IpInfo();
 
   @Data
   @ConfigurationProperties(prefix = "jobshunter")
@@ -115,9 +116,18 @@ public class ApplicationProperties {
   public static class Gpt {
 
     private String apiKey;
-    private int maxTokens;
     private boolean enabled;
     private int threads;
+  }
+
+  @Data
+  @ConfigurationProperties(prefix = "ipinfo")
+  public static class IpInfo {
+
+    private String apiKey;
+    private boolean enabled;
+    private int threads;
+
   }
 
   @Data
@@ -125,7 +135,6 @@ public class ApplicationProperties {
   public static class Grok {
 
     private String apiKey;
-    private int maxTokens;
     private boolean enabled;
     private int threads;
   }
@@ -135,7 +144,6 @@ public class ApplicationProperties {
   public static class Gemini {
 
     private String apiKey;
-    private int maxTokens;
     private boolean enabled;
     private int threads;
   }

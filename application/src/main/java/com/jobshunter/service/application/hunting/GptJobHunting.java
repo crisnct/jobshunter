@@ -28,19 +28,19 @@ public class GptJobHunting extends AdditionalEffortJobHunting<GptJobSearchReques
 
   @Override
   public GptJobSearchRequest createRequest(SearchJobOrder order, UserPromptEntity prompt) {
-    Reasoning reasoning = order.getEngineSelection().model().startsWith("gpt-5") ? new Reasoning("high") : null;
-    GptJobSearchRequest request
-        = new GptJobSearchRequest(order.getUser(), order.getEngineSelection(), reasoning);
+    Reasoning reasoning = order.getEngineSelection().model().startsWith("gpt-5")
+        ? new Reasoning("minimal") : null;
+    GptJobSearchRequest request = new GptJobSearchRequest(order, reasoning);
     request.setUserPrompt(prompt.getPrompt());
     request.setPromptId(prompt.getId());
+    request.setStoreConversation(true);
     request.setSearchCompanies(false);
     return request;
   }
 
   @Override
   public GptJobSearchRequest createCompaniesRequest(SearchJobOrder order) {
-    GptJobSearchRequest request
-        = new GptJobSearchRequest(order.getUser(), order.getEngineSelection(), null);
+    GptJobSearchRequest request = new GptJobSearchRequest(order, null);
     request.setSearchCompanies(true);
     return request;
   }

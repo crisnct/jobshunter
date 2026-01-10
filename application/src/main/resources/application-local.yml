@@ -17,6 +17,9 @@ twilio:
 gemini:
   enabled: false
 
+ipinfo:
+  enabled: false
+
 gpt:
   enabled: false
 

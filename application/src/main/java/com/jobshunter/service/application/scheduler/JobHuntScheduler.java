@@ -2,12 +2,15 @@ package com.jobshunter.service.application.scheduler;
 
 import com.jobshunter.database.entities.JobOrderEntity;
 import com.jobshunter.database.entities.UserEntity;
+import com.jobshunter.database.entities.UserSessionEntity;
 import com.jobshunter.database.service.JobOrderDBService;
 import com.jobshunter.database.service.UserDBService;
+import com.jobshunter.database.service.UserSessionDBService;
 import com.jobshunter.model.OrderStatus;
 import com.jobshunter.model.SearchJobOrder;
 import com.jobshunter.service.application.JobHuntService;
 import com.jobshunter.service.application.UserCvService;
+import com.jobshunter.service.clients.IpInfo;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -43,17 +46,25 @@ public class JobHuntScheduler {
 
   private final Executor maintenanceExecutor;
 
+  private final IpInfo ipInfoClient;
+
+  private final UserSessionDBService userSessionDBService;
+
   public JobHuntScheduler(
       JobHuntService jobHuntService,
       UserDBService userDBService,
       JobOrderDBService jobOrderDBService,
       UserCvService userCvService,
+      UserSessionDBService userSessionDBService,
+      IpInfo ipInfoClient,
       @Qualifier("ordersExecutor") Executor ordersExecutor,
       @Qualifier("notificationsExecutor") Executor notificationsExecutor,
       @Qualifier("maintenanceExecutor") Executor maintenanceExecutor
   ) {
     this.jobHuntService = jobHuntService;
+    this.ipInfoClient = ipInfoClient;
     this.userDBService = userDBService;
+    this.userSessionDBService = userSessionDBService;
     this.jobOrderDBService = jobOrderDBService;
     this.userCvService = userCvService;
     this.ordersExecutor = ordersExecutor;
@@ -93,7 +104,10 @@ public class JobHuntScheduler {
     JobOrderEntity jobOrder = jobOrderDBService.getJobOrder(jobId);
     log.info("Start processing job order id={} for user {}", jobOrder.getId(), jobOrder.getUser().getUsername());
     try {
-      jobHuntService.searchJobsForUser(new SearchJobOrder(jobOrder));
+      UserSessionEntity session = userSessionDBService.findByUser(jobOrder.getUser());
+      SearchJobOrder order = new SearchJobOrder(jobOrder);
+      order.setIpInfo(ipInfoClient.getIpDetailInfo(session.getIpAddress()));
+      jobHuntService.searchJobsForUser(order);
       jobOrder.setStatus(OrderStatus.COMPLETED);
       jobOrderDBService.saveJobOrder(jobOrder);
       log.info("Completed processing job order id={} for user {}", jobOrder.getId(), jobOrder.getUser().getUsername());

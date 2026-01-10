@@ -6,7 +6,6 @@ import com.jobshunter.dto.geminiRequest.GeminiJobsPayload;
 import com.jobshunter.dto.geminiRequest.GenerationConfig;
 import com.jobshunter.dto.geminiRequest.GoogleSearchTool;
 import com.jobshunter.dto.geminiRequest.Part;
-import com.jobshunter.dto.geminiRequest.SafetySetting;
 import com.jobshunter.dto.geminiRequest.ThinkingConfig;
 import com.jobshunter.dto.geminiResponse.GeminiGenerateContentResponse;
 import com.jobshunter.dto.geminiResponse.GeminiGenerateContentResponse.Candidate;
@@ -57,7 +56,7 @@ public non-sealed class GeminiV1JobSearchImpl implements AiJobsClient<GeminiJobS
     try {
       GenerationConfig generationConfig = GenerationConfig.builder()
           .temperature(0.0)
-          .maxOutputTokens(properties.getGemini().getMaxTokens())
+          .maxOutputTokens(3500)
           .thinkingConfig(new ThinkingConfig(2048))
           .build();
 

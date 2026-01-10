@@ -1,4 +1,4 @@
-package com.jobshunter.dto.grokRequest;
+package com.jobshunter.dto.grokResponse;
 
 import java.util.List;
 

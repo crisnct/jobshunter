@@ -17,7 +17,6 @@ import com.jobshunter.dto.gptResponse.GptResponse;
 import com.jobshunter.dto.serpRequest.SearchWithSerpRequest;
 import com.jobshunter.model.AiClientResponse;
 import com.jobshunter.model.PromptType;
-import com.jobshunter.security.JHHeaders;
 import com.jobshunter.service.TemplateRenderer;
 import com.jobshunter.service.application.notifiers.EmailNotifierService;
 import com.jobshunter.service.clients.AiJobsClient;
@@ -133,7 +132,7 @@ public class TestController {
     for (String model : modelsPayload.models()) {
       GptJobsPayload payload = GptJobsPayload.builder()
           .model(model)
-          .max_output_tokens(200)
+          .maxOutputTokens(200)
           .addSystemPrompt("Act like an developer working at Open AI")
           .build();
       boolean supported = false;
@@ -170,7 +169,7 @@ public class TestController {
     for (String model : modelsPayload.models()) {
       GenerationConfig generationConfig = GenerationConfig.builder()
           .temperature(0.0)
-          .maxOutputTokens(properties.getGemini().getMaxTokens())
+          .maxOutputTokens(3500)
           .build();
 
       GeminiJobsPayload payload = GeminiJobsPayload.builder()
@@ -231,8 +230,8 @@ public class TestController {
   ) {
     GptJobsPayload gptPayload = GptJobsPayload.builder()
         .model(model)
-        .max_output_tokens(2000)
-        .addTools(Tools.builder().setDeepSearch().build())
+        .maxOutputTokens(2000)
+        .addTools(Tools.builder().setWebSearch().build())
         .addSystemPrompt(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_COMPANY_SEARCH,
             "city", city,
             "country", country,

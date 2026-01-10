@@ -2,6 +2,7 @@ package com.jobshunter.security;
 
 import com.jobshunter.ApplicationProperties;
 import com.jobshunter.database.service.UserDBService;
+import com.jobshunter.security.filters.AdditionalHeadersFilter;
 import com.jobshunter.security.filters.DeviceIdFilter;
 import com.jobshunter.security.filters.JwtAuthenticationFilter;
 import com.jobshunter.security.filters.RateLimitingFilter;
@@ -68,6 +69,7 @@ public class SecurityConfig {
       HttpSecurity http,
       JwtAuthenticationFilter jwtAuthenticationFilter,
       SecurityHeadersFilter securityHeadersFilter,
+      AdditionalHeadersFilter additionalHeadersFilter,
       DeviceIdFilter deviceIdFilter,
       RateLimitingFilter rateLimitingFilter,
       RestAuthenticationEntryPoint restAuthenticationEntryPoint,
@@ -100,6 +102,7 @@ public class SecurityConfig {
         .authenticationProvider(daoAuthenticationProvider(userDetailsService, passwordEncoder))
         .addFilterBefore(rateLimitingFilter, UsernamePasswordAuthenticationFilter.class)
         .addFilterBefore(securityHeadersFilter, UsernamePasswordAuthenticationFilter.class)
+        .addFilterBefore(additionalHeadersFilter, UsernamePasswordAuthenticationFilter.class)
         .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
         .addFilterAfter(deviceIdFilter, UsernamePasswordAuthenticationFilter.class)
 
@@ -149,6 +152,11 @@ public class SecurityConfig {
   @Bean
   public DeviceIdFilter deviceIdFilter(UserDBService userDeviceDBService, RestAuthenticationEntryPoint restAuthenticationEntryPoint) {
     return new DeviceIdFilter(userDeviceDBService, cookieService, restAuthenticationEntryPoint);
+  }
+
+  @Bean
+  public AdditionalHeadersFilter createAdditionalHeadersFilter(){
+    return new AdditionalHeadersFilter();
   }
 
   private AuthenticationProvider daoAuthenticationProvider(UserDetailsService userDetailsService, PasswordEncoder passwordEncoder) {

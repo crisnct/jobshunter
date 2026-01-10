@@ -55,13 +55,12 @@ public non-sealed class GrokJobScoreCalculatorClientImpl implements JobScoreCalc
           .filter(p -> p.getProvider() == EngineType.GROK).findAny()
           .orElseThrow(() -> new ValidationException("No GROK CV found for user" + request.getUserCV().getUser().getUsername()));
 
-      Grok config = properties.getGrok();
       String userPrompt = templateRenderer.getPrompt(PromptType.USER_PROMPT_MATCH_SCORE, "description", request.getJobDescription());
       GrokScorePayload payload = GrokScorePayload.builder()
           .model(AI_MODEL)
           .store(false)
           .temperature(0)
-          .max_output_tokens(config.getMaxTokens())
+          .max_output_tokens(16)
           .addSystemPrompt(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_MATCH_SCORE))
           .addUserPrompt(userPrompt, remoteCV.getFileId())
           .build();

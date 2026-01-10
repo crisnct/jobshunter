@@ -24,6 +24,10 @@ public class JobsStateMachine {
 
   private final JobScoring<?> geminiScoringProcessor;
 
+  private final JobScoring<?> grokScoringProcessor;
+
+  private final JobScoring<?> gptScoringProcessor;
+
   private final Executor urlFetchRestClientExecutor;
 
   private final Executor geminiExecutor;
@@ -39,8 +43,13 @@ public class JobsStateMachine {
       JobFetchProcessor fetchPageProcessor,
       JobFakelUrFilter fakeUrlFilterProcessor,
       JobBodyExtractorProcessor bodyExtractorProcessor,
+
       @Qualifier("jobScoringGemini")
       JobScoring<?> geminiScoringProcessor,
+      @Qualifier("jobScoringGpt")
+      JobScoring<?> gptScoringProcessor,
+      @Qualifier("jobScoringGrok")
+      JobScoring<?> grokScoringProcessor,
 
       @Qualifier("urlFetchRestClientExecutor") Executor urlFetchRestClientExecutor,
       @Qualifier("geminiSearchExecutor") Executor geminiExecutor,
@@ -49,7 +58,9 @@ public class JobsStateMachine {
       @Qualifier("jobProcessingExecutor") Executor jobProcessingExecutor
   ) {
     this.geminiScoringProcessor = geminiScoringProcessor;
+    this.gptScoringProcessor=gptScoringProcessor;
     this.validatorProcessor = validatorProcessor;
+    this.grokScoringProcessor=grokScoringProcessor;
     this.fetchPageProcessor = fetchPageProcessor;
     this.urlFetchRestClientExecutor = urlFetchRestClientExecutor;
     this.bodyExtractorProcessor = bodyExtractorProcessor;
@@ -88,7 +99,7 @@ public class JobsStateMachine {
         .thenApplyAsync(ctx -> ctx.isSkipProcessors() ? ctx : fetchPageProcessor.processAsync(ctx), urlFetchRestClientExecutor)
         .thenApplyAsync(ctx -> ctx.isSkipProcessors() ? ctx : bodyExtractorProcessor.processAsync(ctx), jobProcessingExecutor)
         .thenApplyAsync(ctx -> ctx.isSkipProcessors() ? ctx : validatorProcessor.processAsync(ctx), jobProcessingExecutor)
-        .thenApplyAsync(ctx -> ctx.isSkipProcessors() ? ctx : geminiScoringProcessor.processAsync(ctx), geminiExecutor)
+        .thenApplyAsync(ctx -> ctx.isSkipProcessors() ? ctx : gptScoringProcessor.processAsync(ctx), gptExecutor)
         .handle((jc, ex) -> {
           if (ex != null) {
             log.error("Pipeline failed for job {}", job != null ? job.getUrl() : "unknown", ex);

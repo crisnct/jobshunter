@@ -7,6 +7,7 @@ import lombok.Builder;
 @Builder
 public record Gpt4ScorePayload(
     String model,
+    Reasoning reasoning,
     double temperature,
     Boolean store,
     int max_output_tokens,

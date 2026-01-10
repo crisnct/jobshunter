@@ -73,6 +73,11 @@ public class UserSessionDBService {
     return userSessionRepository.findValidSession(user.getId(), deviceId, refreshTokenHash);
   }
 
+  public UserSessionEntity findByUser(UserEntity user) {
+    //noinspection OptionalGetWithoutIsPresent
+    return userSessionRepository.findByUser(user).get();
+  }
+
   /**
    * Finds a valid session matching device and refresh token hash (without requiring user). Used for public endpoints like /refresh where we don't
    * have authentication context. A session is valid if: - It matches the deviceId and hash - It is not revoked (revokedAt IS NULL) - It is not

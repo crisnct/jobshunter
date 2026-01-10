@@ -2,12 +2,10 @@ package com.jobshunter.service.clients.gemini;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.jobshunter.ApplicationProperties;
-import com.jobshunter.ApplicationProperties.Gemini;
 import com.jobshunter.dto.geminiRequest.FileData;
 import com.jobshunter.dto.geminiRequest.GeminiJobsPayload;
 import com.jobshunter.dto.geminiRequest.GenerationConfig;
 import com.jobshunter.dto.geminiRequest.Part;
-import com.jobshunter.dto.geminiRequest.SafetySetting;
 import com.jobshunter.dto.geminiResponse.GeminiGenerateContentResponse;
 import com.jobshunter.dto.geminiResponse.GeminiGenerateContentResponse.Candidate;
 import com.jobshunter.model.GeminiJobScoreRequest;
@@ -57,7 +55,7 @@ public non-sealed class GeminiJobScoreCalculatorClientImpl implements JobScoreCa
     try {
       GenerationConfig generationConfig = GenerationConfig.builder()
           .temperature(0.0)
-          .maxOutputTokens(5)
+          .maxOutputTokens(20)
           .build();
 
       FileData resume = new FileData(FILES_URI + "/" + request.getResumeFileId(), MediaType.APPLICATION_PDF_VALUE);
@@ -85,6 +83,7 @@ public non-sealed class GeminiJobScoreCalculatorClientImpl implements JobScoreCa
 
   private int extractScore(GeminiGenerateContentResponse response) throws JsonProcessingException {
     Optional<Part> item = response.candidates().stream()
+        .filter(p -> p.content() != null && p.content().parts() != null)
         .flatMap((Function<Candidate, Stream<Part>>) candidate -> candidate.content().parts().stream()).findFirst();
     return item.map(part -> Integer.parseInt(part.text())).orElse(0);
   }

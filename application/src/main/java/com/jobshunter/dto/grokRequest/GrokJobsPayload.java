@@ -2,6 +2,7 @@ package com.jobshunter.dto.grokRequest;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.jobshunter.dto.grokRequest.tools.Tools;
 import java.util.ArrayList;
@@ -14,8 +15,10 @@ import lombok.Builder;
 @Builder
 public record GrokJobsPayload(
     String model,
-    int max_output_tokens,
-    String previous_response_id,
+    @JsonProperty("max_output_tokens")
+    int maxOutputTokens,
+    @JsonProperty("previous_response_id")
+    String previousResponseId,
     List<Tools> tools,
     String instructions,
     Text text,

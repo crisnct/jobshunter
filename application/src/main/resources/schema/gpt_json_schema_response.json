@@ -6,17 +6,15 @@
       "items": {
         "type": "object",
         "properties": {
-          "score": {
-            "type": "number",
-            "minimum": 0,
-            "maximum": 100
+          "company": {
+            "type": "string"
           },
           "url": {
             "type": "string"
           }
         },
         "required": [
-          "score",
+          "company",
           "url"
         ],
         "additionalProperties": false

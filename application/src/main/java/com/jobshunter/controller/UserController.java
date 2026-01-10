@@ -197,7 +197,9 @@ public class UserController {
 
   @Transactional
   @PutMapping("/update")
-  public ResponseEntity<?> updateUser(@Valid @RequestBody UserUpdateRequest request) {
+  public ResponseEntity<?> updateUser(
+      @Valid @RequestBody UserUpdateRequest request
+  ) {
     @SuppressWarnings("OptionalGetWithoutIsPresent")
     UserEntity user = userDBService.getUser(request.username()).get();
     user.setPhoneNumber(request.phoneNumber());

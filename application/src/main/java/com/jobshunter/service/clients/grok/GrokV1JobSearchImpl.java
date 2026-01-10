@@ -79,8 +79,9 @@ public non-sealed class GrokV1JobSearchImpl implements AiJobsClient<GrokJobSearc
 
       GrokJobsPayloadBuilder payloadBuilder = GrokJobsPayload.builder()
           .model(request.getEngineSelection().model())
-          .previous_response_id(request.getPrevResponseId())
-          .max_output_tokens(properties.getGrok().getMaxTokens())
+          .store(request.getStoreConversation())
+          .previousResponseId(request.getPrevResponseId())
+          .maxOutputTokens(3500)
           .addSystemPrompt(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_JOB_SEARCH));
 
       if (getVersion(request.getEngineSelection().model()) > 3) {
@@ -136,7 +137,7 @@ public non-sealed class GrokV1JobSearchImpl implements AiJobsClient<GrokJobSearc
       GrokJobsPayload payload = GrokJobsPayload.builder()
           .model(request.getEngineSelection().model())
           .store(false)
-          .max_output_tokens(properties.getGrok().getMaxTokens())
+          .maxOutputTokens(2500)
           .addSystemPrompt(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_COMPANY_SEARCH,
               "city", user.getCity(),
               "country", user.getCountry(),
@@ -179,8 +180,9 @@ public non-sealed class GrokV1JobSearchImpl implements AiJobsClient<GrokJobSearc
     );
     GrokJobsPayload payload = GrokJobsPayload.builder()
         .model(request.getEngineSelection().model())
-        .max_output_tokens(properties.getGrok().getMaxTokens())
-        .previous_response_id(request.getPrevResponseId())
+        .maxOutputTokens(3500)
+        .store(request.getStoreConversation())
+        .previousResponseId(request.getPrevResponseId())
         .addTools(Tools.builder().setDeepSearch().build())
         .addSystemPrompt(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_JOB_SEARCH))
         .addUserPrompt(userPrompt)

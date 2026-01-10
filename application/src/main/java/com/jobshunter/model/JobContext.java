@@ -39,13 +39,6 @@ public class JobContext {
     return ctx;
   }
 
-  public void setPhase(JobPhase phase) {
-    if (phase.ordinal() - this.phase.ordinal() != 1) {
-      log.error("Unexpected job order processing old: {}, new: {}", this.phase.name(), phase.name());
-    }
-    this.phase = phase;
-  }
-
   public boolean hasFetchResult() {
     return fetchResult != null && Strings.isNotBlank(fetchResult.body());
   }

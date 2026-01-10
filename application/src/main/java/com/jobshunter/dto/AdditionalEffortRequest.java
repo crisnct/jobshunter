@@ -10,6 +10,7 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(callSuper = true)
 public class AdditionalEffortRequest extends AIJobSearchRequest {
 
+  private Boolean storeConversation;
   private String prevResponseId;
   private List<String> previousURL;
 

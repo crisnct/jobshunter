@@ -35,7 +35,7 @@ import org.springframework.web.client.RestClient;
 @RequiredArgsConstructor
 public non-sealed class GptJobScoreCalculatorClientImpl implements JobScoreCalculatorClient<GptJobScoreRequest> {
 
-  private static final String AI_MODEL = "gpt-4o-mini";
+  private static final String AI_MODEL = "gpt-5.2";
 
   private static final URI DEFAULT_URI = URI.create("https://api.openai.com/v1/responses");
 
@@ -51,7 +51,6 @@ public non-sealed class GptJobScoreCalculatorClientImpl implements JobScoreCalcu
   @Bulkhead(name = "gptBulkhead")
   public int computeScore(GptJobScoreRequest request) {
     try {
-      Gpt config = properties.getGpt();
       String userPrompt = templateRenderer.getPrompt(PromptType.USER_PROMPT_MATCH_SCORE, "description", request.getJobDescription());
       UserRemoteCvEntity remoteCV = request.getUserCV().getUser().getRemoteCvs().stream()
           .filter(p -> p.getProvider() == EngineType.GPT).findAny()
@@ -60,8 +59,9 @@ public non-sealed class GptJobScoreCalculatorClientImpl implements JobScoreCalcu
       Gpt4ScorePayload payload = Gpt4ScorePayload.builder()
           .model(AI_MODEL)
           .temperature(0)
+          .max_output_tokens(16)
+          .reasoning(request.getReasoning())
           .store(false)
-          .max_output_tokens(5)
           .addSystemPrompt(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_MATCH_SCORE))
           .addUserPrompt(userPrompt, remoteCV.getFileId())
           .build();

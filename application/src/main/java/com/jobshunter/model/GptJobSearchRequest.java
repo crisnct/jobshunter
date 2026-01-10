@@ -1,8 +1,8 @@
 package com.jobshunter.model;
 
-import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.dto.AdditionalEffortRequest;
 import com.jobshunter.dto.CompanyDto;
+import com.jobshunter.dto.IpInfoDetailResponse;
 import com.jobshunter.dto.gptRequest.Reasoning;
 import java.util.List;
 import lombok.Data;
@@ -14,10 +14,12 @@ public class GptJobSearchRequest extends AdditionalEffortRequest {
 
   private final Reasoning reasoning;
   private List<CompanyDto> companies;
+  private IpInfoDetailResponse ipInfo;
 
-  public GptJobSearchRequest(UserEntity user, EngineSelection engineSelection, Reasoning reasoning) {
-    super(user, engineSelection);
+  public GptJobSearchRequest(SearchJobOrder order, Reasoning reasoning) {
+    super(order.getUser(), order.getEngineSelection());
     this.reasoning = reasoning;
+    this.ipInfo = order.getIpInfo();
   }
 
 }

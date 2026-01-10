@@ -31,6 +31,7 @@ public class GrokJobHunting extends AdditionalEffortJobHunting<GrokJobSearchRequ
         = new GrokJobSearchRequest(order.getUser(), order.getEngineSelection());
     request.setSearchCompanies(false);
     request.setPromptId(prompt.getId());
+    request.setStoreConversation(true);
     request.setUserPrompt(prompt.getPrompt());
     return request;
   }

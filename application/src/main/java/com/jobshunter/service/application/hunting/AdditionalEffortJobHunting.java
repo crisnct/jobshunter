@@ -40,6 +40,19 @@ public abstract class AdditionalEffortJobHunting<T extends AdditionalEffortReque
     AiClientResponse response = jobsClient.searchJobs(request);
     log.info("Found {} jobs for {}", response.getJobs().size(), request.getUser().getUsername());
 
+    if (request.getStoreConversation()) {
+      chainConversation(request, response, model);
+    }
+
+    response.getJobs().forEach(job -> {
+      job.setPromptId(request.getPromptId());
+      job.setSource(model);
+    });
+    log.info("{} found {} url's and are going to be validated", model, response.getJobs().size());
+    return response;
+  }
+
+  private void chainConversation(T request, AiClientResponse response, String model) {
     request.setPreviousURL(response.getJobs().stream().map(Job::getUrl).toList());
     String prevId = response.getId();
     for (PromptType promptType : List.of(
@@ -53,10 +66,22 @@ public abstract class AdditionalEffortJobHunting<T extends AdditionalEffortReque
       }
       //This is mandatory, otherwise the AI model will reply nothing in conversation.
       try {
-        Thread.sleep(10000);
+        Thread.sleep(5000);
       } catch (InterruptedException e) {
         throw new RuntimeException(e);
       }
+
+      AiClientResponse anotherResponse = jobsClient.searchJobs(request);
+      log.info("Found {} jobs for {}", anotherResponse.getJobs().size(), request.getUser().getUsername());
+      response.addAll(anotherResponse);
+
+      //This is mandatory, otherwise the AI model will reply nothing in conversation.
+      try {
+        Thread.sleep(5000);
+      } catch (InterruptedException e) {
+        throw new RuntimeException(e);
+      }
+
       Map<String, Object> params = switch (promptType) {
         case USER_PROMPT_JOB_SERIES_1 -> Map.of("timestamp", Instant.now());
         case USER_PROMPT_JOB_SERIES_2 -> Map.of("invalid_urls", request.getPreviousURL(), "invalid_reasons", RandomInvalidReasons.pick());
@@ -71,7 +96,8 @@ public abstract class AdditionalEffortJobHunting<T extends AdditionalEffortReque
       };
       String prompt = templateRenderer.getPrompt(promptType, params);
 
-      log.info("Searching jobs for user {} with model {} with prompt {}", request.getUser().getUsername(), model, StringUtils.abbreviate(prompt, 50));
+      log.info("Searching jobs for user {} with model {} with prompt {}", request.getUser().getUsername(), model,
+          StringUtils.abbreviate(prompt, 50));
       request.setUserPrompt(prompt);
       request.setPrevResponseId(prevId);
       AiClientResponse otherResponse = jobsClient.searchJobs(request);
@@ -80,13 +106,6 @@ public abstract class AdditionalEffortJobHunting<T extends AdditionalEffortReque
       response.addAll(otherResponse);
       prevId = otherResponse.getId();
     }
-
-    response.getJobs().forEach(job -> {
-      job.setPromptId(request.getPromptId());
-      job.setSource(model);
-    });
-    log.info("{} found {} url's and are going to be validated", model, response.getJobs().size());
-    return response;
   }
 
 }

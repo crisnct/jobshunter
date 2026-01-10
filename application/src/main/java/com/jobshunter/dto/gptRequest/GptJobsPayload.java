@@ -2,6 +2,7 @@ package com.jobshunter.dto.gptRequest;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.jobshunter.dto.gptRequest.tools.Tools;
 import java.util.ArrayList;
@@ -15,11 +16,13 @@ import lombok.Builder;
 public record GptJobsPayload(
     String model,
     Reasoning reasoning,
-    int max_output_tokens,
+    @JsonProperty("max_output_tokens")
+    int maxOutputTokens,
     List<Tools> tools,
     String instructions,
     Boolean store,
-    String previous_response_id,
+    @JsonProperty("previous_response_id")
+    String previousResponseId,
     Text text,
     List<Object> input
 ) {

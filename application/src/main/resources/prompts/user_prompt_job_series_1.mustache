@@ -1,9 +1,15 @@
-Validation failed at {{timestamp}}.
+Redo the task and follow the rules below carefully.
 
-You MUST redo the task and strictly follow the system rules:
-- Return ONLY verified, public, direct URLs to specific job postings (no career homepages, no category pages, no login walls).
-- Include ONLY postings with a clearly visible publish/update date within the last 3 days; otherwise EXCLUDE.
-- Do NOT guess or fabricate URLs or dates.
-- Output JSON ONLY in the required format. No extra text.
+Return public, direct URLs to individual job postings that most likely match the requirements.
 
-Fix the output now.
+Rules:
+- Include only URLs that point to a specific job posting page (not career homepages or listings).
+- Prefer postings that appear to be recently published or updated (within the last few days).
+- If a posting clearly appears outdated or closed, exclude it.
+- Do NOT invent or fabricate URLs.
+- If publication or update date is not clearly visible, you MAY still include the posting if all other signals indicate it is recent.
+
+Output requirements:
+- Return JSON ONLY in the required format.
+- Do not include explanations or extra text.
+- If no suitable postings can be found, return an empty array.

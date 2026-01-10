@@ -1,5 +1,6 @@
 package com.jobshunter.service.snippets;
 
+import com.jobshunter.security.JHHeaders;
 import com.microsoft.playwright.Browser;
 import com.microsoft.playwright.Playwright;
 import java.net.URI;
@@ -7,7 +8,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import com.jobshunter.security.JHHeaders;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;

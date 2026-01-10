@@ -1,4 +1,4 @@
-package com.jobshunter.dto.grokRequest;
+package com.jobshunter.dto.grokResponse;
 
 //@formatter:off
 /**
@@ -6,7 +6,8 @@ package com.jobshunter.dto.grokRequest;
  */
  //@formatter:on
 public record JobResult(
-    String job_url
+    String url,
+    String company
 ) {
 
 }

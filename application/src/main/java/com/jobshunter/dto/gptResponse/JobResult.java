@@ -7,7 +7,7 @@ package com.jobshunter.dto.gptResponse;
  //@formatter:on
 public record JobResult(
     String url,
-    int score
+    String company
 ) {
 
 }
