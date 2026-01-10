@@ -3,7 +3,6 @@ package com.jobshunter.service.application.processors;
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.model.Job;
 import com.jobshunter.model.JobContext;
-import com.jobshunter.model.JobPhase;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
@@ -23,25 +22,33 @@ public class JobsStateMachine {
 
   private final JobValidator validatorProcessor;
 
-  private final JobScoring scoringProcessor;
+  private final JobScoring<?> geminiScoringProcessor;
 
   private final Executor urlFetchRestClientExecutor;
 
   private final Executor geminiExecutor;
 
+  private final Executor grokExecutor;
+
+  private final Executor gptExecutor;
+
   private final Executor jobProcessingExecutor;
 
   public JobsStateMachine(
-      JobScoring scoringProcessor,
       JobValidator validatorProcessor,
       JobFetchProcessor fetchPageProcessor,
       JobFakelUrFilter fakeUrlFilterProcessor,
       JobBodyExtractorProcessor bodyExtractorProcessor,
+      @Qualifier("jobScoringGemini")
+      JobScoring<?> geminiScoringProcessor,
+
       @Qualifier("urlFetchRestClientExecutor") Executor urlFetchRestClientExecutor,
       @Qualifier("geminiSearchExecutor") Executor geminiExecutor,
+      @Qualifier("grokSearchExecutor") Executor grokExecutor,
+      @Qualifier("gptSearchExecutor") Executor gptExecutor,
       @Qualifier("jobProcessingExecutor") Executor jobProcessingExecutor
   ) {
-    this.scoringProcessor = scoringProcessor;
+    this.geminiScoringProcessor = geminiScoringProcessor;
     this.validatorProcessor = validatorProcessor;
     this.fetchPageProcessor = fetchPageProcessor;
     this.urlFetchRestClientExecutor = urlFetchRestClientExecutor;
@@ -49,13 +56,15 @@ public class JobsStateMachine {
     this.fakeUrlFilterProcessor = fakeUrlFilterProcessor;
     this.jobProcessingExecutor = jobProcessingExecutor;
     this.geminiExecutor = geminiExecutor;
+    this.gptExecutor = gptExecutor;
+    this.grokExecutor = grokExecutor;
   }
 
-  public List<JobContext> processAsync(CompletableFuture<List<Job>> futureJobs, UserEntity user, String resumeFileId) {
+  public List<Job> processAsync(CompletableFuture<List<Job>> futureJobs, UserEntity user) {
     CompletableFuture<List<JobContext>> allJobs = futureJobs
         .thenCompose(jobsList -> {
           List<CompletableFuture<JobContext>> pipelined = jobsList.stream()
-              .map(job -> applyJobPipeline(job, user, resumeFileId))
+              .map(job -> applyJobPipeline(job, user))
               .toList();
 
           return CompletableFuture.allOf(pipelined.toArray(CompletableFuture[]::new))
@@ -67,7 +76,31 @@ public class JobsStateMachine {
 
     List<JobContext> result = allJobs.join();
     this.logResults(result, user.getUsername());
-    return result;
+    return result.stream()
+        .filter(ctx -> !ctx.isFailed() && ctx.isAccepted())
+        .map(JobContext::getJob)
+        .toList();
+  }
+
+  private CompletableFuture<JobContext> applyJobPipeline(Job job, UserEntity user) {
+    return CompletableFuture.supplyAsync(() -> new JobContext(job, user), jobProcessingExecutor)
+        .thenApplyAsync(ctx -> ctx.isSkipProcessors() ? ctx : fakeUrlFilterProcessor.processAsync(ctx), jobProcessingExecutor)
+        .thenApplyAsync(ctx -> ctx.isSkipProcessors() ? ctx : fetchPageProcessor.processAsync(ctx), urlFetchRestClientExecutor)
+        .thenApplyAsync(ctx -> ctx.isSkipProcessors() ? ctx : bodyExtractorProcessor.processAsync(ctx), jobProcessingExecutor)
+        .thenApplyAsync(ctx -> ctx.isSkipProcessors() ? ctx : validatorProcessor.processAsync(ctx), jobProcessingExecutor)
+        .thenApplyAsync(ctx -> ctx.isSkipProcessors() ? ctx : geminiScoringProcessor.processAsync(ctx), geminiExecutor)
+        .handle((jc, ex) -> {
+          if (ex != null) {
+            log.error("Pipeline failed for job {}", job != null ? job.getUrl() : "unknown", ex);
+            return JobContext.failed(job, user, ex);
+          }
+          if (jc == null) {
+            IllegalStateException error = new IllegalStateException("Pipeline returned null JobContext");
+            log.error("Pipeline returned null context for job {}", job != null ? job.getUrl() : "unknown");
+            return JobContext.failed(job, user, error);
+          }
+          return jc;
+        });
   }
 
   private void logResults(List<JobContext> result, String username) {
@@ -81,6 +114,9 @@ public class JobsStateMachine {
         if (!validLinksBuilder.isEmpty()) {
           validLinksBuilder.append("\n");
         }
+        validLinksBuilder.append("score:");
+        validLinksBuilder.append(jc.getJob().getScore());
+        validLinksBuilder.append("%, ");
         validLinksBuilder.append(jc.getJob().getSource());
         validLinksBuilder.append(": ");
         validLinksBuilder.append(jc.getJob().getUrl());
@@ -95,14 +131,6 @@ public class JobsStateMachine {
         errorBuilder.append(jc.getFailureMessage());
       });
     }
-    result.stream().filter(jc -> jc.getPhase().ordinal() < JobPhase.SCORED.ordinal()).forEach(jc -> {
-      errorBuilder.append("\nWrong phase: ");
-      errorBuilder.append(jc.getPhase().name());
-      errorBuilder.append(" ");
-      errorBuilder.append(jc.getJob().getPromptId());
-      errorBuilder.append(" ");
-      errorBuilder.append(jc.getFailureMessage());
-    });
 
     log.info("""
         \n--- Job search results for {} -----------------------------------------
@@ -118,27 +146,6 @@ public class JobsStateMachine {
         {}---
         """, username, result.size(), acceptedUrls, rejected, errors, validLinksBuilder, errorBuilder
     );
-  }
-
-  private CompletableFuture<JobContext> applyJobPipeline(Job job, UserEntity user, String resumeFileId) {
-    return CompletableFuture.supplyAsync(() -> new JobContext(job, user, resumeFileId), jobProcessingExecutor)
-        .thenApplyAsync(ctx -> ctx.isSkipProcessors() ? ctx : fakeUrlFilterProcessor.processAsync(ctx), jobProcessingExecutor)
-        .thenApplyAsync(ctx -> ctx.isSkipProcessors() ? ctx : fetchPageProcessor.processAsync(ctx), urlFetchRestClientExecutor)
-        .thenApplyAsync(ctx -> ctx.isSkipProcessors() ? ctx : bodyExtractorProcessor.processAsync(ctx), jobProcessingExecutor)
-        .thenApplyAsync(ctx -> ctx.isSkipProcessors() ? ctx : validatorProcessor.processAsync(ctx), jobProcessingExecutor)
-        .thenApplyAsync(ctx -> ctx.isSkipProcessors() ? ctx : scoringProcessor.processAsync(ctx), geminiExecutor)
-        .handle((jc, ex) -> {
-          if (ex != null) {
-            log.error("Pipeline failed for job {}", job != null ? job.getUrl() : "unknown", ex);
-            return JobContext.failed(job, user, resumeFileId, ex);
-          }
-          if (jc == null) {
-            IllegalStateException error = new IllegalStateException("Pipeline returned null JobContext");
-            log.error("Pipeline returned null context for job {}", job != null ? job.getUrl() : "unknown");
-            return JobContext.failed(job, user, resumeFileId, error);
-          }
-          return jc;
-        });
   }
 
 }

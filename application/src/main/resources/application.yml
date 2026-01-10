@@ -20,7 +20,7 @@ server:
 
 jobshunter:
   name: JobsHunter
-  expiredExpressions: was expired,is expired,no longer exists,This job was available,is no longer active,job is no longer available,this job was removed,Job not found,Applications from candidates outside of our global target markets are currently not accepted,No longer accepting applications,The job ad is no longer active,Application not possible,This job opening is no longer available,The vacancy has expired,this position has been filled,ONLY on W2,The job you are looking for is no longer open,Oferta no disponible,This job posting is no longer available,this job has expired,this position has been filled,This job offer is not active,Applications are closed,This job offer is not available,This position is no longer open,This page could not be found
+  expiredExpressions: was expired,is expired,no longer exists,This job was available,is no longer active,job is no longer available,this job was removed,Job not found,Applications from candidates outside of our global target markets are currently not accepted,No longer accepting applications,The job ad is no longer active,Application not possible,This job opening is no longer available,The vacancy has expired,this position has been filled,ONLY on W2,The job you are looking for is no longer open,Oferta no disponible,This job posting is no longer available,this job has expired,this position has been filled,This job offer is not active,Applications are closed,This job offer is not available,This position is no longer open,This page could not be found,The job you were looking for was not found
   blacklist: dailyremote.com,remote.co
   whitelistSkipValidation: linkedin.com
   threads:
@@ -48,24 +48,24 @@ gemini:
   enabled: true
   apiKey: ${GEMINI_API_KEY:notset}
   threads: 20
-  maxTokens: 2000
+  maxTokens: 1000
 
 gpt:
   enabled: true
   apiKey: ${CHATGPT_API_KEY:notset}
-  threads: 5
-  maxTokens: 2000
+  threads: 10
+  maxTokens: 1000
 
 grok:
   enabled: true
   apiKey: ${GROK_API_KEY:notset}
-  threads: 5
-  maxTokens: 2000
+  threads: 10
+  maxTokens: 1000
 
 serp:
   enabled: true
   apiKey: ${SERP_API_KEY:notset}
-  threads: 5
+  threads: 10
   maxPageSearch: 3
 
 spring:

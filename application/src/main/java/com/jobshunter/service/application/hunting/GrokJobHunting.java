@@ -30,7 +30,6 @@ public class GrokJobHunting extends AdditionalEffortJobHunting<GrokJobSearchRequ
     GrokJobSearchRequest request
         = new GrokJobSearchRequest(order.getUser(), order.getEngineSelection());
     request.setSearchCompanies(false);
-    request.setStore(true);
     request.setPromptId(prompt.getId());
     request.setUserPrompt(prompt.getPrompt());
     return request;
@@ -39,7 +38,6 @@ public class GrokJobHunting extends AdditionalEffortJobHunting<GrokJobSearchRequ
   @Override
   public GrokJobSearchRequest createCompaniesRequest(SearchJobOrder order) {
     GrokJobSearchRequest request = new GrokJobSearchRequest(order.getUser(), order.getEngineSelection());
-    request.setStore(false);
     request.setSearchCompanies(true);
     return request;
   }

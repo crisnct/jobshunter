@@ -34,7 +34,6 @@ public class GptJobHunting extends AdditionalEffortJobHunting<GptJobSearchReques
     request.setUserPrompt(prompt.getPrompt());
     request.setPromptId(prompt.getId());
     request.setSearchCompanies(false);
-    request.setStore(true);
     return request;
   }
 
@@ -43,7 +42,6 @@ public class GptJobHunting extends AdditionalEffortJobHunting<GptJobSearchReques
     GptJobSearchRequest request
         = new GptJobSearchRequest(order.getUser(), order.getEngineSelection(), null);
     request.setSearchCompanies(true);
-    request.setStore(false);
     return request;
   }
 

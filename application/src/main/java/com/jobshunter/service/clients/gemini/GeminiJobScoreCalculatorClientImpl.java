@@ -37,7 +37,7 @@ import org.springframework.web.client.RestClient;
 @RequiredArgsConstructor
 public non-sealed class GeminiJobScoreCalculatorClientImpl implements JobScoreCalculatorClient<GeminiJobScoreRequest> {
 
-  private static final String AI_MODEL = "gemini-2.5-flash-lite";
+  private static final String AI_MODEL = "gemini-2.5-pro";
 
   private static final String FILES_URI = "https://generativelanguage.googleapis.com/v1beta";
 
@@ -55,20 +55,18 @@ public non-sealed class GeminiJobScoreCalculatorClientImpl implements JobScoreCa
   @CircuitBreaker(name = "geminiCircuitBreaker", fallbackMethod = "fallbackComputeScore")
   public int computeScore(GeminiJobScoreRequest request) {
     try {
-      Gemini config = properties.getGemini();
       GenerationConfig generationConfig = GenerationConfig.builder()
           .temperature(0.0)
-          .maxOutputTokens(config.getMaxTokens())
+          .maxOutputTokens(5)
           .build();
 
       FileData resume = new FileData(FILES_URI + "/" + request.getResumeFileId(), MediaType.APPLICATION_PDF_VALUE);
-      FileData jobDescriptionFile = new FileData(FILES_URI + "/" + request.getJobDescriptionFileId(), MediaType.TEXT_PLAIN_VALUE);
 
       GeminiJobsPayload payload = GeminiJobsPayload.builder()
           .addSystemInstruction(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_MATCH_SCORE))
-          .addUserContent(templateRenderer.getPrompt(PromptType.USER_PROMPT_MATCH_SCORE), List.of(resume, jobDescriptionFile))
+          .addUserContent(templateRenderer.getPrompt(PromptType.USER_PROMPT_MATCH_SCORE, "description", request.getJobDescription()),
+              List.of(resume))
           .generationConfig(generationConfig)
-          .safetySettings(List.of(new SafetySetting("HARM_CATEGORY_DANGEROUS_CONTENT", "BLOCK_LOW_AND_ABOVE")))
           .build();
 
       GeminiGenerateContentResponse response = restClient.post()
@@ -80,7 +78,7 @@ public non-sealed class GeminiJobScoreCalculatorClientImpl implements JobScoreCa
 
       return extractScore(response);
     } catch (Exception e) {
-      log.error("GEMINI job API call failed", e);
+      log.error("❌ GEMINI job API call failed", e);
       return 0;
     }
   }

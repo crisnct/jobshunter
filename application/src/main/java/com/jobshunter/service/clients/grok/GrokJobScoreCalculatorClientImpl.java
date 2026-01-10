@@ -35,7 +35,7 @@ import org.springframework.web.client.RestClient;
 @RequiredArgsConstructor
 public non-sealed class GrokJobScoreCalculatorClientImpl implements JobScoreCalculatorClient<GrokJobScoreRequest> {
 
-  private static final String AI_MODEL = "grok-4-1-fast-non-reasoning";
+  private static final String AI_MODEL = "grok-4-fast-non-reasoning";
 
   private static final URI DEFAULT_URI = URI.create("https://api.x.ai/v1/responses");
 

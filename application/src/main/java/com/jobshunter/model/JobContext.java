@@ -14,7 +14,6 @@ public class JobContext {
   private String body;
 
   private final UserEntity user;
-  private final String resumeFileId;
 
   private HttpFetchResult fetchResult;
   private String host;
@@ -26,15 +25,14 @@ public class JobContext {
   private String failureMessage;
   private boolean skipProcessors;
 
-  public JobContext(Job job, UserEntity user, String resumeFileId) {
+  public JobContext(Job job, UserEntity user) {
     this.job = job;
     this.user = user;
-    this.resumeFileId = resumeFileId;
     this.phase = JobPhase.NEW;
   }
 
-  public static JobContext failed(Job job, UserEntity user, String resumeFileId, Throwable t) {
-    JobContext ctx = new JobContext(job, user, resumeFileId);
+  public static JobContext failed(Job job, UserEntity user, Throwable t) {
+    JobContext ctx = new JobContext(job, user);
     ctx.failed = true;
     ctx.failureMessage = t != null ? t.getMessage() : "Unknown pipeline failure";
     ctx.accepted = false;

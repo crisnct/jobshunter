@@ -26,6 +26,15 @@ public class UnitTests {
   }
 
   @Test
+  public void testHostExtraction(){
+    String host = URI.create("https://www.linkedin.com/jobs/view/2345678901").getHost();
+    if (host.startsWith("www.")) {
+      host = host.substring(4);
+    }
+    System.out.println(host);
+  }
+
+  @Test
   public void testExpiredPages() {
     RestClient.Builder restBuilder = RestClient.builder();
     RestClient restClient = restBuilder

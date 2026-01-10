@@ -5,14 +5,11 @@ import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.service.UserJobDBService;
 import com.jobshunter.dto.JobHuntResponse;
 import com.jobshunter.model.Job;
-import com.jobshunter.model.JobContext;
 import com.jobshunter.model.SearchJobOrder;
 import com.jobshunter.service.application.hunting.HuntingOrchestrator;
 import com.jobshunter.service.application.notifiers.EmailNotifierService;
 import com.jobshunter.service.application.notifiers.WhatsappNotifierService;
-import com.jobshunter.service.application.processors.JobScoring;
 import com.jobshunter.service.application.processors.JobsStateMachine;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -32,8 +29,6 @@ public class JobHuntService {
 
   private final UserJobDBService userJobDBService;
 
-  private final JobScoring jobScoring;
-
   private final HuntingOrchestrator huntingOrchestrator;
 
   private final JobsStateMachine jobsStateMachine;
@@ -50,44 +45,26 @@ public class JobHuntService {
       existingURLs = new ArrayList<>();
     }
 
-    String resumeFileIdCleanup = null;
-    try {
-      String resumeFileId = jobScoring.uploadUserCv(user.getCv());
-      resumeFileIdCleanup = resumeFileId;
+    CompletableFuture<List<Job>> futureJobs = huntingOrchestrator.startHunting(order, existingURLs);
+    List<Job> result = jobsStateMachine.processAsync(futureJobs, user);
 
-      CompletableFuture<List<Job>> futureJobs = huntingOrchestrator.startHunting(order, existingURLs);
-      List<JobContext> result = jobsStateMachine.processAsync(futureJobs, user, resumeFileId);
+    JobHuntResponse jobHuntResponse = new JobHuntResponse(result.stream()
+        .sorted(Comparator.comparing(Job::getScore).reversed())
+        .toList());
 
-      List<Job> validatedJobs = result.stream()
-          .filter(ctx -> !ctx.isFailed() && ctx.isAccepted() && ctx.getJob().getScore() >= 50)
-          .map(JobContext::getJob)
-          .toList();
-
-      JobHuntResponse jobHuntResponse = new JobHuntResponse(validatedJobs.stream()
-          .sorted(Comparator.comparing(Job::getScore).reversed())
-          .toList());
-
-      List<Job> jobs = jobHuntResponse.jobsFound();
-      if (!jobs.isEmpty()) {
-        if (isEnableOneRealEngine) {
-          this.userJobDBService.updateUserWithJobs(user, order, jobs);
-        }
-        if (user.isNotifyWhatsapp()) {
-          whatsappNotifierService.send(jobs, user);
-        }
-        if (user.isNotifyEmail()) {
-          emailNotifierService.sendUsingTemplate(jobs, user);
-        }
+    List<Job> jobs = jobHuntResponse.jobsFound();
+    if (!jobs.isEmpty()) {
+      if (isEnableOneRealEngine) {
+        this.userJobDBService.updateUserWithJobs(user, order, jobs);
       }
-      return jobHuntResponse;
-    } catch (IOException e) {
-      log.error(e.getMessage(), e);
-      throw new RuntimeException("Unexpected error about creating file on local storage " + e.getMessage(), e);
-    } finally {
-      if (resumeFileIdCleanup != null) {
-        jobScoring.cleanup(resumeFileIdCleanup);
+      if (user.isNotifyWhatsapp()) {
+        whatsappNotifierService.send(jobs, user);
+      }
+      if (user.isNotifyEmail()) {
+        emailNotifierService.sendUsingTemplate(jobs, user);
       }
     }
+    return jobHuntResponse;
   }
 
 }

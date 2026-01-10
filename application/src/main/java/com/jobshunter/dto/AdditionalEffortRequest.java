@@ -2,6 +2,7 @@ package com.jobshunter.dto;
 
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.model.EngineSelection;
+import java.util.List;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -9,8 +10,8 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(callSuper = true)
 public class AdditionalEffortRequest extends AIJobSearchRequest {
 
-  private Boolean store;
   private String prevResponseId;
+  private List<String> previousURL;
 
   public AdditionalEffortRequest(UserEntity user, EngineSelection engineSelection) {
     super(user, engineSelection);

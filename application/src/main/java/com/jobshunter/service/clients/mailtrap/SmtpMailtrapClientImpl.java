@@ -71,7 +71,7 @@ public non-sealed class SmtpMailtrapClientImpl implements SmtpMailtrapClient {
             attachment);
       }
       mailSender.send(mimeMessage);
-      log.info("Email sent successfully to {}", (Object) to.toArray(String[]::new));
+      log.info("Email sent successfully to {}", to);
     } catch (MessagingException | MailException e) {
       log.error("Failed to send email with attachment to {}: {}", to, e.getMessage());
       throw new RuntimeException("Failed to send email", e);

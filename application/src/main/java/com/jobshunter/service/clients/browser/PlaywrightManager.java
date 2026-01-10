@@ -4,28 +4,25 @@ import com.microsoft.playwright.Browser;
 import com.microsoft.playwright.BrowserContext;
 import com.microsoft.playwright.BrowserType;
 import com.microsoft.playwright.Playwright;
+import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import java.util.List;
 import org.springframework.stereotype.Component;
 
 /**
- * Manages a single Playwright instance and a single Browser instance
- * for the entire JVM lifecycle.
- *
- * Design goals:
- * - visible browser (headed mode)
- * - stable lifecycle
- * - safe for limited, serialized usage
- * - good debugging experience
+ * Manages a single Playwright instance and a single Browser instance for the entire JVM lifecycle.
+ * <p>
+ * Design goals: - visible browser (headed mode) - stable lifecycle - safe for limited, serialized usage - good debugging experience
  */
 @Component
 public final class PlaywrightManager {
 
-  private final Playwright playwright;
+  private Playwright playwright;
 
-  private final Browser browser;
+  private Browser browser;
 
-  public PlaywrightManager() {
+  @PostConstruct
+  public void init() {
     this.playwright = Playwright.create();
     this.browser =
         playwright.chromium().launch(
@@ -41,8 +38,7 @@ public final class PlaywrightManager {
   }
 
   /**
-   * Creates a new isolated browser context.
-   * Must be called in a controlled (serialized) manner.
+   * Creates a new isolated browser context. Must be called in a controlled (serialized) manner.
    */
   public synchronized BrowserContext newContext() {
     return browser.newContext(
@@ -55,8 +51,7 @@ public final class PlaywrightManager {
   }
 
   /**
-   * Clean shutdown at JVM exit.
-   * Must not be called while contexts/pages are still in use.
+   * Clean shutdown at JVM exit. Must not be called while contexts/pages are still in use.
    */
   @PreDestroy
   public void shutdown() {

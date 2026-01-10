@@ -227,7 +227,10 @@ public class UserCvService {
   public void refreshUserCvIfNeeded(UserEntity user, @NotNull EngineType type) {
     UserRemoteCvEntity remoteCV = user.getRemoteCvs().stream().filter(p -> p.getProvider() == type)
         .findFirst().orElse(null);
-    if (remoteCV == null || remoteCV.getExpireTime() != null && remoteCV.getExpireTime().isBefore(Instant.now())) {
+    if (user.getCv() != null
+        && user.getCv().getByteArray() != null
+        && (remoteCV == null || (remoteCV.getExpireTime() != null) && remoteCV.getExpireTime().isBefore(Instant.now()))
+    ) {
       log.info("Refreshing CV for user {} before searching jobs with engine {}", user.getUsername(), type.name());
       Path tempFile = null;
       try {
@@ -236,7 +239,7 @@ public class UserCvService {
           client.deleteFile(remoteCV.getFileId());
         }
         tempFile = Files.createTempFile("cv-" + user.getUsername() + "-", ".pdf");
-        Files.write(tempFile, user.getCv().getCv(),
+        Files.write(tempFile, user.getCv().getByteArray(),
             StandardOpenOption.CREATE,
             StandardOpenOption.TRUNCATE_EXISTING,
             StandardOpenOption.WRITE

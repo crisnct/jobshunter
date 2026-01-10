@@ -9,6 +9,6 @@ public class GeminiJobScoreRequest implements JobScoreRequest {
 
   private String resumeFileId;
 
-  private String jobDescriptionFileId;
+  private String jobDescription;
 
 }

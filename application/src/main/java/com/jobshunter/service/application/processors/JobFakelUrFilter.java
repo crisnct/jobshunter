@@ -23,7 +23,7 @@ public class JobFakelUrFilter implements JobProcessor {
   private final Set<String> whitelistDomains;
 
   public JobFakelUrFilter(ApplicationProperties properties) {
-    this.whitelistDomains = Arrays.stream(properties.getJobsHunter().getBlacklist().split(","))
+    this.whitelistDomains = Arrays.stream(properties.getJobsHunter().getWhitelistSkipValidation().split(","))
         .map(String::trim)
         .map(String::toLowerCase)
         .collect(Collectors.toUnmodifiableSet());
@@ -41,6 +41,7 @@ public class JobFakelUrFilter implements JobProcessor {
       context.setRealUrl(true);
       context.setAccepted(true);
       context.getJob().setScore(50);
+      context.setPhase(JobPhase.REALURL);
       context.setSkipProcessors(true);
     } else {
       if (isValidAddress(context, host)) {

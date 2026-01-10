@@ -110,7 +110,7 @@ public class BrowserSimulator {
             .header(JHHeaders.ACCEPT_ENCODING, "gzip, deflate")
             .retrieve()
             .toEntity(String.class);
-        log.info("BINGO HACK WORKED. Second time worked about getting the html for {}", url);
+        log.info("\uD83D\uDCA5 BINGO HACK WORKED. Second time worked about getting the html for {}", url);
         return entity;
       } catch (Throwable ex2) {
         log.warn("SECOND time failure about getting the html for {}", url);
@@ -133,10 +133,7 @@ public class BrowserSimulator {
           throw e;
         }
       }
-
-      ResponseEntity<String> body = ResponseEntity.ok(page.content());
-      log.info("Successfully got the body of page with playwright {}", url);
-      return body;
+      return  ResponseEntity.ok(page.content());
     }
   }
 
@@ -147,6 +144,7 @@ public class BrowserSimulator {
             .setWaitUntil(WaitUntilState.DOMCONTENTLOADED)
             .setTimeout(TimeUnit.SECONDS.toMillis(TIMEOUT))
     );
+    log.info("▶️ PLAYWRIGHT successfully got the body of page {}", url);
   }
 
 }

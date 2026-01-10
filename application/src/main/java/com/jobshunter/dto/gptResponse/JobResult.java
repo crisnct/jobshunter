@@ -1,4 +1,4 @@
-package com.jobshunter.dto.gptRequest;
+package com.jobshunter.dto.gptResponse;
 
 //@formatter:off
 /**
@@ -6,7 +6,8 @@ package com.jobshunter.dto.gptRequest;
  */
  //@formatter:on
 public record JobResult(
-    String job_url
+    String url,
+    int score
 ) {
 
 }

@@ -66,7 +66,6 @@ public non-sealed class GeminiV1JobSearchImpl implements AiJobsClient<GeminiJobS
           .addUserContent(request.getUserPrompt(), "application/pdf", request.getBase64CV())
           .generationConfig(generationConfig)
           .tools(List.of(new GoogleSearchTool()))
-          .safetySettings(List.of(new SafetySetting("HARM_CATEGORY_DANGEROUS_CONTENT", "BLOCK_LOW_AND_ABOVE")))
           .build();
 
       GeminiGenerateContentResponse response = restClient.post()

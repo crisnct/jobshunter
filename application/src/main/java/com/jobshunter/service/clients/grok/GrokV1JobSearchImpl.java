@@ -21,7 +21,6 @@ import com.jobshunter.model.GrokJobSearchRequest;
 import com.jobshunter.model.Job;
 import com.jobshunter.model.PromptType;
 import com.jobshunter.processor.PackageExpected;
-import com.jobshunter.security.JHHeaders;
 import com.jobshunter.service.TemplateRenderer;
 import com.jobshunter.service.application.UrlExtractor;
 import com.jobshunter.service.clients.AiJobsClient;
@@ -80,12 +79,11 @@ public non-sealed class GrokV1JobSearchImpl implements AiJobsClient<GrokJobSearc
 
       GrokJobsPayloadBuilder payloadBuilder = GrokJobsPayload.builder()
           .model(request.getEngineSelection().model())
-          .store(request.getStore())
           .previous_response_id(request.getPrevResponseId())
           .max_output_tokens(properties.getGrok().getMaxTokens())
           .addSystemPrompt(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_JOB_SEARCH));
 
-      if (getVersion(request.getEngineSelection().model()) > 3 && request.getStore()) {
+      if (getVersion(request.getEngineSelection().model()) > 3) {
         //TODO web search is billed at $5 per 1,000 tool invocations, in addition to standard token costs.
         payloadBuilder.addTools(Tools.builder().setDeepSearch().build());
         //TODO Document search is billed at $5 per 1,000 tool invocations, in addition to standard token costs.
@@ -182,7 +180,6 @@ public non-sealed class GrokV1JobSearchImpl implements AiJobsClient<GrokJobSearc
     GrokJobsPayload payload = GrokJobsPayload.builder()
         .model(request.getEngineSelection().model())
         .max_output_tokens(properties.getGrok().getMaxTokens())
-        .store(request.getStore())
         .previous_response_id(request.getPrevResponseId())
         .addTools(Tools.builder().setDeepSearch().build())
         .addSystemPrompt(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_JOB_SEARCH))

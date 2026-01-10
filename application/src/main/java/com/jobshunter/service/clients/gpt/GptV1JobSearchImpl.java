@@ -12,6 +12,7 @@ import com.jobshunter.dto.exceptions.ValidationException;
 import com.jobshunter.dto.gptRequest.GptJobsPayload;
 import com.jobshunter.dto.gptRequest.tools.Tools;
 import com.jobshunter.dto.gptResponse.GptResponse;
+import com.jobshunter.dto.gptResponse.JobSearchResponse;
 import com.jobshunter.dto.gptResponse.OutputItem;
 import com.jobshunter.model.AiClientResponse;
 import com.jobshunter.model.AiSchemaType;
@@ -20,7 +21,6 @@ import com.jobshunter.model.GptJobSearchRequest;
 import com.jobshunter.model.Job;
 import com.jobshunter.model.PromptType;
 import com.jobshunter.processor.PackageExpected;
-import com.jobshunter.security.JHHeaders;
 import com.jobshunter.service.TemplateRenderer;
 import com.jobshunter.service.application.UrlExtractor;
 import com.jobshunter.service.clients.AiJobsClient;
@@ -75,13 +75,13 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient<GptJobSearchR
       GptJobsPayload payload = GptJobsPayload.builder()
           .model(request.getEngineSelection().model())
           .reasoning(request.getReasoning())
-          .store(request.getStore())
           .previous_response_id(request.getPrevResponseId())
           .max_output_tokens(properties.getGpt().getMaxTokens())
           .addTools(Tools.builder().setDeepSearch().build())
           .instructions(templateRenderer.getPrompt(PromptType.SYSTEM_INSTRUCTIONS))
           .addSystemPrompt(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_JOB_SEARCH))
           .addUserPrompt(request.getUserPrompt(), remoteCV.getFileId())
+          .setResponseSchema(templateRenderer.getSchema(AiSchemaType.GPT_JSON_SCHEMA_RESPONSE))
           .build();
 
       GptResponse response = restClient.post()
@@ -99,7 +99,7 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient<GptJobSearchR
       result.addAll(jobs);
       return result;
     } catch (Exception e) {
-      log.error("GPT API call failed", e);
+      log.error("❌ GPT API call failed", e);
       return new AiClientResponse();
     }
   }
@@ -210,7 +210,18 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient<GptJobSearchR
       item.get().content().stream()
           .filter(c -> c.text().length() > 2)
           .filter(c -> Objects.equals("output_text", c.type()))
-          .forEach(o -> jobs.addAll(urlExtractor.parseJobs(o.text())));
+          .forEach(o -> {
+            try {
+              JobSearchResponse resp = mapper.readValue(o.text(), JobSearchResponse.class);
+              jobs.addAll(resp.results().stream()
+                  .map(p -> new Job(p.score(), p.url(), null))
+                  .toList()
+              );
+            } catch (Exception e) {
+              log.warn("Exception for mapping jobs from GPT to response {}", e.getMessage());
+              jobs.addAll(urlExtractor.parseJobs(o.text()));
+            }
+          });
       return jobs;
     } else {
       return java.util.Collections.emptyList();

@@ -33,7 +33,7 @@ public class UserCvDBService {
   public UserCvEntity replaceUserCv(UserEntity user, byte[] cvContent, Map<EngineType, ResumeFileInfo> result) {
     UserCvEntity entity = userCvRepository.findByUserId(user.getId())
         .orElseGet(() -> new UserCvEntity(user, cvContent));
-    entity.setCv(cvContent);
+    entity.setByteArray(cvContent);
     entity = userCvRepository.save(entity);
     for (Entry<EngineType, ResumeFileInfo> entry : result.entrySet()) {
       this.saveRemoteCvFile(user, entry.getKey(), entry.getValue());
@@ -52,7 +52,7 @@ public class UserCvDBService {
     entity.setFileId(fileInfo.fileId());
     entity.setFilename(fileInfo.filename());
     entity.setExpireTime(fileInfo.expireAt());
-    userRemoteCvRepository.save(entity);
+    userRemoteCvRepository.saveAndFlush(entity);
   }
 
   @Transactional(readOnly = true)

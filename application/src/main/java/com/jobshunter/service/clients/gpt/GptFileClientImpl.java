@@ -92,8 +92,12 @@ public non-sealed class GptFileClientImpl implements FileClient {
         .uri(API_URI)
         .headers((h) -> h.setBearerAuth(properties.getGpt().getApiKey()))
         .retrieve()
+        .onStatus(HttpStatusCode::isError, (req, res) -> {
+          log.error("GPT job API returned {} - {}", res.getStatusCode().value(), res.getBody());
+        })
         .body(FileListResponse.class);
-    if (response != null && response.data() != null) {
+
+    if (response != null) {
       List<FileInfo> toDelete = response.data().stream().filter(f -> !fileIds.contains(f.id())).toList();
       for (FileInfo file : toDelete) {
         deleteFile(file.id());

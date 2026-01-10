@@ -228,7 +228,7 @@ public class IntegrationTests {
   public void testJobFakelUrFilter(){
     Job job = new Job(-1, "https://www.bestjobs.eu/en/job/accounts-receivable-accountant-with-german-cabs-continental-automotive-romania-srl-timisoara-5b5f5e5e-5b5f-5e5e-5b5f-5b5f5e5e5b5f", null );
 
-    JobContext jc = new JobContext(job, null, "cv");
+    JobContext jc = new JobContext(job, null);
     jc = jobFakelUrFilter.processAsync(jc);
     jc = jobFetchProcessor.processAsync(jc);
     jc = jobBodyExtractorProcessor.processAsync(jc);

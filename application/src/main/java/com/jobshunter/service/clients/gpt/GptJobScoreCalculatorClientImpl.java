@@ -61,7 +61,7 @@ public non-sealed class GptJobScoreCalculatorClientImpl implements JobScoreCalcu
           .model(AI_MODEL)
           .temperature(0)
           .store(false)
-          .max_output_tokens(config.getMaxTokens())
+          .max_output_tokens(5)
           .addSystemPrompt(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_MATCH_SCORE))
           .addUserPrompt(userPrompt, remoteCV.getFileId())
           .build();
@@ -77,7 +77,7 @@ public non-sealed class GptJobScoreCalculatorClientImpl implements JobScoreCalcu
       //noinspection DataFlowIssue
       return extractScore(response);
     } catch (Exception e) {
-      log.error("ChatGPT job API call failed", e);
+      log.error("❌ GPT job API call failed", e);
       return 0;
     }
   }

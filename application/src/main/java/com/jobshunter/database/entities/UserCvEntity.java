@@ -36,11 +36,11 @@ public class UserCvEntity {
   @Lob
   @Basic(fetch = FetchType.LAZY)
   @Column(name = "cv", nullable = false)
-  private byte[] cv;
+  private byte[] byteArray;
 
   public UserCvEntity(UserEntity user, byte[] cv) {
     this.user = user;
-    this.cv = cv;
+    this.byteArray = cv;
   }
 }
 
