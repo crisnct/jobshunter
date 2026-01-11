@@ -33,7 +33,7 @@ public class GptJobHunting extends AdditionalEffortJobHunting<GptJobSearchReques
     GptJobSearchRequest request = new GptJobSearchRequest(order, reasoning);
     request.setUserPrompt(prompt.getPrompt());
     request.setPromptId(prompt.getId());
-    request.setStoreConversation(true);
+    request.setStoreConversation(false);
     request.setSearchCompanies(false);
     return request;
   }

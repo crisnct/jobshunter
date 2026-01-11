@@ -59,21 +59,22 @@ public class EngineController {
   @PostMapping("/order")
   @Transactional
   public ResponseEntity<?> createOrder(
-      @Valid @RequestBody JobOrderRequest request,
+      @Valid @RequestBody List<JobOrderRequest> requests,
       Authentication authentication
   ) {
-    if (!request.searchWithUserPrompts() && !request.searchCompanies()) {
-      throw new ValidationException("At least one of searchWithUserPrompts or searchCompanies must be true");
-    }
-    log.info("Creating job order for user: {}, model: {}, searchCompanies: {}, searchWithUserPrompts: {}",
-        authentication.getName(), request.model(), request.searchCompanies(), request.searchWithUserPrompts());
+    for (JobOrderRequest request : requests) {
+      if (!request.searchWithUserPrompts() && !request.searchCompanies()) {
+        throw new ValidationException("At least one of searchWithUserPrompts or searchCompanies must be true");
+      }
+      log.info("Creating job order for user: {}, model: {}, searchCompanies: {}, searchWithUserPrompts: {}",
+          authentication.getName(), request.model(), request.searchCompanies(), request.searchWithUserPrompts());
 
-    @SuppressWarnings("OptionalGetWithoutIsPresent")
-    UserEntity user = userDBService.getUser(authentication.getName()).get();
-    JobOrderEntity jobOrder = jobOrderDBService.createJobOrder(user, request);
-    log.info("Job order created successfully");
-    return ResponseEntity.status(HttpStatus.CREATED)
-        .body(Map.of("id", jobOrder.getId(), "message", "Job order created successfully"));
+      @SuppressWarnings("OptionalGetWithoutIsPresent")
+      UserEntity user = userDBService.getUser(authentication.getName()).get();
+      jobOrderDBService.createJobOrder(user, request);
+      log.info("Job order created successfully {}-{}", request.model(), request.provider().name());
+    }
+    return ResponseEntity.status(HttpStatus.CREATED).body("Job orders created successfully");
   }
 
   @GetMapping("/orders")

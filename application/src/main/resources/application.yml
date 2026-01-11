@@ -155,7 +155,7 @@ resilience4j.ratelimiter:
       timeoutDuration: 5m
       writableStackTraceEnabled: false
     grokLimiter:
-      limitForPeriod: 8
+      limitForPeriod: 1
       limitRefreshPeriod: 1s
       timeoutDuration: 5m
       writableStackTraceEnabled: false

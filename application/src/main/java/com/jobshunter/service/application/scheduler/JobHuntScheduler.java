@@ -74,25 +74,12 @@ public class JobHuntScheduler {
 
   @Scheduled(fixedDelayString = "${jobshunter.scheduler.processOrderFrequency:5000}")
   public void processOrderAsync() {
-    Optional<Long> jobId = jobOrderDBService.acquireJobId();
-    if (jobId.isPresent()) {
-      this.performActionAsync("processOrderAsync", () -> processOrderSync(jobId.get()), ordersExecutor);
-    }
+    this.performActionAsync("processOrderAsync", this::processOrderSync, ordersExecutor);
   }
 
   @Scheduled(fixedDelayString = "${jobshunter.scheduler.notifyUsersFrequency:60000}")
   public void notifyUsersAsync() {
-    final List<UserEntity> usersToNotify = new ArrayList<>();
-    for (var user : userDBService.getAllUsers()) {
-      if (user.isNotifyWhatsapp() || user.isNotifyEmail()) {
-        if (user.getLastJobs() != null && user.getLastJobs().plus(Duration.ofDays(1)).isBefore(Instant.now())) {
-          usersToNotify.add(user);
-        }
-      }
-    }
-    if (!usersToNotify.isEmpty()) {
-      this.performActionAsync("notifyUsersAsync", () -> notifyUsersSync(usersToNotify), notificationsExecutor);
-    }
+    this.performActionAsync("notifyUsersAsync", this::notifyUsersSync, notificationsExecutor);
   }
 
   @Scheduled(fixedDelayString = "${jobshunter.scheduler.cleanupFiles:86400000}")
@@ -100,8 +87,12 @@ public class JobHuntScheduler {
     this.performActionAsync("cleanupFiles", this::cleanupFilesSync, maintenanceExecutor);
   }
 
-  public void processOrderSync(Long jobId) {
-    JobOrderEntity jobOrder = jobOrderDBService.getJobOrder(jobId);
+  public void processOrderSync() {
+    Optional<Long> jobIdOp = jobOrderDBService.acquireJobId();
+    if (jobIdOp.isEmpty()) {
+      return;
+    }
+    JobOrderEntity jobOrder = jobOrderDBService.getJobOrder(jobIdOp.get());
     log.info("Start processing job order id={} for user {}", jobOrder.getId(), jobOrder.getUser().getUsername());
     try {
       UserSessionEntity session = userSessionDBService.findByUser(jobOrder.getUser());
@@ -119,9 +110,19 @@ public class JobHuntScheduler {
     }
   }
 
-  public void notifyUsersSync(List<UserEntity> usersToNotify) {
-    //log.info("Notifying user {} about new jobs found", user.getUsername());
-    // TODO: implement notification logic if needed
+  public void notifyUsersSync() {
+    final List<UserEntity> usersToNotify = new ArrayList<>();
+    for (var user : userDBService.getAllUsers()) {
+      if (user.isNotifyWhatsapp() || user.isNotifyEmail()) {
+        if (user.getLastJobs() != null && user.getLastJobs().plus(Duration.ofDays(1)).isBefore(Instant.now())) {
+          usersToNotify.add(user);
+        }
+      }
+    }
+    if (!usersToNotify.isEmpty()) {
+      //log.info("Notifying user {} about new jobs found", user.getUsername());
+      // TODO: implement notification logic if needed
+    }
   }
 
   private void cleanupFilesSync() {
