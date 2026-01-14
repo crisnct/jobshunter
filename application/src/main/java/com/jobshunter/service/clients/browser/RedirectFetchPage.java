@@ -6,6 +6,7 @@ import java.util.concurrent.TimeUnit;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hc.client5.http.protocol.HttpClientContext;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
@@ -43,7 +44,7 @@ public class RedirectFetchPage implements HttpFetcher {
             return new HttpFetchResult(url, redirectedURL, response.getStatusCode().value(), response.getBody(), redirects, httpcontext);
           } catch (Throwable e) {
             log.error("Redirection error {} for url {}", e.getMessage(), url);
-            return new HttpFetchResult(url, null, 404, null, List.of(), httpcontext);
+            return new HttpFetchResult(url, null, HttpStatus.NOT_FOUND.value(), null, List.of(), httpcontext);
           }
         });
   }

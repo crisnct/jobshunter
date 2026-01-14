@@ -5,11 +5,10 @@ import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.jobshunter.ApplicationProperties;
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.entities.UserJobRoleEntity;
-import com.jobshunter.database.entities.UserRemoteCvEntity;
 import com.jobshunter.dto.CompanyDto;
 import com.jobshunter.dto.CompanyDtoList;
 import com.jobshunter.dto.IpInfoDetailResponse;
-import com.jobshunter.dto.exceptions.ValidationException;
+import com.jobshunter.dto.exceptions.BusinessException;
 import com.jobshunter.dto.gptRequest.GptJobsPayload;
 import com.jobshunter.dto.gptRequest.tools.Tools;
 import com.jobshunter.dto.gptRequest.tools.UserLocation;
@@ -18,7 +17,6 @@ import com.jobshunter.dto.gptResponse.JobSearchResponse;
 import com.jobshunter.dto.gptResponse.OutputItem;
 import com.jobshunter.model.AiClientResponse;
 import com.jobshunter.model.AiSchemaType;
-import com.jobshunter.model.EngineType;
 import com.jobshunter.model.GptJobSearchRequest;
 import com.jobshunter.model.Job;
 import com.jobshunter.model.PromptType;
@@ -26,6 +24,7 @@ import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.TemplateRenderer;
 import com.jobshunter.service.application.UrlExtractor;
 import com.jobshunter.service.clients.AiJobsClient;
+import com.jobshunter.service.clients.DeleteConvAiClient;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
@@ -41,6 +40,8 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
@@ -50,7 +51,11 @@ import org.springframework.web.client.RestClient;
 @PackageExpected("com.jobshunter.service.clients.gpt")
 @ConditionalOnProperty(name = "gpt.enabled", havingValue = "true")
 @AllArgsConstructor
-public non-sealed class GptV1JobSearchImpl implements AiJobsClient<GptJobSearchRequest, AiClientResponse> {
+public non-sealed class GptV1JobSearchImpl implements
+    AiJobsClient<GptJobSearchRequest, AiClientResponse>,
+    DeleteConvAiClient {
+
+  private static final double DEFAULT_TEMPERATURE = 0.2;
 
   public static final URI DEFAULT_URI = URI.create("https://api.openai.com/v1/responses");
 
@@ -70,10 +75,6 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient<GptJobSearchR
   @Bulkhead(name = "gptBulkhead")
   public AiClientResponse searchJobs(GptJobSearchRequest request) {
     try {
-      UserRemoteCvEntity remoteCV = request.getUser().getRemoteCvs().stream()
-          .filter(p -> p.getProvider() == EngineType.GPT).findAny()
-          .orElseThrow(() -> new ValidationException("No GPT CV found for user " + request.getUser().getId()));
-
       IpInfoDetailResponse ipInfo = request.getIpInfo();
 
       UserLocation userLocation = new UserLocation();
@@ -84,6 +85,7 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient<GptJobSearchR
 
       GptJobsPayload payload = GptJobsPayload.builder()
           .model(request.getEngineSelection().model())
+          .temperature(DEFAULT_TEMPERATURE)
           .reasoning(request.getReasoning())
           .store(request.getStoreConversation())
           .previousResponseId(request.getPrevResponseId())
@@ -94,7 +96,7 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient<GptJobSearchR
               .build())
           .instructions(templateRenderer.getPrompt(PromptType.SYSTEM_INSTRUCTIONS))
           .addSystemPrompt(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_JOB_SEARCH))
-          .addUserPrompt(request.getUserPrompt(), remoteCV.getFileId())
+          .addUserPrompt(request.getUserPrompt(), request.getFileId())
           .setResponseSchema(templateRenderer.getSchema(AiSchemaType.GPT_JSON_SCHEMA_RESPONSE))
           .build();
 
@@ -127,6 +129,7 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient<GptJobSearchR
       UserEntity user = request.getUser();
       GptJobsPayload payload = GptJobsPayload.builder()
           .model(request.getEngineSelection().model())
+          .temperature(DEFAULT_TEMPERATURE)
           .maxOutputTokens(2500)
           .store(false)
           .addSystemPrompt(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_COMPANY_SEARCH,
@@ -171,6 +174,7 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient<GptJobSearchR
     );
     GptJobsPayload payload = GptJobsPayload.builder()
         .model(request.getEngineSelection().model())
+        .temperature(DEFAULT_TEMPERATURE)
         .maxOutputTokens(3500)
         .store(request.getStoreConversation())
         .previousResponseId(request.getPrevResponseId())
@@ -193,6 +197,24 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient<GptJobSearchR
     result.addAll(jobs);
     result.setId(result.getId());
     return result;
+  }
+
+  @Override
+  @CircuitBreaker(name = "gptCircuitBreaker", fallbackMethod = "fallbackDeleteConversation")
+  @RateLimiter(name = "gptLimiter")
+  @Bulkhead(name = "gptBulkhead")
+  public void deleteConversation(String id) {
+    restClient.delete()
+        .uri(DEFAULT_URI + "/" + id)
+        .headers((h) -> h.setBearerAuth(properties.getGpt().getApiKey()))
+        .retrieve()
+        .onStatus(
+            HttpStatusCode::isError,
+            (request, response) -> {
+              throw new BusinessException(HttpStatus.NOT_FOUND, "Delete failed: " + response.getStatusCode() + " for id " + id);
+            }
+        )
+        .toBodilessEntity();
   }
 
   @SuppressWarnings("unused")
@@ -229,6 +251,7 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient<GptJobSearchR
             try {
               JobSearchResponse resp = mapper.readValue(o.text(), JobSearchResponse.class);
               jobs.addAll(resp.results().stream()
+                  .filter(p -> p.url() != null && p.url().length() > 5)
                   .map(p -> new Job(-1, p.url(), null))
                   .toList()
               );
@@ -241,6 +264,12 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient<GptJobSearchR
     } else {
       return java.util.Collections.emptyList();
     }
+  }
+
+
+  @SuppressWarnings("unused")
+  private void fallbackDeleteConversation(String id, Throwable t) {
+    log.error("{} call short-circuited/bulkheaded: {}", getClass().getSimpleName(), t.getMessage());
   }
 
   protected List<CompanyDto> extractCompanies(GptResponse response) {

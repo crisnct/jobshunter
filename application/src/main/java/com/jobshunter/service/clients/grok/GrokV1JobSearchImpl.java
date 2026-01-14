@@ -5,10 +5,9 @@ import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.jobshunter.ApplicationProperties;
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.entities.UserJobRoleEntity;
-import com.jobshunter.database.entities.UserRemoteCvEntity;
 import com.jobshunter.dto.CompanyDto;
 import com.jobshunter.dto.CompanyDtoList;
-import com.jobshunter.dto.exceptions.ValidationException;
+import com.jobshunter.dto.exceptions.BusinessException;
 import com.jobshunter.dto.grokRequest.GrokJobsPayload;
 import com.jobshunter.dto.grokRequest.GrokJobsPayload.GrokJobsPayloadBuilder;
 import com.jobshunter.dto.grokRequest.tools.Tools;
@@ -16,7 +15,6 @@ import com.jobshunter.dto.grokResponse.GrokResponse;
 import com.jobshunter.dto.grokResponse.OutputItem;
 import com.jobshunter.model.AiClientResponse;
 import com.jobshunter.model.AiSchemaType;
-import com.jobshunter.model.EngineType;
 import com.jobshunter.model.GrokJobSearchRequest;
 import com.jobshunter.model.Job;
 import com.jobshunter.model.PromptType;
@@ -24,11 +22,11 @@ import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.TemplateRenderer;
 import com.jobshunter.service.application.UrlExtractor;
 import com.jobshunter.service.clients.AiJobsClient;
+import com.jobshunter.service.clients.DeleteConvAiClient;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import io.jsonwebtoken.lang.Collections;
-import jakarta.validation.constraints.NotBlank;
 import java.net.URI;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -36,12 +34,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
@@ -51,11 +49,13 @@ import org.springframework.web.client.RestClient;
 @PackageExpected("com.jobshunter.service.clients.grok")
 @ConditionalOnProperty(name = "grok.enabled", havingValue = "true")
 @AllArgsConstructor
-public non-sealed class GrokV1JobSearchImpl implements AiJobsClient<GrokJobSearchRequest, AiClientResponse> {
+public non-sealed class GrokV1JobSearchImpl implements
+    AiJobsClient<GrokJobSearchRequest, AiClientResponse>,
+    DeleteConvAiClient {
+
+  private static final double DEFAULT_TEMPERATURE = 0.2;
 
   public static final URI DEFAULT_URI = URI.create("https://api.x.ai/v1/responses");
-
-  private static final Pattern GROK_VERSION_PATTERN = Pattern.compile("^[a-zA-Z]+-(\\d+)-.*");
 
   private final ApplicationProperties properties;
 
@@ -73,25 +73,13 @@ public non-sealed class GrokV1JobSearchImpl implements AiJobsClient<GrokJobSearc
   @Bulkhead(name = "grokBulkhead")
   public AiClientResponse searchJobs(GrokJobSearchRequest request) {
     try {
-      UserRemoteCvEntity remoteCV = request.getUser().getRemoteCvs().stream()
-          .filter(p -> p.getProvider() == EngineType.GROK).findAny()
-          .orElseThrow(() -> new ValidationException("No GROK CV found for user " + request.getUser().getId()));
-
       GrokJobsPayloadBuilder payloadBuilder = GrokJobsPayload.builder()
           .model(request.getEngineSelection().model())
+          .temperature(DEFAULT_TEMPERATURE)
           .store(request.getStoreConversation())
           .previousResponseId(request.getPrevResponseId())
-          .maxOutputTokens(3500)
-          .addSystemPrompt(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_JOB_SEARCH));
-
-      if (getVersion(request.getEngineSelection().model()) > 3) {
-        //TODO web search is billed at $5 per 1,000 tool invocations, in addition to standard token costs.
-        payloadBuilder.addTools(Tools.builder().setDeepSearch().build());
-        //TODO Document search is billed at $5 per 1,000 tool invocations, in addition to standard token costs.
-        payloadBuilder.addUserPrompt(request.getUserPrompt(), remoteCV.getFileId());
-      } else {
-        payloadBuilder.addUserPrompt(request.getUserPrompt());
-      }
+          .maxOutputTokens(7000)
+          .addUserPrompt(request.getUserPrompt(), request.getFileId());
 
       GrokJobsPayload payload = payloadBuilder.build();
       GrokResponse response = restClient.post()
@@ -114,19 +102,6 @@ public non-sealed class GrokV1JobSearchImpl implements AiJobsClient<GrokJobSearc
     }
   }
 
-  private int getVersion(@NotBlank String model) {
-    try {
-      Matcher matcher = GROK_VERSION_PATTERN.matcher(model);
-      if (!matcher.matches()) {
-        throw new IllegalArgumentException("Invalid format: " + model);
-      }
-      return Integer.parseInt(matcher.group(1));
-    } catch (Exception e) {
-      log.error("Error parsing model version: {}", model, e);
-    }
-    return 2;
-  }
-
   @Override
   @CircuitBreaker(name = "grokCircuitBreaker", fallbackMethod = "fallbackSearchCompanies")
   @RateLimiter(name = "grokLimiter")
@@ -136,6 +111,7 @@ public non-sealed class GrokV1JobSearchImpl implements AiJobsClient<GrokJobSearc
       UserEntity user = request.getUser();
       GrokJobsPayload payload = GrokJobsPayload.builder()
           .model(request.getEngineSelection().model())
+          .temperature(DEFAULT_TEMPERATURE)
           .store(false)
           .maxOutputTokens(2500)
           .addSystemPrompt(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_COMPANY_SEARCH,
@@ -180,11 +156,11 @@ public non-sealed class GrokV1JobSearchImpl implements AiJobsClient<GrokJobSearc
     );
     GrokJobsPayload payload = GrokJobsPayload.builder()
         .model(request.getEngineSelection().model())
-        .maxOutputTokens(3500)
+        .temperature(DEFAULT_TEMPERATURE)
+        .maxOutputTokens(7000)
         .store(request.getStoreConversation())
         .previousResponseId(request.getPrevResponseId())
         .addTools(Tools.builder().setDeepSearch().build())
-        .addSystemPrompt(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_JOB_SEARCH))
         .addUserPrompt(userPrompt)
         .build();
 
@@ -201,6 +177,29 @@ public non-sealed class GrokV1JobSearchImpl implements AiJobsClient<GrokJobSearc
     result.setId(response.id());
     result.addAll(jobs);
     return result;
+  }
+
+  @Override
+  @CircuitBreaker(name = "grokCircuitBreaker", fallbackMethod = "fallbackDeleteConversation")
+  @RateLimiter(name = "grokLimiter")
+  @Bulkhead(name = "grokBulkhead")
+  public void deleteConversation(String id) {
+    restClient.delete()
+        .uri(DEFAULT_URI + "/" + id)
+        .headers((h) -> h.setBearerAuth(properties.getGrok().getApiKey()))
+        .retrieve()
+        .onStatus(
+            HttpStatusCode::isError,
+            (request, response) -> {
+              throw new BusinessException(HttpStatus.NOT_FOUND, "Delete failed: " + response.getStatusCode() + " for id " + id);
+            }
+        )
+        .toBodilessEntity();
+  }
+
+  @SuppressWarnings("unused")
+  private void fallbackDeleteConversation(String id, Throwable t) {
+    log.error("{} call short-circuited/bulkheaded: {}", getClass().getSimpleName(), t.getMessage());
   }
 
   @SuppressWarnings("unused")

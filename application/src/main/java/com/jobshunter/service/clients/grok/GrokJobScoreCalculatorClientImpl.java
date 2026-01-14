@@ -1,7 +1,6 @@
 package com.jobshunter.service.clients.grok;
 
 import com.jobshunter.ApplicationProperties;
-import com.jobshunter.ApplicationProperties.Grok;
 import com.jobshunter.database.entities.UserRemoteCvEntity;
 import com.jobshunter.dto.exceptions.ValidationException;
 import com.jobshunter.dto.grokRequest.GrokScorePayload;
@@ -12,7 +11,6 @@ import com.jobshunter.model.EngineType;
 import com.jobshunter.model.GrokJobScoreRequest;
 import com.jobshunter.model.PromptType;
 import com.jobshunter.processor.PackageExpected;
-import com.jobshunter.security.JHHeaders;
 import com.jobshunter.service.TemplateRenderer;
 import com.jobshunter.service.clients.JobScoreCalculatorClient;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
@@ -35,7 +33,7 @@ import org.springframework.web.client.RestClient;
 @RequiredArgsConstructor
 public non-sealed class GrokJobScoreCalculatorClientImpl implements JobScoreCalculatorClient<GrokJobScoreRequest> {
 
-  private static final String AI_MODEL = "grok-4-fast-non-reasoning";
+  private static final String AI_MODEL = "grok-2-1212";
 
   private static final URI DEFAULT_URI = URI.create("https://api.x.ai/v1/responses");
 
@@ -59,7 +57,7 @@ public non-sealed class GrokJobScoreCalculatorClientImpl implements JobScoreCalc
       GrokScorePayload payload = GrokScorePayload.builder()
           .model(AI_MODEL)
           .store(false)
-          .temperature(0)
+          .temperature(DEFAULT_SCORE_TEMPERATURE)
           .max_output_tokens(16)
           .addSystemPrompt(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_MATCH_SCORE))
           .addUserPrompt(userPrompt, remoteCV.getFileId())

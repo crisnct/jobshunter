@@ -54,7 +54,7 @@ public non-sealed class GeminiJobScoreCalculatorClientImpl implements JobScoreCa
   public int computeScore(GeminiJobScoreRequest request) {
     try {
       GenerationConfig generationConfig = GenerationConfig.builder()
-          .temperature(0.0)
+          .temperature(DEFAULT_SCORE_TEMPERATURE)
           .maxOutputTokens(20)
           .build();
 

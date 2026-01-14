@@ -8,6 +8,7 @@ import lombok.Data;
 public class AiClientResponse {
 
   private final List<Job> jobs = new ArrayList<>();
+
   private String id;
 
   public void add(Job job) {

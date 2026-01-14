@@ -40,13 +40,15 @@ import org.springframework.web.client.RestClient;
 @Slf4j
 public class RestClientConfig {
 
+  private static final int RESPONSE_TIMEOUT = 15;//minutes
+
   /**
    * Shared connection pool for all HTTP clients. Singleton bean to ensure efficient resource usage across the application.
    */
   @Bean
   public PoolingHttpClientConnectionManager httpClientConnectionManager() {
     ConnectionConfig connectionConfig = ConnectionConfig.custom()
-        .setConnectTimeout(Timeout.ofSeconds(10))
+        .setConnectTimeout(Timeout.ofSeconds(RESPONSE_TIMEOUT))
         .build();
 
     return PoolingHttpClientConnectionManagerBuilder.create()
@@ -76,9 +78,9 @@ public class RestClientConfig {
   @Bean
   public HttpClient httpClient(PoolingHttpClientConnectionManager connectionManager) {
     RequestConfig requestConfig = RequestConfig.custom()
-        .setConnectionRequestTimeout(Timeout.ofSeconds(2))
-        .setResponseTimeout(Timeout.ofMinutes(5)) // Default timeout, can be overridden per RestClient
-        .setMaxRedirects(5)
+        .setConnectionRequestTimeout(Timeout.ofSeconds(5))
+        .setResponseTimeout(Timeout.ofMinutes(RESPONSE_TIMEOUT)) // Default timeout, can be overridden per RestClient
+        .setMaxRedirects(3)
         .setRedirectsEnabled(true)
         .build();
 
@@ -140,6 +142,7 @@ public class RestClientConfig {
     HttpClientBuilder clientBuilder = HttpClients.custom()
         .setConnectionManager(connectionManager) // Share the same connection pool
         .setDefaultRequestConfig(requestConfig)
+        .disableRedirectHandling()
         .evictExpiredConnections()
         .evictIdleConnections(Timeout.ofMinutes(5));
 

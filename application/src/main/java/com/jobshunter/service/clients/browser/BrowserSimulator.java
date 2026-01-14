@@ -119,7 +119,6 @@ public class BrowserSimulator {
     }
   }
 
-
   public ResponseEntity<String> openPageSyncPlaywright(String url) {
     try (BrowserContext context = playwrightManager.newContext();
         Page page = context.newPage()) {

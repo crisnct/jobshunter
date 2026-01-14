@@ -9,12 +9,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import lombok.Builder;
+import org.apache.logging.log4j.util.Strings;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Builder
 public record GptJobsPayload(
     String model,
+    double temperature,
     Reasoning reasoning,
     @JsonProperty("max_output_tokens")
     int maxOutputTokens,
@@ -44,10 +46,12 @@ public record GptJobsPayload(
     }
 
     public GptJobsPayloadBuilder addUserPrompt(String userPrompt, String fileId) {
-      input.add(new Input("user", List.of(
-          new InputMessage("input_text", userPrompt),
-          new InputFile(fileId)
-      )));
+      List<InputObj> inputs = new ArrayList<>();
+      inputs.add(new InputMessage("input_text", userPrompt));
+      if (Strings.isNotBlank(fileId)) {
+        inputs.add(new InputFile(fileId));
+      }
+      input.add(new Input("user", inputs));
       return this;
     }
 

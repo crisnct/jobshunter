@@ -25,12 +25,17 @@ public class UrlExtractor {
     Matcher matcher = URL_PATTERN.matcher(text);
     while (matcher.find()) {
       String url = normalize(matcher.group());
-      results.add(new Job(-1, url, null));
+      if (url.length() > 5) {
+        results.add(new Job(-1, url, null));
+      }
     }
     return results;
   }
 
   private String normalize(String url) {
+    if (url == null) {
+      return "";
+    }
     // normalize www.* → https://www.*
     if (url.startsWith("www.")) {
       url = "https://" + url;

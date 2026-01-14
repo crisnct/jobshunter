@@ -68,6 +68,8 @@ public abstract non-sealed class GenericJobHunting<T extends AIJobSearchRequest>
   public CompletableFuture<List<Job>> searchJobsByCompaniesAsync(SearchJobOrder order) {
     UserEntity user = order.getUser();
     T request = createCompaniesRequest(order);
+    //TODO optimize and create an async for each of the job search for a group of companies.
+    // Do it similar like in searchJobsAsync so it will run all jobs search in parallel
     return CompletableFuture.supplyAsync(() -> searchCompaniesSync(request, order.getEngineSelection()), executor)
         .exceptionally(throwable -> {
           if (throwable.getCause() != null && throwable.getCause() instanceof RequestNotPermitted) {
@@ -84,7 +86,7 @@ public abstract non-sealed class GenericJobHunting<T extends AIJobSearchRequest>
         });
   }
 
-  private CompletableFuture<AiClientResponse> searchAsync(T request, Executor executor) {
+  protected CompletableFuture<AiClientResponse> searchAsync(T request, Executor executor) {
     return CompletableFuture.supplyAsync(() -> searchSync(request), executor)
         .exceptionally(throwable -> {
           EngineSelection engineConfig = request.getEngineSelection();

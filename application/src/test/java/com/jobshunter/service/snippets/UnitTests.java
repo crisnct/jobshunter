@@ -46,6 +46,8 @@ public class UnitTests {
     jobs.add("https://allremote.jobs/remote-job/global-talents-hub-senior-java-engineer-36870af5-14a4-4aa2-b55c-d280439fb5e7");
     jobs.add("https://jobgether.com/offer/69098ffedec002a1d45b6d3d-senior-java-developer");
     jobs.add("https://twlglobalservicessrl.teamtailor.com/jobs/2370944-senior-java-developer-remote-opportunity");
+    jobs.add("https://wellfound.com/jobs/senior-java-developer-remote-321654987");
+    jobs.add("https://angel.co/company/techstartup/jobs/senior-java-developer-remote-321654987");
 
     List<String> expiredKeywords = List.of("expired", "no longer exists");
     for (String jobURL : jobs) {

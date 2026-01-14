@@ -38,6 +38,8 @@ import org.springframework.web.client.RestClient;
 @AllArgsConstructor
 public non-sealed class GeminiV1JobSearchImpl implements AiJobsClient<GeminiJobSearchRequest, AiClientResponse> {
 
+  private static final double DEFAULT_TEMPERATURE = 0.3;
+
   public static final String GEMINI_URI = "https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent?key=%s";
 
   private final ApplicationProperties properties;
@@ -55,7 +57,7 @@ public non-sealed class GeminiV1JobSearchImpl implements AiJobsClient<GeminiJobS
   public AiClientResponse searchJobs(GeminiJobSearchRequest request) {
     try {
       GenerationConfig generationConfig = GenerationConfig.builder()
-          .temperature(0.0)
+          .temperature(DEFAULT_TEMPERATURE)
           .maxOutputTokens(3500)
           .thinkingConfig(new ThinkingConfig(2048))
           .build();

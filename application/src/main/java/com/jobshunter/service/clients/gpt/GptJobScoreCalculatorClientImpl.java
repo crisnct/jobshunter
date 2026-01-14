@@ -1,7 +1,6 @@
 package com.jobshunter.service.clients.gpt;
 
 import com.jobshunter.ApplicationProperties;
-import com.jobshunter.ApplicationProperties.Gpt;
 import com.jobshunter.database.entities.UserRemoteCvEntity;
 import com.jobshunter.dto.exceptions.ValidationException;
 import com.jobshunter.dto.gptRequest.Gpt4ScorePayload;
@@ -12,7 +11,6 @@ import com.jobshunter.model.EngineType;
 import com.jobshunter.model.GptJobScoreRequest;
 import com.jobshunter.model.PromptType;
 import com.jobshunter.processor.PackageExpected;
-import com.jobshunter.security.JHHeaders;
 import com.jobshunter.service.TemplateRenderer;
 import com.jobshunter.service.clients.JobScoreCalculatorClient;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
@@ -58,7 +56,7 @@ public non-sealed class GptJobScoreCalculatorClientImpl implements JobScoreCalcu
 
       Gpt4ScorePayload payload = Gpt4ScorePayload.builder()
           .model(AI_MODEL)
-          .temperature(0)
+          .temperature(DEFAULT_SCORE_TEMPERATURE)
           .max_output_tokens(16)
           .reasoning(request.getReasoning())
           .store(false)

@@ -58,9 +58,9 @@ public class JobsStateMachine {
       @Qualifier("jobProcessingExecutor") Executor jobProcessingExecutor
   ) {
     this.geminiScoringProcessor = geminiScoringProcessor;
-    this.gptScoringProcessor=gptScoringProcessor;
+    this.gptScoringProcessor = gptScoringProcessor;
     this.validatorProcessor = validatorProcessor;
-    this.grokScoringProcessor=grokScoringProcessor;
+    this.grokScoringProcessor = grokScoringProcessor;
     this.fetchPageProcessor = fetchPageProcessor;
     this.urlFetchRestClientExecutor = urlFetchRestClientExecutor;
     this.bodyExtractorProcessor = bodyExtractorProcessor;
@@ -71,11 +71,12 @@ public class JobsStateMachine {
     this.grokExecutor = grokExecutor;
   }
 
+  //TODO replace by the other method with similar name
   public List<Job> processAsync(CompletableFuture<List<Job>> futureJobs, UserEntity user) {
     CompletableFuture<List<JobContext>> allJobs = futureJobs
         .thenCompose(jobsList -> {
           List<CompletableFuture<JobContext>> pipelined = jobsList.stream()
-              .map(job -> applyJobPipeline(job, user))
+              .map(job -> applyJobPipeline(job, user, true))
               .toList();
 
           return CompletableFuture.allOf(pipelined.toArray(CompletableFuture[]::new))
@@ -93,13 +94,35 @@ public class JobsStateMachine {
         .toList();
   }
 
-  private CompletableFuture<JobContext> applyJobPipeline(Job job, UserEntity user) {
+  public CompletableFuture<List<JobContext>> processAsyncWithContext(CompletableFuture<List<Job>> futureJobs, UserEntity user, boolean scoring) {
+    CompletableFuture<List<JobContext>> allJobs = futureJobs
+        .thenCompose(jobsList -> {
+          List<CompletableFuture<JobContext>> pipelined = jobsList.stream()
+              .map(job -> applyJobPipeline(job, user, scoring))
+              .toList();
+
+          return CompletableFuture.allOf(pipelined.toArray(CompletableFuture[]::new))
+              .thenApply(v -> pipelined.stream()
+                  .map(CompletableFuture::join)
+                  .toList()
+              );
+        });
+
+    return allJobs.thenApply(contexts -> {
+      this.logResults(contexts, user.getUsername());
+      return contexts;
+    });
+  }
+
+  //TODO do optimization to not pass again the jobs through state machine the second time
+  // through all the stages but only for scoring.
+  private CompletableFuture<JobContext> applyJobPipeline(Job job, UserEntity user, boolean scoring) {
     return CompletableFuture.supplyAsync(() -> new JobContext(job, user), jobProcessingExecutor)
         .thenApplyAsync(ctx -> ctx.isSkipProcessors() ? ctx : fakeUrlFilterProcessor.processAsync(ctx), jobProcessingExecutor)
         .thenApplyAsync(ctx -> ctx.isSkipProcessors() ? ctx : fetchPageProcessor.processAsync(ctx), urlFetchRestClientExecutor)
         .thenApplyAsync(ctx -> ctx.isSkipProcessors() ? ctx : bodyExtractorProcessor.processAsync(ctx), jobProcessingExecutor)
         .thenApplyAsync(ctx -> ctx.isSkipProcessors() ? ctx : validatorProcessor.processAsync(ctx), jobProcessingExecutor)
-        .thenApplyAsync(ctx -> ctx.isSkipProcessors() ? ctx : gptScoringProcessor.processAsync(ctx), gptExecutor)
+        .thenApplyAsync(ctx -> (ctx.isSkipProcessors() || !scoring) ? ctx : gptScoringProcessor.processAsync(ctx), gptExecutor)
         .handle((jc, ex) -> {
           if (ex != null) {
             log.error("Pipeline failed for job {}", job != null ? job.getUrl() : "unknown", ex);
@@ -133,6 +156,18 @@ public class JobsStateMachine {
         validLinksBuilder.append(jc.getJob().getUrl());
       });
     }
+    StringBuilder rejectedLinksBuilder = new StringBuilder();
+    if (rejected > 0) {
+      result.stream().filter(p -> !p.isAccepted()).forEach(jc -> {
+        if (!rejectedLinksBuilder.isEmpty()) {
+          rejectedLinksBuilder.append("\n");
+        }
+        rejectedLinksBuilder.append(jc.getJob().getSource());
+        rejectedLinksBuilder.append(": ");
+        rejectedLinksBuilder.append(jc.getJob().getUrl());
+      });
+    }
+
     StringBuilder errorBuilder = new StringBuilder();
     if (errors > 0) {
       result.stream().filter(JobContext::isFailed).forEach(jc -> {
@@ -153,9 +188,12 @@ public class JobsStateMachine {
         ✅Valid links:
         {}
         
+        🔍Rejected links:
+        {}
+        
         Errors:
         {}---
-        """, username, result.size(), acceptedUrls, rejected, errors, validLinksBuilder, errorBuilder
+        """, username, result.size(), acceptedUrls, rejected, errors, validLinksBuilder, rejectedLinksBuilder, errorBuilder
     );
   }
 

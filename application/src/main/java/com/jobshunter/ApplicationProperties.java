@@ -29,6 +29,13 @@ public class ApplicationProperties {
     private String blacklist;
     private String whitelistSkipValidation;
     private AppThreads threads = new AppThreads();
+    private AdditionalEffort additionalEffort = new AdditionalEffort();
+  }
+
+  @Data
+  public static class AdditionalEffort {
+
+    private int maxRetries = 3;
   }
 
   @Data

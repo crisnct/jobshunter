@@ -1,4 +1,6 @@
-Quality gate at {{timestamp}}:
-If you cannot verify a posting meets ALL rules (public, direct job URL, clearly visible publish/update date within last 3 days), you MUST exclude it.
-It is acceptable to return an empty array [].
-Return JSON ONLY. No extra text.
+Repair request at {{timestamp}}.
+Keep these valid results unchanged:
+{{valid_results_json}}
+Remove and replace ONLY these invalid URLs:
+{{invalid_urls}}
+Return the full corrected results array in JSON ONLY.

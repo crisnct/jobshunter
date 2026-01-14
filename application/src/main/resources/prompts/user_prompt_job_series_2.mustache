@@ -1,12 +1,4 @@
-Your previous output contained invalid results at {{timestamp}}.
-
-These URLs are invalid and MUST be removed (do not include them again):
-{{invalid_urls}}
-
-Reasons:
-{{invalid_reasons}}
-
-Redo the task:
-- Replace each invalid URL with a new verified, valid job posting URL that satisfies ALL rules.
-- Do not repeat any URL from the invalid list.
-- Output JSON ONLY. No commentary.
+Quality gate at {{timestamp}}:
+If you cannot verify a posting meets ALL rules (public, direct job URL, clearly visible publish/update date within last 3 days), you MUST exclude it.
+It is acceptable to return an empty array [].
+Return JSON ONLY. No extra text.

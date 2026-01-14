@@ -14,6 +14,8 @@ public sealed interface JobScoreCalculatorClient<T extends JobScoreRequest>
     permits GeminiJobScoreCalculatorClientImpl, GptJobScoreCalculatorClientImpl, GrokJobScoreCalculatorClientImpl, FakeGeminiJobScoreCalculator,
     FakeGptJobScoreCalculator, FakeGrokJobScoreCalculator {
 
+  double DEFAULT_SCORE_TEMPERATURE = 0.25;
+
   int computeScore(T request);
 
 }

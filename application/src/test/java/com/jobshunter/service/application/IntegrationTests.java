@@ -27,7 +27,9 @@ import com.jobshunter.service.clients.browser.BrowserSimulator;
 import io.jsonwebtoken.lang.Assert;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ExecutionException;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
@@ -216,6 +218,25 @@ public class IntegrationTests {
     list.add(
         browserSimulator.openPageAsync("https://apply.careers.microsoft.com/careers?query=java&start=0&pid=1970393556623182&sort_by=relevance"));
     list.forEach(l -> l.toCompletableFuture().join());
+  }
+
+  @Test
+  @Disabled
+  public void testInvalidRedirectedLink() {
+    List<CompletionStage<ResponseEntity<String>>> list = new ArrayList<>();
+    list.add(browserSimulator.openPageAsync("https://angel.co/company/techstartup/jobs/senior-java-developer-remote-321654987"));
+    list.forEach(l -> {
+      CompletableFuture<ResponseEntity<String>> completableFuture = l.toCompletableFuture();
+      completableFuture.join();
+      try {
+        ResponseEntity<String> respBody = completableFuture.get();
+        System.out.println("code="+respBody.getStatusCode()+", body="+respBody.getBody());
+      } catch (InterruptedException e) {
+        throw new RuntimeException(e);
+      } catch (ExecutionException e) {
+        throw new RuntimeException(e);
+      }
+    });
   }
 
   private void logStatus(long startTime) {

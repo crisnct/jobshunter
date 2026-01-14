@@ -20,8 +20,8 @@ server:
 
 jobshunter:
   name: JobsHunter
-  expiredExpressions: was expired,is expired,no longer exists,This job was available,is no longer active,job is no longer available,this job was removed,Job not found,Applications from candidates outside of our global target markets are currently not accepted,No longer accepting applications,The job ad is no longer active,Application not possible,This job opening is no longer available,The vacancy has expired,this position has been filled,ONLY on W2,The job you are looking for is no longer open,Oferta no disponible,This job posting is no longer available,this job has expired,this position has been filled,This job offer is not active,Applications are closed,This job offer is not available,This position is no longer open,This page could not be found,The job you were looking for was not found,We can’t find this page
-  blacklist: dailyremote.com,remote.co
+  expiredExpressions: was expired,is expired,no longer exists,This job was available,is no longer active,job is no longer available,this job was removed,Job not found,Applications from candidates outside of our global target markets are currently not accepted,No longer accepting applications,The job ad is no longer active,Application not possible,This job opening is no longer available,The vacancy has expired,this position has been filled,ONLY on W2,The job you are looking for is no longer open,Oferta no disponible,This job posting is no longer available,this job has expired,this position has been filled,This job offer is not active,Applications are closed,This job offer is not available,This position is no longer open,This page could not be found,The job you were looking for was not found,We can’t find this page,Job is OOO
+  blacklist: dailyremote.com,remote.co,wellfound.com,weworkremotely.com
   whitelistSkipValidation: linkedin.com
   threads:
     urlFetchRestClient: 30
@@ -34,6 +34,8 @@ jobshunter:
     processOrderFrequency: 5000
     notifyUsersFrequency: 60000
     cleanupFiles: 86400000
+  additionalEffort:
+    maxRetries: 3
   ratelimit:
     capacity: 60
     window: 1m
@@ -114,7 +116,7 @@ spring:
 security:
   jwt:
     secret: ${JWT_SECRET:change-me-dev-secret-please-keep-long}
-    expiration-sec: 900 # 15 min
+    expiration-sec: 3600 # 1h
   refresh-token:
     pepper: ${REFRESH_TOKEN_PEPPER:change-me-dev-secret-please-keep-long} # generate using openssl rand -base64 48
     expiration-sec: 2592000 # 30 days
@@ -152,17 +154,17 @@ resilience4j.ratelimiter:
     gptLimiter:
       limitForPeriod: 1
       limitRefreshPeriod: 1s
-      timeoutDuration: 5m
+      timeoutDuration: 15m
       writableStackTraceEnabled: false
     grokLimiter:
       limitForPeriod: 1
       limitRefreshPeriod: 1s
-      timeoutDuration: 5m
+      timeoutDuration: 15m
       writableStackTraceEnabled: false
     geminiLimiter:
       limitForPeriod: 1
       limitRefreshPeriod: 1s
-      timeoutDuration: 5m
+      timeoutDuration: 15m
       writableStackTraceEnabled: false
     serpLimiter:
       limitForPeriod: 1
