@@ -1,6 +1,5 @@
 package com.jobshunter.service.application.hunting;
 
-import com.jobshunter.ApplicationProperties;
 import com.jobshunter.database.entities.UserPromptEntity;
 import com.jobshunter.database.entities.UserRemoteCvEntity;
 import com.jobshunter.dto.exceptions.ValidationException;
@@ -10,7 +9,7 @@ import com.jobshunter.model.GrokJobSearchRequest;
 import com.jobshunter.model.SearchJobOrder;
 import com.jobshunter.service.TemplateRenderer;
 import com.jobshunter.service.application.UserCvService;
-import com.jobshunter.service.application.processors.JobsStateMachine;
+import com.jobshunter.service.application.processors.AiConversationStateMachine;
 import com.jobshunter.service.clients.AiJobsClient;
 import java.util.concurrent.Executor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,10 +25,9 @@ public class GrokJobHunting extends AdditionalEffortJobHunting<GrokJobSearchRequ
       @Qualifier("JobsClientGROK") AiJobsClient<GrokJobSearchRequest, AiClientResponse> aiClient,
       UserCvService userCvService,
       TemplateRenderer templateRenderer,
-      JobsStateMachine jobsStateMachine,
-      ApplicationProperties applicationProperties
+      AiConversationStateMachine conversationStateMachine
   ) {
-    super(executor, aiClient, userCvService, templateRenderer, jobsStateMachine, applicationProperties);
+    super(executor, aiClient, userCvService, templateRenderer, conversationStateMachine);
   }
 
   @Override

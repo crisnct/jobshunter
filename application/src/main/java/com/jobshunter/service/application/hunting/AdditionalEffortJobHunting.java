@@ -1,19 +1,16 @@
 package com.jobshunter.service.application.hunting;
 
-import com.jobshunter.ApplicationProperties;
 import com.jobshunter.dto.AdditionalEffortRequest;
 import com.jobshunter.model.AiClientResponse;
 import com.jobshunter.model.EngineSelection;
 import com.jobshunter.model.Job;
-import com.jobshunter.model.JobContext;
 import com.jobshunter.model.PromptType;
 import com.jobshunter.service.TemplateRenderer;
 import com.jobshunter.service.application.UserCvService;
-import com.jobshunter.service.application.processors.JobsStateMachine;
+import com.jobshunter.service.application.processors.AiConversationStateMachine;
 import com.jobshunter.service.clients.AiJobsClient;
 import com.jobshunter.service.clients.DeleteConvAiClient;
 import io.github.resilience4j.ratelimiter.RequestNotPermitted;
-import jakarta.annotation.Nonnull;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -27,87 +24,30 @@ public abstract class AdditionalEffortJobHunting<T extends AdditionalEffortReque
 
   private final TemplateRenderer templateRenderer;
 
-  private final JobsStateMachine jobsStateMachine;
-
-  private final int maxRetries;
+  private final AiConversationStateMachine conversationStateMachine;
 
   public AdditionalEffortJobHunting(Executor executor,
       AiJobsClient<T, AiClientResponse> jobsClient,
       UserCvService userCvService,
       TemplateRenderer templateRenderer,
-      JobsStateMachine jobsStateMachine,
-      ApplicationProperties applicationProperties
+      AiConversationStateMachine conversationStateMachine
   ) {
     super(executor, jobsClient, userCvService);
     this.templateRenderer = templateRenderer;
-    this.jobsStateMachine = jobsStateMachine;
-    this.maxRetries = applicationProperties.getJobsHunter().getAdditionalEffort().getMaxRetries();
+    this.conversationStateMachine = conversationStateMachine;
   }
 
   @Override
   protected CompletableFuture<AiClientResponse> searchAsync(T request, Executor executor) {
-    return searchAsyncWithRetry(request, executor, 0, new AiClientResponse());
-  }
-
-  private CompletableFuture<AiClientResponse> searchAsyncWithRetry(T request, Executor executor, int retryCount,
-      AiClientResponse accumulatedResponse) {
-    //Firstly try with user prompt
-    return CompletableFuture.supplyAsync(() -> searchSync(request), executor)
-        .thenCompose(response -> {
-          if (response.getJobs().isEmpty()) {
-            return CompletableFuture.completedFuture(List.of());
-          }
-          log.info("Conversation response id: {}", response.getId());
-          request.setPrevResponseId(response.getId());
-          //Pass jobs to state machine for processing to see which URLs are accepted/rejected
-          CompletableFuture<List<Job>> jobsFuture = CompletableFuture.completedFuture(response.getJobs());
-          return jobsStateMachine.processAsyncWithContext(jobsFuture, request.getUser(), false);
-        })
-        //Then, if some URLs are rejected, retry with modified prompt
-        .thenCompose(contexts -> searchAsyncWithRetry(request, executor, retryCount, accumulatedResponse, contexts))
-        .thenApplyAsync(aiClientResponse -> {
-          deleteConversationSync(request);
-          return aiClientResponse;
-        },executor)
-        .handle((response, ex) -> handleErrorsSync(request, accumulatedResponse, response, ex));
-  }
-
-  @Nonnull
-  private CompletableFuture<AiClientResponse> searchAsyncWithRetry(
-      T request,
-      Executor executor,
-      int retryCount,
-      AiClientResponse accumulatedResponse,
-      List<JobContext> contexts
-  ) {
-    List<Job> acceptedJobs = contexts.stream()
-        .filter(ctx -> !ctx.isFailed() && ctx.isAccepted())
-        .map(JobContext::getJob)
-        .toList();
-
-    List<Job> rejectedJobs = contexts.stream()
-        .filter(ctx -> !ctx.isFailed() && !ctx.isAccepted())
-        .map(JobContext::getJob)
-        .toList();
-
-    // Add accepted jobs to accumulated response
-    accumulatedResponse.addAll(acceptedJobs);
-
-    // Stage 4: Retry if there are rejected jobs and retry limit not reached
-    if (!rejectedJobs.isEmpty() && retryCount < maxRetries) {
-      log.info("Found {} rejected jobs for user {}. Retrying search (attempt {}/{})",
-          rejectedJobs.size(), request.getUser().getUsername(), retryCount + 1, maxRetries);
-
-      String newPrompt = this.generateRejectedJobsPrompt(rejectedJobs);
-      T retryRequest = this.createRetryRequest(request, accumulatedResponse, newPrompt);
-      return this.searchAsyncWithRetry(retryRequest, executor, retryCount + 1, accumulatedResponse);
-    } else {
-      if (!rejectedJobs.isEmpty()) {
-        log.warn("Max retries ({}) reached for user {}. {} jobs remain rejected.",
-            maxRetries, request.getUser().getUsername(), rejectedJobs.size());
-      }
-      return CompletableFuture.completedFuture(accumulatedResponse);
-    }
+    return conversationStateMachine.processAsync(
+        request,
+        executor,
+        this::searchSync,
+        this::generateRejectedJobsPrompt,
+        this::createRetryRequest,
+        this::deleteConversationSync,
+        this::handleErrorsSync
+    );
   }
 
   private void deleteConversationSync(T request) {
@@ -155,11 +95,11 @@ public abstract class AdditionalEffortJobHunting<T extends AdditionalEffortReque
         log.error("Unexpected error at gathering jobs from model {}: {} for prompt {}", engineConfig.model(),
             ex.getMessage(), request.getUserPrompt());
       }
-      log.error("Pipeline failed for searchAsyncWithRetry", ex);
+      log.error("Pipeline failed for searchAsync", ex);
       return accumulatedResponse.getJobs().isEmpty() ? new AiClientResponse() : accumulatedResponse;
     }
     if (response == null) {
-      log.error("Pipeline searchAsyncWithRetry returned null response for user {}", request.getUser().getUsername());
+      log.error("Pipeline returned null response for user {}", request.getUser().getUsername());
       return accumulatedResponse.getJobs().isEmpty() ? new AiClientResponse() : accumulatedResponse;
     }
     return response;

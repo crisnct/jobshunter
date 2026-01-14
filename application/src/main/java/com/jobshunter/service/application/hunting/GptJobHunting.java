@@ -1,6 +1,5 @@
 package com.jobshunter.service.application.hunting;
 
-import com.jobshunter.ApplicationProperties;
 import com.jobshunter.database.entities.UserPromptEntity;
 import com.jobshunter.database.entities.UserRemoteCvEntity;
 import com.jobshunter.dto.exceptions.ValidationException;
@@ -11,7 +10,7 @@ import com.jobshunter.model.GptJobSearchRequest;
 import com.jobshunter.model.SearchJobOrder;
 import com.jobshunter.service.TemplateRenderer;
 import com.jobshunter.service.application.UserCvService;
-import com.jobshunter.service.application.processors.JobsStateMachine;
+import com.jobshunter.service.application.processors.AiConversationStateMachine;
 import com.jobshunter.service.clients.AiJobsClient;
 import java.util.concurrent.Executor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,10 +26,9 @@ public class GptJobHunting extends AdditionalEffortJobHunting<GptJobSearchReques
       @Qualifier("JobsClientGPT") AiJobsClient<GptJobSearchRequest, AiClientResponse> gptClient,
       UserCvService userCvService,
       TemplateRenderer templateRenderer,
-      JobsStateMachine jobsStateMachine,
-      ApplicationProperties applicationProperties
+      AiConversationStateMachine conversationStateMachine
   ) {
-    super(gptSearchExecutor, gptClient, userCvService, templateRenderer, jobsStateMachine, applicationProperties);
+    super(gptSearchExecutor, gptClient, userCvService, templateRenderer, conversationStateMachine);
   }
 
   @Override
