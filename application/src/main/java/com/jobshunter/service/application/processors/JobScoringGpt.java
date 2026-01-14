@@ -36,7 +36,7 @@ public non-sealed class JobScoringGpt implements JobScoring<GptJobScoreRequest> 
   public JobContext processAsync(JobContext context) {
     Job job = context.getJob();
     int score;
-    if (context.isAccepted() && context.getDescription() != null) {
+    if (context.isValidatedSuccessfully() && context.getDescription() != null) {
       log.info("Computing matching score between {} resume and description of job {}",
           context.getUser().getUsername(), job.getUrl());
       GptJobScoreRequest request
@@ -46,7 +46,7 @@ public non-sealed class JobScoringGpt implements JobScoring<GptJobScoreRequest> 
       score = -1;
     }
     job.setScore(score);
-    context.setPhase(JobPhase.SCORED);
+    context.setPhase(JobPhase.SCORING);
     return context;
   }
 

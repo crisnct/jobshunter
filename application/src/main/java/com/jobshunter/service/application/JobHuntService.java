@@ -5,6 +5,7 @@ import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.service.UserJobDBService;
 import com.jobshunter.dto.JobHuntResponse;
 import com.jobshunter.model.Job;
+import com.jobshunter.model.JobContext;
 import com.jobshunter.model.SearchJobOrder;
 import com.jobshunter.service.application.hunting.HuntingOrchestrator;
 import com.jobshunter.service.application.notifiers.EmailNotifierService;
@@ -46,7 +47,12 @@ public class JobHuntService {
     }
 
     CompletableFuture<List<Job>> futureJobs = huntingOrchestrator.startHunting(order, existingURLs);
-    List<Job> result = jobsStateMachine.processAsync(futureJobs, user);
+    List<Job> result = jobsStateMachine.processAsync(futureJobs, user)
+        .join()
+        .stream()
+        .filter(ctx -> !ctx.isFailed() && ctx.isValidatedSuccessfully())
+        .map(JobContext::getJob)
+        .toList();
 
     JobHuntResponse jobHuntResponse = new JobHuntResponse(result.stream()
         .sorted(Comparator.comparing(Job::getScore).reversed())

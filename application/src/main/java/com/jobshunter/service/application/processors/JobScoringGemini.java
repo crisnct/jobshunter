@@ -40,7 +40,7 @@ public non-sealed class JobScoringGemini implements JobScoring<GeminiJobScoreReq
   public JobContext processAsync(JobContext context) {
     Job job = context.getJob();
     int score = 0;
-    if (context.isAccepted() && context.getDescription() != null) {
+    if (context.isValidatedSuccessfully() && context.getDescription() != null) {
       String fileId = context.getUser().getRemoteCvs().stream().filter(p -> p.getProvider() == EngineType.GEMINI)
           .findFirst().orElseThrow().getFileId();
       log.info("Computing matching score between {} resume and description of job {}",
@@ -49,7 +49,7 @@ public non-sealed class JobScoringGemini implements JobScoring<GeminiJobScoreReq
           new GeminiJobScoreRequest(fileId, context.getDescription()));
     }
     job.setScore(score);
-    context.setPhase(JobPhase.SCORED);
+    context.setPhase(JobPhase.SCORING);
     return context;
   }
 

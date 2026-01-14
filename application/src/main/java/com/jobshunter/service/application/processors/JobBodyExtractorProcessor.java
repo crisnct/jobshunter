@@ -15,13 +15,12 @@ public final class JobBodyExtractorProcessor implements JobProcessor {
   @Override
   public JobContext processAsync(JobContext context) {
     HttpFetchResult result = context.getFetchResult();
-    if (!context.hasFetchResult()) {
-      return context;
+    if (context.hasFetchResult()) {
+      context.setBody(this.cleanupHTML(result.body()));
+      context.setPhase(JobPhase.BODY_EXTRACTION);
+    } else{
+      context.failJob("Missing body from fetch result");
     }
-
-    context.setBody(this.cleanupHTML(result.body()));
-    context.setPhase(JobPhase.GETBODY);
-
     return context;
   }
 

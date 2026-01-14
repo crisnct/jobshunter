@@ -35,7 +35,7 @@ public non-sealed class JobScoringGrok implements JobScoring<GrokJobScoreRequest
   public JobContext processAsync(JobContext context) {
     Job job = context.getJob();
     int score;
-    if (context.isAccepted() && context.getDescription() != null) {
+    if (context.isValidatedSuccessfully() && context.getDescription() != null) {
       log.info("Computing matching score between {} resume and description of job {}",
           context.getUser().getUsername(), job.getUrl());
       score = calculator.computeScore(
@@ -44,7 +44,7 @@ public non-sealed class JobScoringGrok implements JobScoring<GrokJobScoreRequest
       score = -1;
     }
     job.setScore(score);
-    context.setPhase(JobPhase.SCORED);
+    context.setPhase(JobPhase.SCORING);
     return context;
   }
 

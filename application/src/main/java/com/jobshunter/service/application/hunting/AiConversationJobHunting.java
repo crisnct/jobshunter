@@ -2,15 +2,12 @@ package com.jobshunter.service.application.hunting;
 
 import com.jobshunter.dto.AdditionalEffortRequest;
 import com.jobshunter.model.AiClientResponse;
-import com.jobshunter.model.EngineSelection;
 import com.jobshunter.model.Job;
 import com.jobshunter.model.PromptType;
 import com.jobshunter.service.TemplateRenderer;
 import com.jobshunter.service.application.UserCvService;
-import com.jobshunter.service.application.processors.AiConversationStateMachine;
 import com.jobshunter.service.clients.AiJobsClient;
 import com.jobshunter.service.clients.DeleteConvAiClient;
-import io.github.resilience4j.ratelimiter.RequestNotPermitted;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -20,13 +17,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
 @Slf4j
-public abstract class AdditionalEffortJobHunting<T extends AdditionalEffortRequest> extends GenericJobHunting<T> {
+public abstract class AiConversationJobHunting<T extends AdditionalEffortRequest> extends GenericJobHunting<T> {
 
   private final TemplateRenderer templateRenderer;
 
   private final AiConversationStateMachine conversationStateMachine;
 
-  public AdditionalEffortJobHunting(Executor executor,
+  public AiConversationJobHunting(Executor executor,
       AiJobsClient<T, AiClientResponse> jobsClient,
       UserCvService userCvService,
       TemplateRenderer templateRenderer,
@@ -45,8 +42,7 @@ public abstract class AdditionalEffortJobHunting<T extends AdditionalEffortReque
         this::searchSync,
         this::generateRejectedJobsPrompt,
         this::createRetryRequest,
-        this::deleteConversationSync,
-        this::handleErrorsSync
+        this::deleteConversationSync
     );
   }
 
@@ -83,26 +79,6 @@ public abstract class AdditionalEffortJobHunting<T extends AdditionalEffortReque
       originalRequest.setUserPrompt(newPrompt);
       return originalRequest;
     }
-  }
-
-  private AiClientResponse handleErrorsSync(T request, AiClientResponse accumulatedResponse, AiClientResponse response, Throwable ex) {
-    if (ex != null) {
-      EngineSelection engineConfig = request.getEngineSelection();
-      if (ex.getCause() != null && ex.getCause() instanceof RequestNotPermitted) {
-        log.error("❌ Rate limit exceeded for user {}, engine: {}, model: {}",
-            request.getUser().getUsername(), engineConfig.type(), engineConfig.model());
-      } else {
-        log.error("Unexpected error at gathering jobs from model {}: {} for prompt {}", engineConfig.model(),
-            ex.getMessage(), request.getUserPrompt());
-      }
-      log.error("Pipeline failed for searchAsync", ex);
-      return accumulatedResponse.getJobs().isEmpty() ? new AiClientResponse() : accumulatedResponse;
-    }
-    if (response == null) {
-      log.error("Pipeline returned null response for user {}", request.getUser().getUsername());
-      return accumulatedResponse.getJobs().isEmpty() ? new AiClientResponse() : accumulatedResponse;
-    }
-    return response;
   }
 
   private void chainConversation(T request, AiClientResponse response, String model) {

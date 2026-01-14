@@ -9,7 +9,6 @@ import com.jobshunter.model.GrokJobSearchRequest;
 import com.jobshunter.model.SearchJobOrder;
 import com.jobshunter.service.TemplateRenderer;
 import com.jobshunter.service.application.UserCvService;
-import com.jobshunter.service.application.processors.AiConversationStateMachine;
 import com.jobshunter.service.clients.AiJobsClient;
 import java.util.concurrent.Executor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,7 +17,7 @@ import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
-public class GrokJobHunting extends AdditionalEffortJobHunting<GrokJobSearchRequest> {
+public class GrokJobHunting extends AiConversationJobHunting<GrokJobSearchRequest> {
 
   public GrokJobHunting(
       @Qualifier("grokSearchExecutor") Executor executor,

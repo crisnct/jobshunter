@@ -16,10 +16,11 @@ import com.jobshunter.database.service.AuthDBService;
 import com.jobshunter.dto.RegisterRequest;
 import com.jobshunter.model.Job;
 import com.jobshunter.model.JobContext;
+import com.jobshunter.model.JobPhase;
 import com.jobshunter.service.UrlAffinityExecutor;
 import com.jobshunter.service.application.notifiers.EmailNotifierService;
 import com.jobshunter.service.application.processors.JobBodyExtractorProcessor;
-import com.jobshunter.service.application.processors.JobFakelUrFilter;
+import com.jobshunter.service.application.processors.JobBasicCheckProcessor;
 import com.jobshunter.service.application.processors.JobFetchProcessor;
 import com.jobshunter.service.application.processors.JobValidator;
 import com.jobshunter.service.clients.SmtpMailtrapClient;
@@ -86,7 +87,7 @@ public class IntegrationTests {
   private UrlAffinityExecutor executor;
 
   @Autowired
-  private JobFakelUrFilter jobFakelUrFilter;
+  private JobBasicCheckProcessor jobBasicCheckProcessor;
 
   @Autowired
   private JobValidator jobValidator;
@@ -250,14 +251,14 @@ public class IntegrationTests {
     Job job = new Job(-1, "https://www.bestjobs.eu/en/job/accounts-receivable-accountant-with-german-cabs-continental-automotive-romania-srl-timisoara-5b5f5e5e-5b5f-5e5e-5b5f-5b5f5e5e5b5f", null );
 
     JobContext jc = new JobContext(job, null);
-    jc = jobFakelUrFilter.processAsync(jc);
+    jc = jobBasicCheckProcessor.processAsync(jc);
     jc = jobFetchProcessor.processAsync(jc);
     jc = jobBodyExtractorProcessor.processAsync(jc);
     jc = jobValidator.processAsync(jc);
 
-    Assert.isTrue(jc.isRealUrl(), "IP is accessible");
+    Assert.state(jc.getPhase() == JobPhase.SCORING, "IP is accessible");
     Assert.isTrue(jc.getFetchResult().statusCode() == 200, "URL is reacheble");
-    Assert.isTrue(!jc.isAccepted(), "URL is not valid");
+    Assert.isTrue(!jc.isValidatedSuccessfully(), "URL is not valid");
   }
 
 }

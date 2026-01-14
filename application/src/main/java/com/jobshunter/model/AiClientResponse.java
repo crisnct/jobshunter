@@ -1,5 +1,6 @@
 package com.jobshunter.model;
 
+import jakarta.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.Data;
@@ -23,4 +24,7 @@ public class AiClientResponse {
     jobs.addAll(anotherResponse.getJobs());
   }
 
+  public boolean contains(@NotNull String url) {
+    return jobs.stream().anyMatch(p -> p.getUrl().equals(url));
+  }
 }

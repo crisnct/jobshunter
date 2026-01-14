@@ -19,12 +19,12 @@ import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
-public class JobFakelUrFilter implements JobProcessor {
+public class JobBasicCheckProcessor implements JobProcessor {
 
   private final Set<String> whitelistDomains;
   private final Set<String> blacklistDomains;
 
-  public JobFakelUrFilter(ApplicationProperties properties) {
+  public JobBasicCheckProcessor(ApplicationProperties properties) {
     this.whitelistDomains = Arrays.stream(properties.getJobsHunter().getWhitelistSkipValidation().split(","))
         .map(String::trim)
         .map(String::toLowerCase)
@@ -41,36 +41,34 @@ public class JobFakelUrFilter implements JobProcessor {
     String host = extractHost(context);
     context.setHost(host);
     if (blacklistDomains.contains(host)) {
-      log.error("Host is blacklisted {}", host);
-      context.setAccepted(false);
-      context.setSkipProcessors(true);
+      log.info("Host is blacklisted {}", host);
+      context.setValidatedSuccessfully(false);
+      context.failJob("host is blacklisted");
     } else {
       if (isValidAddress(context, host)) {
         try (Socket socket = new Socket()) {
           socket.connect(new InetSocketAddress(host, 443), 1000);
-          context.setRealUrl(true);
           if (whitelistDomains.contains(host)) {
             log.info("Host {} is in whitelist so we don't do any checks", host);
-            context.setAccepted(true);
+            context.setValidatedSuccessfully(true);
             context.getJob().setScore(50);
-            context.setSkipProcessors(true);
+            context.finalizeJob("Host is whitelisted");
+          } else {
+            context.setPhase(JobPhase.BASIC_CHECK);
           }
         } catch (IOException e) {
-          log.error("Not reachable url {}", context.getJob().getUrl());
-          context.setRealUrl(false);
-          context.setSkipProcessors(true);
+          log.warn("Not reachable url {}", context.getJob().getUrl());
+          context.failJob("Not reachable url");
         }
       } else {
-        context.setRealUrl(false);
-        context.setSkipProcessors(true);
+        context.failJob("Not reachable IP address");
       }
     }
-    context.setPhase(JobPhase.REALURL);
     return context;
   }
 
   @Nonnull
-  private static String extractHost(JobContext context) {
+  private String extractHost(JobContext context) {
     String host = URI.create(context.getJob().getUrl()).getHost();
     if (host.startsWith("www.")) {
       host = host.substring(4);

@@ -50,7 +50,7 @@ public class Job {
     this.metadata.put(type, value);
   }
 
-  public <T> T getMetadata(JobMetadataType type){
+  public <T> T getMetadata(JobMetadataType type) {
     //noinspection unchecked
     return (T) metadata.get(type);
   }

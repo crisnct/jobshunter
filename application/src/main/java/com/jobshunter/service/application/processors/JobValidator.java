@@ -44,12 +44,13 @@ public class JobValidator implements JobProcessor {
       }
       desc += "\n" + context.getBody();
       context.setDescription(desc);
-      context.setAccepted(true);
+      context.setValidatedSuccessfully(true);
+      context.setPhase(JobPhase.VALIDATION);
     } else {
-      context.setAccepted(false);
-      context.setSkipProcessors(true);
+      context.setValidatedSuccessfully(false);
+      context.failJob("Job is not validated successfully");
     }
-    context.setPhase(JobPhase.VALIDATED);
+
     return context;
   }
 
