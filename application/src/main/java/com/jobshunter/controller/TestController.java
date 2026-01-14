@@ -173,7 +173,10 @@ public class TestController {
           .build();
 
       GeminiJobsPayload payload = GeminiJobsPayload.builder()
-          .addSystemInstruction(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_JOB_SEARCH))
+          .addSystemInstruction(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_JOB_SEARCH,
+              "blacklist",
+              properties.getJobsHunter().getBlacklist()
+          ))
           .addUserContent("Act like an developer working at Open AI")
           .generationConfig(generationConfig)
           .tools(List.of(new GoogleSearchTool()))

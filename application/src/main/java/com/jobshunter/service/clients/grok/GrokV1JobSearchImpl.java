@@ -79,7 +79,10 @@ public non-sealed class GrokV1JobSearchImpl implements
           .store(request.getStoreConversation())
           .previousResponseId(request.getPrevResponseId())
           .maxOutputTokens(7000)
-          .addUserPrompt(request.getUserPrompt(), request.getFileId());
+          .addUserPrompt(request.getUserPrompt() + templateRenderer.getPrompt(PromptType.USER_PROMPT_JOB_BLACKLISTED,
+              "blacklist",
+              properties.getJobsHunter().getBlacklist()
+          ), request.getFileId());
 
       GrokJobsPayload payload = payloadBuilder.build();
       GrokResponse response = restClient.post()
@@ -115,16 +118,17 @@ public non-sealed class GrokV1JobSearchImpl implements
           .store(false)
           .maxOutputTokens(2500)
           .addSystemPrompt(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_COMPANY_SEARCH,
-              "city", user.getCity(),
-              "country", user.getCountry(),
-              "timestamp", String.valueOf(Instant.now())
-          ))
+              Map.of("city", user.getCity(),
+                  "country", user.getCountry(),
+                  "timestamp", String.valueOf(Instant.now())
+              )))
           .addUserPrompt(templateRenderer.getPrompt(PromptType.USER_PROMPT_COMPANIES,
               Map.of(
                   "domain", user.getJobDomain(),
                   "city", user.getCity(),
                   "country", user.getCountry(),
-                  "positions", user.getJobRoles()
+                  "positions", user.getJobRoles(),
+                  "blacklist", properties.getJobsHunter().getBlacklist()
               )))
           .setResponseSchema(templateRenderer.getSchema(AiSchemaType.GROK_JSON_COMPANY_SCHEMA_RESPONSE))
           .build();
@@ -161,7 +165,10 @@ public non-sealed class GrokV1JobSearchImpl implements
         .store(request.getStoreConversation())
         .previousResponseId(request.getPrevResponseId())
         .addTools(Tools.builder().setDeepSearch().build())
-        .addUserPrompt(userPrompt)
+        .addUserPrompt(userPrompt + templateRenderer.getPrompt(PromptType.USER_PROMPT_JOB_BLACKLISTED,
+            "blacklist",
+            properties.getJobsHunter().getBlacklist()
+        ))
         .build();
 
     GrokResponse response = restClient.post()

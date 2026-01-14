@@ -95,7 +95,10 @@ public non-sealed class GptV1JobSearchImpl implements
               .userLocation(userLocation)
               .build())
           .instructions(templateRenderer.getPrompt(PromptType.SYSTEM_INSTRUCTIONS))
-          .addSystemPrompt(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_JOB_SEARCH))
+          .addSystemPrompt(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_JOB_SEARCH,
+              "blacklist",
+              properties.getJobsHunter().getBlacklist()
+          ))
           .addUserPrompt(request.getUserPrompt(), request.getFileId())
           .setResponseSchema(templateRenderer.getSchema(AiSchemaType.GPT_JSON_SCHEMA_RESPONSE))
           .build();
@@ -180,7 +183,10 @@ public non-sealed class GptV1JobSearchImpl implements
         .previousResponseId(request.getPrevResponseId())
         .reasoning(request.getReasoning())
         .addTools(Tools.builder().setWebSearch().build())
-        .addSystemPrompt(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_JOB_SEARCH))
+        .addSystemPrompt(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_JOB_SEARCH,
+            "blacklist",
+            properties.getJobsHunter().getBlacklist()
+        ))
         .addUserPrompt(userPrompt)
         .build();
 

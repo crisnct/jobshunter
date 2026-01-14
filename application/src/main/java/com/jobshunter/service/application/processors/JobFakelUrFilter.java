@@ -3,6 +3,7 @@ package com.jobshunter.service.application.processors;
 import com.jobshunter.ApplicationProperties;
 import com.jobshunter.model.JobContext;
 import com.jobshunter.model.JobPhase;
+import jakarta.annotation.Nonnull;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -21,9 +22,14 @@ import org.springframework.stereotype.Service;
 public class JobFakelUrFilter implements JobProcessor {
 
   private final Set<String> whitelistDomains;
+  private final Set<String> blacklistDomains;
 
   public JobFakelUrFilter(ApplicationProperties properties) {
     this.whitelistDomains = Arrays.stream(properties.getJobsHunter().getWhitelistSkipValidation().split(","))
+        .map(String::trim)
+        .map(String::toLowerCase)
+        .collect(Collectors.toUnmodifiableSet());
+    this.blacklistDomains = Arrays.stream(properties.getJobsHunter().getBlacklist().split(","))
         .map(String::trim)
         .map(String::toLowerCase)
         .collect(Collectors.toUnmodifiableSet());
@@ -32,22 +38,23 @@ public class JobFakelUrFilter implements JobProcessor {
   @Override
   public JobContext processAsync(JobContext context) {
     log.info("Checking reachability for URL: {}", StringUtils.abbreviate(context.getJob().getUrl(), 50));
-    String host = URI.create(context.getJob().getUrl()).getHost();
-    if (host.startsWith("www.")) {
-      host = host.substring(4);
-    }
+    String host = extractHost(context);
     context.setHost(host);
-    if (whitelistDomains.contains(host)) {
-      context.setRealUrl(true);
-      context.setAccepted(true);
-      context.getJob().setScore(50);
-      context.setPhase(JobPhase.REALURL);
+    if (blacklistDomains.contains(host)) {
+      log.error("Host is blacklisted {}", host);
+      context.setAccepted(false);
       context.setSkipProcessors(true);
     } else {
       if (isValidAddress(context, host)) {
         try (Socket socket = new Socket()) {
           socket.connect(new InetSocketAddress(host, 443), 1000);
           context.setRealUrl(true);
+          if (whitelistDomains.contains(host)) {
+            log.info("Host {} is in whitelist so we don't do any checks", host);
+            context.setAccepted(true);
+            context.getJob().setScore(50);
+            context.setSkipProcessors(true);
+          }
         } catch (IOException e) {
           log.error("Not reachable url {}", context.getJob().getUrl());
           context.setRealUrl(false);
@@ -60,6 +67,15 @@ public class JobFakelUrFilter implements JobProcessor {
     }
     context.setPhase(JobPhase.REALURL);
     return context;
+  }
+
+  @Nonnull
+  private static String extractHost(JobContext context) {
+    String host = URI.create(context.getJob().getUrl()).getHost();
+    if (host.startsWith("www.")) {
+      host = host.substring(4);
+    }
+    return host;
   }
 
   private boolean isValidAddress(JobContext context, String host) {

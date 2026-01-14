@@ -63,7 +63,10 @@ public non-sealed class GeminiV1JobSearchImpl implements AiJobsClient<GeminiJobS
           .build();
 
       GeminiJobsPayload payload = GeminiJobsPayload.builder()
-          .addSystemInstruction(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_JOB_SEARCH))
+          .addSystemInstruction(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_JOB_SEARCH,
+              "blacklist",
+              properties.getJobsHunter().getBlacklist()
+          ))
           .addUserContent(request.getUserPrompt(), "application/pdf", request.getBase64CV())
           .generationConfig(generationConfig)
           .tools(List.of(new GoogleSearchTool()))

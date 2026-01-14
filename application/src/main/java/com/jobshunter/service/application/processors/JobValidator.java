@@ -6,12 +6,9 @@ import com.jobshunter.model.JobContext;
 import com.jobshunter.model.JobMetadataType;
 import com.jobshunter.model.JobPhase;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.stereotype.Service;
@@ -20,17 +17,11 @@ import org.springframework.stereotype.Service;
 @Service
 public class JobValidator implements JobProcessor {
 
-  private final Set<String> blacklistDomains;
   private List<Pattern> expiredJobsPatterns;
 
   public JobValidator(
       ApplicationProperties properties
   ) {
-    this.blacklistDomains = Arrays.stream(properties.getJobsHunter().getBlacklist().split(","))
-        .map(String::trim)
-        .map(String::toLowerCase)
-        .collect(Collectors.toUnmodifiableSet());
-
     expiredJobsPatterns = new ArrayList<>();
     for (String keyword : properties.getJobsHunter().getExpiredExpressions().split(",")) {
       expiredJobsPatterns.add(
@@ -45,7 +36,7 @@ public class JobValidator implements JobProcessor {
   @Override
   public JobContext processAsync(JobContext context) {
     Job job = context.getJob();
-    if (this.isValidJobSync(context.getHost(), job.getUrl(), context.getBody())) {
+    if (this.isValidJobSync(job.getUrl(), context.getBody())) {
       String desc = context.getDescription() != null ? context.getDescription() : "";
       String serpJobDesc = job.getMetadata(JobMetadataType.SERP_DESCRIPTION);
       if (serpJobDesc != null) {
@@ -62,13 +53,8 @@ public class JobValidator implements JobProcessor {
     return context;
   }
 
-  private boolean isValidJobSync(String host, String url, String rawBody) {
-    log.info("Validating URL: {}", url);
-    if (blacklistDomains.contains(host)) {
-      log.error("Host is blacklisted {}", url);
-      return false;
-    }
-    log.info("Getting body from URL {}", url);
+  private boolean isValidJobSync(String url, String rawBody) {
+    log.info("Validating URL, getting body of the page: {}", url);
     try {
       boolean isExpired;
       if (Strings.isBlank(rawBody)) {
