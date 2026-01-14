@@ -77,4 +77,24 @@ public class SearchWithSerpRequest extends AIJobSearchRequest {
     super(user, engineSelection);
   }
 
+  @Override
+  public SearchWithSerpRequest copy() {
+    SearchWithSerpRequest copy = new SearchWithSerpRequest(this.getUser(),
+        new EngineSelection(this.getEngineSelection().type(), this.getEngineSelection().model()));
+    // Copy parent fields
+    copy.setPromptId(this.getPromptId());
+    copy.setUserPrompt(this.getUserPrompt());
+    copy.setSearchCompanies(this.isSearchCompanies());
+    // Copy SearchWithSerpRequest specific fields
+    copy.query = this.query;
+    copy.googleDomain = this.googleDomain;
+    copy.datePosted = this.datePosted;
+    copy.country = this.country;
+    copy.location = this.location;
+    copy.workType = this.workType;
+    copy.radius = this.radius;
+    copy.language = this.language;
+    return copy;
+  }
+
 }

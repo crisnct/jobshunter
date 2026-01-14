@@ -12,16 +12,11 @@ import lombok.EqualsAndHashCode;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class GptJobSearchRequest extends AdditionalEffortRequest implements Cloneable {
+public class GptJobSearchRequest extends AdditionalEffortRequest {
 
   private final Reasoning reasoning;
   private List<CompanyDto> companies;
   private IpInfoDetailResponse ipInfo;
-
-  public GptJobSearchRequest(UserEntity user, EngineSelection engineSelection) {
-    super(user, engineSelection);
-    this.reasoning = null;
-  }
 
   public GptJobSearchRequest(SearchJobOrder order, Reasoning reasoning) {
     super(order.getUser(), order.getEngineSelection());
@@ -35,26 +30,22 @@ public class GptJobSearchRequest extends AdditionalEffortRequest implements Clon
   }
 
   @Override
-  public GptJobSearchRequest clone() {
-    // Create new instance with same reasoning (final field requires constructor)
-    GptJobSearchRequest clone = new GptJobSearchRequest(this.getUser(), this.getEngineSelection(), this.reasoning);
-
-    // Copy parent fields from super.clone()
-    AdditionalEffortRequest parentClone = super.clone();
-    clone.setPromptId(parentClone.getPromptId());
-    clone.setUserPrompt(parentClone.getUserPrompt());
-    clone.setSearchCompanies(parentClone.isSearchCompanies());
-    clone.setStoreConversation(parentClone.getStoreConversation());
-    clone.setPrevResponseId(parentClone.getPrevResponseId());
-    clone.setFileId(parentClone.getFileId());
-    clone.setPreviousURL(parentClone.getPreviousURL());
-
+  public GptJobSearchRequest copy() {
+    GptJobSearchRequest copy = new GptJobSearchRequest(this.getUser(),
+        new EngineSelection(this.getEngineSelection().type(), this.getEngineSelection().model()),
+        this.reasoning);
+    // Copy parent fields
+    copy.setPromptId(this.getPromptId());
+    copy.setUserPrompt(this.getUserPrompt());
+    copy.setSearchCompanies(this.isSearchCompanies());
+    copy.setStoreConversation(this.getStoreConversation());
+    copy.setPrevResponseId(this.getPrevResponseId());
+    copy.setFileId(this.getFileId());
+    copy.setPreviousURL(this.getPreviousURL() != null ? new ArrayList<>(this.getPreviousURL()) : null);
     // Copy GptJobSearchRequest specific fields
-    clone.companies = this.companies != null ? new ArrayList<>(this.companies) : null;
-    clone.ipInfo = this.ipInfo;
-
-    return clone;
-
+    copy.companies = this.companies != null ? new ArrayList<>(this.companies) : null;
+    copy.ipInfo = this.ipInfo;
+    return copy;
   }
 
 }

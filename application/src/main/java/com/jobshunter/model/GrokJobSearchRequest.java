@@ -10,7 +10,7 @@ import lombok.EqualsAndHashCode;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class GrokJobSearchRequest extends AdditionalEffortRequest implements Cloneable {
+public class GrokJobSearchRequest extends AdditionalEffortRequest {
 
   private List<CompanyDto> companies;
 
@@ -19,10 +19,20 @@ public class GrokJobSearchRequest extends AdditionalEffortRequest implements Clo
   }
 
   @Override
-  public GrokJobSearchRequest clone() {
-    GrokJobSearchRequest clone = (GrokJobSearchRequest) super.clone();
-    clone.companies = this.companies != null ? new ArrayList<>(this.companies) : null;
-    return clone;
+  public GrokJobSearchRequest copy() {
+    GrokJobSearchRequest copy = new GrokJobSearchRequest(this.getUser(), 
+        new EngineSelection(this.getEngineSelection().type(), this.getEngineSelection().model()));
+    // Copy parent fields
+    copy.setPromptId(this.getPromptId());
+    copy.setUserPrompt(this.getUserPrompt());
+    copy.setSearchCompanies(this.isSearchCompanies());
+    copy.setStoreConversation(this.getStoreConversation());
+    copy.setPrevResponseId(this.getPrevResponseId());
+    copy.setFileId(this.getFileId());
+    copy.setPreviousURL(this.getPreviousURL() != null ? new ArrayList<>(this.getPreviousURL()) : null);
+    // Copy GrokJobSearchRequest specific fields
+    copy.companies = this.companies != null ? new ArrayList<>(this.companies) : null;
+    return copy;
   }
 
 }

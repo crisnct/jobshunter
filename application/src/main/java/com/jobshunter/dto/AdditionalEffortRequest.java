@@ -9,7 +9,7 @@ import lombok.EqualsAndHashCode;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class AdditionalEffortRequest extends AIJobSearchRequest implements Cloneable {
+public abstract class AdditionalEffortRequest extends AIJobSearchRequest {
 
   private Boolean storeConversation;
   private String prevResponseId;
@@ -20,13 +20,4 @@ public class AdditionalEffortRequest extends AIJobSearchRequest implements Clone
     super(user, engineSelection);
   }
 
-  @Override
-  public AdditionalEffortRequest clone() {
-    AdditionalEffortRequest clone = (AdditionalEffortRequest) super.clone();
-    clone.storeConversation = this.storeConversation;
-    clone.prevResponseId = this.prevResponseId;
-    clone.fileId = this.fileId;
-    clone.previousURL = this.previousURL != null ? new ArrayList<>(this.previousURL) : null;
-    return clone;
-  }
 }

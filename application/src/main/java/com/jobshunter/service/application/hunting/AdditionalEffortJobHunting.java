@@ -129,18 +129,13 @@ public abstract class AdditionalEffortJobHunting<T extends AdditionalEffortReque
   @SuppressWarnings("unchecked")
   private T createRetryRequest(T originalRequest, AiClientResponse prevResponse, String newPrompt) {
     try {
-      // Try to create a new instance using the constructor that takes UserEntity and EngineSelection
-      //TODO check if this is best practice
-      T retryRequest = (T) originalRequest.clone();
+      // Create a copy using Copyable interface
+      T retryRequest = (T) originalRequest.copy();
 
-      // Copy all fields from original request
-      retryRequest.setPromptId(originalRequest.getPromptId());
+      // Override specific fields for retry
       retryRequest.setUserPrompt(newPrompt);
-      retryRequest.setSearchCompanies(originalRequest.isSearchCompanies());
-      retryRequest.setStoreConversation(originalRequest.getStoreConversation());
       retryRequest.setFileId(null);
       retryRequest.setPrevResponseId(prevResponse.getId());
-      retryRequest.setPreviousURL(originalRequest.getPreviousURL());
       return retryRequest;
     } catch (Exception e) {
       log.warn("Failed to create retry request copy, modifying original request instead", e);
