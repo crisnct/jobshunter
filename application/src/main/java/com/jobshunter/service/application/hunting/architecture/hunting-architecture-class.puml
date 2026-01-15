@@ -1,0 +1,92 @@
+﻿@startuml
+hide empty members
+skinparam classAttributeIconSize 0
+
+interface JobHunting <<sealed interface>> {
+    +searchJobsAsync(order: SearchJobOrder): CompletableFuture<List<Job>>
+}
+
+abstract class GenericJobHunting {
+    #jobsClient: AiJobsClient
+    #userCvService: UserCvService
+    #executor: Executor
+    +searchJobsAsync(order: SearchJobOrder): CompletableFuture<List<Job>>
+    +searchJobsByCompaniesAsync(order: SearchJobOrder): CompletableFuture<List<Job>>
+    #searchAsync(request: T, executor: Executor): CompletableFuture<AiClientResponse>
+    #searchSync(request: T): AiClientResponse
+    +createRequest(order: SearchJobOrder, prompt: UserPromptEntity): T
+    +createCompaniesRequest(order: SearchJobOrder): T
+}
+
+abstract class AiConversationJobHunting {
+    -templateRenderer: TemplateRenderer
+    -conversationStateMachine: AiConversationStateMachine
+    #searchAsync(request: T, executor: Executor): CompletableFuture<AiClientResponse>
+    -deleteConversationSync(request: T): void
+    -generateRejectedJobsPrompt(jobs: List<Job>): String
+    -createRetryRequest(request: T, response: AiClientResponse, newPrompt: String): T
+    -chainConversation(request: T, response: AiClientResponse, newPrompt: String): void
+}
+
+class GptJobHunting {
+    +createRequest(order: SearchJobOrder, prompt: UserPromptEntity): GptJobSearchRequest
+    +createCompaniesRequest(order: SearchJobOrder): GptJobSearchRequest
+}
+
+class GrokJobHunting {
+    +createRequest(order: SearchJobOrder, prompt: UserPromptEntity): GrokJobSearchRequest
+    +createCompaniesRequest(order: SearchJobOrder): GrokJobSearchRequest
+}
+
+class GeminiJobHunting {
+    -mapper: JsonMapper
+    +createRequest(order: SearchJobOrder, prompt: UserPromptEntity): GeminiJobSearchRequest
+    +createCompaniesRequest(order: SearchJobOrder): GeminiJobSearchRequest
+}
+
+class SerpJobHunting {
+    -mapper: JsonMapper
+    +createRequest(order: SearchJobOrder, prompt: UserPromptEntity): SearchWithSerpRequest
+    +createCompaniesRequest(order: SearchJobOrder): SearchWithSerpRequest
+}
+
+class AiConversationStateMachine {
+    -jobsStateMachine: JobsStateMachine
+    -maxRetries: int
+    +processAsync(request: R, executor: Executor, searchExecutor: SearchExecutor, promptGenerator: PromptGenerator, retryRequestFactory: RetryRequestFactory, conversationCleanup: ConversationCleanup): CompletableFuture<AiClientResponse>
+    -processAsyncWithRetry(...): CompletableFuture<AiClientResponse>
+    -startConversation(request: R, initialResponse: AiClientResponse, aiResponse: AiClientResponse): CompletableFuture<List<JobContext>>
+    -processWithRetry(...): CompletableFuture<AiClientResponse>
+    -handlePipelineError(request: R, response: AiClientResponse, error: Throwable): AiClientResponse
+}
+
+class HuntingOrchestrator {
+    -serpJobHunting: SerpJobHunting
+    -gptJobHunting: GptJobHunting
+    -grokJobHunting: GrokJobHunting
+    -geminiJobHunting: GeminiJobHunting
+    +startHunting(order: SearchJobOrder, engines: List<String>): CompletableFuture<List<Job>>
+    -removeDuplicatesBetweenSources(jobs: List<Job>, engines: List<String>): List<Job>
+}
+
+class RandomInvalidReasons <<utility>> {
+    {static} pick(): String
+}
+
+class JobsStateMachine
+
+JobHunting <|.. GenericJobHunting : implements
+GenericJobHunting <|-- AiConversationJobHunting : extends
+GenericJobHunting <|-- GeminiJobHunting : extends
+GenericJobHunting <|-- SerpJobHunting : extends
+AiConversationJobHunting <|-- GptJobHunting : extends
+AiConversationJobHunting <|-- GrokJobHunting : extends
+
+AiConversationJobHunting ..> AiConversationStateMachine : uses
+AiConversationJobHunting ..> RandomInvalidReasons : uses
+HuntingOrchestrator ..> GptJobHunting : orchestrates
+HuntingOrchestrator ..> GrokJobHunting : orchestrates
+HuntingOrchestrator ..> GeminiJobHunting : orchestrates
+HuntingOrchestrator ..> SerpJobHunting : orchestrates
+AiConversationStateMachine ..> JobsStateMachine : uses
+@enduml

@@ -1,0 +1,21 @@
+@startuml
+participant Caller as HuntingService
+participant Client as GptV1JobSearchImpl
+participant Template as TemplateRenderer
+participant Rest as RestClient
+participant OpenAI as "OpenAI Responses API"
+participant Parser as UrlExtractor
+participant Result as AiClientResponse
+
+HuntingService -> Client : searchJobs(GptJobSearchRequest)
+Client -> Template : getPrompt(system/user/schema)
+Template --> Client : prompts
+Client -> Rest : POST /v1/responses (payload)
+Rest -> OpenAI : HTTPS request
+OpenAI --> Rest : HTTP 200 + body
+Rest --> Client : GptResponse
+Client -> Parser : parseJobs(text)
+Parser --> Client : List<Job>
+Client -> Result : add jobs + setId
+Result --> HuntingService : AiClientResponse
+@enduml

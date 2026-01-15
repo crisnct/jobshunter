@@ -1,0 +1,132 @@
+@startuml
+hide empty members
+skinparam classAttributeIconSize 0
+
+class Users {
+  +id: bigint
+  username
+  email
+  password_hash
+}
+
+class Roles {
+  +id: bigint
+  name
+}
+
+class UserRoles {
+  +user_id: bigint
+  +role_id: bigint
+}
+
+class UserJobs {
+  +id: bigint
+  user_id
+  url
+  model_id
+  job_order_id
+  prompt_id
+}
+
+class UserPrompts {
+  +id: bigint
+  user_id
+  prompt
+  engine_category
+}
+
+class PromptsJobs {
+  +prompt_id: bigint
+  +user_jobs_id: bigint
+}
+
+class JobOrder {
+  +id: bigint
+  user_id
+  engine_configuration_id
+  status
+}
+
+class AiModels {
+  +id: bigint
+  provider
+  model
+}
+
+class ModelCapabilities {
+  +id: bigint
+  model_id
+  capability
+}
+
+class UserJobRoles {
+  +id: bigint
+  user_id
+  job_role
+}
+
+class UserJobTypes {
+  +id: bigint
+  user_id
+  job_type
+}
+
+class UserContractTypes {
+  +id: bigint
+  user_id
+  contract_type
+}
+
+class UserCv {
+  +id: bigint
+  user_id
+  cv (blob)
+}
+
+class UserRemoteCv {
+  +user_id: bigint
+  +provider
+  file_id
+  filename
+}
+
+class UserDevices {
+  +id: bigint
+  user_id
+  device_id
+  status
+}
+
+class UserSessions {
+  +id: bigint
+  user_id
+  device_id
+  refresh_token_hash
+}
+
+Users "1" -- "many" UserRoles : user_roles
+Roles "1" -- "many" UserRoles : role_id
+
+Users "1" -- "many" UserJobs
+Users "1" -- "many" UserPrompts
+Users "1" -- "many" UserJobRoles
+Users "1" -- "many" UserJobTypes
+Users "1" -- "many" UserContractTypes
+Users "1" -- "many" UserSessions
+Users "1" -- "many" UserRemoteCv
+Users "1" -- "many" JobOrder
+
+Users "1" -- "1" UserCv
+Users "1" -- "1" UserDevices
+
+UserJobs "many" -- "1" AiModels
+JobOrder "many" -- "1" AiModels
+ModelCapabilities "many" -- "1" AiModels
+
+UserJobs "many" -- "1" JobOrder
+UserJobs "many" -- "1" UserPrompts
+
+PromptsJobs "many" -- "1" UserPrompts
+PromptsJobs "many" -- "1" UserJobs
+
+@enduml

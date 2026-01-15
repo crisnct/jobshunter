@@ -1,0 +1,42 @@
+﻿@startuml
+participant HO as HuntingOrchestrator
+participant GH as GenericJobHunting
+participant ACJH as AiConversationJobHunting
+participant ACSM as AiConversationStateMachine
+participant JSM as JobsStateMachine
+participant AI as AiJobsClient
+
+HO -> GH : searchJobsAsync(order)
+GH -> GH : createRequest(order, prompt)
+
+alt Conversation-based (GPT/Grok)
+    GH -> ACJH : searchAsync(request, executor)
+    ACJH -> ACSM : processAsync(request, executor, strategies)
+    ACSM -> AI : searchExecutor.searchJobsSync(request)
+    AI --> ACSM : AiClientResponse
+    ACSM -> ACSM : startConversation()
+    ACSM -> JSM : processAsync(jobs, user)
+    JSM --> ACSM : List<JobContext>
+    ACSM -> ACSM : processWithRetry()
+    alt Rejected jobs exist
+        ACSM -> ACJH : generateRejectedJobsPrompt()
+        ACJH --> ACSM : newPrompt
+        ACSM -> ACJH : createRetryRequest()
+        ACJH --> ACSM : retryRequest
+        ACSM -> ACSM : processAsyncWithRetry(retryRequest)
+        note over ACSM : Retry loop
+    end
+    ACSM -> ACJH : conversationCleanup.cleanup()
+    ACSM --> ACJH : AiClientResponse
+    ACJH --> GH : CompletableFuture<AiClientResponse>
+else Direct (Gemini/Serp)
+    GH -> AI : searchJobs(request)
+    AI --> GH : AiClientResponse
+    GH -> JSM : processAsync(jobs, user)
+    JSM --> GH : List<JobContext>
+end
+
+GH --> HO : CompletableFuture<List<Job>>
+HO -> HO : removeDuplicatesBetweenSources()
+HO --> HO : List<Job>
+@enduml

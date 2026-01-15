@@ -1,0 +1,105 @@
+@startuml
+hide empty members
+skinparam classAttributeIconSize 0
+
+interface JobProcessor {
+    +processAsync(ctx: JobContext): JobContext
+}
+
+interface JobScoring {
+    +processAsync(ctx: JobContext): JobContext
+}
+
+class JobBasicCheckProcessor {
+    -whitelistDomains: Set<String>
+    -blacklistDomains: Set<String>
+    +processAsync(ctx: JobContext): JobContext
+    -extractHost(ctx: JobContext): String
+    -isValidAddress(ctx: JobContext, host: String): boolean
+}
+
+class JobFetchProcessor {
+    -fetcher: HttpFetcher
+    +processAsync(ctx: JobContext): JobContext
+}
+
+class JobBodyExtractorProcessor {
+    +processAsync(ctx: JobContext): JobContext
+    -cleanupHTML(html: String): String
+}
+
+class JobValidator {
+    -expiredJobsPatterns: List<Pattern>
+    +processAsync(ctx: JobContext): JobContext
+    -isValidJobSync(title: String, body: String): boolean
+}
+
+class JobScoringGpt {
+    -fileClient: FileClient
+    -calculator: JobScoreCalculatorClient<GptJobScoreRequest>
+    +processAsync(ctx: JobContext): JobContext
+}
+
+class JobScoringGemini {
+    -fileClient: FileClient
+    -calculator: JobScoreCalculatorClient<GeminiJobScoreRequest>
+    +processAsync(ctx: JobContext): JobContext
+}
+
+class JobScoringGrok {
+    -fileClient: FileClient
+    -calculator: JobScoreCalculatorClient<GrokJobScoreRequest>
+    +processAsync(ctx: JobContext): JobContext
+}
+
+class JobsStateMachine {
+    -jobProcessingExecutor: Executor
+    -pipelineSteps: List<PipelineStep>
+    +processAsync(futureJobs: CompletableFuture<List<Job>>, user: UserEntity): CompletableFuture<List<JobContext>>
+    -applyJobPipeline(job: Job, user: UserEntity): CompletableFuture<JobContext>
+    -logResults(contexts: List<JobContext>, tag: String): void
+}
+
+class PipelineStep {
+    +phase: JobPhase
+    +processor: JobProcessor
+    +executor: Executor
+}
+
+class UploadedFile {
+    -fileClient: FileClient
+    -filePath: Path
+    -fileInfo: ResumeFileInfo
+    +uploadAndGetFileId(): ResumeFileInfo
+    +getFileInfo(): ResumeFileInfo
+    +close(): void
+}
+
+JobProcessor <|-- JobScoring
+JobProcessor <|-- JobBasicCheckProcessor
+JobProcessor <|-- JobFetchProcessor
+JobProcessor <|-- JobBodyExtractorProcessor
+JobProcessor <|-- JobValidator
+JobScoring <|-- JobScoringGpt
+JobScoring <|-- JobScoringGemini
+JobScoring <|-- JobScoringGrok
+
+JobsStateMachine *-- PipelineStep
+PipelineStep --> JobProcessor
+
+JobBasicCheckProcessor ..> ApplicationProperties
+JobFetchProcessor ..> HttpFetcher
+JobValidator ..> ApplicationProperties
+JobScoringGpt ..> FileClient
+JobScoringGpt ..> JobScoreCalculatorClient
+JobScoringGemini ..> FileClient
+JobScoringGemini ..> JobScoreCalculatorClient
+JobScoringGrok ..> FileClient
+JobScoringGrok ..> JobScoreCalculatorClient
+UploadedFile ..> FileClient
+JobsStateMachine ..> JobBasicCheckProcessor : orchestrates
+JobsStateMachine ..> JobFetchProcessor : orchestrates
+JobsStateMachine ..> JobBodyExtractorProcessor : orchestrates
+JobsStateMachine ..> JobValidator : orchestrates
+JobsStateMachine ..> JobScoringGpt : orchestrates
+@enduml

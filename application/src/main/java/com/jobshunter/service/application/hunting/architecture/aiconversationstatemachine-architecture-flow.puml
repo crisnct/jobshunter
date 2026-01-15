@@ -1,0 +1,67 @@
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+
+package "AiConversationStateMachine" {
+    component ACSM_Entry as "processAsync Entry"
+    component ACSM_Search as "Search Phase\nsearchExecutor.searchJobsSync"
+    component ACSM_Start as "startConversation\nFilter duplicate jobs"
+    component ACSM_Process as "processWithRetry\nFilter accepted/rejected"
+    component ACSM_Accumulate as "Add to accumulatedResponse"
+    component ACSM_RetryCheck as "Retry needed?"
+    component ACSM_GeneratePrompt as "Generate retry prompt"
+    component ACSM_CreateRetry as "Create retry request"
+    component ACSM_Cleanup as "Cleanup Phase\nconversationCleanup.cleanup"
+    component ACSM_Error as "handlePipelineError"
+    component ACSM_Return as "Return AiClientResponse"
+}
+
+package "JobsStateMachine" {
+    component JSM_Entry as "processAsync Entry\nList of Jobs"
+    component JSM_CheckMetadata as "Job has\nAPPROVED_BY_CONVERSATION\nmetadata?"
+    component JSM_Skip as "Skip Pipeline\nCreate finalized JobContext"
+    component JSM_Pipeline as "applyJobPipeline"
+    component JSM_Log as "logResults"
+    component JSM_Return as "Return List of JobContext"
+}
+
+package "Job Processing Pipeline" {
+    component PS_Init as "Create JobContext"
+    component PS_BasicCheck as "PipelineStep 1\nBASIC_CHECK\nJobBasicCheckProcessor"
+    component PS_Fetch as "PipelineStep 2\nFETCH\nJobFetchProcessor"
+    component PS_BodyExtract as "PipelineStep 3\nBODY_EXTRACTION\nJobBodyExtractorProcessor"
+    component PS_Validate as "PipelineStep 4\nVALIDATION\nJobValidator"
+    component PS_Score as "PipelineStep 5\nSCORING\nJobScoring GPT"
+    component PS_Handle as "Error Handling"
+}
+
+ACSM_Entry --> ACSM_Search
+ACSM_Search --> ACSM_Start
+ACSM_Start --> ACSM_Process : List of Jobs
+ACSM_Process --> ACSM_Accumulate : Accepted Jobs
+ACSM_Process --> ACSM_RetryCheck : Rejected Jobs
+ACSM_RetryCheck --> ACSM_GeneratePrompt : Yes
+ACSM_GeneratePrompt --> ACSM_CreateRetry
+ACSM_CreateRetry --> ACSM_Search
+ACSM_RetryCheck --> ACSM_Cleanup : No
+ACSM_Accumulate --> ACSM_Cleanup
+ACSM_Cleanup --> ACSM_Error
+ACSM_Error --> ACSM_Return
+
+ACSM_Start --> JSM_Entry : Calls
+JSM_Entry --> JSM_CheckMetadata
+JSM_CheckMetadata --> JSM_Skip : Yes
+JSM_CheckMetadata --> JSM_Pipeline : No
+JSM_Skip --> JSM_Log
+JSM_Pipeline --> JSM_Log
+JSM_Log --> JSM_Return
+JSM_Return --> ACSM_Process : List of JobContext
+
+JSM_Pipeline --> PS_Init
+PS_Init --> PS_BasicCheck
+PS_BasicCheck --> PS_Fetch : ctx.isOkToRun
+PS_Fetch --> PS_BodyExtract : ctx.isOkToRun
+PS_BodyExtract --> PS_Validate : ctx.isOkToRun
+PS_Validate --> PS_Score : ctx.isOkToRun
+PS_Score --> PS_Handle
+@enduml

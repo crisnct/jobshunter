@@ -1,0 +1,58 @@
+@startuml
+left to right direction
+skinparam componentStyle rectangle
+
+package "Entry Point" {
+    component JSM as "JobsStateMachine\nprocessAsync"
+}
+
+package "Job Processing" {
+    component CheckMetadata as "Job has\nAPPROVED_BY_CONVERSATION\nmetadata?"
+    component SkipPipeline as "Skip Pipeline\nCreate finalized JobContext"
+    component ApplyPipeline as "applyJobPipeline"
+}
+
+package "Processing Pipeline" {
+    component Init as "Create JobContext"
+    component Step1 as "PipelineStep 1\nBASIC_CHECK\nJobBasicCheckProcessor"
+    component Step2 as "PipelineStep 2\nFETCH\nJobFetchProcessor"
+    component Step3 as "PipelineStep 3\nBODY_EXTRACTION\nJobBodyExtractorProcessor"
+    component Step4 as "PipelineStep 4\nVALIDATION\nJobValidator"
+    component Step5 as "PipelineStep 5\nSCORING\nJobScoring"
+    component ErrorHandle as "Error Handling"
+}
+
+package "Processors" {
+    component BasicCheck as "JobBasicCheckProcessor\n- URL reachability\n- Host validation\n- Whitelist/blacklist"
+    component Fetch as "JobFetchProcessor\n- Fetch page content\n- Check HTTP status"
+    component BodyExtract as "JobBodyExtractorProcessor\n- Extract HTML body\n- Clean up HTML"
+    component Validate as "JobValidator\n- Check expired keywords\n- Validate job content"
+    component Score as "JobScoringGpt/Gemini/Grok\n- Calculate job score\n- Match CV with job"
+}
+
+package "Result" {
+    component Log as "logResults"
+    component Return as "List<JobContext>"
+}
+
+JSM --> CheckMetadata
+CheckMetadata --> SkipPipeline : Yes
+CheckMetadata --> ApplyPipeline : No
+SkipPipeline --> Log
+ApplyPipeline --> Init
+
+Init --> Step1
+Step1 --> Step2 : ctx.isOkToRun
+Step2 --> Step3 : ctx.isOkToRun
+Step3 --> Step4 : ctx.isOkToRun
+Step4 --> Step5 : ctx.isOkToRun
+Step5 --> ErrorHandle
+ErrorHandle --> Log
+Log --> Return
+
+Step1 ..> BasicCheck
+Step2 ..> Fetch
+Step3 ..> BodyExtract
+Step4 ..> Validate
+Step5 ..> Score
+@enduml

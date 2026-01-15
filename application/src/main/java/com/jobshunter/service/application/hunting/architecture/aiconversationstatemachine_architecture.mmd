@@ -1,0 +1,65 @@
+%%{init: {'themeVariables': { 'fontSize': '10px' }}}%%
+
+flowchart TD
+    subgraph AiConversationStateMachine["AiConversationStateMachine"]
+        ACSM_Entry[processAsync Entry]
+        ACSM_Search[Search Phase<br/>searchExecutor.searchJobsSync]
+        ACSM_Start[startConversation<br/>Filter duplicate jobs]
+        ACSM_Process[processWithRetry<br/>Filter accepted/rejected]
+        ACSM_Cleanup[Cleanup Phase<br/>conversationCleanup.cleanup]
+        ACSM_Error[handlePipelineError]
+        
+        ACSM_Entry --> ACSM_Search
+        ACSM_Search --> ACSM_Start
+        ACSM_Start -->|List of Jobs| ACSM_Process
+        ACSM_Process -->|Accepted Jobs| ACSM_Accumulate[Add to accumulatedResponse]
+        ACSM_Process -->|Rejected Jobs| ACSM_RetryCheck{Retry needed?}
+        ACSM_RetryCheck -->|Yes| ACSM_GeneratePrompt[Generate retry prompt]
+        ACSM_GeneratePrompt --> ACSM_CreateRetry[Create retry request]
+        ACSM_CreateRetry --> ACSM_Search
+        ACSM_RetryCheck -->|No| ACSM_Cleanup
+        ACSM_Accumulate --> ACSM_Cleanup
+        ACSM_Cleanup --> ACSM_Error
+        ACSM_Error --> ACSM_Return[Return AiClientResponse]
+    end
+    
+    subgraph JobsStateMachine["JobsStateMachine"]
+        JSM_Entry[processAsync Entry<br/>List of Jobs]
+        JSM_CheckMetadata{Job has<br/>APPROVED_BY_CONVERSATION<br/>metadata?}
+        JSM_Skip[Skip Pipeline<br/>Create finalized JobContext]
+        JSM_Pipeline[applyJobPipeline]
+        JSM_Log[logResults]
+        JSM_Return[Return List of JobContext]
+        
+        JSM_Entry --> JSM_CheckMetadata
+        JSM_CheckMetadata -->|Yes| JSM_Skip
+        JSM_CheckMetadata -->|No| JSM_Pipeline
+        JSM_Skip --> JSM_Log
+        JSM_Pipeline --> JSM_Log
+        JSM_Log --> JSM_Return
+    end
+    
+    subgraph PipelineSteps["Job Processing Pipeline"]
+        PS_Init[Create JobContext]
+        PS_BasicCheck[PipelineStep 1<br/>BASIC_CHECK<br/>JobBasicCheckProcessor]
+        PS_Fetch[PipelineStep 2<br/>FETCH<br/>JobFetchProcessor]
+        PS_BodyExtract[PipelineStep 3<br/>BODY_EXTRACTION<br/>JobBodyExtractorProcessor]
+        PS_Validate[PipelineStep 4<br/>VALIDATION<br/>JobValidator]
+        PS_Score[PipelineStep 5<br/>SCORING<br/>JobScoring GPT]
+        PS_Handle[Error Handling]
+        
+        PS_Init --> PS_BasicCheck
+        PS_BasicCheck -->|ctx.isOkToRun| PS_Fetch
+        PS_Fetch -->|ctx.isOkToRun| PS_BodyExtract
+        PS_BodyExtract -->|ctx.isOkToRun| PS_Validate
+        PS_Validate -->|ctx.isOkToRun| PS_Score
+        PS_Score --> PS_Handle
+    end
+    
+    ACSM_Start -->|Calls| JSM_Entry
+    JSM_Pipeline --> PS_Init
+    JSM_Return -->|List of JobContext| ACSM_Process
+    
+    style AiConversationStateMachine fill:#e1f5ff
+    style JobsStateMachine fill:#fff4e1
+    style PipelineSteps fill:#f0f0f0

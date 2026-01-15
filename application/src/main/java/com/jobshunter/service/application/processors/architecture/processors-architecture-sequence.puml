@@ -1,0 +1,66 @@
+@startuml
+participant Caller
+participant JSM as JobsStateMachine
+participant JC as JobContext
+participant BC as JobBasicCheckProcessor
+participant FP as JobFetchProcessor
+participant BE as JobBodyExtractorProcessor
+participant V as JobValidator
+participant SC as JobScoring
+
+Caller -> JSM : processAsync(List<Job>, UserEntity)
+JSM -> JSM : Check metadata for each job
+
+alt Job has APPROVED_BY_CONVERSATION metadata
+    JSM -> JC : Create JobContext
+    JSM -> JC : setValidatedSuccessfully(true)
+    JSM -> JC : finalizeJob()
+else Job needs processing
+    JSM -> JSM : applyJobPipeline(Job, UserEntity)
+    JSM -> JC : new JobContext(job, user)
+
+    JSM -> JC : isOkToRun(BASIC_CHECK)?
+    alt Yes
+        JSM -> BC : processAsync(JobContext)
+        BC -> BC : Check URL reachability
+        BC -> BC : Validate host
+        BC -> BC : Check whitelist/blacklist
+        BC --> JSM : JobContext (phase: BASIC_CHECK)
+    end
+
+    JSM -> JC : isOkToRun(FETCH)?
+    alt Yes
+        JSM -> FP : processAsync(JobContext)
+        FP -> FP : Fetch page content
+        FP --> JSM : JobContext (phase: FETCH, fetchResult)
+    end
+
+    JSM -> JC : isOkToRun(BODY_EXTRACTION)?
+    alt Yes
+        JSM -> BE : processAsync(JobContext)
+        BE -> BE : Extract HTML body
+        BE -> BE : Clean up HTML
+        BE --> JSM : JobContext (phase: BODY_EXTRACTION, body)
+    end
+
+    JSM -> JC : isOkToRun(VALIDATION)?
+    alt Yes
+        JSM -> V : processAsync(JobContext)
+        V -> V : Check expired keywords
+        V -> V : Validate job content
+        V --> JSM : JobContext (phase: VALIDATION, validated)
+    end
+
+    JSM -> JC : isOkToRun(SCORING)?
+    alt Yes
+        JSM -> SC : processAsync(JobContext)
+        SC -> SC : Calculate job score
+        SC --> JSM : JobContext (phase: SCORING, score)
+    end
+
+    JSM -> JSM : handle errors
+end
+
+JSM -> JSM : logResults(contexts)
+JSM --> Caller : CompletableFuture<List<JobContext>>
+@enduml

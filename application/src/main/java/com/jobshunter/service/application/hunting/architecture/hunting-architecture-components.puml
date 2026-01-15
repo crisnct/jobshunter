@@ -1,0 +1,61 @@
+﻿@startuml
+left to right direction
+skinparam componentStyle rectangle
+
+package "Entry Point" {
+    component HO as "HuntingOrchestrator\nstartHunting"
+}
+
+package "Hunting Classes" {
+    component GPT as "GptJobHunting"
+    component GROK as "GrokJobHunting"
+    component GEMINI as "GeminiJobHunting"
+    component SERP as "SerpJobHunting"
+}
+
+package "Conversation Flow" {
+    component ACJH as "AiConversationJobHunting\nsearchAsync"
+    component ACSM as "AiConversationStateMachine\nprocessAsync"
+}
+
+package "Job Processing" {
+    component JSM as "JobsStateMachine\nprocessAsync"
+}
+
+package "Generic Flow" {
+    component GJH as "GenericJobHunting\nsearchAsync"
+}
+
+rectangle Result as "List<Job>"
+
+HO --> GPT : switch by EngineType
+HO --> GROK : switch by EngineType
+HO --> GEMINI : switch by EngineType
+HO --> SERP : switch by EngineType
+
+GPT --> ACJH : extends
+GROK --> ACJH : extends
+GEMINI --> GJH : extends
+SERP --> GJH : extends
+
+ACJH --> ACSM : delegates to
+ACSM --> JSM : calls
+GJH --> JSM : direct search
+
+JSM --> ACSM : List<JobContext>
+ACSM --> ACJH : AiClientResponse
+GJH --> GEMINI : AiClientResponse
+GJH --> SERP : AiClientResponse
+
+ACJH --> GPT : CompletableFuture<List<Job>>
+ACJH --> GROK : CompletableFuture<List<Job>>
+GJH --> GEMINI : CompletableFuture<List<Job>>
+GJH --> SERP : CompletableFuture<List<Job>>
+
+GPT --> HO : returns
+GROK --> HO : returns
+GEMINI --> HO : returns
+SERP --> HO : returns
+
+HO --> Result : removes duplicates
+@enduml

@@ -1,0 +1,77 @@
+@startuml
+hide empty members
+skinparam classAttributeIconSize 0
+
+interface AiJobsClient <<sealed interface>> {
+    +searchJobs(request: AIJobSearchRequest): AiClientResponse
+    +searchCompanies(request: AIJobSearchRequest): List<CompanyDto>
+    +searchJobsFromCompanies(request: AIJobSearchRequest, companies: List<CompanyDto>): AiClientResponse
+}
+
+interface DeleteConvAiClient {
+    +deleteConversation(id: String): void
+}
+
+class GptV1JobSearchImpl {
+    -properties: ApplicationProperties
+    -restClient: RestClient
+    -mapper: JsonMapper
+    -urlExtractor: UrlExtractor
+    -templateRenderer: TemplateRenderer
+}
+
+class GrokV1JobSearchImpl {
+    -properties: ApplicationProperties
+    -restClient: RestClient
+    -mapper: JsonMapper
+    -urlExtractor: UrlExtractor
+    -templateRenderer: TemplateRenderer
+}
+
+class GeminiV1JobSearchImpl {
+    -properties: ApplicationProperties
+    -restClient: RestClient
+    -urlExtractor: UrlExtractor
+    -templateRenderer: TemplateRenderer
+}
+
+class SerpClientImpl {
+    -browserSimulator: BrowserSimulator
+    -applicationProperties: ApplicationProperties
+}
+
+class FakeGptClient
+class FakeGrokClient
+class FakeGeminiClient
+class FakeSerpClient
+
+AiJobsClient <|.. GptV1JobSearchImpl
+AiJobsClient <|.. GrokV1JobSearchImpl
+AiJobsClient <|.. GeminiV1JobSearchImpl
+AiJobsClient <|.. SerpClientImpl
+AiJobsClient <|.. FakeGptClient
+AiJobsClient <|.. FakeGrokClient
+AiJobsClient <|.. FakeGeminiClient
+AiJobsClient <|.. FakeSerpClient
+
+DeleteConvAiClient <|.. GptV1JobSearchImpl
+DeleteConvAiClient <|.. GrokV1JobSearchImpl
+
+GptV1JobSearchImpl ..> ApplicationProperties
+GptV1JobSearchImpl ..> RestClient
+GptV1JobSearchImpl ..> TemplateRenderer
+GptV1JobSearchImpl ..> UrlExtractor
+
+GrokV1JobSearchImpl ..> ApplicationProperties
+GrokV1JobSearchImpl ..> RestClient
+GrokV1JobSearchImpl ..> TemplateRenderer
+GrokV1JobSearchImpl ..> UrlExtractor
+
+GeminiV1JobSearchImpl ..> ApplicationProperties
+GeminiV1JobSearchImpl ..> RestClient
+GeminiV1JobSearchImpl ..> TemplateRenderer
+GeminiV1JobSearchImpl ..> UrlExtractor
+
+SerpClientImpl ..> BrowserSimulator
+SerpClientImpl ..> ApplicationProperties
+@enduml
