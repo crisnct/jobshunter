@@ -6,7 +6,6 @@ import com.jobshunter.dto.grokResponse.FileInfo;
 import com.jobshunter.dto.grokResponse.FileListResponse;
 import com.jobshunter.model.ResumeFileInfo;
 import com.jobshunter.processor.PackageExpected;
-import com.jobshunter.security.JHHeaders;
 import com.jobshunter.service.clients.FileClient;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;

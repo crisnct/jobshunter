@@ -20,7 +20,7 @@ public class GrokJobSearchRequest extends AdditionalEffortRequest {
 
   @Override
   public GrokJobSearchRequest copy() {
-    GrokJobSearchRequest copy = new GrokJobSearchRequest(this.getUser(), 
+    GrokJobSearchRequest copy = new GrokJobSearchRequest(this.getUser(),
         new EngineSelection(this.getEngineSelection().type(), this.getEngineSelection().model()));
     // Copy parent fields
     copy.setPromptId(this.getPromptId());

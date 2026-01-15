@@ -69,29 +69,24 @@ public class MonitoringController {
   public ResponseEntity<String> getExecutorsStatus() {
     log.info("Fetching status of executors");
 
-    StringBuilder table = new StringBuilder(TABLE_HEADER);
+    String table = TABLE_HEADER + formatExecutorRow("GPT", gptSearchExecutor) + '\n'
+        + formatExecutorRow("Grok", grokSearchExecutor) + '\n'
+        + formatExecutorRow("Gemini", geminiSearchExecutor) + '\n'
+        + formatExecutorRow("SERP", serpExecutor) + '\n'
+        + formatExecutorRow("Job Processing", jobProcessingExecutor) + '\n'
+        + formatExecutorRow("Orders", ordersExecutor) + '\n'
+        + formatExecutorRow("Notifications", notificationsExecutor) + '\n'
+        + formatExecutorRow("URL-Fetch-REST Client", urlFetchRestClientExecutor) + '\n'
+        + formatExecutorRow("URL-Fetch-Playwright", urlFetchPlaywrightExecutor) + '\n'
+        + formatSchedulerRow(
+        "Scheduler",
+        ((ThreadPoolTaskScheduler) scheduler).getScheduledThreadPoolExecutor()
+    )
+        + '\n'
+        + "\nURL Affinity executors: "
+        + urlAffinityExecutor.getAllExecutors().size();
 
-    table.append(formatExecutorRow("GPT", gptSearchExecutor)).append('\n');
-    table.append(formatExecutorRow("Grok", grokSearchExecutor)).append('\n');
-    table.append(formatExecutorRow("Gemini", geminiSearchExecutor)).append('\n');
-    table.append(formatExecutorRow("SERP", serpExecutor)).append('\n');
-    table.append(formatExecutorRow("Job Processing", jobProcessingExecutor)).append('\n');
-    table.append(formatExecutorRow("Orders", ordersExecutor)).append('\n');
-    table.append(formatExecutorRow("Notifications", notificationsExecutor)).append('\n');
-    table.append(formatExecutorRow("URL-Fetch-REST Client", urlFetchRestClientExecutor)).append('\n');
-    table.append(formatExecutorRow("URL-Fetch-Playwright", urlFetchPlaywrightExecutor)).append('\n');
-
-    table.append(
-        formatSchedulerRow(
-            "Scheduler",
-            ((ThreadPoolTaskScheduler) scheduler).getScheduledThreadPoolExecutor()
-        )
-    ).append('\n');
-
-    table.append("\nURL Affinity executors: ")
-        .append(urlAffinityExecutor.getAllExecutors().size());
-
-    return ResponseEntity.ok(table.toString());
+    return ResponseEntity.ok(table);
   }
 
   private String formatExecutorRow(String name, LimitedVirtualThreadExecutor executor) {

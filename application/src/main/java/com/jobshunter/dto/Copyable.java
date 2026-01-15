@@ -6,5 +6,6 @@ package com.jobshunter.dto;
  */
 //@formatter:on
 public interface Copyable<T> {
-    T copy();
+
+  T copy();
 }

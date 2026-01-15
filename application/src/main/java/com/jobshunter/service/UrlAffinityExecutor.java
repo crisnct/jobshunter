@@ -19,14 +19,11 @@ import org.springframework.stereotype.Component;
 @Component
 public final class UrlAffinityExecutor {
 
-  private static final int MAX_CONCURRENT_TASKS = 50;
-
   // Delay which is applied for tasks from same host
   public static final int DELAY_SAME_HOST_URL = 5; //sec
-
   //lifetime of threads in the cache
   public static final int LIFETIME_IN_CACHE = 15; //minutes
-
+  private static final int MAX_CONCURRENT_TASKS = 50;
   private final Semaphore globalSemaphore = new Semaphore(MAX_CONCURRENT_TASKS, true);
 
   private final Cache<String, HostExecutionContext> cache;
@@ -103,17 +100,7 @@ public final class UrlAffinityExecutor {
   // Internal context
   // =========================
 
-  private static final class HostExecutionContext {
+  private record HostExecutionContext(ExecutorService executor, RateLimiter rateLimiter) {
 
-    final ExecutorService executor;
-    final RateLimiter rateLimiter;
-
-    HostExecutionContext(
-        ExecutorService executor,
-        RateLimiter rateLimiter
-    ) {
-      this.executor = executor;
-      this.rateLimiter = rateLimiter;
-    }
   }
 }

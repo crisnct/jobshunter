@@ -1,5 +1,3 @@
-%%{init: {'themeVariables': { 'fontSize': '10px' }}}%%
-
 flowchart TD
     subgraph AiConversationStateMachine["AiConversationStateMachine"]
         ACSM_Entry[processAsync Entry]
@@ -8,7 +6,6 @@ flowchart TD
         ACSM_Process[processWithRetry<br/>Filter accepted/rejected]
         ACSM_Cleanup[Cleanup Phase<br/>conversationCleanup.cleanup]
         ACSM_Error[handlePipelineError]
-        
         ACSM_Entry --> ACSM_Search
         ACSM_Search --> ACSM_Start
         ACSM_Start -->|List of Jobs| ACSM_Process
@@ -22,7 +19,7 @@ flowchart TD
         ACSM_Cleanup --> ACSM_Error
         ACSM_Error --> ACSM_Return[Return AiClientResponse]
     end
-    
+
     subgraph JobsStateMachine["JobsStateMachine"]
         JSM_Entry[processAsync Entry<br/>List of Jobs]
         JSM_CheckMetadata{Job has<br/>APPROVED_BY_CONVERSATION<br/>metadata?}
@@ -30,7 +27,6 @@ flowchart TD
         JSM_Pipeline[applyJobPipeline]
         JSM_Log[logResults]
         JSM_Return[Return List of JobContext]
-        
         JSM_Entry --> JSM_CheckMetadata
         JSM_CheckMetadata -->|Yes| JSM_Skip
         JSM_CheckMetadata -->|No| JSM_Pipeline
@@ -38,7 +34,7 @@ flowchart TD
         JSM_Pipeline --> JSM_Log
         JSM_Log --> JSM_Return
     end
-    
+
     subgraph PipelineSteps["Job Processing Pipeline"]
         PS_Init[Create JobContext]
         PS_BasicCheck[PipelineStep 1<br/>BASIC_CHECK<br/>JobBasicCheckProcessor]
@@ -47,19 +43,17 @@ flowchart TD
         PS_Validate[PipelineStep 4<br/>VALIDATION<br/>JobValidator]
         PS_Score[PipelineStep 5<br/>SCORING<br/>JobScoring GPT]
         PS_Handle[Error Handling]
-        
         PS_Init --> PS_BasicCheck
-        PS_BasicCheck -->|ctx.isOkToRun| PS_Fetch
-        PS_Fetch -->|ctx.isOkToRun| PS_BodyExtract
-        PS_BodyExtract -->|ctx.isOkToRun| PS_Validate
-        PS_Validate -->|ctx.isOkToRun| PS_Score
+        PS_BasicCheck -->|ctx . isOkToRun| PS_Fetch
+        PS_Fetch -->|ctx . isOkToRun| PS_BodyExtract
+        PS_BodyExtract -->|ctx . isOkToRun| PS_Validate
+        PS_Validate -->|ctx . isOkToRun| PS_Score
         PS_Score --> PS_Handle
     end
-    
+
     ACSM_Start -->|Calls| JSM_Entry
     JSM_Pipeline --> PS_Init
     JSM_Return -->|List of JobContext| ACSM_Process
-    
-    style AiConversationStateMachine fill:#e1f5ff
-    style JobsStateMachine fill:#fff4e1
-    style PipelineSteps fill:#f0f0f0
+    style AiConversationStateMachine fill: #e1f5ff
+    style JobsStateMachine fill: #fff4e1
+    style PipelineSteps fill: #f0f0f0

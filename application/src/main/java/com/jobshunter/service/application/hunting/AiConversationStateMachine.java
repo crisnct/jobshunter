@@ -12,6 +12,7 @@ import io.github.resilience4j.ratelimiter.RequestNotPermitted;
 import jakarta.annotation.Nonnull;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.Executor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -19,30 +20,6 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @Service
 public class AiConversationStateMachine {
-
-  @FunctionalInterface
-  public interface SearchExecutor<R extends AdditionalEffortRequest> {
-
-    AiClientResponse searchJobsSync(R request);
-  }
-
-  @FunctionalInterface
-  public interface PromptGenerator {
-
-    String generate(List<Job> rejectedJobs);
-  }
-
-  @FunctionalInterface
-  public interface RetryRequestFactory<R extends AdditionalEffortRequest> {
-
-    R create(R originalRequest, AiClientResponse prevResponse, String newPrompt);
-  }
-
-  @FunctionalInterface
-  public interface ConversationCleanup<R extends AdditionalEffortRequest> {
-
-    void cleanup(R request);
-  }
 
   private final JobsStateMachine jobsStateMachine;
   private final int maxRetries;
@@ -78,20 +55,21 @@ public class AiConversationStateMachine {
       ConversationCleanup<R> conversationCleanup
   ) {
     return CompletableFuture.supplyAsync(() -> searchExecutor.searchJobsSync(request), executor)
-        .thenCompose(response -> startConversation(request, accumulatedResponse, response))
-        .thenCompose(contexts -> processWithRetry(request, executor, retryCount, accumulatedResponse, contexts,
+        .thenCompose(response -> validateJobsUrl(request, accumulatedResponse, response))
+        .thenCompose(contexts -> collectValidJobs(accumulatedResponse, contexts))
+        .thenCompose(contexts -> askAIForRejectedURLs(request, executor, retryCount, accumulatedResponse, contexts,
             searchExecutor, promptGenerator, retryRequestFactory, conversationCleanup))
-        .whenCompleteAsync((_, _) -> {
+        .whenComplete((result, error) -> CompletableFuture.runAsync(() -> {
           try {
             conversationCleanup.cleanup(request);
           } catch (Exception cleanupEx) {
             log.warn("Failed to cleanup conversation for user {}: {}", request.getUser().getUsername(), cleanupEx.getMessage());
           }
-        }, executor)
+        }))
         .exceptionally(ex -> handlePipelineError(request, accumulatedResponse, ex));
   }
 
-  private <R extends AdditionalEffortRequest> CompletableFuture<List<JobContext>> startConversation(
+  private <R extends AdditionalEffortRequest> CompletableFuture<List<JobContext>> validateJobsUrl(
       R request,
       AiClientResponse accumulatedResponse,
       AiClientResponse response
@@ -111,7 +89,7 @@ public class AiConversationStateMachine {
   }
 
   @Nonnull
-  private <R extends AdditionalEffortRequest> CompletableFuture<AiClientResponse> processWithRetry(
+  private <R extends AdditionalEffortRequest> CompletableFuture<AiClientResponse> askAIForRejectedURLs(
       R request,
       Executor executor,
       int retryCount,
@@ -122,15 +100,6 @@ public class AiConversationStateMachine {
       RetryRequestFactory<R> retryRequestFactory,
       ConversationCleanup<R> conversationCleanup
   ) {
-    // Filter Phase: Separate accepted and rejected jobs
-    contexts.stream()
-        .filter(ctx -> !ctx.isFailed() && ctx.isValidatedSuccessfully())
-        .map(JobContext::getJob)
-        .forEach(job -> {
-          job.addMetadata(JobMetadataType.APPROVED_BY_CONVERSATION_STATE_MACHINE, true);
-          accumulatedResponse.add(job);
-        });
-
     List<Job> rejectedJobs = contexts.stream()
         .filter(ctx -> !ctx.isFailed() && !ctx.isValidatedSuccessfully())
         .map(JobContext::getJob)
@@ -154,21 +123,69 @@ public class AiConversationStateMachine {
     }
   }
 
+  private CompletableFuture<List<JobContext>> collectValidJobs(
+      AiClientResponse accumulatedResponse,
+      List<JobContext> contexts
+  ) {
+    // Filter Phase: Separate accepted and rejected jobs
+    contexts.stream()
+        .filter(ctx -> !ctx.isFailed() && ctx.isValidatedSuccessfully())
+        .map(JobContext::getJob)
+        .forEach(job -> {
+          job.addMetadata(JobMetadataType.APPROVED_BY_CONVERSATION_STATE_MACHINE, true);
+          accumulatedResponse.add(job);
+        });
+    return CompletableFuture.completedFuture(contexts);
+  }
+
   private <R extends AdditionalEffortRequest> AiClientResponse handlePipelineError(
       R request,
       AiClientResponse accumulatedResponse,
       Throwable ex
   ) {
+    Throwable cause = unwrap(ex);
     EngineSelection engineConfig = request.getEngineSelection();
-    if (ex.getCause() instanceof RequestNotPermitted) {
+    if (cause instanceof RequestNotPermitted) {
       log.error("Rate limit exceeded for user {}, engine: {}, model: {}",
           request.getUser().getUsername(), engineConfig.type(), engineConfig.model());
     } else {
       log.error("Unexpected error at gathering jobs from model {}: {} for prompt {}",
-          engineConfig.model(), ex.getMessage(), request.getUserPrompt());
+          engineConfig.model(), cause != null ? cause.getMessage() : ex.getMessage(), request.getUserPrompt());
     }
     log.error("Pipeline failed for searchAsync", ex);
     return accumulatedResponse.getJobs().isEmpty() ? new AiClientResponse() : accumulatedResponse;
+  }
+
+  private Throwable unwrap(Throwable ex) {
+    Throwable current = ex instanceof CompletionException && ex.getCause() != null ? ex.getCause() : ex;
+    while (current != null && current.getCause() != null && !(current instanceof RequestNotPermitted)) {
+      current = current.getCause();
+    }
+    return current;
+  }
+
+  @FunctionalInterface
+  public interface SearchExecutor<R extends AdditionalEffortRequest> {
+
+    AiClientResponse searchJobsSync(R request);
+  }
+
+  @FunctionalInterface
+  public interface PromptGenerator {
+
+    String generate(List<Job> rejectedJobs);
+  }
+
+  @FunctionalInterface
+  public interface RetryRequestFactory<R extends AdditionalEffortRequest> {
+
+    R create(R originalRequest, AiClientResponse prevResponse, String newPrompt);
+  }
+
+  @FunctionalInterface
+  public interface ConversationCleanup<R extends AdditionalEffortRequest> {
+
+    void cleanup(R request);
   }
 
 }

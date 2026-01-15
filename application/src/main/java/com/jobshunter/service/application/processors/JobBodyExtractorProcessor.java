@@ -18,7 +18,7 @@ public final class JobBodyExtractorProcessor implements JobProcessor {
     if (context.hasFetchResult()) {
       context.setBody(this.cleanupHTML(result.body()));
       context.setPhase(JobPhase.BODY_EXTRACTION);
-    } else{
+    } else {
       context.failJob("Missing body from fetch result");
     }
     return context;

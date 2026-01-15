@@ -1,8 +1,8 @@
 package com.jobshunter;
 
 import com.jobshunter.security.JHHeaders;
-import com.jobshunter.service.clients.browser.RedirectFetchPage;
 import com.jobshunter.service.clients.browser.BrowserSimulator;
+import com.jobshunter.service.clients.browser.RedirectFetchPage;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.UnknownHostException;

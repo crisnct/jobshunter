@@ -1,7 +1,6 @@
 package com.jobshunter.service.clients.mailtrap;
 
 import com.jobshunter.processor.PackageExpected;
-import com.jobshunter.security.JHHeaders;
 import com.jobshunter.service.clients.RestMailtrapClient;
 import com.jobshunter.service.clients.mailtrap.RestMailtrapClientImpl.MailtrapTemplateRequest.From;
 import com.jobshunter.service.clients.mailtrap.RestMailtrapClientImpl.MailtrapTemplateRequest.To;

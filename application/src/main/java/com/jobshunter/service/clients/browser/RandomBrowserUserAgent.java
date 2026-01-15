@@ -4,8 +4,7 @@ import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
- * Provides realistic desktop browser User-Agent strings.
- * Intentionally limited to reduce bot fingerprint variance.
+ * Provides realistic desktop browser User-Agent strings. Intentionally limited to reduce bot fingerprint variance.
  */
 public final class RandomBrowserUserAgent {
 

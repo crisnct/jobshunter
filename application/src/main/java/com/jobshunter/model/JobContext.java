@@ -12,10 +12,8 @@ import org.apache.logging.log4j.util.Strings;
 public class JobContext {
 
   private final Job job;
-  private String body;
-
   private final UserEntity user;
-
+  private String body;
   private HttpFetchResult fetchResult;
   private String host;
   private String description;

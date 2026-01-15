@@ -13,18 +13,14 @@ import lombok.Data;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Job {
 
-  @Max(100)
-  private int score;
-
-  @NotNull
-  private String url;
-
-  private String source;
-
-  private Long promptId;
-
   @JsonIgnore
   private final Map<JobMetadataType, Object> metadata = new HashMap<>();
+  @Max(100)
+  private int score;
+  @NotNull
+  private String url;
+  private String source;
+  private Long promptId;
 
   public Job(int score, String url, String source) {
     this.score = score;

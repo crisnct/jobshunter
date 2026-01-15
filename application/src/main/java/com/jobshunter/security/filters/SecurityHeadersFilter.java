@@ -91,42 +91,42 @@ public class SecurityHeadersFilter extends OncePerRequestFilter {
    * @return the CSP header value
    */
   private String buildContentSecurityPolicy(HttpServletRequest request) {
-    StringBuilder csp = new StringBuilder();
 
     // Default source restrictions
-    csp.append("default-src 'self'");
 
-    // Script sources - allow self and inline scripts for React
-    csp.append("; script-src 'self' 'unsafe-inline' 'unsafe-eval'");
+    String csp = "default-src 'self'"
 
-    // Style sources - allow self and inline styles for React
-    csp.append("; style-src 'self' 'unsafe-inline'");
+        // Script sources - allow self and inline scripts for React
+        + "; script-src 'self' 'unsafe-inline' 'unsafe-eval'"
 
-    // Image sources - allow self and data URIs
-    csp.append("; img-src 'self' data: https:");
+        // Style sources - allow self and inline styles for React
+        + "; style-src 'self' 'unsafe-inline'"
 
-    // Font sources - allow self
-    csp.append("; font-src 'self'");
+        // Image sources - allow self and data URIs
+        + "; img-src 'self' data: https:"
 
-    // Connect sources - allow self and API endpoints
-    csp.append("; connect-src 'self'");
+        // Font sources - allow self
+        + "; font-src 'self'"
 
-    // Object sources - deny all
-    csp.append("; object-src 'none'");
+        // Connect sources - allow self and API endpoints
+        + "; connect-src 'self'"
 
-    // Base URI - restrict to self
-    csp.append("; base-uri 'self'");
+        // Object sources - deny all
+        + "; object-src 'none'"
 
-    // Form action - restrict to self
-    csp.append("; form-action 'self'");
+        // Base URI - restrict to self
+        + "; base-uri 'self'"
 
-    // Frame ancestors - deny all (redundant with X-Frame-Options but more specific)
-    csp.append("; frame-ancestors 'none'");
+        // Form action - restrict to self
+        + "; form-action 'self'"
 
-    // Upgrade insecure requests
-    csp.append("; upgrade-insecure-requests");
+        // Frame ancestors - deny all (redundant with X-Frame-Options but more specific)
+        + "; frame-ancestors 'none'"
 
-    return csp.toString();
+        // Upgrade insecure requests
+        + "; upgrade-insecure-requests";
+
+    return csp;
   }
 
 }

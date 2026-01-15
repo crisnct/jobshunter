@@ -55,10 +55,8 @@ public non-sealed class GptV1JobSearchImpl implements
     AiJobsClient<GptJobSearchRequest, AiClientResponse>,
     DeleteConvAiClient {
 
-  private static final double DEFAULT_TEMPERATURE = 0.2;
-
   public static final URI DEFAULT_URI = URI.create("https://api.openai.com/v1/responses");
-
+  private static final double DEFAULT_TEMPERATURE = 0.2;
   private final ApplicationProperties properties;
 
   private final RestClient restClient;

@@ -26,9 +26,9 @@ public class TinyUrlClient {
         .toUriString();
 
     return restClient.get()
-            .uri(apiUrl)
-            .retrieve()
-            .body(String.class);
+        .uri(apiUrl)
+        .retrieve()
+        .body(String.class);
   }
 
   @SuppressWarnings("unused")

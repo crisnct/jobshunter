@@ -12,6 +12,7 @@ import com.jobshunter.service.testdata.FakeGeminiClient;
 import com.jobshunter.service.testdata.FakeGptClient;
 import com.jobshunter.service.testdata.FakeGrokClient;
 import com.jobshunter.service.testdata.FakeSerpClient;
+import jakarta.validation.constraints.NotNull;
 import java.util.List;
 
 @PackageExpected("com.jobshunter.service.application")
@@ -19,10 +20,13 @@ public sealed interface AiJobsClient
     <T extends AIJobSearchRequest, F extends AiClientResponse> permits GeminiV1JobSearchImpl, GptV1JobSearchImpl, GrokV1JobSearchImpl, SerpClientImpl,
     FakeGeminiClient, FakeGptClient, FakeGrokClient, FakeSerpClient {
 
+  @NotNull
   F searchJobs(T request);
 
+  @NotNull
   List<CompanyDto> searchCompanies(T request);
 
+  @NotNull
   F searchJobsFromCompanies(T request, List<CompanyDto> group);
 
 }

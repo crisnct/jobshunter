@@ -155,7 +155,7 @@ public class SecurityConfig {
   }
 
   @Bean
-  public AdditionalHeadersFilter createAdditionalHeadersFilter(){
+  public AdditionalHeadersFilter createAdditionalHeadersFilter() {
     return new AdditionalHeadersFilter();
   }
 

@@ -9,7 +9,7 @@ public record IpInfoResponse(
     @JsonProperty("country_code")
     String countryCode,
     @JsonProperty("continent_code")
-    String  continentCode,
+    String continentCode,
     String asn,
     Boolean bogon
 ) {

@@ -24,18 +24,15 @@ import org.springframework.web.client.RestClient;
 @Component
 public class BrowserSimulator {
 
+  public static final int TIMEOUT = 20; //sec
   private static final MediaType[] BROWSER_ACCEPT = {
       MediaType.TEXT_HTML,
       MediaType.APPLICATION_XHTML_XML,
       MediaType.APPLICATION_XML,
       MediaType.ALL
   };
-
   private static final String ACCEPT_LANGUAGE_HEADER = "en-US,en;q=0.9";
-
   private static final String CONNECTION_HEADER = "keep-alive";
-
-  public static final int TIMEOUT = 20; //sec
 
   private final RestClient restClientNoRedirection;
 
@@ -132,7 +129,7 @@ public class BrowserSimulator {
           throw e;
         }
       }
-      return  ResponseEntity.ok(page.content());
+      return ResponseEntity.ok(page.content());
     }
   }
 

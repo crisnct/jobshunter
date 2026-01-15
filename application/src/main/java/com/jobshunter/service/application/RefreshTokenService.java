@@ -28,8 +28,7 @@ public class RefreshTokenService {
   private final UserSessionDBService userSessionDBService;
 
   /**
-   * Generates a cryptographically secure refresh token.
-   * Uses 32 bytes of SecureRandom, encoded as Base64 URL-safe without padding.
+   * Generates a cryptographically secure refresh token. Uses 32 bytes of SecureRandom, encoded as Base64 URL-safe without padding.
    *
    * @return Base64 URL-safe encoded refresh token
    */
@@ -40,8 +39,7 @@ public class RefreshTokenService {
   }
 
   /**
-   * Hashes a refresh token using SHA-256 with a server-side pepper.
-   * Format: SHA-256(token + pepper)
+   * Hashes a refresh token using SHA-256 with a server-side pepper. Format: SHA-256(token + pepper)
    *
    * @param refreshToken The plain refresh token
    * @return Hex-encoded SHA-256 hash
@@ -55,11 +53,11 @@ public class RefreshTokenService {
   }
 
   /**
-   * Validates a refresh token and performs rotation (generates new token).
-   * This implements secure token rotation: every refresh generates a new token.
+   * Validates a refresh token and performs rotation (generates new token). This implements secure token rotation: every refresh generates a new
+   * token.
    *
-   * @param user The user entity
-   * @param deviceId The device ID (UUID string)
+   * @param user         The user entity
+   * @param deviceId     The device ID (UUID string)
    * @param refreshToken The refresh token from client
    * @return The new refresh token (to be sent to client)
    * @throws IllegalArgumentException if token is invalid, expired, or revoked
@@ -92,11 +90,10 @@ public class RefreshTokenService {
   }
 
   /**
-   * Validates a refresh token and returns the associated user entity.
-   * This method is used for public endpoints like /refresh where we don't have authentication context.
-   * The user entity is eagerly loaded via JOIN FETCH to avoid LazyInitializationException.
+   * Validates a refresh token and returns the associated user entity. This method is used for public endpoints like /refresh where we don't have
+   * authentication context. The user entity is eagerly loaded via JOIN FETCH to avoid LazyInitializationException.
    *
-   * @param deviceId The device ID (UUID string)
+   * @param deviceId     The device ID (UUID string)
    * @param refreshToken The refresh token from client
    * @return The user entity associated with the valid session
    * @throws IllegalArgumentException if token is invalid, expired, or revoked

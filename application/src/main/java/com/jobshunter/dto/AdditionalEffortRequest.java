@@ -2,7 +2,6 @@ package com.jobshunter.dto;
 
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.model.EngineSelection;
-import java.util.ArrayList;
 import java.util.List;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
