@@ -163,17 +163,13 @@ components:
         gptFileId:
           type: string
           nullable: true
-        geminiFileId:
+        grokFileId:
           type: string
           nullable: true
         lastJobs:
           type: string
           nullable: true
           description: ISO-8601 date-time as string.
-        timeInterval:
-          type: integer
-          format: int32
-          nullable: true
         prompts:
           type: array
           nullable: true
@@ -187,6 +183,36 @@ components:
           type: array
           items:
             type: string
+        city:
+          type: string
+          nullable: true
+          maxLength: 64
+        country:
+          type: string
+          nullable: true
+          maxLength: 64
+        jobDomain:
+          type: string
+          nullable: true
+          maxLength: 64
+        jobRoles:
+          type: array
+          nullable: true
+          items:
+            type: string
+        jobTypes:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/JobType'
+        relocation:
+          $ref: '#/components/schemas/Relocation'
+          nullable: true
+        contractTypes:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/ContractType'
       required:
         - username
         - email
@@ -280,6 +306,53 @@ components:
           description: Language code. See https://serpapi.com/google-languages
       required: [ q ]
 
+    SerpPromptUpdate:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          nullable: true
+          description: Prompt ID for updates (null for new prompts)
+        q:
+          type: string
+          maxLength: 2000
+          description: SERP query.
+        googleDomain:
+          type: string
+          maxLength: 255
+          nullable: true
+          description: Google domain (e.g., google.ro). See https://serpapi.com/google-domains
+        datePosted:
+          type: string
+          maxLength: 128
+          nullable: true
+          description: Date filter (today, last_3_days, last_7_days, last_14_days, last_30_days).
+        country:
+          type: string
+          maxLength: 2
+          nullable: true
+          description: Country code. See https://serpapi.com/google-countries
+        location:
+          type: string
+          nullable: true
+        workType:
+          type: string
+          enum: [ REMOTE, ONSITE, HYBRID ]
+          nullable: true
+        radius:
+          type: integer
+          format: int32
+          nullable: true
+          minimum: 1
+          description: Radius in km.
+        language:
+          type: string
+          maxLength: 2
+          nullable: true
+          description: Language code. See https://serpapi.com/google-languages
+      required: [ q ]
+
     AiPrompt:
       type: object
       properties:
@@ -299,35 +372,87 @@ components:
           description: Model name (e.g., gpt-4o-mini, gemini-2.5-flash)
       required: [ prompt, engine, model ]
 
+    AiPromptUpdate:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          nullable: true
+          description: Prompt ID for updates (null for new prompts)
+        prompt:
+          type: string
+          maxLength: 3000
+      required: [ prompt ]
+
+    JobType:
+      type: string
+      enum: [ REMOTE, HYBRID, ONSITE ]
+
+    ContractType:
+      type: string
+      enum: [ EMPLOYMENT, B2B, EOR, INTERNSHIP ]
+
+    Relocation:
+      type: string
+      enum: [ NO, YES_BUT_WITHIN_COUNTRY, YES ]
+
     UserUpdateRequest:
       type: object
       properties:
         username:
           type: string
           maxLength: 50
-        phone_number:
+        phoneNumber:
           type: string
           maxLength: 30
-        time_interval:
-          type: integer
-          format: int32
-          minimum: 1
-        notify_whatsapp:
+        notifyWhatsapp:
           type: boolean
-        notify_email:
+        notifyEmail:
           type: boolean
-        serp_prompts:
+        serpPrompts:
           type: array
+          nullable: true
           items:
-            $ref: '#/components/schemas/SerpPrompt'
-        ai_prompts:
+            $ref: '#/components/schemas/SerpPromptUpdate'
+        aiPrompts:
           type: array
+          nullable: true
           items:
-            $ref: '#/components/schemas/AiPrompt'
+            $ref: '#/components/schemas/AiPromptUpdate'
+        city:
+          type: string
+          nullable: true
+          maxLength: 64
+        country:
+          type: string
+          nullable: true
+          maxLength: 64
+        jobDomain:
+          type: string
+          nullable: true
+          maxLength: 64
+        jobRoles:
+          type: array
+          nullable: true
+          items:
+            type: string
+        jobTypes:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/JobType'
+        relocation:
+          $ref: '#/components/schemas/Relocation'
+          nullable: true
+        contractTypes:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/ContractType'
       required:
         - username
-        - phone_number
-        - time_interval
+        - phoneNumber
 
     JobHit:
       type: object
@@ -404,32 +529,37 @@ components:
           description: Language code. See https://serpapi.com/google-languages
       required: [ q ]
 
-    ModelResponse:
+    AiModel:
       type: object
       properties:
-        id:
-          type: integer
-          format: int64
-          description: Engine configuration ID
         model:
           type: string
           description: Model name
-      required: [ id, model ]
+        enabled:
+          type: boolean
+          description: Whether the model is enabled
+        notes:
+          type: string
+          nullable: true
+          description: Additional notes about the model
+      required: [ model, enabled ]
 
     JobOrderRequest:
       type: object
       properties:
-        engineId:
-          type: integer
-          format: int64
-          description: Engine configuration ID
+        provider:
+          $ref: '#/components/schemas/EngineType'
+          description: AI provider type (GPT, GROK, GEMINI, SERP)
+        model:
+          type: string
+          description: Model name (e.g., gpt-4o-mini, gemini-2.5-flash)
         searchCompanies:
           type: boolean
           description: Whether to search for companies
         searchWithUserPrompts:
           type: boolean
           description: Whether to use user prompts for the search
-      required: [ engineId, searchCompanies, searchWithUserPrompts ]
+      required: [ provider, model, searchCompanies, searchWithUserPrompts ]
 
     JobOrderResponse:
       type: object
@@ -659,9 +789,9 @@ paths:
 
   /api/auth/logout-all:
     post:
-      summary: Logout all sessions for authenticated user
+      summary: Logout all sessions for authenticated user (admin only)
       tags: [ Auth ]
-      description: Revokes all active sessions for the authenticated user and expires refresh token cookie. Requires authentication.
+      description: Revokes all active sessions for the authenticated user and expires refresh token cookie. Requires ROLE_ADMIN.
       security:
         - bearerAuth: [ ]
       responses:
@@ -669,6 +799,12 @@ paths:
           description: All sessions revoked successfully. Cookies expired.
         '401':
           description: Unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden (requires ROLE_ADMIN).
           content:
             application/json:
               schema:
@@ -840,7 +976,15 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/MessageResponse'
+                type: object
+                properties:
+                  user:
+                    type: string
+                    description: Updated username
+                  message:
+                    type: string
+                    description: Success message
+                required: [ user, message ]
         '400':
           description: Validation error.
           content:
@@ -1060,7 +1204,7 @@ paths:
     post:
       summary: Test GPT models (admin only)
       tags: [ Test ]
-      description: Requires ROLE_ADMIN. Tests GPT API connection and models. Returns list of supported models.
+      description: Requires ROLE_ADMIN. Tests GPT API connection and models. Returns formatted string with supported models.
       security:
         - bearerAuth: [ ]
       requestBody:
@@ -1068,23 +1212,16 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                models:
-                  type: array
-                  items:
-                    type: string
-                  description: Set of model names to test
-              required: [ models ]
+              type: string
+              description: Custom prompt payload (unused, but required by controller)
       responses:
         '200':
-          description: List of supported models
+          description: Formatted string with model support status and list of supported models
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  type: string
+                type: string
+                example: "1\n0\n1\n\n\nModels supported:\n[gpt-4o-mini, gpt-5.2]"
         '401':
           description: Unauthorized
           content:
@@ -1102,7 +1239,7 @@ paths:
     post:
       summary: Test Gemini models (admin only)
       tags: [ Test ]
-      description: Requires ROLE_ADMIN. Tests Gemini API connection and models. Returns list of supported models.
+      description: Requires ROLE_ADMIN. Tests Gemini API connection and models. Returns formatted string with supported models.
       security:
         - bearerAuth: [ ]
       requestBody:
@@ -1110,23 +1247,51 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                models:
-                  type: array
-                  items:
-                    type: string
-                  description: Set of model names to test
-              required: [ models ]
+              type: string
+              description: Custom prompt payload (unused, but required by controller)
       responses:
         '200':
-          description: List of supported models
+          description: Formatted string with model support status and list of supported models
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  type: string
+                type: string
+                example: "1\n0\n1\n\n\nModels supported:\n[gemini-2.5-flash, gemini-2.5-pro]"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - requires ROLE_ADMIN
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/test/testGrokModels:
+    post:
+      summary: Test Grok models (admin only)
+      tags: [ Test ]
+      description: Requires ROLE_ADMIN. Tests Grok API connection and models. Returns formatted string with supported models.
+      security:
+        - bearerAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: string
+              description: Custom prompt payload (unused, but required by controller)
+      responses:
+        '200':
+          description: Formatted string with model support status and list of supported models
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "1\n0\n1\n\n\nModels supported:\n[grok-2-1212, grok-3]"
         '401':
           description: Unauthorized
           content:
@@ -1222,16 +1387,26 @@ paths:
                 additionalProperties:
                   type: array
                   items:
-                    type: string
+                    $ref: '#/components/schemas/AiModel'
                 example:
                   GPT:
-                    - gpt-4o-mini
-                    - gpt-5.2
+                    - model: gpt-4o-mini
+                      enabled: true
+                      notes: null
+                    - model: gpt-5.2
+                      enabled: true
+                      notes: null
                   GEMINI:
-                    - gemini-2.5-flash
-                    - gemini-2.5-pro
+                    - model: gemini-2.5-flash
+                      enabled: true
+                      notes: null
+                    - model: gemini-2.5-pro
+                      enabled: true
+                      notes: null
                   SERP:
-                    - google_jobs
+                    - model: google_jobs
+                      enabled: true
+                      notes: null
         '401':
           description: Unauthorized
           content:
@@ -1241,9 +1416,9 @@ paths:
 
   /api/engine/order:
     post:
-      summary: Create a new job order
+      summary: Create new job orders
       tags: [ Engine ]
-      description: Creates a new job order for the authenticated user with the specified engine configuration. Requires authentication.
+      description: Creates one or more job orders for the authenticated user with the specified engine configurations. Requires authentication. At least one of searchCompanies or searchWithUserPrompts must be true for each order.
       security:
         - bearerAuth: [ ]
       requestBody:
@@ -1251,25 +1426,19 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/JobOrderRequest'
+              type: array
+              items:
+                $ref: '#/components/schemas/JobOrderRequest'
       responses:
         '201':
-          description: Job order created successfully
+          description: Job orders created successfully
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  id:
-                    type: integer
-                    format: int64
-                    description: Job order ID
-                  message:
-                    type: string
-                    description: Success message
-                required: [ id, message ]
+                type: string
+                example: "Job orders created successfully"
         '400':
-          description: Invalid request (e.g., engine configuration not found)
+          description: Invalid request (e.g., engine configuration not found, or both searchCompanies and searchWithUserPrompts are false)
           content:
             application/json:
               schema:
