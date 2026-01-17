@@ -35,7 +35,7 @@ public class GptJobHunting extends AiConversationJobHunting<GptJobSearchRequest>
         .filter(p -> p.getProvider() == EngineType.GPT).findAny()
         .orElseThrow(() -> new ValidationException("No GPT CV found for user " + order.getUser().getId()));
 
-    GptJobSearchRequest request = new GptJobSearchRequest(order, null);
+    GptJobSearchRequest request = new GptJobSearchRequest(order);
     request.setUserPrompt(prompt.getPrompt());
     request.setPromptId(prompt.getId());
     request.setFileId(remoteCV.getFileId());
@@ -46,7 +46,7 @@ public class GptJobHunting extends AiConversationJobHunting<GptJobSearchRequest>
 
   @Override
   public GptJobSearchRequest createCompaniesRequest(SearchJobOrder order) {
-    GptJobSearchRequest request = new GptJobSearchRequest(order, null);
+    GptJobSearchRequest request = new GptJobSearchRequest(order);
     request.setSearchCompanies(true);
     return request;
   }

@@ -1,15 +1,20 @@
 package com.jobshunter.database.entities;
 
+import com.jobshunter.model.AiCapabilityType;
 import com.jobshunter.model.EngineType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -21,7 +26,7 @@ import lombok.ToString;
 @Entity
 @Table(name = "ai_models",
     uniqueConstraints = @UniqueConstraint(name = "uc_provider_model", columnNames = {"provider", "model"}))
-@ToString
+@ToString(exclude = "capabilities")
 public class AiModelEntity {
 
   @Id
@@ -44,8 +49,17 @@ public class AiModelEntity {
   @Column(name = "notes", columnDefinition = "TEXT")
   private String notes;
 
+  @OneToMany(mappedBy = "model", fetch = FetchType.LAZY)
+  private List<AiModelsCapabilityEntity> capabilities = new ArrayList<>();
+
   public AiModelEntity(EngineType provider, String model) {
     this.provider = provider;
     this.model = model;
   }
+
+  public boolean isEnabledCapability(AiCapabilityType capabilityType) {
+    return capabilities.stream()
+        .anyMatch(entity -> entity.isEnabled() && entity.getCapability().getType() == capabilityType);
+  }
+
 }

@@ -1,7 +1,7 @@
 package com.jobshunter.service.clients.gemini;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.jobshunter.ApplicationProperties;
+import com.jobshunter.database.entities.AiModelEntity;
 import com.jobshunter.dto.geminiRequest.FileData;
 import com.jobshunter.dto.geminiRequest.GeminiJobsPayload;
 import com.jobshunter.dto.geminiRequest.GenerationConfig;
@@ -53,14 +53,17 @@ public non-sealed class GeminiJobScoreCalculatorClientImpl implements JobScoreCa
   @CircuitBreaker(name = "geminiCircuitBreaker", fallbackMethod = "fallbackComputeScore")
   public int computeScore(GeminiJobScoreRequest request) {
     try {
-      GenerationConfig generationConfig = GenerationConfig.builder()
+      //TODO
+      AiModelEntity model = null;
+
+      GenerationConfig generationConfig = GenerationConfig.builder(model)
           .temperature(DEFAULT_SCORE_TEMPERATURE)
           .maxOutputTokens(20)
           .build();
 
       FileData resume = new FileData(String.format(FILES_URI, request.getResumeFileId()), MediaType.APPLICATION_PDF_VALUE);
 
-      GeminiJobsPayload payload = GeminiJobsPayload.builder()
+      GeminiJobsPayload payload = GeminiJobsPayload.builder(model)
           .addSystemInstruction(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_MATCH_SCORE))
           .addUserContent(templateRenderer.getPrompt(PromptType.USER_PROMPT_MATCH_SCORE, "description", request.getJobDescription()),
               List.of(resume))

@@ -10,6 +10,7 @@ import com.jobshunter.dto.CompanyDtoList;
 import com.jobshunter.dto.exceptions.BusinessException;
 import com.jobshunter.dto.grokRequest.GrokJobsPayload;
 import com.jobshunter.dto.grokRequest.GrokJobsPayload.GrokJobsPayloadBuilder;
+import com.jobshunter.dto.grokRequest.Reasoning;
 import com.jobshunter.dto.grokRequest.tools.Tools;
 import com.jobshunter.dto.grokResponse.GrokResponse;
 import com.jobshunter.dto.grokResponse.OutputItem;
@@ -71,11 +72,12 @@ public non-sealed class GrokV1JobSearchImpl implements
   @Bulkhead(name = "grokBulkhead")
   public AiClientResponse searchJobs(GrokJobSearchRequest request) {
     try {
-      GrokJobsPayloadBuilder payloadBuilder = GrokJobsPayload.builder()
-          .model(request.getEngineSelection().model())
+      GrokJobsPayloadBuilder payloadBuilder = GrokJobsPayload.builder(request.getModel())
           .temperature(DEFAULT_TEMPERATURE)
+          .reasoning(new Reasoning())
           .store(request.getStoreConversation())
           .previousResponseId(request.getPrevResponseId())
+          .addTools(Tools.builder().setWebSearch().build())
           .maxOutputTokens(7000)
           .addUserPrompt(request.getUserPrompt() + templateRenderer.getPrompt(PromptType.USER_PROMPT_JOB_BLACKLISTED,
               "blacklist",
@@ -110,8 +112,7 @@ public non-sealed class GrokV1JobSearchImpl implements
   public List<CompanyDto> searchCompanies(GrokJobSearchRequest request) {
     try {
       UserEntity user = request.getUser();
-      GrokJobsPayload payload = GrokJobsPayload.builder()
-          .model(request.getEngineSelection().model())
+      GrokJobsPayload payload = GrokJobsPayload.builder(request.getModel())
           .temperature(DEFAULT_TEMPERATURE)
           .store(false)
           .maxOutputTokens(2500)
@@ -156,8 +157,7 @@ public non-sealed class GrokV1JobSearchImpl implements
         "positions", request.getUser().getJobRoles().stream().map(UserJobRoleEntity::getJobRole).toList().toString(),
         "companies", StringUtils.join(group.stream().map(CompanyDto::companyName).toList())
     );
-    GrokJobsPayload payload = GrokJobsPayload.builder()
-        .model(request.getEngineSelection().model())
+    GrokJobsPayload payload = GrokJobsPayload.builder(request.getModel())
         .temperature(DEFAULT_TEMPERATURE)
         .maxOutputTokens(7000)
         .store(request.getStoreConversation())

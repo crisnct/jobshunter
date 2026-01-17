@@ -3,6 +3,7 @@ package com.jobshunter.service.clients.gpt;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.jobshunter.ApplicationProperties;
+import com.jobshunter.database.entities.AiModelEntity;
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.entities.UserJobRoleEntity;
 import com.jobshunter.dto.CompanyDto;
@@ -10,6 +11,7 @@ import com.jobshunter.dto.CompanyDtoList;
 import com.jobshunter.dto.IpInfoDetailResponse;
 import com.jobshunter.dto.exceptions.BusinessException;
 import com.jobshunter.dto.gptRequest.GptJobsPayload;
+import com.jobshunter.dto.gptRequest.Reasoning;
 import com.jobshunter.dto.gptRequest.tools.Tools;
 import com.jobshunter.dto.gptRequest.tools.UserLocation;
 import com.jobshunter.dto.gptResponse.GptResponse;
@@ -81,17 +83,13 @@ public non-sealed class GptV1JobSearchImpl implements
       userLocation.setCountry(ipInfo.country() != null ? ipInfo.country() : "RO");
       userLocation.setCity(request.getUser().getCity() != null ? request.getUser().getCity() : ipInfo.city());
 
-      GptJobsPayload payload = GptJobsPayload.builder()
-          .model(request.getEngineSelection().model())
+      GptJobsPayload payload = GptJobsPayload.builder(request.getModel())
           .temperature(DEFAULT_TEMPERATURE)
-          .reasoning(request.getReasoning())
+          .reasoning(new Reasoning())
           .store(request.getStoreConversation())
           .previousResponseId(request.getPrevResponseId())
           .maxOutputTokens(3500)
-          .addTools(Tools.builder()
-              .setWebSearch()
-              .userLocation(userLocation)
-              .build())
+          .addTools(Tools.builder().setWebSearch().userLocation(userLocation).build())
           .instructions(templateRenderer.getPrompt(PromptType.SYSTEM_INSTRUCTIONS))
           .addSystemPrompt(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_JOB_SEARCH,
               "blacklist",
@@ -128,8 +126,7 @@ public non-sealed class GptV1JobSearchImpl implements
   public List<CompanyDto> searchCompanies(GptJobSearchRequest request) {
     try {
       UserEntity user = request.getUser();
-      GptJobsPayload payload = GptJobsPayload.builder()
-          .model(request.getEngineSelection().model())
+      GptJobsPayload payload = GptJobsPayload.builder(request.getModel())
           .temperature(DEFAULT_TEMPERATURE)
           .maxOutputTokens(2500)
           .store(false)
@@ -173,13 +170,12 @@ public non-sealed class GptV1JobSearchImpl implements
         "positions", request.getUser().getJobRoles().stream().map(UserJobRoleEntity::getJobRole).toList().toString(),
         "companies", StringUtils.join(group.stream().map(CompanyDto::companyName).toList())
     );
-    GptJobsPayload payload = GptJobsPayload.builder()
-        .model(request.getEngineSelection().model())
+    GptJobsPayload payload = GptJobsPayload.builder(request.getModel())
         .temperature(DEFAULT_TEMPERATURE)
         .maxOutputTokens(3500)
         .store(request.getStoreConversation())
         .previousResponseId(request.getPrevResponseId())
-        .reasoning(request.getReasoning())
+        .reasoning(new Reasoning())
         .addTools(Tools.builder().setWebSearch().build())
         .addSystemPrompt(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_JOB_SEARCH,
             "blacklist",

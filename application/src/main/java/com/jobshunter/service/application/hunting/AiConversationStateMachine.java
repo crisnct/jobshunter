@@ -1,9 +1,9 @@
 package com.jobshunter.service.application.hunting;
 
 import com.jobshunter.ApplicationProperties;
+import com.jobshunter.database.entities.AiModelEntity;
 import com.jobshunter.dto.AdditionalEffortRequest;
 import com.jobshunter.model.AiClientResponse;
-import com.jobshunter.model.EngineSelection;
 import com.jobshunter.model.Job;
 import com.jobshunter.model.JobContext;
 import com.jobshunter.model.JobMetadataType;
@@ -144,13 +144,13 @@ public class AiConversationStateMachine {
       Throwable ex
   ) {
     Throwable cause = unwrap(ex);
-    EngineSelection engineConfig = request.getEngineSelection();
+    AiModelEntity engineConfig = request.getModel();
     if (cause instanceof RequestNotPermitted) {
       log.error("Rate limit exceeded for user {}, engine: {}, model: {}",
-          request.getUser().getUsername(), engineConfig.type(), engineConfig.model());
+          request.getUser().getUsername(), engineConfig.getProvider(), engineConfig.getModel());
     } else {
       log.error("Unexpected error at gathering jobs from model {}: {} for prompt {}",
-          engineConfig.model(), cause != null ? cause.getMessage() : ex.getMessage(), request.getUserPrompt());
+          engineConfig.getModel(), cause != null ? cause.getMessage() : ex.getMessage(), request.getUserPrompt());
     }
     log.error("Pipeline failed for searchAsync", ex);
     return accumulatedResponse.getJobs().isEmpty() ? new AiClientResponse() : accumulatedResponse;

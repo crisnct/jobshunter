@@ -2,8 +2,8 @@ package com.jobshunter.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.jobshunter.database.entities.AiModelEntity;
 import com.jobshunter.database.entities.UserEntity;
-import com.jobshunter.model.EngineSelection;
 import lombok.Data;
 
 @Data
@@ -12,14 +12,14 @@ import lombok.Data;
 public abstract class AIJobSearchRequest implements Copyable<AIJobSearchRequest> {
 
   private UserEntity user;
-  private EngineSelection engineSelection;
+  private AiModelEntity model;
   private long promptId;
   private String userPrompt;
   private boolean searchCompanies;
 
-  public AIJobSearchRequest(UserEntity user, EngineSelection engineSelection) {
+  public AIJobSearchRequest(UserEntity user, AiModelEntity model) {
     this.user = user;
-    this.engineSelection = engineSelection;
+    this.model = model;
   }
 
 }

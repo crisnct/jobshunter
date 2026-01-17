@@ -4,11 +4,14 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.json.JsonMapper;
+import com.jobshunter.database.entities.AiModelEntity;
 import com.jobshunter.dto.gptRequest.tools.Tools;
+import com.jobshunter.model.AiCapabilityType;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import lombok.Builder;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -29,7 +32,18 @@ public record GptJobsPayload(
     List<Object> input
 ) {
 
-  @SuppressWarnings({"MismatchedQueryAndUpdateOfCollection", "FieldMayBeFinal", "FieldCanBeLocal"})
+  public GptJobsPayload {
+    if (store == null) {
+      store = Boolean.FALSE;
+    }
+  }
+
+  public static GptJobsPayloadBuilder builder(AiModelEntity model) {
+    return new GptJobsPayloadBuilder(model);
+  }
+
+  @SuppressWarnings({"MismatchedQueryAndUpdateOfCollection", "FieldMayBeFinal", "FieldCanBeLocal", "unused"})
+  @Slf4j
   public static class GptJobsPayloadBuilder {
 
     private static final JsonMapper JSON_MAPPER = JsonMapper.builder().findAndAddModules().build();
@@ -40,15 +54,54 @@ public record GptJobsPayload(
 
     private List<Tools> tools = new ArrayList<>();
 
+    private AiModelEntity aiModel;
+
+    private GptJobsPayloadBuilder(AiModelEntity model) {
+      this.aiModel = model;
+      this.model = model.getModel();
+    }
+
+    public GptJobsPayloadBuilder temperature(Double temperature) {
+      if (isEnabledCapability(AiCapabilityType.TEMPERATURE)) {
+        this.temperature = temperature;
+      }
+      return this;
+    }
+
+    public GptJobsPayloadBuilder store(Boolean store) {
+      if (!store || isEnabledCapability(AiCapabilityType.CHAIN_CONVERSATIONS)) {
+        this.store = store;
+      }
+      return this;
+    }
+
+    public GptJobsPayloadBuilder reasoning(Reasoning reasoning) {
+      if (isEnabledCapability(AiCapabilityType.REASONING)) {
+        this.reasoning = reasoning;
+      }
+      return this;
+    }
+
+    //TODO consolidate duplicate similar methods in a new bean and use caffeine cache
+    private boolean isEnabledCapability(AiCapabilityType type) {
+      boolean enabledCapability = aiModel.isEnabledCapability(type);
+      if (!enabledCapability) {
+        log.debug(type + " capability is not supported by model " + aiModel.getModel());
+      }
+      return enabledCapability;
+    }
+
     public GptJobsPayloadBuilder addSystemPrompt(String systemPrompt) {
-      input.add(new Input("system", List.of(new InputMessage("input_text", systemPrompt))));
+      if (isEnabledCapability(AiCapabilityType.SYSTEM_PROMPT)) {
+        input.add(new Input("system", List.of(new InputMessage("input_text", systemPrompt))));
+      }
       return this;
     }
 
     public GptJobsPayloadBuilder addUserPrompt(String userPrompt, String fileId) {
       List<InputObj> inputs = new ArrayList<>();
       inputs.add(new InputMessage("input_text", userPrompt));
-      if (Strings.isNotBlank(fileId)) {
+      if (Strings.isNotBlank(fileId) && isEnabledCapability(AiCapabilityType.FILE_UPLOAD)) {
         inputs.add(new InputFile(fileId));
       }
       input.add(new Input("user", inputs));
@@ -63,34 +116,42 @@ public record GptJobsPayload(
     }
 
     public GptJobsPayloadBuilder addAssistantPrompt(String prompt) {
-      input.add(new AssistantInput("assistant", prompt));
+      if (isEnabledCapability(AiCapabilityType.CHAIN_CONVERSATIONS)) {
+        input.add(new AssistantInput("assistant", prompt));
+      }
       return this;
     }
 
     public GptJobsPayloadBuilder addDeveloperPrompt(String userPrompt) {
-      input.add(new Input("developer", List.of(
-          new InputMessage("input_text", userPrompt)
-      )));
+      if (isEnabledCapability(AiCapabilityType.DEVELOPER_PROMPT)) {
+        input.add(new Input("developer", List.of(
+            new InputMessage("input_text", userPrompt)
+        )));
+      }
       return this;
     }
 
     public GptJobsPayloadBuilder setResponseSchema(String schema) {
-      try {
-        this.text = new Text(
-            new TextFormat(
-                "job_search_results",
-                "json_schema",
-                JSON_MAPPER.readValue(schema, Map.class)
-            )
-        );
-      } catch (Exception e) {
-        throw new IllegalArgumentException("Invalid schema JSON", e);
+      if (isEnabledCapability(AiCapabilityType.RESPONSE_SCHEMA)) {
+        try {
+          this.text = new Text(
+              new TextFormat(
+                  "job_search_results",
+                  "json_schema",
+                  JSON_MAPPER.readValue(schema, Map.class)
+              )
+          );
+        } catch (Exception e) {
+          throw new IllegalArgumentException("Invalid schema JSON", e);
+        }
       }
       return this;
     }
 
     public GptJobsPayloadBuilder addTools(Tools tool) {
-      this.tools.add(tool);
+      if (isEnabledCapability(AiCapabilityType.WEB_SEARCH)) {
+        this.tools.add(tool);
+      }
       return this;
     }
 

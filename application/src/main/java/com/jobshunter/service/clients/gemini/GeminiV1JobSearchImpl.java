@@ -54,13 +54,13 @@ public non-sealed class GeminiV1JobSearchImpl implements AiJobsClient<GeminiJobS
   @RateLimiter(name = "geminiLimiter")
   public AiClientResponse searchJobs(GeminiJobSearchRequest request) {
     try {
-      GenerationConfig generationConfig = GenerationConfig.builder()
+      GenerationConfig generationConfig = GenerationConfig.builder(request.getModel())
           .temperature(DEFAULT_TEMPERATURE)
           .maxOutputTokens(3500)
           .thinkingConfig(new ThinkingConfig(2048))//how reasoning it is
           .build();
 
-      GeminiJobsPayload payload = GeminiJobsPayload.builder()
+      GeminiJobsPayload payload = GeminiJobsPayload.builder(request.getModel())
                     .addSystemInstruction(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_JOB_SEARCH,
               "blacklist",
               properties.getJobsHunter().getBlacklist()
@@ -71,7 +71,7 @@ public non-sealed class GeminiV1JobSearchImpl implements AiJobsClient<GeminiJobS
           .build();
 
       GeminiGenerateContentResponse response = restClient.post()
-          .uri(URI.create(String.format(GEMINI_URI, request.getEngineSelection().model(),
+          .uri(URI.create(String.format(GEMINI_URI, request.getModel().getModel(),
               properties.getGemini().getApiKey())))
           .contentType(MediaType.APPLICATION_JSON)
           .body(payload)

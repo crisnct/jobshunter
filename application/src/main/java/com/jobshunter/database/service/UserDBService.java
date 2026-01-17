@@ -44,7 +44,7 @@ public class UserDBService {
   public List<UserEntity> getAllUsers() {
     List<UserEntity> all = userRepository.findAll();
     for (UserEntity user : all) {
-      initializeUserData(user);
+      initialize(user);
     }
     return all;
   }
@@ -52,7 +52,7 @@ public class UserDBService {
   @Transactional(readOnly = true)
   public Optional<UserEntity> getUserCompleteInfo(String username) {
     Optional<UserEntity> userOptional = userRepository.findByUsername(username);
-    userOptional.ifPresent(this::initializeUserData);
+    userOptional.ifPresent(this::initialize);
     return userOptional;
   }
 
@@ -149,7 +149,7 @@ public class UserDBService {
   /**
    * Initializes lazy-loaded associations for a user entity. This method ensures that related entities are loaded before the transaction ends.
    */
-  public void initializeUserData(UserEntity user) {
+  public void initialize(UserEntity user) {
     Hibernate.initialize(user.getPrompts());
     Hibernate.initialize(user.getRoles());
     Hibernate.initialize(user.getCv());

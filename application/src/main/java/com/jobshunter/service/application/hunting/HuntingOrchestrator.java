@@ -29,7 +29,7 @@ public class HuntingOrchestrator {
     List<CompletableFuture<List<Job>>> allFutureJobs = new ArrayList<>();
 
     if (order.isSearchByUserPrompt()) {
-      allFutureJobs.add(switch (order.getEngineSelection().type()) {
+      allFutureJobs.add(switch (order.getModel().getProvider()) {
         case GPT -> gptJobHunting.searchJobsAsync(order);
         case GROK -> grokJobHunting.searchJobsAsync(order);
         case GEMINI -> geminiJobHunting.searchJobsAsync(order);
@@ -37,7 +37,7 @@ public class HuntingOrchestrator {
       });
     }
     if (order.isSearchCompanies()) {
-      allFutureJobs.add(switch (order.getEngineSelection().type()) {
+      allFutureJobs.add(switch (order.getModel().getProvider()) {
         case GPT -> gptJobHunting.searchJobsByCompaniesAsync(order);
         case GROK -> grokJobHunting.searchJobsByCompaniesAsync(order);
         case GEMINI -> geminiJobHunting.searchJobsByCompaniesAsync(order);

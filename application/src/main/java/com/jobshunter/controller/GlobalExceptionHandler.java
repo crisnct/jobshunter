@@ -64,6 +64,7 @@ public class GlobalExceptionHandler {
     if (message == null || message.isBlank()) {
       message = ExceptionUtils.getMessage(exception);
     }
+    log.error(message, exception);
     return ResponseEntity.status(exception.getStatus()).body(Map.of(ERROR_MESSAGE, message));
   }
 

@@ -35,12 +35,10 @@ public class GrokJobHunting extends AiConversationJobHunting<GrokJobSearchReques
         .filter(p -> p.getProvider() == EngineType.GROK).findAny()
         .orElseThrow(() -> new ValidationException("No GROK CV found for user " + order.getUser().getId()));
 
-    GrokJobSearchRequest request
-        = new GrokJobSearchRequest(order.getUser(), order.getEngineSelection());
+    GrokJobSearchRequest request = new GrokJobSearchRequest(order);
     request.setSearchCompanies(false);
     request.setPromptId(prompt.getId());
-    //For models equals or higher than 4
-    //request.setFileId(remoteCV.getFileId());
+    request.setFileId(remoteCV.getFileId());
     request.setStoreConversation(true);
     request.setUserPrompt(prompt.getPrompt());
     return request;
@@ -48,7 +46,7 @@ public class GrokJobHunting extends AiConversationJobHunting<GrokJobSearchReques
 
   @Override
   public GrokJobSearchRequest createCompaniesRequest(SearchJobOrder order) {
-    GrokJobSearchRequest request = new GrokJobSearchRequest(order.getUser(), order.getEngineSelection());
+    GrokJobSearchRequest request = new GrokJobSearchRequest(order);
     request.setSearchCompanies(true);
     return request;
   }

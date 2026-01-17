@@ -3,9 +3,9 @@ package com.jobshunter.dto.serpRequest;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.jobshunter.database.entities.AiModelEntity;
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.dto.AIJobSearchRequest;
-import com.jobshunter.model.EngineSelection;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -73,14 +73,13 @@ public class SearchWithSerpRequest extends AIJobSearchRequest {
   @Nullable
   private String language;
 
-  public SearchWithSerpRequest(UserEntity user, EngineSelection engineSelection) {
-    super(user, engineSelection);
+  public SearchWithSerpRequest(UserEntity user, AiModelEntity model) {
+    super(user, model);
   }
 
   @Override
   public SearchWithSerpRequest copy() {
-    SearchWithSerpRequest copy = new SearchWithSerpRequest(this.getUser(),
-        new EngineSelection(this.getEngineSelection().type(), this.getEngineSelection().model()));
+    SearchWithSerpRequest copy = new SearchWithSerpRequest(this.getUser(), getModel());
     // Copy parent fields
     copy.setPromptId(this.getPromptId());
     copy.setUserPrompt(this.getUserPrompt());

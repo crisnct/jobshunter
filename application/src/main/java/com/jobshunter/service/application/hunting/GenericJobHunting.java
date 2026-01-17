@@ -1,12 +1,12 @@
 package com.jobshunter.service.application.hunting;
 
+import com.jobshunter.database.entities.AiModelEntity;
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.entities.UserPromptEntity;
 import com.jobshunter.dto.AIJobSearchRequest;
 import com.jobshunter.dto.CompanyDto;
 import com.jobshunter.model.AiClientResponse;
 import com.jobshunter.model.EngineCategory;
-import com.jobshunter.model.EngineSelection;
 import com.jobshunter.model.EngineType;
 import com.jobshunter.model.Job;
 import com.jobshunter.model.SearchJobOrder;
@@ -47,7 +47,7 @@ public abstract non-sealed class GenericJobHunting<T extends AIJobSearchRequest>
     //Search companies and then for each company search jobs
     CompletableFuture<List<Job>> futures = CompletableFuture.completedFuture(List.of());
     //Search jobs based on user requests
-    boolean isAImodel = Arrays.stream(EngineType.values()).anyMatch(p -> p == order.getEngineSelection().type());
+    boolean isAImodel = Arrays.stream(EngineType.values()).anyMatch(p -> p == order.getModel().getProvider());
     for (UserPromptEntity prompt : order.getUser().getPrompts()) {
       if (((prompt.getEngineCategory() == EngineCategory.AI) && isAImodel)
           || ((prompt.getEngineCategory() != EngineCategory.AI) && !isAImodel)) {
@@ -70,16 +70,16 @@ public abstract non-sealed class GenericJobHunting<T extends AIJobSearchRequest>
     T request = createCompaniesRequest(order);
     //TODO optimize and create an async for each of the job search for a group of companies.
     // Do it similar like in searchJobsAsync so it will run all jobs search in parallel
-    return CompletableFuture.supplyAsync(() -> searchCompaniesSync(request, order.getEngineSelection()), executor)
+    return CompletableFuture.supplyAsync(() -> searchCompaniesSync(request, order.getModel()), executor)
         .exceptionally(throwable -> {
           if (throwable.getCause() != null && throwable.getCause() instanceof RequestNotPermitted) {
-            log.error("❌ Rate limit exceeded for user {} model {}", user.getUsername(), order.getEngineSelection().model());
+            log.error("❌ Rate limit exceeded for user {} model {}", user.getUsername(), order.getModel());
           } else {
             if (throwable.getCause() != null) {
-              log.error("Unexpected error at gathering jobs from model {}: {}", order.getEngineSelection().model(),
+              log.error("Unexpected error at gathering jobs from model {}: {}", order.getModel(),
                   throwable.getCause().getMessage());
             } else {
-              log.error("Unexpected error at gathering jobs from model {}: {}", order.getEngineSelection().model(), throwable.getMessage());
+              log.error("Unexpected error at gathering jobs from model {}: {}", order.getModel(), throwable.getMessage());
             }
           }
           return List.of();
@@ -89,12 +89,12 @@ public abstract non-sealed class GenericJobHunting<T extends AIJobSearchRequest>
   protected CompletableFuture<AiClientResponse> searchAsync(T request, Executor executor) {
     return CompletableFuture.supplyAsync(() -> searchSync(request), executor)
         .exceptionally(throwable -> {
-          EngineSelection engineConfig = request.getEngineSelection();
+          AiModelEntity aiModel = request.getModel();
           if (throwable.getCause() != null && throwable.getCause() instanceof RequestNotPermitted) {
             log.error("❌ Rate limit exceeded for user {}, engine: {}, eodel: {}",
-                request.getUser().getUsername(), engineConfig.type(), engineConfig.model());
+                request.getUser().getUsername(), aiModel.getProvider(), aiModel.getModel());
           } else {
-            log.error("Unexpected error at gathering jobs from model {}: {} for prompt {}", engineConfig.model(),
+            log.error("Unexpected error at gathering jobs from model {}: {} for prompt {}", aiModel.getModel(),
                 throwable.getMessage(), request.getUserPrompt());
           }
           return new AiClientResponse();
@@ -102,27 +102,27 @@ public abstract non-sealed class GenericJobHunting<T extends AIJobSearchRequest>
   }
 
   protected AiClientResponse searchSync(T request) {
-    String model = request.getEngineSelection().model();
-    log.info("Searching jobs for user {} with model {}", request.getUser().getUsername(), model);
+    AiModelEntity aiModel = request.getModel();
+    log.info("Searching jobs for user {} with model {}", request.getUser().getUsername(), aiModel.getModel());
     if (request.getUser().getCv() != null) {
       //Upload cv if needed
-      userCvService.refreshUserCvIfNeeded(request.getUser(), request.getEngineSelection().type());
+      userCvService.refreshUserCvIfNeeded(request.getUser(), request.getModel().getProvider());
     }
     AiClientResponse response = jobsClient.searchJobs(request);
     response.getJobs().forEach(job -> {
       job.setPromptId(request.getPromptId());
-      job.setSource(model);
+      job.setSource(aiModel.getModel());
     });
 
-    log.info("{} found {} url's and are going to be validated", model, response.getJobs().size());
+    log.info("{} found {} url's and are going to be validated", aiModel.getModel(), response.getJobs().size());
     return response;
   }
 
-  private List<Job> searchCompaniesSync(T request, EngineSelection engineSelection) {
-    log.info("Searching companies for user {} with model {}", request.getUser().getUsername(), engineSelection.model());
+  private List<Job> searchCompaniesSync(T request, AiModelEntity model) {
+    log.info("Searching companies for user {} with model {}", request.getUser().getUsername(), model.getModel());
     List<CompanyDto> companies = jobsClient.searchCompanies(request);
     log.info("Found {} companies for user {} with model {}, searching jobs now...", companies.size(), request.getUser().getUsername(),
-        engineSelection.model());
+        model.getModel());
     List<List<CompanyDto>> companiesGrouped = companies.stream()
         .gather(Gatherers.windowFixed(5))
         .toList();
@@ -135,7 +135,7 @@ public abstract non-sealed class GenericJobHunting<T extends AIJobSearchRequest>
       jobsFound.addAll(jobs);
       log.info("Found {} jobs for user {} from current group of companies.", jobs.size(), request.getUser().getUsername());
     }
-    jobsFound.forEach(job -> job.setSource("COMP-" + engineSelection.model()));
+    jobsFound.forEach(job -> job.setSource("COMP-" + model.getModel()));
     return jobsFound;
   }
 

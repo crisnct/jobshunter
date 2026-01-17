@@ -52,7 +52,7 @@ public class UserJobDBService {
   public void updateUserWithJobs(UserEntity user, SearchJobOrder order, List<Job> jobs) {
     @SuppressWarnings("OptionalGetWithoutIsPresent")
     AiModelEntity aiModel
-        = aiModelRepository.findByProviderAndModel(order.getEngineSelection().type(), order.getEngineSelection().model()).get();
+        = aiModelRepository.findByProviderAndModel(order.getModel().getProvider(), order.getModel().getModel()).get();
 
     user.setLastJobs(Instant.now());
     jobs.forEach(job -> {

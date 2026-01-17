@@ -1,7 +1,9 @@
 package com.jobshunter.controller;
 
 import com.jobshunter.ApplicationProperties;
+import com.jobshunter.database.entities.AiModelEntity;
 import com.jobshunter.database.entities.UserEntity;
+import com.jobshunter.database.service.ModelsDBService;
 import com.jobshunter.database.service.UserDBService;
 import com.jobshunter.dto.EmailRequest;
 import com.jobshunter.dto.JobHuntResponse;
@@ -18,6 +20,7 @@ import com.jobshunter.dto.grokResponse.GrokResponse;
 import com.jobshunter.dto.serpRequest.SearchWithSerpRequest;
 import com.jobshunter.model.AiClientResponse;
 import com.jobshunter.model.AiSchemaType;
+import com.jobshunter.model.EngineType;
 import com.jobshunter.model.PromptType;
 import com.jobshunter.service.TemplateRenderer;
 import com.jobshunter.service.application.notifiers.EmailNotifierService;
@@ -69,11 +72,14 @@ public class TestController {
 
   private final TemplateRenderer templateRenderer;
 
+  private final ModelsDBService modelsDBService;
+
   public TestController(
       EmailNotifierService emailNotifierService,
       UserDBService userDBService,
       ApplicationProperties properties,
       RestClient restClient,
+      ModelsDBService modelsDBService,
       @Qualifier("JobsClientSerp") AiJobsClient<SearchWithSerpRequest, AiClientResponse> serpClient,
       TemplateRenderer templateRenderer
   ) {
@@ -82,6 +88,7 @@ public class TestController {
     this.serpClient = serpClient;
     this.properties = properties;
     this.restClient = restClient;
+    this.modelsDBService=modelsDBService;
     this.templateRenderer = templateRenderer;
   }
 
@@ -134,7 +141,9 @@ public class TestController {
   public ResponseEntity<?> testGPTModels() {
     List<String> modelsSupported = new ArrayList<>();
     for (String model : GPT_MODELS) {
-      GptJobsPayload payload = GptJobsPayload.builder()
+      AiModelEntity aiModel = modelsDBService.getModelById(EngineType.GPT, model).get();
+
+      GptJobsPayload payload = GptJobsPayload.builder(aiModel)
           .model(model)
           .maxOutputTokens(200)
           //.addTools(Tools.builder().setWebSearch().build())
@@ -194,7 +203,8 @@ public class TestController {
   public ResponseEntity<?> testGROKModels() {
     List<String> modelsSupported = new ArrayList<>();
     for (String model : GROK_MODELS) {
-      GrokJobsPayload payload = GrokJobsPayload.builder()
+      AiModelEntity aiModel = modelsDBService.getModelById(EngineType.GROK, model).get();
+      GrokJobsPayload payload = GrokJobsPayload.builder(aiModel)
           .model(model)
           .maxOutputTokens(200)
           //.addTools(com.jobshunter.dto.grokRequest.tools.Tools.builder().setWebSearch().build())
@@ -255,7 +265,8 @@ public class TestController {
   public ResponseEntity<?> testGeminiModels() {
     List<String> modelsSupported = new ArrayList<>();
     for (String model : GEMINI_MODELS) {
-      GenerationConfig generationConfig = GenerationConfig.builder()
+      AiModelEntity aiModel = modelsDBService.getModelById(EngineType.GEMINI, model).get();
+      GenerationConfig generationConfig = GenerationConfig.builder(aiModel)
           .temperature(0.2)
           .responseMimeType("application/json")
           .responseJsonSchema(templateRenderer.getSchema(AiSchemaType.GEMINI_JSON_SCHEMA_RESPONSE))
@@ -263,7 +274,7 @@ public class TestController {
           .maxOutputTokens(500)
           .build();
 
-      GeminiJobsPayload payload = GeminiJobsPayload.builder()
+      GeminiJobsPayload payload = GeminiJobsPayload.builder(aiModel)
 //          .addSystemInstruction(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_JOB_SEARCH,
 //              "blacklist",
 //              properties.getJobsHunter().getBlacklist()
@@ -338,7 +349,8 @@ public class TestController {
       @RequestBody
       String payload
   ) {
-    GptJobsPayload gptPayload = GptJobsPayload.builder()
+    AiModelEntity aiModel = modelsDBService.getModelById(EngineType.GPT, model).get();
+    GptJobsPayload gptPayload = GptJobsPayload.builder(aiModel)
         .model(model)
         .maxOutputTokens(2000)
         .addTools(Tools.builder().setWebSearch().build())
@@ -361,10 +373,6 @@ public class TestController {
       e.printStackTrace();
       return ResponseEntity.badRequest().body(e.getMessage());
     }
-  }
-
-  public record ModelsPayload(Set<String> models) {
-
   }
 
   public static final Set<String> GROK_MODELS =
