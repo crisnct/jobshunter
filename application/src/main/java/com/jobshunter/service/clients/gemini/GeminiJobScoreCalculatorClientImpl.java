@@ -37,9 +37,9 @@ public non-sealed class GeminiJobScoreCalculatorClientImpl implements JobScoreCa
 
   private static final String AI_MODEL = "gemini-2.5-pro";
 
-  private static final String FILES_URI = "https://generativelanguage.googleapis.com/v1beta";
+  private static final String GENERATE_CONTENT_URI = "https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent?key=%s";
 
-  private static final String GEMINI_URI = "https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent?key=%s";
+  private static final String FILES_URI = "https://generativelanguage.googleapis.com/%s";
 
   private final ApplicationProperties properties;
 
@@ -58,7 +58,7 @@ public non-sealed class GeminiJobScoreCalculatorClientImpl implements JobScoreCa
           .maxOutputTokens(20)
           .build();
 
-      FileData resume = new FileData(FILES_URI + "/" + request.getResumeFileId(), MediaType.APPLICATION_PDF_VALUE);
+      FileData resume = new FileData(String.format(FILES_URI, request.getResumeFileId()), MediaType.APPLICATION_PDF_VALUE);
 
       GeminiJobsPayload payload = GeminiJobsPayload.builder()
           .addSystemInstruction(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_MATCH_SCORE))
@@ -68,7 +68,7 @@ public non-sealed class GeminiJobScoreCalculatorClientImpl implements JobScoreCa
           .build();
 
       GeminiGenerateContentResponse response = restClient.post()
-          .uri(URI.create(String.format(GEMINI_URI, AI_MODEL, properties.getGemini().getApiKey())))
+          .uri(URI.create(String.format(GENERATE_CONTENT_URI, AI_MODEL, properties.getGemini().getApiKey())))
           .contentType(MediaType.APPLICATION_JSON)
           .body(payload)
           .retrieve()
@@ -81,7 +81,7 @@ public non-sealed class GeminiJobScoreCalculatorClientImpl implements JobScoreCa
     }
   }
 
-  private int extractScore(GeminiGenerateContentResponse response) throws JsonProcessingException {
+  private int extractScore(GeminiGenerateContentResponse response) {
     Optional<Part> item = response.candidates().stream()
         .filter(p -> p.content() != null && p.content().parts() != null)
         .flatMap((Function<Candidate, Stream<Part>>) candidate -> candidate.content().parts().stream()).findFirst();

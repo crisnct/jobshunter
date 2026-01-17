@@ -1,8 +1,8 @@
-package com.jobshunter.dto.gptRequest;
+package com.jobshunter.dto.grokRequest;
 
 public record Reasoning(String effort) {
 
   public Reasoning() {
-    this("high");
+    this("low");
   }
 }

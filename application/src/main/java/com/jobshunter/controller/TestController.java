@@ -9,25 +9,29 @@ import com.jobshunter.dto.exceptions.BusinessException;
 import com.jobshunter.dto.exceptions.ValidationException;
 import com.jobshunter.dto.geminiRequest.GeminiJobsPayload;
 import com.jobshunter.dto.geminiRequest.GenerationConfig;
-import com.jobshunter.dto.geminiRequest.GoogleSearchTool;
 import com.jobshunter.dto.geminiResponse.GeminiGenerateContentResponse;
 import com.jobshunter.dto.gptRequest.GptJobsPayload;
 import com.jobshunter.dto.gptRequest.tools.Tools;
 import com.jobshunter.dto.gptResponse.GptResponse;
+import com.jobshunter.dto.grokRequest.GrokJobsPayload;
+import com.jobshunter.dto.grokResponse.GrokResponse;
 import com.jobshunter.dto.serpRequest.SearchWithSerpRequest;
 import com.jobshunter.model.AiClientResponse;
+import com.jobshunter.model.AiSchemaType;
 import com.jobshunter.model.PromptType;
 import com.jobshunter.service.TemplateRenderer;
 import com.jobshunter.service.application.notifiers.EmailNotifierService;
 import com.jobshunter.service.clients.AiJobsClient;
 import com.jobshunter.service.clients.gemini.GeminiV1JobSearchImpl;
 import com.jobshunter.service.clients.gpt.GptV1JobSearchImpl;
+import com.jobshunter.service.clients.grok.GrokV1JobSearchImpl;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import java.net.URI;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -127,13 +131,21 @@ public class TestController {
   @PostMapping(value = "/testGptModels", consumes = MediaType.APPLICATION_JSON_VALUE)
   @PreAuthorize("hasRole('ADMIN')")
   @RateLimiter(name = "gptLimiter")
-  public ResponseEntity<?> testGPTModels(@Valid @RequestBody ModelsPayload modelsPayload) {
+  public ResponseEntity<?> testGPTModels() {
     List<String> modelsSupported = new ArrayList<>();
-    for (String model : modelsPayload.models()) {
+    for (String model : GPT_MODELS) {
       GptJobsPayload payload = GptJobsPayload.builder()
           .model(model)
           .maxOutputTokens(200)
-          .addSystemPrompt("Act like an developer working at Open AI")
+          //.addTools(Tools.builder().setWebSearch().build())
+          //.reasoning(new Reasoning())
+          //.store(true)
+          //.previousResponseId("resp_04290e486a986c7b0069694046f22c8192ace2d3fe38c6f46a")
+         // .temperature(0.2)
+          //.addSystemPrompt("Act like a job search assistant and search jobs for me")
+          //.setResponseSchema(templateRenderer.getSchema(AiSchemaType.GPT_JSON_SCHEMA_RESPONSE))
+          .addUserPrompt("Search java developers jobs for me", "file-MD9RCwJjJ132DLKRosNQUt")
+          //.addDeveloperPrompt("Act like a stressed developer")
           .build();
       boolean supported = false;
       try {
@@ -147,7 +159,8 @@ public class TestController {
         if (response.getStatusCode().is2xxSuccessful()) {
           supported = true;
         }
-      } catch (Throwable _) {
+      } catch (Throwable e) {
+        log.error("error {}", e.getMessage());
       }
       if (supported) {
         log.info("{} supported", model);
@@ -158,28 +171,107 @@ public class TestController {
         modelsSupported.add(model);
       }
     }
-    return ResponseEntity.ok(modelsSupported);
+
+    StringBuilder ret = new StringBuilder();
+    for (String model : GPT_MODELS) {
+      if (!ret.isEmpty()){
+        ret.append("\n");
+      }
+      if (modelsSupported.contains(model)){
+        ret.append(1);
+      } else {
+        ret.append(0);
+      }
+    }
+    ret.append("\n\n\nModels supported:\n");
+    ret.append(modelsSupported);
+    return ResponseEntity.ok(ret.toString());
+  }
+
+  @PostMapping(value = "/testGrokModels", consumes = MediaType.APPLICATION_JSON_VALUE)
+  @PreAuthorize("hasRole('ADMIN')")
+  @RateLimiter(name = "grokLimiter")
+  public ResponseEntity<?> testGROKModels() {
+    List<String> modelsSupported = new ArrayList<>();
+    for (String model : GROK_MODELS) {
+      GrokJobsPayload payload = GrokJobsPayload.builder()
+          .model(model)
+          .maxOutputTokens(200)
+          //.addTools(com.jobshunter.dto.grokRequest.tools.Tools.builder().setWebSearch().build())
+          //.reasoning(new Reasoning())
+          //.store(true)
+          //.previousResponseId("65224478-5394-d462-c1a9-015ef2be2b0e")
+           .temperature(0.2)
+          //.addSystemPrompt("Act like a job search assistant and search jobs for me")
+          //.setResponseSchema(templateRenderer.getSchema(AiSchemaType.GROK_JSON_SCHEMA_RESPONSE))
+          //.reasoning(new com.jobshunter.dto.grokRequest.Reasoning("high"))
+          .addUserPrompt("Search java developers jobs for me", "file_6cd02667-69ec-478b-b36e-343cc5cca014")
+          //.addSystemPrompt("Act as search assistant")
+          .build();
+      boolean supported = false;
+      try {
+        ResponseEntity<GrokResponse> response = restClient.post()
+            .uri(GrokV1JobSearchImpl.DEFAULT_URI)
+            .headers((h) -> h.setBearerAuth(properties.getGrok().getApiKey()))
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(payload)
+            .retrieve()
+            .toEntity(GrokResponse.class);
+        if (response.getStatusCode().is2xxSuccessful()) {
+          supported = true;
+        }
+      } catch (Throwable e) {
+        log.error("error {}", e.getMessage());
+      }
+      if (supported) {
+        log.info("{} supported", model);
+      } else {
+        log.error("{} not supported", model);
+      }
+      if (supported) {
+        modelsSupported.add(model);
+      }
+    }
+
+    StringBuilder ret = new StringBuilder();
+    for (String model : GROK_MODELS) {
+      if (!ret.isEmpty()){
+        ret.append("\n");
+      }
+      if (modelsSupported.contains(model)){
+        ret.append(1);
+      } else {
+        ret.append(0);
+      }
+    }
+    ret.append("\n\n\nModels supported:\n");
+    ret.append(modelsSupported);
+    return ResponseEntity.ok(ret.toString());
   }
 
   @PostMapping(value = "/testGeminiModels", consumes = MediaType.APPLICATION_JSON_VALUE)
   @PreAuthorize("hasRole('ADMIN')")
   @RateLimiter(name = "geminiLimiter")
-  public ResponseEntity<?> testGeminiModels(@Valid @RequestBody ModelsPayload modelsPayload) {
+  public ResponseEntity<?> testGeminiModels() {
     List<String> modelsSupported = new ArrayList<>();
-    for (String model : modelsPayload.models()) {
+    for (String model : GEMINI_MODELS) {
       GenerationConfig generationConfig = GenerationConfig.builder()
-          .temperature(0.0)
-          .maxOutputTokens(3500)
+          .temperature(0.2)
+          .responseMimeType("application/json")
+          .responseJsonSchema(templateRenderer.getSchema(AiSchemaType.GEMINI_JSON_SCHEMA_RESPONSE))
+          //.thinkingConfig(new ThinkingConfig(1024))
+          .maxOutputTokens(500)
           .build();
 
       GeminiJobsPayload payload = GeminiJobsPayload.builder()
-          .addSystemInstruction(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_JOB_SEARCH,
-              "blacklist",
-              properties.getJobsHunter().getBlacklist()
-          ))
-          .addUserContent("Act like an developer working at Open AI")
+//          .addSystemInstruction(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_JOB_SEARCH,
+//              "blacklist",
+//              properties.getJobsHunter().getBlacklist()
+//          ))
+          .addUserContent("[Context: Country=DE, Language=de] Act like an developer working at Gemini AI")
+          //.addModelContent("Ok, got it. Now search java developer jobs for you")
           .generationConfig(generationConfig)
-          .tools(List.of(new GoogleSearchTool()))
+          //.tools(List.of(new GoogleSearchTool()))
           .build();
       boolean supported = false;
       try {
@@ -193,7 +285,8 @@ public class TestController {
         if (response.getStatusCode().is2xxSuccessful()) {
           supported = true;
         }
-      } catch (Throwable _) {
+      } catch (Throwable e) {
+        log.error("error {}", e.getMessage());
       }
       if (supported) {
         log.info("{} supported", model);
@@ -204,7 +297,21 @@ public class TestController {
         modelsSupported.add(model);
       }
     }
-    return ResponseEntity.ok(modelsSupported);
+
+    StringBuilder ret = new StringBuilder();
+    for (String model : GEMINI_MODELS) {
+      if (!ret.isEmpty()){
+        ret.append("\n");
+      }
+      if (modelsSupported.contains(model)){
+        ret.append(1);
+      } else {
+        ret.append(0);
+      }
+    }
+    ret.append("\n\n\nModels supported:\n");
+    ret.append(modelsSupported);
+    return ResponseEntity.ok(ret.toString());
   }
 
   @PostMapping(value = "/testGPT", consumes = MediaType.APPLICATION_JSON_VALUE)
@@ -259,5 +366,89 @@ public class TestController {
   public record ModelsPayload(Set<String> models) {
 
   }
+
+  public static final Set<String> GROK_MODELS =
+      new LinkedHashSet<>(List.of(
+          "grok-2-1212",
+          "grok-2-image-1212",
+          "grok-2-vision-1212",
+          "grok-3",
+          "grok-3-mini",
+          "grok-4-0709",
+          "grok-4-1-fast-non-reasoning",
+          "grok-4-1-fast-reasoning",
+          "grok-4-fast-non-reasoning",
+          "grok-4-fast-reasoning",
+          "grok-code-fast-1"
+      ));
+
+  public static final Set<String> GEMINI_MODELS =
+      new LinkedHashSet<>(List.of(
+          "gemini-2.0-flash",
+          "gemini-2.0-flash-001",
+          "gemini-2.0-flash-exp",
+          "gemini-2.0-flash-lite",
+          "gemini-2.0-flash-lite-001",
+          "gemini-2.5-flash",
+          "gemini-2.5-flash-lite",
+          "gemini-2.5-pro"
+      ));
+
+  private static final Set<String> GPT_MODELS = new LinkedHashSet<>(List.of(
+      "chatgpt-4o-latest",
+      "gpt-3.5-turbo",
+      "gpt-3.5-turbo-0125",
+      "gpt-3.5-turbo-1106",
+      "gpt-4",
+      "gpt-4-0125-preview",
+      "gpt-4-0613",
+      "gpt-4-1106-preview",
+      "gpt-4-turbo",
+      "gpt-4-turbo-2024-04-09",
+      "gpt-4-turbo-preview",
+      "gpt-4.1",
+      "gpt-4.1-2025-04-14",
+      "gpt-4.1-mini",
+      "gpt-4.1-mini-2025-04-14",
+      "gpt-4.1-nano",
+      "gpt-4.1-nano-2025-04-14",
+      "gpt-4o",
+      "gpt-4o-2024-05-13",
+      "gpt-4o-2024-08-06",
+      "gpt-4o-2024-11-20",
+      "gpt-4o-mini",
+      "gpt-4o-mini-2024-07-18",
+      "gpt-5",
+      "gpt-5-2025-08-07",
+      "gpt-5-chat-latest",
+      "gpt-5-codex",
+      "gpt-5-mini",
+      "gpt-5-mini-2025-08-07",
+      "gpt-5-nano",
+      "gpt-5-nano-2025-08-07",
+      "gpt-5-pro",
+      "gpt-5-pro-2025-10-06",
+      "gpt-5.1",
+      "gpt-5.1-2025-11-13",
+      "gpt-5.1-chat-latest",
+      "gpt-5.1-codex",
+      "gpt-5.1-codex-max",
+      "gpt-5.1-codex-mini",
+      "gpt-5.2",
+      "gpt-5.2-2025-12-11",
+      "gpt-5.2-chat-latest",
+      "gpt-5.2-pro",
+      "gpt-5.2-pro-2025-12-11",
+      "o1",
+      "o1-2024-12-17",
+      "o1-pro",
+      "o1-pro-2025-03-19",
+      "o3",
+      "o3-2025-04-16",
+      "o3-mini",
+      "o3-mini-2025-01-31",
+      "o4-mini",
+      "o4-mini-2025-04-16"
+  ));
 
 }

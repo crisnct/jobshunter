@@ -24,7 +24,7 @@ public record Tools(String type, UserLocation userLocation) {
       return this;
     }
 
-    public ToolsBuilder setDeepSearch() {
+    public ToolsBuilder setWebSearch() {
       type = "web_search";
       return this;
     }

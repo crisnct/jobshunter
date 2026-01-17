@@ -16,7 +16,7 @@ import org.apache.logging.log4j.util.Strings;
 @Builder
 public record GptJobsPayload(
     String model,
-    double temperature,
+    Double temperature,
     Reasoning reasoning,
     @JsonProperty("max_output_tokens")
     int maxOutputTokens,

@@ -16,9 +16,10 @@ import org.apache.logging.log4j.util.Strings;
 @Builder
 public record GrokJobsPayload(
     String model,
-    double temperature,
+    Double temperature,
     @JsonProperty("max_output_tokens")
     int maxOutputTokens,
+    Reasoning reasoning,
     @JsonProperty("previous_response_id")
     String previousResponseId,
     List<Tools> tools,

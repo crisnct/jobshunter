@@ -1,0 +1,1055 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+  xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="
+        http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.23.xsd">
+
+  <changeSet id="create-ai-capability-table" author="assistant">
+    <preConditions onFail="MARK_RAN">
+      <not>
+        <tableExists tableName="ai_capability"/>
+      </not>
+    </preConditions>
+    <comment>Create ai_capability table to store AI capability definitions</comment>
+    <createTable tableName="ai_capability">
+      <column name="id" type="BIGINT" autoIncrement="true">
+        <constraints primaryKey="true" nullable="false" primaryKeyName="pk_ai_capability"/>
+      </column>
+      <column name="type" type="VARCHAR(32)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="value_type" type="VARCHAR(32)">
+        <constraints nullable="false"/>
+      </column>
+      <column name="description" type="TEXT"/>
+    </createTable>
+    <createIndex tableName="ai_capability" indexName="idx_ai_capability_type">
+      <column name="type"/>
+    </createIndex>
+  </changeSet>
+
+  <changeSet id="drop-models-capability-table" author="assistant">
+    <preConditions onFail="MARK_RAN">
+      <tableExists tableName="models_capability"/>
+    </preConditions>
+    <comment>Drop models_capability table before creating new ai_models_capability table</comment>
+    <dropTable tableName="models_capability" cascadeConstraints="true"/>
+  </changeSet>
+
+  <changeSet id="create-ai-models-capability-table" author="assistant">
+    <preConditions onFail="MARK_RAN">
+      <and>
+        <tableExists tableName="ai_models"/>
+        <tableExists tableName="ai_capability"/>
+        <not>
+          <tableExists tableName="ai_models_capability"/>
+        </not>
+      </and>
+    </preConditions>
+    <comment>Create ai_models_capability table to link models with capabilities</comment>
+    <createTable tableName="ai_models_capability">
+      <column name="model_id" type="BIGINT">
+        <constraints nullable="false"/>
+      </column>
+      <column name="capability_id" type="BIGINT">
+        <constraints nullable="false"/>
+      </column>
+      <column name="enabled" type="BOOLEAN" defaultValueBoolean="true">
+        <constraints nullable="false"/>
+      </column>
+      <column name="config_json" type="JSON">
+        <constraints nullable="true"/>
+      </column>
+    </createTable>
+    <addPrimaryKey tableName="ai_models_capability" columnNames="model_id, capability_id" constraintName="pk_ai_models_capability"/>
+    <addForeignKeyConstraint constraintName="fk_ai_models_capability_model"
+                             baseTableName="ai_models_capability"
+                             baseColumnNames="model_id"
+                             referencedTableName="ai_models"
+                             referencedColumnNames="id"
+                             onDelete="CASCADE"/>
+    <addForeignKeyConstraint constraintName="fk_ai_models_capability_capability"
+                             baseTableName="ai_models_capability"
+                             baseColumnNames="capability_id"
+                             referencedTableName="ai_capability"
+                             referencedColumnNames="id"
+                             onDelete="CASCADE"/>
+    <createIndex tableName="ai_models_capability" indexName="idx_ai_models_capability_model_id">
+      <column name="model_id"/>
+    </createIndex>
+    <createIndex tableName="ai_models_capability" indexName="idx_ai_models_capability_capability_id">
+      <column name="capability_id"/>
+    </createIndex>
+  </changeSet>
+
+  <changeSet id="insert-ai-capability-data" author="assistant">
+    <preConditions onFail="MARK_RAN">
+      <tableExists tableName="ai_capability"/>
+      <sqlCheck expectedResult="0">SELECT COUNT(*) FROM ai_capability</sqlCheck>
+    </preConditions>
+    <comment>Insert initial AI capability data</comment>
+    <insert tableName="ai_capability">
+      <column name="type" value="FILE_UPLOAD"/>
+      <column name="value_type" value="BOOLEAN"/>
+    </insert>
+    <insert tableName="ai_capability">
+      <column name="type" value="REASONING"/>
+      <column name="value_type" value="BOOLEAN"/>
+    </insert>
+    <insert tableName="ai_capability">
+      <column name="type" value="TEMPERATURE"/>
+      <column name="value_type" value="BOOLEAN"/>
+    </insert>
+    <insert tableName="ai_capability">
+      <column name="type" value="CHAIN_CONVERSATIONS"/>
+      <column name="value_type" value="BOOLEAN"/>
+    </insert>
+    <insert tableName="ai_capability">
+      <column name="type" value="WEB_SEARCH"/>
+      <column name="value_type" value="BOOLEAN"/>
+    </insert>
+    <insert tableName="ai_capability">
+      <column name="type" value="DEVELOPER_PROMPT"/>
+      <column name="value_type" value="BOOLEAN"/>
+    </insert>
+    <insert tableName="ai_capability">
+      <column name="type" value="SYSTEM_PROMPT"/>
+      <column name="value_type" value="BOOLEAN"/>
+    </insert>
+    <insert tableName="ai_capability">
+      <column name="type" value="RESPONSE_SCHEMA"/>
+      <column name="value_type" value="BOOLEAN"/>
+    </insert>
+  </changeSet>
+
+  <changeSet id="insert-ai-models-capability-data" author="assistant">
+    <preConditions onFail="MARK_RAN">
+      <and>
+        <tableExists tableName="ai_models"/>
+        <tableExists tableName="ai_capability"/>
+        <tableExists tableName="ai_models_capability"/>
+      </and>
+    </preConditions>
+    <comment>Insert AI models capability mappings for all models and their capabilities with enabled flags</comment>
+    <sql>
+      INSERT INTO ai_models_capability (model_id, capability_id, enabled)
+      SELECT m.id, c.id, true
+      FROM ai_models m, ai_capability c
+      WHERE m.provider = 'GPT' AND m.model = 'chatgpt-4o-latest' AND c.type = 'FILE_UPLOAD'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'chatgpt-4o-latest' AND c.type = 'REASONING'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'chatgpt-4o-latest' AND c.type = 'CHAIN_CONVERSATIONS'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'chatgpt-4o-latest' AND c.type = 'WEB_SEARCH'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'chatgpt-4o-latest' AND c.type = 'DEVELOPER_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'chatgpt-4o-latest' AND c.type = 'SYSTEM_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'chatgpt-4o-latest' AND c.type = 'RESPONSE_SCHEMA'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'chatgpt-4o-latest' AND c.type = 'TEMPERATURE'
+      ON DUPLICATE KEY UPDATE enabled = VALUES(enabled);
+    </sql>
+    <sql>
+      INSERT INTO ai_models_capability (model_id, capability_id, enabled)
+      SELECT m.id, c.id, true
+      FROM ai_models m, ai_capability c
+      WHERE m.provider = 'GEMINI' AND m.model = 'gemini-2.0-flash' AND c.type = 'FILE_UPLOAD'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GEMINI' AND m.model = 'gemini-2.0-flash' AND c.type = 'REASONING'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GEMINI' AND m.model = 'gemini-2.0-flash' AND c.type = 'CHAIN_CONVERSATIONS'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GEMINI' AND m.model = 'gemini-2.0-flash' AND c.type = 'WEB_SEARCH'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GEMINI' AND m.model = 'gemini-2.0-flash' AND c.type = 'DEVELOPER_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GEMINI' AND m.model = 'gemini-2.0-flash' AND c.type = 'SYSTEM_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GEMINI' AND m.model = 'gemini-2.0-flash' AND c.type = 'RESPONSE_SCHEMA'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GEMINI' AND m.model = 'gemini-2.0-flash' AND c.type = 'TEMPERATURE'
+      ON DUPLICATE KEY UPDATE enabled = VALUES(enabled);
+    </sql>
+    <sql>
+      INSERT INTO ai_models_capability (model_id, capability_id, enabled)
+      SELECT m.id, c.id, true
+      FROM ai_models m, ai_capability c
+      WHERE m.provider = 'GEMINI' AND m.model = 'gemini-2.0-flash-001' AND c.type = 'FILE_UPLOAD'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GEMINI' AND m.model = 'gemini-2.0-flash-001' AND c.type = 'REASONING'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GEMINI' AND m.model = 'gemini-2.0-flash-001' AND c.type = 'CHAIN_CONVERSATIONS'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GEMINI' AND m.model = 'gemini-2.0-flash-001' AND c.type = 'WEB_SEARCH'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GEMINI' AND m.model = 'gemini-2.0-flash-001' AND c.type = 'DEVELOPER_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GEMINI' AND m.model = 'gemini-2.0-flash-001' AND c.type = 'SYSTEM_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GEMINI' AND m.model = 'gemini-2.0-flash-001' AND c.type = 'RESPONSE_SCHEMA'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GEMINI' AND m.model = 'gemini-2.0-flash-001' AND c.type = 'TEMPERATURE'
+      ON DUPLICATE KEY UPDATE enabled = VALUES(enabled);
+    </sql>
+    <sql>
+      INSERT INTO ai_models_capability (model_id, capability_id, enabled)
+      SELECT m.id, c.id, true
+      FROM ai_models m, ai_capability c
+      WHERE m.provider = 'GEMINI' AND m.model = 'gemini-2.0-flash-exp' AND c.type = 'FILE_UPLOAD'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GEMINI' AND m.model = 'gemini-2.0-flash-exp' AND c.type = 'REASONING'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GEMINI' AND m.model = 'gemini-2.0-flash-exp' AND c.type = 'CHAIN_CONVERSATIONS'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GEMINI' AND m.model = 'gemini-2.0-flash-exp' AND c.type = 'WEB_SEARCH'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GEMINI' AND m.model = 'gemini-2.0-flash-exp' AND c.type = 'DEVELOPER_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GEMINI' AND m.model = 'gemini-2.0-flash-exp' AND c.type = 'SYSTEM_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GEMINI' AND m.model = 'gemini-2.0-flash-exp' AND c.type = 'RESPONSE_SCHEMA'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GEMINI' AND m.model = 'gemini-2.0-flash-exp' AND c.type = 'TEMPERATURE'
+      ON DUPLICATE KEY UPDATE enabled = VALUES(enabled);
+    </sql>
+    <sql>
+      INSERT INTO ai_models_capability (model_id, capability_id, enabled)
+      SELECT m.id, c.id, true
+      FROM ai_models m, ai_capability c
+      WHERE m.provider = 'GEMINI' AND m.model = 'gemini-2.0-flash-lite' AND c.type = 'FILE_UPLOAD'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GEMINI' AND m.model = 'gemini-2.0-flash-lite' AND c.type = 'REASONING'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GEMINI' AND m.model = 'gemini-2.0-flash-lite' AND c.type = 'CHAIN_CONVERSATIONS'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GEMINI' AND m.model = 'gemini-2.0-flash-lite' AND c.type = 'WEB_SEARCH'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GEMINI' AND m.model = 'gemini-2.0-flash-lite' AND c.type = 'DEVELOPER_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GEMINI' AND m.model = 'gemini-2.0-flash-lite' AND c.type = 'SYSTEM_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GEMINI' AND m.model = 'gemini-2.0-flash-lite' AND c.type = 'RESPONSE_SCHEMA'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GEMINI' AND m.model = 'gemini-2.0-flash-lite' AND c.type = 'TEMPERATURE'
+      ON DUPLICATE KEY UPDATE enabled = VALUES(enabled);
+    </sql>
+    <sql>
+      INSERT INTO ai_models_capability (model_id, capability_id, enabled)
+      SELECT m.id, c.id, true
+      FROM ai_models m, ai_capability c
+      WHERE m.provider = 'GEMINI' AND m.model = 'gemini-2.0-flash-lite-001' AND c.type = 'FILE_UPLOAD'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GEMINI' AND m.model = 'gemini-2.0-flash-lite-001' AND c.type = 'REASONING'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GEMINI' AND m.model = 'gemini-2.0-flash-lite-001' AND c.type = 'CHAIN_CONVERSATIONS'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GEMINI' AND m.model = 'gemini-2.0-flash-lite-001' AND c.type = 'WEB_SEARCH'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GEMINI' AND m.model = 'gemini-2.0-flash-lite-001' AND c.type = 'DEVELOPER_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GEMINI' AND m.model = 'gemini-2.0-flash-lite-001' AND c.type = 'SYSTEM_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GEMINI' AND m.model = 'gemini-2.0-flash-lite-001' AND c.type = 'RESPONSE_SCHEMA'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GEMINI' AND m.model = 'gemini-2.0-flash-lite-001' AND c.type = 'TEMPERATURE'
+      ON DUPLICATE KEY UPDATE enabled = VALUES(enabled);
+    </sql>
+    <sql>
+      INSERT INTO ai_models_capability (model_id, capability_id, enabled)
+      SELECT m.id, c.id, true
+      FROM ai_models m, ai_capability c
+      WHERE m.provider = 'GEMINI' AND m.model = 'gemini-2.5-flash' AND c.type = 'FILE_UPLOAD'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GEMINI' AND m.model = 'gemini-2.5-flash' AND c.type = 'REASONING'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GEMINI' AND m.model = 'gemini-2.5-flash' AND c.type = 'CHAIN_CONVERSATIONS'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GEMINI' AND m.model = 'gemini-2.5-flash' AND c.type = 'WEB_SEARCH'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GEMINI' AND m.model = 'gemini-2.5-flash' AND c.type = 'DEVELOPER_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GEMINI' AND m.model = 'gemini-2.5-flash' AND c.type = 'SYSTEM_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GEMINI' AND m.model = 'gemini-2.5-flash' AND c.type = 'RESPONSE_SCHEMA'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GEMINI' AND m.model = 'gemini-2.5-flash' AND c.type = 'TEMPERATURE'
+      ON DUPLICATE KEY UPDATE enabled = VALUES(enabled);
+    </sql>
+    <sql>
+      INSERT INTO ai_models_capability (model_id, capability_id, enabled)
+      SELECT m.id, c.id, true
+      FROM ai_models m, ai_capability c
+      WHERE m.provider = 'GEMINI' AND m.model = 'gemini-2.5-flash-lite' AND c.type = 'FILE_UPLOAD'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GEMINI' AND m.model = 'gemini-2.5-flash-lite' AND c.type = 'REASONING'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GEMINI' AND m.model = 'gemini-2.5-flash-lite' AND c.type = 'CHAIN_CONVERSATIONS'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GEMINI' AND m.model = 'gemini-2.5-flash-lite' AND c.type = 'WEB_SEARCH'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GEMINI' AND m.model = 'gemini-2.5-flash-lite' AND c.type = 'DEVELOPER_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GEMINI' AND m.model = 'gemini-2.5-flash-lite' AND c.type = 'SYSTEM_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GEMINI' AND m.model = 'gemini-2.5-flash-lite' AND c.type = 'RESPONSE_SCHEMA'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GEMINI' AND m.model = 'gemini-2.5-flash-lite' AND c.type = 'TEMPERATURE'
+      ON DUPLICATE KEY UPDATE enabled = VALUES(enabled);
+    </sql>
+    <sql>
+      INSERT INTO ai_models_capability (model_id, capability_id, enabled)
+      SELECT m.id, c.id, true
+      FROM ai_models m, ai_capability c
+      WHERE m.provider = 'GEMINI' AND m.model = 'gemini-2.5-pro' AND c.type = 'FILE_UPLOAD'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GEMINI' AND m.model = 'gemini-2.5-pro' AND c.type = 'REASONING'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GEMINI' AND m.model = 'gemini-2.5-pro' AND c.type = 'CHAIN_CONVERSATIONS'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GEMINI' AND m.model = 'gemini-2.5-pro' AND c.type = 'WEB_SEARCH'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GEMINI' AND m.model = 'gemini-2.5-pro' AND c.type = 'DEVELOPER_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GEMINI' AND m.model = 'gemini-2.5-pro' AND c.type = 'SYSTEM_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GEMINI' AND m.model = 'gemini-2.5-pro' AND c.type = 'RESPONSE_SCHEMA'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GEMINI' AND m.model = 'gemini-2.5-pro' AND c.type = 'TEMPERATURE'
+      ON DUPLICATE KEY UPDATE enabled = VALUES(enabled);
+    </sql>
+    <sql>
+      INSERT INTO ai_models_capability (model_id, capability_id, enabled)
+      SELECT m.id, c.id, true
+      FROM ai_models m, ai_capability c
+      WHERE m.provider = 'GPT' AND m.model = 'gpt-3.5-turbo' AND c.type = 'FILE_UPLOAD'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-3.5-turbo' AND c.type = 'REASONING'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-3.5-turbo' AND c.type = 'CHAIN_CONVERSATIONS'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-3.5-turbo' AND c.type = 'WEB_SEARCH'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-3.5-turbo' AND c.type = 'DEVELOPER_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-3.5-turbo' AND c.type = 'SYSTEM_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-3.5-turbo' AND c.type = 'RESPONSE_SCHEMA'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-3.5-turbo' AND c.type = 'TEMPERATURE'
+      ON DUPLICATE KEY UPDATE enabled = VALUES(enabled);
+    </sql>
+    <sql>
+      INSERT INTO ai_models_capability (model_id, capability_id, enabled)
+      SELECT m.id, c.id, true
+      FROM ai_models m, ai_capability c
+      WHERE m.provider = 'GPT' AND m.model = 'gpt-3.5-turbo-0125' AND c.type = 'FILE_UPLOAD'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-3.5-turbo-0125' AND c.type = 'REASONING'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-3.5-turbo-0125' AND c.type = 'CHAIN_CONVERSATIONS'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-3.5-turbo-0125' AND c.type = 'WEB_SEARCH'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-3.5-turbo-0125' AND c.type = 'DEVELOPER_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-3.5-turbo-0125' AND c.type = 'SYSTEM_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-3.5-turbo-0125' AND c.type = 'RESPONSE_SCHEMA'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-3.5-turbo-0125' AND c.type = 'TEMPERATURE'
+      ON DUPLICATE KEY UPDATE enabled = VALUES(enabled);
+    </sql>
+    <sql>
+      INSERT INTO ai_models_capability (model_id, capability_id, enabled)
+      SELECT m.id, c.id, true
+      FROM ai_models m, ai_capability c
+      WHERE m.provider = 'GPT' AND m.model = 'gpt-3.5-turbo-1106' AND c.type = 'FILE_UPLOAD'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-3.5-turbo-1106' AND c.type = 'REASONING'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-3.5-turbo-1106' AND c.type = 'CHAIN_CONVERSATIONS'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-3.5-turbo-1106' AND c.type = 'WEB_SEARCH'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-3.5-turbo-1106' AND c.type = 'DEVELOPER_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-3.5-turbo-1106' AND c.type = 'SYSTEM_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-3.5-turbo-1106' AND c.type = 'RESPONSE_SCHEMA'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-3.5-turbo-1106' AND c.type = 'TEMPERATURE'
+      ON DUPLICATE KEY UPDATE enabled = VALUES(enabled);
+    </sql>
+    <sql>
+      INSERT INTO ai_models_capability (model_id, capability_id, enabled)
+      SELECT m.id, c.id, true
+      FROM ai_models m, ai_capability c
+      WHERE m.provider = 'GPT' AND m.model = 'gpt-4' AND c.type = 'FILE_UPLOAD'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4' AND c.type = 'REASONING'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4' AND c.type = 'CHAIN_CONVERSATIONS'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4' AND c.type = 'WEB_SEARCH'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4' AND c.type = 'DEVELOPER_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4' AND c.type = 'SYSTEM_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4' AND c.type = 'RESPONSE_SCHEMA'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4' AND c.type = 'TEMPERATURE'
+      ON DUPLICATE KEY UPDATE enabled = VALUES(enabled);
+    </sql>
+    <sql>
+      INSERT INTO ai_models_capability (model_id, capability_id, enabled)
+      SELECT m.id, c.id, true
+      FROM ai_models m, ai_capability c
+      WHERE m.provider = 'GPT' AND m.model = 'gpt-4-0125-preview' AND c.type = 'FILE_UPLOAD'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4-0125-preview' AND c.type = 'REASONING'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4-0125-preview' AND c.type = 'CHAIN_CONVERSATIONS'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4-0125-preview' AND c.type = 'WEB_SEARCH'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4-0125-preview' AND c.type = 'DEVELOPER_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4-0125-preview' AND c.type = 'SYSTEM_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4-0125-preview' AND c.type = 'RESPONSE_SCHEMA'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4-0125-preview' AND c.type = 'TEMPERATURE'
+      ON DUPLICATE KEY UPDATE enabled = VALUES(enabled);
+    </sql>
+    <sql>
+      INSERT INTO ai_models_capability (model_id, capability_id, enabled)
+      SELECT m.id, c.id, true
+      FROM ai_models m, ai_capability c
+      WHERE m.provider = 'GPT' AND m.model = 'gpt-4-0613' AND c.type = 'FILE_UPLOAD'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4-0613' AND c.type = 'REASONING'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4-0613' AND c.type = 'CHAIN_CONVERSATIONS'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4-0613' AND c.type = 'WEB_SEARCH'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4-0613' AND c.type = 'DEVELOPER_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4-0613' AND c.type = 'SYSTEM_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4-0613' AND c.type = 'RESPONSE_SCHEMA'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4-0613' AND c.type = 'TEMPERATURE'
+      ON DUPLICATE KEY UPDATE enabled = VALUES(enabled);
+    </sql>
+    <sql>
+      INSERT INTO ai_models_capability (model_id, capability_id, enabled)
+      SELECT m.id, c.id, true
+      FROM ai_models m, ai_capability c
+      WHERE m.provider = 'GPT' AND m.model = 'gpt-4-1106-preview' AND c.type = 'FILE_UPLOAD'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4-1106-preview' AND c.type = 'REASONING'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4-1106-preview' AND c.type = 'CHAIN_CONVERSATIONS'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4-1106-preview' AND c.type = 'WEB_SEARCH'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4-1106-preview' AND c.type = 'DEVELOPER_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4-1106-preview' AND c.type = 'SYSTEM_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4-1106-preview' AND c.type = 'RESPONSE_SCHEMA'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4-1106-preview' AND c.type = 'TEMPERATURE'
+      ON DUPLICATE KEY UPDATE enabled = VALUES(enabled);
+    </sql>
+    <sql>
+      INSERT INTO ai_models_capability (model_id, capability_id, enabled)
+      SELECT m.id, c.id, true
+      FROM ai_models m, ai_capability c
+      WHERE m.provider = 'GPT' AND m.model = 'gpt-4-turbo' AND c.type = 'FILE_UPLOAD'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4-turbo' AND c.type = 'REASONING'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4-turbo' AND c.type = 'CHAIN_CONVERSATIONS'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4-turbo' AND c.type = 'WEB_SEARCH'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4-turbo' AND c.type = 'DEVELOPER_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4-turbo' AND c.type = 'SYSTEM_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4-turbo' AND c.type = 'RESPONSE_SCHEMA'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4-turbo' AND c.type = 'TEMPERATURE'
+      ON DUPLICATE KEY UPDATE enabled = VALUES(enabled);
+    </sql>
+    <sql>
+      INSERT INTO ai_models_capability (model_id, capability_id, enabled)
+      SELECT m.id, c.id, true
+      FROM ai_models m, ai_capability c
+      WHERE m.provider = 'GPT' AND m.model = 'gpt-4-turbo-2024-04-09' AND c.type = 'FILE_UPLOAD'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4-turbo-2024-04-09' AND c.type = 'REASONING'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4-turbo-2024-04-09' AND c.type = 'CHAIN_CONVERSATIONS'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4-turbo-2024-04-09' AND c.type = 'WEB_SEARCH'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4-turbo-2024-04-09' AND c.type = 'DEVELOPER_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4-turbo-2024-04-09' AND c.type = 'SYSTEM_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4-turbo-2024-04-09' AND c.type = 'RESPONSE_SCHEMA'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4-turbo-2024-04-09' AND c.type = 'TEMPERATURE'
+      ON DUPLICATE KEY UPDATE enabled = VALUES(enabled);
+    </sql>
+    <sql>
+      INSERT INTO ai_models_capability (model_id, capability_id, enabled)
+      SELECT m.id, c.id, true
+      FROM ai_models m, ai_capability c
+      WHERE m.provider = 'GPT' AND m.model = 'gpt-4-turbo-preview' AND c.type = 'FILE_UPLOAD'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4-turbo-preview' AND c.type = 'REASONING'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4-turbo-preview' AND c.type = 'CHAIN_CONVERSATIONS'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4-turbo-preview' AND c.type = 'WEB_SEARCH'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4-turbo-preview' AND c.type = 'DEVELOPER_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4-turbo-preview' AND c.type = 'SYSTEM_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4-turbo-preview' AND c.type = 'RESPONSE_SCHEMA'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4-turbo-preview' AND c.type = 'TEMPERATURE'
+      ON DUPLICATE KEY UPDATE enabled = VALUES(enabled);
+    </sql>
+    <!-- Continue with remaining GPT models -->
+    <sql>
+      INSERT INTO ai_models_capability (model_id, capability_id, enabled)
+      SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4.1' AND c.type = 'FILE_UPLOAD'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4.1' AND c.type = 'REASONING'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4.1' AND c.type = 'CHAIN_CONVERSATIONS'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4.1' AND c.type = 'WEB_SEARCH'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4.1' AND c.type = 'DEVELOPER_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4.1' AND c.type = 'SYSTEM_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4.1' AND c.type = 'RESPONSE_SCHEMA'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4.1' AND c.type = 'TEMPERATURE'
+      ON DUPLICATE KEY UPDATE enabled = VALUES(enabled);
+    </sql>
+    <sql>
+      INSERT INTO ai_models_capability (model_id, capability_id, enabled)
+      SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4.1-2025-04-14' AND c.type = 'FILE_UPLOAD'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4.1-2025-04-14' AND c.type = 'REASONING'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4.1-2025-04-14' AND c.type = 'CHAIN_CONVERSATIONS'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4.1-2025-04-14' AND c.type = 'WEB_SEARCH'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4.1-2025-04-14' AND c.type = 'DEVELOPER_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4.1-2025-04-14' AND c.type = 'SYSTEM_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4.1-2025-04-14' AND c.type = 'RESPONSE_SCHEMA'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4.1-2025-04-14' AND c.type = 'TEMPERATURE'
+      ON DUPLICATE KEY UPDATE enabled = VALUES(enabled);
+    </sql>
+    <sql>
+      INSERT INTO ai_models_capability (model_id, capability_id, enabled)
+      SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4.1-mini' AND c.type = 'FILE_UPLOAD'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4.1-mini' AND c.type = 'REASONING'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4.1-mini' AND c.type = 'CHAIN_CONVERSATIONS'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4.1-mini' AND c.type = 'WEB_SEARCH'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4.1-mini' AND c.type = 'DEVELOPER_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4.1-mini' AND c.type = 'SYSTEM_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4.1-mini' AND c.type = 'RESPONSE_SCHEMA'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4.1-mini' AND c.type = 'TEMPERATURE'
+      ON DUPLICATE KEY UPDATE enabled = VALUES(enabled);
+    </sql>
+    <sql>
+      INSERT INTO ai_models_capability (model_id, capability_id, enabled)
+      SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4.1-mini-2025-04-14' AND c.type = 'FILE_UPLOAD'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4.1-mini-2025-04-14' AND c.type = 'REASONING'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4.1-mini-2025-04-14' AND c.type = 'CHAIN_CONVERSATIONS'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4.1-mini-2025-04-14' AND c.type = 'WEB_SEARCH'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4.1-mini-2025-04-14' AND c.type = 'DEVELOPER_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4.1-mini-2025-04-14' AND c.type = 'SYSTEM_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4.1-mini-2025-04-14' AND c.type = 'RESPONSE_SCHEMA'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4.1-mini-2025-04-14' AND c.type = 'TEMPERATURE'
+      ON DUPLICATE KEY UPDATE enabled = VALUES(enabled);
+    </sql>
+    <sql>
+      INSERT INTO ai_models_capability (model_id, capability_id, enabled)
+      SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4.1-nano' AND c.type = 'FILE_UPLOAD'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4.1-nano' AND c.type = 'REASONING'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4.1-nano' AND c.type = 'CHAIN_CONVERSATIONS'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4.1-nano' AND c.type = 'WEB_SEARCH'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4.1-nano' AND c.type = 'DEVELOPER_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4.1-nano' AND c.type = 'SYSTEM_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4.1-nano' AND c.type = 'RESPONSE_SCHEMA'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4.1-nano' AND c.type = 'TEMPERATURE'
+      ON DUPLICATE KEY UPDATE enabled = VALUES(enabled);
+    </sql>
+    <sql>
+      INSERT INTO ai_models_capability (model_id, capability_id, enabled)
+      SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4.1-nano-2025-04-14' AND c.type = 'FILE_UPLOAD'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4.1-nano-2025-04-14' AND c.type = 'REASONING'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4.1-nano-2025-04-14' AND c.type = 'CHAIN_CONVERSATIONS'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4.1-nano-2025-04-14' AND c.type = 'WEB_SEARCH'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4.1-nano-2025-04-14' AND c.type = 'DEVELOPER_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4.1-nano-2025-04-14' AND c.type = 'SYSTEM_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4.1-nano-2025-04-14' AND c.type = 'RESPONSE_SCHEMA'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4.1-nano-2025-04-14' AND c.type = 'TEMPERATURE'
+      ON DUPLICATE KEY UPDATE enabled = VALUES(enabled);
+    </sql>
+    <sql>
+      INSERT INTO ai_models_capability (model_id, capability_id, enabled)
+      SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4o' AND c.type = 'FILE_UPLOAD'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4o' AND c.type = 'REASONING'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4o' AND c.type = 'CHAIN_CONVERSATIONS'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4o' AND c.type = 'WEB_SEARCH'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4o' AND c.type = 'DEVELOPER_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4o' AND c.type = 'SYSTEM_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4o' AND c.type = 'RESPONSE_SCHEMA'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4o' AND c.type = 'TEMPERATURE'
+      ON DUPLICATE KEY UPDATE enabled = VALUES(enabled);
+    </sql>
+    <sql>
+      INSERT INTO ai_models_capability (model_id, capability_id, enabled)
+      SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4o-2024-05-13' AND c.type = 'FILE_UPLOAD'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4o-2024-05-13' AND c.type = 'REASONING'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4o-2024-05-13' AND c.type = 'CHAIN_CONVERSATIONS'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4o-2024-05-13' AND c.type = 'WEB_SEARCH'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4o-2024-05-13' AND c.type = 'DEVELOPER_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4o-2024-05-13' AND c.type = 'SYSTEM_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4o-2024-05-13' AND c.type = 'RESPONSE_SCHEMA'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4o-2024-05-13' AND c.type = 'TEMPERATURE'
+      ON DUPLICATE KEY UPDATE enabled = VALUES(enabled);
+    </sql>
+    <sql>
+      INSERT INTO ai_models_capability (model_id, capability_id, enabled)
+      SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4o-2024-08-06' AND c.type = 'FILE_UPLOAD'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4o-2024-08-06' AND c.type = 'REASONING'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4o-2024-08-06' AND c.type = 'CHAIN_CONVERSATIONS'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4o-2024-08-06' AND c.type = 'WEB_SEARCH'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4o-2024-08-06' AND c.type = 'DEVELOPER_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4o-2024-08-06' AND c.type = 'SYSTEM_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4o-2024-08-06' AND c.type = 'RESPONSE_SCHEMA'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4o-2024-08-06' AND c.type = 'TEMPERATURE'
+      ON DUPLICATE KEY UPDATE enabled = VALUES(enabled);
+    </sql>
+    <sql>
+      INSERT INTO ai_models_capability (model_id, capability_id, enabled)
+      SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4o-2024-11-20' AND c.type = 'FILE_UPLOAD'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4o-2024-11-20' AND c.type = 'REASONING'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4o-2024-11-20' AND c.type = 'CHAIN_CONVERSATIONS'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4o-2024-11-20' AND c.type = 'WEB_SEARCH'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4o-2024-11-20' AND c.type = 'DEVELOPER_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4o-2024-11-20' AND c.type = 'SYSTEM_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4o-2024-11-20' AND c.type = 'RESPONSE_SCHEMA'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4o-2024-11-20' AND c.type = 'TEMPERATURE'
+      ON DUPLICATE KEY UPDATE enabled = VALUES(enabled);
+    </sql>
+    <sql>
+      INSERT INTO ai_models_capability (model_id, capability_id, enabled)
+      SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4o-mini' AND c.type = 'FILE_UPLOAD'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4o-mini' AND c.type = 'REASONING'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4o-mini' AND c.type = 'CHAIN_CONVERSATIONS'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4o-mini' AND c.type = 'WEB_SEARCH'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4o-mini' AND c.type = 'DEVELOPER_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4o-mini' AND c.type = 'SYSTEM_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4o-mini' AND c.type = 'RESPONSE_SCHEMA'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4o-mini' AND c.type = 'TEMPERATURE'
+      ON DUPLICATE KEY UPDATE enabled = VALUES(enabled);
+    </sql>
+    <sql>
+      INSERT INTO ai_models_capability (model_id, capability_id, enabled)
+      SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4o-mini-2024-07-18' AND c.type = 'FILE_UPLOAD'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4o-mini-2024-07-18' AND c.type = 'REASONING'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4o-mini-2024-07-18' AND c.type = 'CHAIN_CONVERSATIONS'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4o-mini-2024-07-18' AND c.type = 'WEB_SEARCH'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4o-mini-2024-07-18' AND c.type = 'DEVELOPER_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4o-mini-2024-07-18' AND c.type = 'SYSTEM_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4o-mini-2024-07-18' AND c.type = 'RESPONSE_SCHEMA'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-4o-mini-2024-07-18' AND c.type = 'TEMPERATURE'
+      ON DUPLICATE KEY UPDATE enabled = VALUES(enabled);
+    </sql>
+    <sql>
+      INSERT INTO ai_models_capability (model_id, capability_id, enabled)
+      SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5' AND c.type = 'FILE_UPLOAD'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5' AND c.type = 'REASONING'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5' AND c.type = 'CHAIN_CONVERSATIONS'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5' AND c.type = 'WEB_SEARCH'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5' AND c.type = 'DEVELOPER_PROMPT'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5' AND c.type = 'SYSTEM_PROMPT'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5' AND c.type = 'RESPONSE_SCHEMA'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5' AND c.type = 'TEMPERATURE'
+      ON DUPLICATE KEY UPDATE enabled = VALUES(enabled);
+    </sql>
+    <sql>
+      INSERT INTO ai_models_capability (model_id, capability_id, enabled)
+      SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5-2025-08-07' AND c.type = 'FILE_UPLOAD'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5-2025-08-07' AND c.type = 'REASONING'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5-2025-08-07' AND c.type = 'CHAIN_CONVERSATIONS'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5-2025-08-07' AND c.type = 'WEB_SEARCH'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5-2025-08-07' AND c.type = 'DEVELOPER_PROMPT'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5-2025-08-07' AND c.type = 'SYSTEM_PROMPT'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5-2025-08-07' AND c.type = 'RESPONSE_SCHEMA'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5-2025-08-07' AND c.type = 'TEMPERATURE'
+      ON DUPLICATE KEY UPDATE enabled = VALUES(enabled);
+    </sql>
+    <sql>
+      INSERT INTO ai_models_capability (model_id, capability_id, enabled)
+      SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5-chat-latest' AND c.type = 'FILE_UPLOAD'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5-chat-latest' AND c.type = 'REASONING'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5-chat-latest' AND c.type = 'CHAIN_CONVERSATIONS'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5-chat-latest' AND c.type = 'WEB_SEARCH'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5-chat-latest' AND c.type = 'DEVELOPER_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5-chat-latest' AND c.type = 'SYSTEM_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5-chat-latest' AND c.type = 'RESPONSE_SCHEMA'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5-chat-latest' AND c.type = 'TEMPERATURE'
+      ON DUPLICATE KEY UPDATE enabled = VALUES(enabled);
+    </sql>
+    <sql>
+      INSERT INTO ai_models_capability (model_id, capability_id, enabled)
+      SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5-codex' AND c.type = 'FILE_UPLOAD'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5-codex' AND c.type = 'REASONING'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5-codex' AND c.type = 'CHAIN_CONVERSATIONS'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5-codex' AND c.type = 'WEB_SEARCH'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5-codex' AND c.type = 'DEVELOPER_PROMPT'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5-codex' AND c.type = 'SYSTEM_PROMPT'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5-codex' AND c.type = 'RESPONSE_SCHEMA'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5-codex' AND c.type = 'TEMPERATURE'
+      ON DUPLICATE KEY UPDATE enabled = VALUES(enabled);
+    </sql>
+    <sql>
+      INSERT INTO ai_models_capability (model_id, capability_id, enabled)
+      SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5-mini' AND c.type = 'FILE_UPLOAD'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5-mini' AND c.type = 'REASONING'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5-mini' AND c.type = 'CHAIN_CONVERSATIONS'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5-mini' AND c.type = 'WEB_SEARCH'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5-mini' AND c.type = 'DEVELOPER_PROMPT'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5-mini' AND c.type = 'SYSTEM_PROMPT'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5-mini' AND c.type = 'RESPONSE_SCHEMA'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5-mini' AND c.type = 'TEMPERATURE'
+      ON DUPLICATE KEY UPDATE enabled = VALUES(enabled);
+    </sql>
+    <sql>
+      INSERT INTO ai_models_capability (model_id, capability_id, enabled)
+      SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5-mini-2025-08-07' AND c.type = 'FILE_UPLOAD'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5-mini-2025-08-07' AND c.type = 'REASONING'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5-mini-2025-08-07' AND c.type = 'CHAIN_CONVERSATIONS'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5-mini-2025-08-07' AND c.type = 'WEB_SEARCH'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5-mini-2025-08-07' AND c.type = 'DEVELOPER_PROMPT'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5-mini-2025-08-07' AND c.type = 'SYSTEM_PROMPT'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5-mini-2025-08-07' AND c.type = 'RESPONSE_SCHEMA'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5-mini-2025-08-07' AND c.type = 'TEMPERATURE'
+      ON DUPLICATE KEY UPDATE enabled = VALUES(enabled);
+    </sql>
+    <sql>
+      INSERT INTO ai_models_capability (model_id, capability_id, enabled)
+      SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5-nano' AND c.type = 'FILE_UPLOAD'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5-nano' AND c.type = 'REASONING'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5-nano' AND c.type = 'CHAIN_CONVERSATIONS'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5-nano' AND c.type = 'WEB_SEARCH'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5-nano' AND c.type = 'DEVELOPER_PROMPT'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5-nano' AND c.type = 'SYSTEM_PROMPT'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5-nano' AND c.type = 'RESPONSE_SCHEMA'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5-nano' AND c.type = 'TEMPERATURE'
+      ON DUPLICATE KEY UPDATE enabled = VALUES(enabled);
+    </sql>
+    <sql>
+      INSERT INTO ai_models_capability (model_id, capability_id, enabled)
+      SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5-nano-2025-08-07' AND c.type = 'FILE_UPLOAD'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5-nano-2025-08-07' AND c.type = 'REASONING'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5-nano-2025-08-07' AND c.type = 'CHAIN_CONVERSATIONS'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5-nano-2025-08-07' AND c.type = 'WEB_SEARCH'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5-nano-2025-08-07' AND c.type = 'DEVELOPER_PROMPT'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5-nano-2025-08-07' AND c.type = 'SYSTEM_PROMPT'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5-nano-2025-08-07' AND c.type = 'RESPONSE_SCHEMA'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5-nano-2025-08-07' AND c.type = 'TEMPERATURE'
+      ON DUPLICATE KEY UPDATE enabled = VALUES(enabled);
+    </sql>
+    <sql>
+      INSERT INTO ai_models_capability (model_id, capability_id, enabled)
+      SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5-pro' AND c.type = 'FILE_UPLOAD'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5-pro' AND c.type = 'REASONING'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5-pro' AND c.type = 'CHAIN_CONVERSATIONS'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5-pro' AND c.type = 'WEB_SEARCH'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5-pro' AND c.type = 'DEVELOPER_PROMPT'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5-pro' AND c.type = 'SYSTEM_PROMPT'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5-pro' AND c.type = 'RESPONSE_SCHEMA'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5-pro' AND c.type = 'TEMPERATURE'
+      ON DUPLICATE KEY UPDATE enabled = VALUES(enabled);
+    </sql>
+    <sql>
+      INSERT INTO ai_models_capability (model_id, capability_id, enabled)
+      SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5-pro-2025-10-06' AND c.type = 'FILE_UPLOAD'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5-pro-2025-10-06' AND c.type = 'REASONING'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5-pro-2025-10-06' AND c.type = 'CHAIN_CONVERSATIONS'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5-pro-2025-10-06' AND c.type = 'WEB_SEARCH'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5-pro-2025-10-06' AND c.type = 'DEVELOPER_PROMPT'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5-pro-2025-10-06' AND c.type = 'SYSTEM_PROMPT'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5-pro-2025-10-06' AND c.type = 'RESPONSE_SCHEMA'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5-pro-2025-10-06' AND c.type = 'TEMPERATURE'
+      ON DUPLICATE KEY UPDATE enabled = VALUES(enabled);
+    </sql>
+    <sql>
+      INSERT INTO ai_models_capability (model_id, capability_id, enabled)
+      SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5.1' AND c.type = 'FILE_UPLOAD'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5.1' AND c.type = 'REASONING'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5.1' AND c.type = 'CHAIN_CONVERSATIONS'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5.1' AND c.type = 'WEB_SEARCH'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5.1' AND c.type = 'DEVELOPER_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5.1' AND c.type = 'SYSTEM_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5.1' AND c.type = 'RESPONSE_SCHEMA'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5.1' AND c.type = 'TEMPERATURE'
+      ON DUPLICATE KEY UPDATE enabled = VALUES(enabled);
+    </sql>
+    <sql>
+      INSERT INTO ai_models_capability (model_id, capability_id, enabled)
+      SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5.1-2025-11-13' AND c.type = 'FILE_UPLOAD'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5.1-2025-11-13' AND c.type = 'REASONING'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5.1-2025-11-13' AND c.type = 'CHAIN_CONVERSATIONS'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5.1-2025-11-13' AND c.type = 'WEB_SEARCH'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5.1-2025-11-13' AND c.type = 'DEVELOPER_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5.1-2025-11-13' AND c.type = 'SYSTEM_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5.1-2025-11-13' AND c.type = 'RESPONSE_SCHEMA'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5.1-2025-11-13' AND c.type = 'TEMPERATURE'
+      ON DUPLICATE KEY UPDATE enabled = VALUES(enabled);
+    </sql>
+    <sql>
+      INSERT INTO ai_models_capability (model_id, capability_id, enabled)
+      SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5.1-chat-latest' AND c.type = 'FILE_UPLOAD'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5.1-chat-latest' AND c.type = 'REASONING'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5.1-chat-latest' AND c.type = 'CHAIN_CONVERSATIONS'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5.1-chat-latest' AND c.type = 'WEB_SEARCH'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5.1-chat-latest' AND c.type = 'DEVELOPER_PROMPT'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5.1-chat-latest' AND c.type = 'SYSTEM_PROMPT'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5.1-chat-latest' AND c.type = 'RESPONSE_SCHEMA'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5.1-chat-latest' AND c.type = 'TEMPERATURE'
+      ON DUPLICATE KEY UPDATE enabled = VALUES(enabled);
+    </sql>
+    <sql>
+      INSERT INTO ai_models_capability (model_id, capability_id, enabled)
+      SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5.1-codex' AND c.type = 'FILE_UPLOAD'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5.1-codex' AND c.type = 'REASONING'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5.1-codex' AND c.type = 'CHAIN_CONVERSATIONS'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5.1-codex' AND c.type = 'WEB_SEARCH'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5.1-codex' AND c.type = 'DEVELOPER_PROMPT'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5.1-codex' AND c.type = 'SYSTEM_PROMPT'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5.1-codex' AND c.type = 'RESPONSE_SCHEMA'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5.1-codex' AND c.type = 'TEMPERATURE'
+      ON DUPLICATE KEY UPDATE enabled = VALUES(enabled);
+    </sql>
+    <sql>
+      INSERT INTO ai_models_capability (model_id, capability_id, enabled)
+      SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5.1-codex-max' AND c.type = 'FILE_UPLOAD'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5.1-codex-max' AND c.type = 'REASONING'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5.1-codex-max' AND c.type = 'CHAIN_CONVERSATIONS'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5.1-codex-max' AND c.type = 'WEB_SEARCH'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5.1-codex-max' AND c.type = 'DEVELOPER_PROMPT'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5.1-codex-max' AND c.type = 'SYSTEM_PROMPT'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5.1-codex-max' AND c.type = 'RESPONSE_SCHEMA'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5.1-codex-max' AND c.type = 'TEMPERATURE'
+      ON DUPLICATE KEY UPDATE enabled = VALUES(enabled);
+    </sql>
+    <sql>
+      INSERT INTO ai_models_capability (model_id, capability_id, enabled)
+      SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5.1-codex-mini' AND c.type = 'FILE_UPLOAD'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5.1-codex-mini' AND c.type = 'REASONING'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5.1-codex-mini' AND c.type = 'CHAIN_CONVERSATIONS'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5.1-codex-mini' AND c.type = 'WEB_SEARCH'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5.1-codex-mini' AND c.type = 'DEVELOPER_PROMPT'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5.1-codex-mini' AND c.type = 'SYSTEM_PROMPT'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5.1-codex-mini' AND c.type = 'RESPONSE_SCHEMA'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5.1-codex-mini' AND c.type = 'TEMPERATURE'
+      ON DUPLICATE KEY UPDATE enabled = VALUES(enabled);
+    </sql>
+    <sql>
+      INSERT INTO ai_models_capability (model_id, capability_id, enabled)
+      SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5.2' AND c.type = 'FILE_UPLOAD'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5.2' AND c.type = 'REASONING'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5.2' AND c.type = 'CHAIN_CONVERSATIONS'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5.2' AND c.type = 'WEB_SEARCH'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5.2' AND c.type = 'DEVELOPER_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5.2' AND c.type = 'SYSTEM_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5.2' AND c.type = 'RESPONSE_SCHEMA'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5.2' AND c.type = 'TEMPERATURE'
+      ON DUPLICATE KEY UPDATE enabled = VALUES(enabled);
+    </sql>
+    <sql>
+      INSERT INTO ai_models_capability (model_id, capability_id, enabled)
+      SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5.2-2025-12-11' AND c.type = 'FILE_UPLOAD'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5.2-2025-12-11' AND c.type = 'REASONING'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5.2-2025-12-11' AND c.type = 'CHAIN_CONVERSATIONS'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5.2-2025-12-11' AND c.type = 'WEB_SEARCH'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5.2-2025-12-11' AND c.type = 'DEVELOPER_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5.2-2025-12-11' AND c.type = 'SYSTEM_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5.2-2025-12-11' AND c.type = 'RESPONSE_SCHEMA'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5.2-2025-12-11' AND c.type = 'TEMPERATURE'
+      ON DUPLICATE KEY UPDATE enabled = VALUES(enabled);
+    </sql>
+    <sql>
+      INSERT INTO ai_models_capability (model_id, capability_id, enabled)
+      SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5.2-chat-latest' AND c.type = 'FILE_UPLOAD'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5.2-chat-latest' AND c.type = 'REASONING'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5.2-chat-latest' AND c.type = 'CHAIN_CONVERSATIONS'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5.2-chat-latest' AND c.type = 'WEB_SEARCH'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5.2-chat-latest' AND c.type = 'DEVELOPER_PROMPT'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5.2-chat-latest' AND c.type = 'SYSTEM_PROMPT'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5.2-chat-latest' AND c.type = 'RESPONSE_SCHEMA'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5.2-chat-latest' AND c.type = 'TEMPERATURE'
+      ON DUPLICATE KEY UPDATE enabled = VALUES(enabled);
+    </sql>
+    <sql>
+      INSERT INTO ai_models_capability (model_id, capability_id, enabled)
+      SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5.2-pro' AND c.type = 'FILE_UPLOAD'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5.2-pro' AND c.type = 'REASONING'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5.2-pro' AND c.type = 'CHAIN_CONVERSATIONS'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5.2-pro' AND c.type = 'WEB_SEARCH'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5.2-pro' AND c.type = 'DEVELOPER_PROMPT'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5.2-pro' AND c.type = 'SYSTEM_PROMPT'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5.2-pro' AND c.type = 'RESPONSE_SCHEMA'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5.2-pro' AND c.type = 'TEMPERATURE'
+      ON DUPLICATE KEY UPDATE enabled = VALUES(enabled);
+    </sql>
+    <sql>
+      INSERT INTO ai_models_capability (model_id, capability_id, enabled)
+      SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5.2-pro-2025-12-11' AND c.type = 'FILE_UPLOAD'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5.2-pro-2025-12-11' AND c.type = 'REASONING'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5.2-pro-2025-12-11' AND c.type = 'CHAIN_CONVERSATIONS'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5.2-pro-2025-12-11' AND c.type = 'WEB_SEARCH'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5.2-pro-2025-12-11' AND c.type = 'DEVELOPER_PROMPT'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5.2-pro-2025-12-11' AND c.type = 'SYSTEM_PROMPT'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5.2-pro-2025-12-11' AND c.type = 'RESPONSE_SCHEMA'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'gpt-5.2-pro-2025-12-11' AND c.type = 'TEMPERATURE'
+      ON DUPLICATE KEY UPDATE enabled = VALUES(enabled);
+    </sql>
+    <!-- GROK models -->
+    <sql>
+      INSERT INTO ai_models_capability (model_id, capability_id, enabled)
+      SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GROK' AND m.model = 'grok-2-1212' AND c.type = 'FILE_UPLOAD'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GROK' AND m.model = 'grok-2-1212' AND c.type = 'REASONING'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GROK' AND m.model = 'grok-2-1212' AND c.type = 'CHAIN_CONVERSATIONS'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GROK' AND m.model = 'grok-2-1212' AND c.type = 'WEB_SEARCH'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GROK' AND m.model = 'grok-2-1212' AND c.type = 'DEVELOPER_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GROK' AND m.model = 'grok-2-1212' AND c.type = 'SYSTEM_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GROK' AND m.model = 'grok-2-1212' AND c.type = 'RESPONSE_SCHEMA'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GROK' AND m.model = 'grok-2-1212' AND c.type = 'TEMPERATURE'
+      ON DUPLICATE KEY UPDATE enabled = VALUES(enabled);
+    </sql>
+    <sql>
+      INSERT INTO ai_models_capability (model_id, capability_id, enabled)
+      SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GROK' AND m.model = 'grok-2-image-1212' AND c.type = 'FILE_UPLOAD'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GROK' AND m.model = 'grok-2-image-1212' AND c.type = 'REASONING'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GROK' AND m.model = 'grok-2-image-1212' AND c.type = 'CHAIN_CONVERSATIONS'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GROK' AND m.model = 'grok-2-image-1212' AND c.type = 'WEB_SEARCH'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GROK' AND m.model = 'grok-2-image-1212' AND c.type = 'DEVELOPER_PROMPT'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GROK' AND m.model = 'grok-2-image-1212' AND c.type = 'SYSTEM_PROMPT'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GROK' AND m.model = 'grok-2-image-1212' AND c.type = 'RESPONSE_SCHEMA'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GROK' AND m.model = 'grok-2-image-1212' AND c.type = 'TEMPERATURE'
+      ON DUPLICATE KEY UPDATE enabled = VALUES(enabled);
+    </sql>
+    <sql>
+      INSERT INTO ai_models_capability (model_id, capability_id, enabled)
+      SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GROK' AND m.model = 'grok-2-vision-1212' AND c.type = 'FILE_UPLOAD'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GROK' AND m.model = 'grok-2-vision-1212' AND c.type = 'REASONING'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GROK' AND m.model = 'grok-2-vision-1212' AND c.type = 'CHAIN_CONVERSATIONS'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GROK' AND m.model = 'grok-2-vision-1212' AND c.type = 'WEB_SEARCH'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GROK' AND m.model = 'grok-2-vision-1212' AND c.type = 'DEVELOPER_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GROK' AND m.model = 'grok-2-vision-1212' AND c.type = 'SYSTEM_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GROK' AND m.model = 'grok-2-vision-1212' AND c.type = 'RESPONSE_SCHEMA'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GROK' AND m.model = 'grok-2-vision-1212' AND c.type = 'TEMPERATURE'
+      ON DUPLICATE KEY UPDATE enabled = VALUES(enabled);
+    </sql>
+    <sql>
+      INSERT INTO ai_models_capability (model_id, capability_id, enabled)
+      SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GROK' AND m.model = 'grok-3' AND c.type = 'FILE_UPLOAD'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GROK' AND m.model = 'grok-3' AND c.type = 'REASONING'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GROK' AND m.model = 'grok-3' AND c.type = 'CHAIN_CONVERSATIONS'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GROK' AND m.model = 'grok-3' AND c.type = 'WEB_SEARCH'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GROK' AND m.model = 'grok-3' AND c.type = 'DEVELOPER_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GROK' AND m.model = 'grok-3' AND c.type = 'SYSTEM_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GROK' AND m.model = 'grok-3' AND c.type = 'RESPONSE_SCHEMA'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GROK' AND m.model = 'grok-3' AND c.type = 'TEMPERATURE'
+      ON DUPLICATE KEY UPDATE enabled = VALUES(enabled);
+    </sql>
+    <sql>
+      INSERT INTO ai_models_capability (model_id, capability_id, enabled)
+      SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GROK' AND m.model = 'grok-3-mini' AND c.type = 'FILE_UPLOAD'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GROK' AND m.model = 'grok-3-mini' AND c.type = 'REASONING'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GROK' AND m.model = 'grok-3-mini' AND c.type = 'CHAIN_CONVERSATIONS'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GROK' AND m.model = 'grok-3-mini' AND c.type = 'WEB_SEARCH'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GROK' AND m.model = 'grok-3-mini' AND c.type = 'DEVELOPER_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GROK' AND m.model = 'grok-3-mini' AND c.type = 'SYSTEM_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GROK' AND m.model = 'grok-3-mini' AND c.type = 'RESPONSE_SCHEMA'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GROK' AND m.model = 'grok-3-mini' AND c.type = 'TEMPERATURE'
+      ON DUPLICATE KEY UPDATE enabled = VALUES(enabled);
+    </sql>
+    <sql>
+      INSERT INTO ai_models_capability (model_id, capability_id, enabled)
+      SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GROK' AND m.model = 'grok-4-0709' AND c.type = 'FILE_UPLOAD'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GROK' AND m.model = 'grok-4-0709' AND c.type = 'REASONING'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GROK' AND m.model = 'grok-4-0709' AND c.type = 'CHAIN_CONVERSATIONS'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GROK' AND m.model = 'grok-4-0709' AND c.type = 'WEB_SEARCH'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GROK' AND m.model = 'grok-4-0709' AND c.type = 'DEVELOPER_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GROK' AND m.model = 'grok-4-0709' AND c.type = 'SYSTEM_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GROK' AND m.model = 'grok-4-0709' AND c.type = 'RESPONSE_SCHEMA'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GROK' AND m.model = 'grok-4-0709' AND c.type = 'TEMPERATURE'
+      ON DUPLICATE KEY UPDATE enabled = VALUES(enabled);
+    </sql>
+    <sql>
+      INSERT INTO ai_models_capability (model_id, capability_id, enabled)
+      SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GROK' AND m.model = 'grok-4-1-fast-non-reasoning' AND c.type = 'FILE_UPLOAD'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GROK' AND m.model = 'grok-4-1-fast-non-reasoning' AND c.type = 'REASONING'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GROK' AND m.model = 'grok-4-1-fast-non-reasoning' AND c.type = 'CHAIN_CONVERSATIONS'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GROK' AND m.model = 'grok-4-1-fast-non-reasoning' AND c.type = 'WEB_SEARCH'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GROK' AND m.model = 'grok-4-1-fast-non-reasoning' AND c.type = 'DEVELOPER_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GROK' AND m.model = 'grok-4-1-fast-non-reasoning' AND c.type = 'SYSTEM_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GROK' AND m.model = 'grok-4-1-fast-non-reasoning' AND c.type = 'RESPONSE_SCHEMA'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GROK' AND m.model = 'grok-4-1-fast-non-reasoning' AND c.type = 'TEMPERATURE'
+      ON DUPLICATE KEY UPDATE enabled = VALUES(enabled);
+    </sql>
+    <sql>
+      INSERT INTO ai_models_capability (model_id, capability_id, enabled)
+      SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GROK' AND m.model = 'grok-4-1-fast-reasoning' AND c.type = 'FILE_UPLOAD'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GROK' AND m.model = 'grok-4-1-fast-reasoning' AND c.type = 'REASONING'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GROK' AND m.model = 'grok-4-1-fast-reasoning' AND c.type = 'CHAIN_CONVERSATIONS'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GROK' AND m.model = 'grok-4-1-fast-reasoning' AND c.type = 'WEB_SEARCH'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GROK' AND m.model = 'grok-4-1-fast-reasoning' AND c.type = 'DEVELOPER_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GROK' AND m.model = 'grok-4-1-fast-reasoning' AND c.type = 'SYSTEM_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GROK' AND m.model = 'grok-4-1-fast-reasoning' AND c.type = 'RESPONSE_SCHEMA'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GROK' AND m.model = 'grok-4-1-fast-reasoning' AND c.type = 'TEMPERATURE'
+      ON DUPLICATE KEY UPDATE enabled = VALUES(enabled);
+    </sql>
+    <sql>
+      INSERT INTO ai_models_capability (model_id, capability_id, enabled)
+      SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GROK' AND m.model = 'grok-4-fast-non-reasoning' AND c.type = 'FILE_UPLOAD'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GROK' AND m.model = 'grok-4-fast-non-reasoning' AND c.type = 'REASONING'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GROK' AND m.model = 'grok-4-fast-non-reasoning' AND c.type = 'CHAIN_CONVERSATIONS'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GROK' AND m.model = 'grok-4-fast-non-reasoning' AND c.type = 'WEB_SEARCH'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GROK' AND m.model = 'grok-4-fast-non-reasoning' AND c.type = 'DEVELOPER_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GROK' AND m.model = 'grok-4-fast-non-reasoning' AND c.type = 'SYSTEM_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GROK' AND m.model = 'grok-4-fast-non-reasoning' AND c.type = 'RESPONSE_SCHEMA'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GROK' AND m.model = 'grok-4-fast-non-reasoning' AND c.type = 'TEMPERATURE'
+      ON DUPLICATE KEY UPDATE enabled = VALUES(enabled);
+    </sql>
+    <sql>
+      INSERT INTO ai_models_capability (model_id, capability_id, enabled)
+      SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GROK' AND m.model = 'grok-4-fast-reasoning' AND c.type = 'FILE_UPLOAD'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GROK' AND m.model = 'grok-4-fast-reasoning' AND c.type = 'REASONING'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GROK' AND m.model = 'grok-4-fast-reasoning' AND c.type = 'CHAIN_CONVERSATIONS'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GROK' AND m.model = 'grok-4-fast-reasoning' AND c.type = 'WEB_SEARCH'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GROK' AND m.model = 'grok-4-fast-reasoning' AND c.type = 'DEVELOPER_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GROK' AND m.model = 'grok-4-fast-reasoning' AND c.type = 'SYSTEM_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GROK' AND m.model = 'grok-4-fast-reasoning' AND c.type = 'RESPONSE_SCHEMA'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GROK' AND m.model = 'grok-4-fast-reasoning' AND c.type = 'TEMPERATURE'
+      ON DUPLICATE KEY UPDATE enabled = VALUES(enabled);
+    </sql>
+    <sql>
+      INSERT INTO ai_models_capability (model_id, capability_id, enabled)
+      SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GROK' AND m.model = 'grok-code-fast-1' AND c.type = 'FILE_UPLOAD'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GROK' AND m.model = 'grok-code-fast-1' AND c.type = 'REASONING'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GROK' AND m.model = 'grok-code-fast-1' AND c.type = 'CHAIN_CONVERSATIONS'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GROK' AND m.model = 'grok-code-fast-1' AND c.type = 'WEB_SEARCH'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GROK' AND m.model = 'grok-code-fast-1' AND c.type = 'DEVELOPER_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GROK' AND m.model = 'grok-code-fast-1' AND c.type = 'SYSTEM_PROMPT'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GROK' AND m.model = 'grok-code-fast-1' AND c.type = 'RESPONSE_SCHEMA'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GROK' AND m.model = 'grok-code-fast-1' AND c.type = 'TEMPERATURE'
+      ON DUPLICATE KEY UPDATE enabled = VALUES(enabled);
+    </sql>
+    <!-- o1/o3/o4 series -->
+    <sql>
+      INSERT INTO ai_models_capability (model_id, capability_id, enabled)
+      SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'o1' AND c.type = 'FILE_UPLOAD'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'o1' AND c.type = 'REASONING'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'o1' AND c.type = 'CHAIN_CONVERSATIONS'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'o1' AND c.type = 'WEB_SEARCH'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'o1' AND c.type = 'DEVELOPER_PROMPT'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'o1' AND c.type = 'SYSTEM_PROMPT'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'o1' AND c.type = 'RESPONSE_SCHEMA'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'o1' AND c.type = 'TEMPERATURE'
+      ON DUPLICATE KEY UPDATE enabled = VALUES(enabled);
+    </sql>
+    <sql>
+      INSERT INTO ai_models_capability (model_id, capability_id, enabled)
+      SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'o1-2024-12-17' AND c.type = 'FILE_UPLOAD'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'o1-2024-12-17' AND c.type = 'REASONING'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'o1-2024-12-17' AND c.type = 'CHAIN_CONVERSATIONS'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'o1-2024-12-17' AND c.type = 'WEB_SEARCH'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'o1-2024-12-17' AND c.type = 'DEVELOPER_PROMPT'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'o1-2024-12-17' AND c.type = 'SYSTEM_PROMPT'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'o1-2024-12-17' AND c.type = 'RESPONSE_SCHEMA'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'o1-2024-12-17' AND c.type = 'TEMPERATURE'
+      ON DUPLICATE KEY UPDATE enabled = VALUES(enabled);
+    </sql>
+    <sql>
+      INSERT INTO ai_models_capability (model_id, capability_id, enabled)
+      SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'o1-pro' AND c.type = 'FILE_UPLOAD'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'o1-pro' AND c.type = 'REASONING'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'o1-pro' AND c.type = 'CHAIN_CONVERSATIONS'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'o1-pro' AND c.type = 'WEB_SEARCH'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'o1-pro' AND c.type = 'DEVELOPER_PROMPT'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'o1-pro' AND c.type = 'SYSTEM_PROMPT'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'o1-pro' AND c.type = 'RESPONSE_SCHEMA'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'o1-pro' AND c.type = 'TEMPERATURE'
+      ON DUPLICATE KEY UPDATE enabled = VALUES(enabled);
+    </sql>
+    <sql>
+      INSERT INTO ai_models_capability (model_id, capability_id, enabled)
+      SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'o1-pro-2025-03-19' AND c.type = 'FILE_UPLOAD'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'o1-pro-2025-03-19' AND c.type = 'REASONING'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'o1-pro-2025-03-19' AND c.type = 'CHAIN_CONVERSATIONS'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'o1-pro-2025-03-19' AND c.type = 'WEB_SEARCH'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'o1-pro-2025-03-19' AND c.type = 'DEVELOPER_PROMPT'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'o1-pro-2025-03-19' AND c.type = 'SYSTEM_PROMPT'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'o1-pro-2025-03-19' AND c.type = 'RESPONSE_SCHEMA'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'o1-pro-2025-03-19' AND c.type = 'TEMPERATURE'
+      ON DUPLICATE KEY UPDATE enabled = VALUES(enabled);
+    </sql>
+    <sql>
+      INSERT INTO ai_models_capability (model_id, capability_id, enabled)
+      SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'o3' AND c.type = 'FILE_UPLOAD'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'o3' AND c.type = 'REASONING'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'o3' AND c.type = 'CHAIN_CONVERSATIONS'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'o3' AND c.type = 'WEB_SEARCH'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'o3' AND c.type = 'DEVELOPER_PROMPT'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'o3' AND c.type = 'SYSTEM_PROMPT'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'o3' AND c.type = 'RESPONSE_SCHEMA'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'o3' AND c.type = 'TEMPERATURE'
+      ON DUPLICATE KEY UPDATE enabled = VALUES(enabled);
+    </sql>
+    <sql>
+      INSERT INTO ai_models_capability (model_id, capability_id, enabled)
+      SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'o3-2025-04-16' AND c.type = 'FILE_UPLOAD'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'o3-2025-04-16' AND c.type = 'REASONING'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'o3-2025-04-16' AND c.type = 'CHAIN_CONVERSATIONS'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'o3-2025-04-16' AND c.type = 'WEB_SEARCH'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'o3-2025-04-16' AND c.type = 'DEVELOPER_PROMPT'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'o3-2025-04-16' AND c.type = 'SYSTEM_PROMPT'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'o3-2025-04-16' AND c.type = 'RESPONSE_SCHEMA'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'o3-2025-04-16' AND c.type = 'TEMPERATURE'
+      ON DUPLICATE KEY UPDATE enabled = VALUES(enabled);
+    </sql>
+    <sql>
+      INSERT INTO ai_models_capability (model_id, capability_id, enabled)
+      SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'o3-mini' AND c.type = 'FILE_UPLOAD'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'o3-mini' AND c.type = 'REASONING'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'o3-mini' AND c.type = 'CHAIN_CONVERSATIONS'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'o3-mini' AND c.type = 'WEB_SEARCH'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'o3-mini' AND c.type = 'DEVELOPER_PROMPT'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'o3-mini' AND c.type = 'SYSTEM_PROMPT'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'o3-mini' AND c.type = 'RESPONSE_SCHEMA'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'o3-mini' AND c.type = 'TEMPERATURE'
+      ON DUPLICATE KEY UPDATE enabled = VALUES(enabled);
+    </sql>
+    <sql>
+      INSERT INTO ai_models_capability (model_id, capability_id, enabled)
+      SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'o3-mini-2025-01-31' AND c.type = 'FILE_UPLOAD'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'o3-mini-2025-01-31' AND c.type = 'REASONING'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'o3-mini-2025-01-31' AND c.type = 'CHAIN_CONVERSATIONS'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'o3-mini-2025-01-31' AND c.type = 'WEB_SEARCH'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'o3-mini-2025-01-31' AND c.type = 'DEVELOPER_PROMPT'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'o3-mini-2025-01-31' AND c.type = 'SYSTEM_PROMPT'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'o3-mini-2025-01-31' AND c.type = 'RESPONSE_SCHEMA'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'o3-mini-2025-01-31' AND c.type = 'TEMPERATURE'
+      ON DUPLICATE KEY UPDATE enabled = VALUES(enabled);
+    </sql>
+    <sql>
+      INSERT INTO ai_models_capability (model_id, capability_id, enabled)
+      SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'o4-mini' AND c.type = 'FILE_UPLOAD'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'o4-mini' AND c.type = 'REASONING'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'o4-mini' AND c.type = 'CHAIN_CONVERSATIONS'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'o4-mini' AND c.type = 'WEB_SEARCH'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'o4-mini' AND c.type = 'DEVELOPER_PROMPT'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'o4-mini' AND c.type = 'SYSTEM_PROMPT'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'o4-mini' AND c.type = 'RESPONSE_SCHEMA'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'o4-mini' AND c.type = 'TEMPERATURE'
+      ON DUPLICATE KEY UPDATE enabled = VALUES(enabled);
+    </sql>
+    <sql>
+      INSERT INTO ai_models_capability (model_id, capability_id, enabled)
+      SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'o4-mini-2025-04-16' AND c.type = 'FILE_UPLOAD'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'o4-mini-2025-04-16' AND c.type = 'REASONING'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'o4-mini-2025-04-16' AND c.type = 'CHAIN_CONVERSATIONS'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'o4-mini-2025-04-16' AND c.type = 'WEB_SEARCH'
+      UNION ALL SELECT m.id, c.id, true FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'o4-mini-2025-04-16' AND c.type = 'DEVELOPER_PROMPT'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'o4-mini-2025-04-16' AND c.type = 'SYSTEM_PROMPT'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'o4-mini-2025-04-16' AND c.type = 'RESPONSE_SCHEMA'
+      UNION ALL SELECT m.id, c.id, false FROM ai_models m, ai_capability c WHERE m.provider = 'GPT' AND m.model = 'o4-mini-2025-04-16' AND c.type = 'TEMPERATURE'
+      ON DUPLICATE KEY UPDATE enabled = VALUES(enabled);
+    </sql>
+  </changeSet>
+
+</databaseChangeLog>

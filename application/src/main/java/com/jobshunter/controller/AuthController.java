@@ -1,6 +1,5 @@
 package com.jobshunter.controller;
 
-import com.jobshunter.ApplicationProperties;
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.service.AuthDBService;
 import com.jobshunter.database.service.UserDBService;
@@ -64,8 +63,6 @@ public class AuthController {
   private final UserSessionDBService userSessionDBService;
 
   private final JwtService jwtService;
-
-  private final ApplicationProperties properties;
 
   @PostMapping("/register")
   public RegistrationResponse register(

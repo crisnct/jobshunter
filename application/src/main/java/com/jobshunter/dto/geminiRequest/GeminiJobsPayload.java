@@ -68,6 +68,17 @@ public record GeminiJobsPayload(
       return this;
     }
 
+    public GeminiJobsPayloadBuilder addModelContent(String text) {
+      List<Part> parts = new ArrayList<>();
+      if (text != null && !text.isBlank()) {
+        parts.add(Part.text(text));
+      }
+      if (!parts.isEmpty()) {
+        this.contents.add(new Content("model", parts));
+      }
+      return this;
+    }
+
   }
 
 }

@@ -57,11 +57,11 @@ public non-sealed class GeminiV1JobSearchImpl implements AiJobsClient<GeminiJobS
       GenerationConfig generationConfig = GenerationConfig.builder()
           .temperature(DEFAULT_TEMPERATURE)
           .maxOutputTokens(3500)
-          .thinkingConfig(new ThinkingConfig(2048))
+          .thinkingConfig(new ThinkingConfig(2048))//how reasoning it is
           .build();
 
       GeminiJobsPayload payload = GeminiJobsPayload.builder()
-          .addSystemInstruction(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_JOB_SEARCH,
+                    .addSystemInstruction(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_JOB_SEARCH,
               "blacklist",
               properties.getJobsHunter().getBlacklist()
           ))

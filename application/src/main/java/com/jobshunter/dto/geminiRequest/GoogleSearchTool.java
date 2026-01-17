@@ -10,4 +10,5 @@ public class GoogleSearchTool implements Tool {
   public record GoogleSearch() {
 
   }
+
 }

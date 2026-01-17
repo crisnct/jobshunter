@@ -13,16 +13,9 @@
             "type": "string"
           }
         },
-        "required": [
-          "company",
-          "url"
-        ],
-        "additionalProperties": false
+        "required": ["company", "url"]
       }
     }
   },
-  "required": [
-    "results"
-  ],
-  "additionalProperties": false
+  "required": ["results"]
 }

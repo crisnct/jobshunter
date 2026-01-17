@@ -162,7 +162,7 @@ public non-sealed class GrokV1JobSearchImpl implements
         .maxOutputTokens(7000)
         .store(request.getStoreConversation())
         .previousResponseId(request.getPrevResponseId())
-        .addTools(Tools.builder().setDeepSearch().build())
+        .addTools(Tools.builder().setWebSearch().build())
         .addUserPrompt(userPrompt + templateRenderer.getPrompt(PromptType.USER_PROMPT_JOB_BLACKLISTED,
             "blacklist",
             properties.getJobsHunter().getBlacklist()

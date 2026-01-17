@@ -82,7 +82,7 @@ public class JobHuntScheduler {
     this.performActionAsync("notifyUsersAsync", this::notifyUsersSync, notificationsExecutor);
   }
 
-  @Scheduled(fixedDelayString = "${jobshunter.scheduler.cleanupFiles:86400000}")
+  @Scheduled(fixedDelayString = "${jobshunter.scheduler.cleanupFiles:86400000}",  initialDelayString = "PT12H")
   public void cleanupFilesAsync() {
     this.performActionAsync("cleanupFiles", this::cleanupFilesSync, maintenanceExecutor);
   }
