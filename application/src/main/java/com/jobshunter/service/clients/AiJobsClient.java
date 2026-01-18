@@ -20,6 +20,10 @@ public sealed interface AiJobsClient
     <T extends AIJobSearchRequest, F extends AiClientResponse> permits GeminiV1JobSearchImpl, GptV1JobSearchImpl, GrokV1JobSearchImpl, SerpClientImpl,
     FakeGeminiClient, FakeGptClient, FakeGrokClient, FakeSerpClient {
 
+  String REASONING_JOB_SEARCH = "low";
+
+  String REASONING_COMPANY_SEARCH = "low";
+
   @NotNull
   F searchJobs(T request);
 

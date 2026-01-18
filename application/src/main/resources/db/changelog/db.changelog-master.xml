@@ -14,5 +14,7 @@
   <include file="db/changelog/2026-01-06-comprehensive-schema-updates.xml"/>
   <include file="db/changelog/2026-01-07-changed-time-columns.xml"/>
   <include file="db/changelog/2026-01-08-refactor-ai-capability-tables.xml"/>
+  <include file="db/changelog/2026-01-09-disable-models-update-notes.xml"/>
+  <include file="db/changelog/2026-01-10-enable-reasoning-drop-capabilities.xml"/>
 
 </databaseChangeLog>

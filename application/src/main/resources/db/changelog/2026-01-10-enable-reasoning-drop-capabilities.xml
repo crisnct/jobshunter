@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+  xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="
+        http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.23.xsd">
+
+  <changeSet id="enable-reasoning-for-grok-models" author="assistant">
+    <preConditions onFail="MARK_RAN">
+      <and>
+        <tableExists tableName="ai_models"/>
+        <tableExists tableName="ai_capability"/>
+        <tableExists tableName="ai_models_capability"/>
+      </and>
+    </preConditions>
+    <comment>Enable REASONING capability for specific GROK models</comment>
+    
+    <sql>
+      INSERT INTO ai_models_capability (model_id, capability_id, enabled)
+      SELECT m.id, c.id, true
+      FROM ai_models m, ai_capability c
+      WHERE m.provider = 'GROK' AND m.model = 'grok-4-1-fast-reasoning' AND c.type = 'REASONING'
+      ON DUPLICATE KEY UPDATE enabled = VALUES(enabled);
+    </sql>
+    
+    <sql>
+      INSERT INTO ai_models_capability (model_id, capability_id, enabled)
+      SELECT m.id, c.id, true
+      FROM ai_models m, ai_capability c
+      WHERE m.provider = 'GROK' AND m.model = 'grok-4-fast-reasoning' AND c.type = 'REASONING'
+      ON DUPLICATE KEY UPDATE enabled = VALUES(enabled);
+    </sql>
+    
+    <sql>
+      INSERT INTO ai_models_capability (model_id, capability_id, enabled)
+      SELECT m.id, c.id, true
+      FROM ai_models m, ai_capability c
+      WHERE m.provider = 'GROK' AND m.model = 'grok-3' AND c.type = 'REASONING'
+      ON DUPLICATE KEY UPDATE enabled = VALUES(enabled);
+    </sql>
+    
+    <sql>
+      INSERT INTO ai_models_capability (model_id, capability_id, enabled)
+      SELECT m.id, c.id, true
+      FROM ai_models m, ai_capability c
+      WHERE m.provider = 'GROK' AND m.model = 'grok-4-0709' AND c.type = 'REASONING'
+      ON DUPLICATE KEY UPDATE enabled = VALUES(enabled);
+    </sql>
+  </changeSet>
+
+  <changeSet id="drop-chain-conversations-developer-prompt-capabilities" author="assistant">
+    <preConditions onFail="MARK_RAN">
+      <tableExists tableName="ai_capability"/>
+    </preConditions>
+    <comment>Delete CHAIN_CONVERSATIONS and DEVELOPER_PROMPT capabilities from ai_capability table</comment>
+    
+    <delete tableName="ai_capability">
+      <where>type = 'CHAIN_CONVERSATIONS'</where>
+    </delete>
+    
+    <delete tableName="ai_capability">
+      <where>type = 'DEVELOPER_PROMPT'</where>
+    </delete>
+  </changeSet>
+
+</databaseChangeLog>

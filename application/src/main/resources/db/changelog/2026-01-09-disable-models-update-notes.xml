@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+  xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="
+        http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.23.xsd">
+
+  <changeSet id="disable-ai-models-and-update-notes" author="assistant">
+    <preConditions onFail="MARK_RAN">
+      <tableExists tableName="ai_models"/>
+    </preConditions>
+    <comment>Disable specific AI models and update notes for multiple models</comment>
+    
+    <!-- GROK models: Disable and set notes -->
+    <update tableName="ai_models">
+      <column name="enabled" valueBoolean="false"/>
+      <column name="notes" value="designed for image handling"/>
+      <where>provider = 'GROK' AND model = 'grok-2-image-1212'</where>
+    </update>
+    
+    <update tableName="ai_models">
+      <column name="enabled" valueBoolean="false"/>
+      <column name="notes" value="designed for coding, expensive"/>
+      <where>provider = 'GROK' AND model = 'grok-code-fast-1'</where>
+    </update>
+    
+    <update tableName="ai_models">
+      <column name="enabled" valueBoolean="false"/>
+      <column name="notes" value="designed for image handling"/>
+      <where>provider = 'GROK' AND model = 'grok-2-vision-1212'</where>
+    </update>
+    
+    <update tableName="ai_models">
+      <column name="enabled" valueBoolean="false"/>
+      <column name="notes" value="not suitable for job search or scoring because it does not support web search and file upload"/>
+      <where>provider = 'GROK' AND model = 'grok-2-1212'</where>
+    </update>
+    
+    <update tableName="ai_models">
+      <column name="enabled" valueBoolean="false"/>
+      <column name="notes" value="not suitable for searching or scoring"/>
+      <where>provider = 'GROK' AND model = 'grok-3'</where>
+    </update>
+    
+    <update tableName="ai_models">
+      <column name="enabled" valueBoolean="false"/>
+      <column name="notes" value="not suitable for searching or scoring"/>
+      <where>provider = 'GROK' AND model = 'grok-3-mini'</where>
+    </update>
+    
+    <!-- GPT models: Disable and set notes -->
+    <update tableName="ai_models">
+      <column name="enabled" valueBoolean="false"/>
+      <column name="notes" value="designed for coding, expensive"/>
+      <where>provider = 'GPT' AND model = 'gpt-5-codex'</where>
+    </update>
+    
+    <update tableName="ai_models">
+      <column name="enabled" valueBoolean="false"/>
+      <column name="notes" value="designed for coding, expensive"/>
+      <where>provider = 'GPT' AND model = 'gpt-5.1-codex'</where>
+    </update>
+    
+    <update tableName="ai_models">
+      <column name="enabled" valueBoolean="false"/>
+      <column name="notes" value="designed for coding, very expensive"/>
+      <where>provider = 'GPT' AND model = 'gpt-5.1-codex-max'</where>
+    </update>
+    
+    <update tableName="ai_models">
+      <column name="enabled" valueBoolean="false"/>
+      <column name="notes" value="designed for coding, expensive"/>
+      <where>provider = 'GPT' AND model = 'gpt-5.1-codex-mini'</where>
+    </update>
+    
+    <!-- GEMINI models: Disable and set notes -->
+    <update tableName="ai_models">
+      <column name="enabled" valueBoolean="false"/>
+      <column name="notes" value="designed for coding, very expensive"/>
+      <where>provider = 'GEMINI' AND model = 'gemini-2.5-pro'</where>
+    </update>
+    
+    <!-- GPT models: Update notes only (keep enabled) -->
+    <update tableName="ai_models">
+      <column name="notes" value="the best for reasoning, works well for many constraints"/>
+      <where>provider = 'GPT' AND model = 'gpt-5.2-pro'</where>
+    </update>
+    
+  </changeSet>
+
+</databaseChangeLog>

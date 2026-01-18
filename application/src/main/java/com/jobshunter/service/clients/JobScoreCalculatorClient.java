@@ -16,6 +16,8 @@ public sealed interface JobScoreCalculatorClient<T extends JobScoreRequest>
 
   double DEFAULT_SCORE_TEMPERATURE = 0.25;
 
+  String REASONING_SCORING = "medium";
+
   int computeScore(T request);
 
 }

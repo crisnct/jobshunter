@@ -4,6 +4,7 @@ import com.jobshunter.ApplicationProperties;
 import com.jobshunter.database.entities.UserRemoteCvEntity;
 import com.jobshunter.dto.exceptions.ValidationException;
 import com.jobshunter.dto.gptRequest.Gpt4ScorePayload;
+import com.jobshunter.dto.gptRequest.Reasoning;
 import com.jobshunter.dto.gptResponse.ContentItem;
 import com.jobshunter.dto.gptResponse.GptResponse;
 import com.jobshunter.dto.gptResponse.OutputItem;
@@ -33,7 +34,7 @@ import org.springframework.web.client.RestClient;
 @RequiredArgsConstructor
 public non-sealed class GptJobScoreCalculatorClientImpl implements JobScoreCalculatorClient<GptJobScoreRequest> {
 
-  private static final String AI_MODEL = "gpt-5.2";
+  private static final String AI_MODEL = "gpt-5-nano";
 
   private static final URI DEFAULT_URI = URI.create("https://api.openai.com/v1/responses");
 
@@ -58,7 +59,7 @@ public non-sealed class GptJobScoreCalculatorClientImpl implements JobScoreCalcu
           .model(AI_MODEL)
           .temperature(DEFAULT_SCORE_TEMPERATURE)
           .max_output_tokens(16)
-          .reasoning(request.getReasoning())
+          .reasoning(new Reasoning(REASONING_SCORING))
           .store(false)
           .addSystemPrompt(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_MATCH_SCORE))
           .addUserPrompt(userPrompt, remoteCV.getFileId())

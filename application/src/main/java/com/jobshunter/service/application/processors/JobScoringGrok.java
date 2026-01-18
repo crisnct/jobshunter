@@ -38,8 +38,7 @@ public non-sealed class JobScoringGrok implements JobScoring<GrokJobScoreRequest
     if (context.isValidatedSuccessfully() && context.getDescription() != null) {
       log.info("Computing matching score between {} resume and description of job {}",
           context.getUser().getUsername(), job.getUrl());
-      score = calculator.computeScore(
-          new GrokJobScoreRequest(context.getDescription(), context.getUser().getCv()));
+      score = calculator.computeScore(new GrokJobScoreRequest(context.getDescription(), context.getUser().getCv()));
     } else {
       score = -1;
     }

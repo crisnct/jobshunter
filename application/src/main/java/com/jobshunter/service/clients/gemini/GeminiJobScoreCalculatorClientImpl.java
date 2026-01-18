@@ -6,6 +6,7 @@ import com.jobshunter.dto.geminiRequest.FileData;
 import com.jobshunter.dto.geminiRequest.GeminiJobsPayload;
 import com.jobshunter.dto.geminiRequest.GenerationConfig;
 import com.jobshunter.dto.geminiRequest.Part;
+import com.jobshunter.dto.geminiRequest.ThinkingConfig;
 import com.jobshunter.dto.geminiResponse.GeminiGenerateContentResponse;
 import com.jobshunter.dto.geminiResponse.GeminiGenerateContentResponse.Candidate;
 import com.jobshunter.model.GeminiJobScoreRequest;
@@ -35,7 +36,7 @@ import org.springframework.web.client.RestClient;
 @RequiredArgsConstructor
 public non-sealed class GeminiJobScoreCalculatorClientImpl implements JobScoreCalculatorClient<GeminiJobScoreRequest> {
 
-  private static final String AI_MODEL = "gemini-2.5-pro";
+  private static final String AI_MODEL = "gemini-2.0-flash-lite";
 
   private static final String GENERATE_CONTENT_URI = "https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent?key=%s";
 
@@ -59,6 +60,7 @@ public non-sealed class GeminiJobScoreCalculatorClientImpl implements JobScoreCa
       GenerationConfig generationConfig = GenerationConfig.builder(model)
           .temperature(DEFAULT_SCORE_TEMPERATURE)
           .maxOutputTokens(20)
+          .thinkingConfig(new ThinkingConfig(256))//how reasoning it is
           .build();
 
       FileData resume = new FileData(String.format(FILES_URI, request.getResumeFileId()), MediaType.APPLICATION_PDF_VALUE);

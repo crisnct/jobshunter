@@ -45,8 +45,7 @@ public non-sealed class JobScoringGemini implements JobScoring<GeminiJobScoreReq
           .findFirst().orElseThrow().getFileId();
       log.info("Computing matching score between {} resume and description of job {}",
           context.getUser().getUsername(), job.getUrl());
-      score = calculator.computeScore(
-          new GeminiJobScoreRequest(fileId, context.getDescription()));
+      score = calculator.computeScore(new GeminiJobScoreRequest(fileId, context.getDescription()));
     }
     job.setScore(score);
     context.setPhase(JobPhase.SCORING);

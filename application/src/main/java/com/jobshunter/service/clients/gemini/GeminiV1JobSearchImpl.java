@@ -57,7 +57,7 @@ public non-sealed class GeminiV1JobSearchImpl implements AiJobsClient<GeminiJobS
       GenerationConfig generationConfig = GenerationConfig.builder(request.getModel())
           .temperature(DEFAULT_TEMPERATURE)
           .maxOutputTokens(3500)
-          .thinkingConfig(new ThinkingConfig(2048))//how reasoning it is
+          .thinkingConfig(new ThinkingConfig(128))//how reasoning it is
           .build();
 
       GeminiJobsPayload payload = GeminiJobsPayload.builder(request.getModel())

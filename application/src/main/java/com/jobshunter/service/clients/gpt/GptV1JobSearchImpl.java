@@ -3,7 +3,6 @@ package com.jobshunter.service.clients.gpt;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.jobshunter.ApplicationProperties;
-import com.jobshunter.database.entities.AiModelEntity;
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.entities.UserJobRoleEntity;
 import com.jobshunter.dto.CompanyDto;
@@ -59,6 +58,7 @@ public non-sealed class GptV1JobSearchImpl implements
 
   public static final URI DEFAULT_URI = URI.create("https://api.openai.com/v1/responses");
   private static final double DEFAULT_TEMPERATURE = 0.2;
+
   private final ApplicationProperties properties;
 
   private final RestClient restClient;
@@ -85,7 +85,7 @@ public non-sealed class GptV1JobSearchImpl implements
 
       GptJobsPayload payload = GptJobsPayload.builder(request.getModel())
           .temperature(DEFAULT_TEMPERATURE)
-          .reasoning(new Reasoning())
+          .reasoning(new Reasoning(REASONING_JOB_SEARCH))
           .store(request.getStoreConversation())
           .previousResponseId(request.getPrevResponseId())
           .maxOutputTokens(3500)
@@ -126,10 +126,21 @@ public non-sealed class GptV1JobSearchImpl implements
   public List<CompanyDto> searchCompanies(GptJobSearchRequest request) {
     try {
       UserEntity user = request.getUser();
+
+      IpInfoDetailResponse ipInfo = request.getIpInfo();
+
+      UserLocation userLocation = new UserLocation();
+      userLocation.setType("approximate");
+      //This is country iso code, like RO
+      userLocation.setCountry(ipInfo.country() != null ? ipInfo.country() : "RO");
+      userLocation.setCity(request.getUser().getCity() != null ? request.getUser().getCity() : ipInfo.city());
+
       GptJobsPayload payload = GptJobsPayload.builder(request.getModel())
           .temperature(DEFAULT_TEMPERATURE)
           .maxOutputTokens(2500)
           .store(false)
+          .reasoning(new Reasoning(REASONING_COMPANY_SEARCH))
+          .addTools(Tools.builder().setWebSearch().userLocation(userLocation).build())
           .addSystemPrompt(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_COMPANY_SEARCH,
               "city", user.getCity(),
               "country", user.getCountry(),
@@ -175,13 +186,13 @@ public non-sealed class GptV1JobSearchImpl implements
         .maxOutputTokens(3500)
         .store(request.getStoreConversation())
         .previousResponseId(request.getPrevResponseId())
-        .reasoning(new Reasoning())
+        .reasoning(new Reasoning(REASONING_JOB_SEARCH))
         .addTools(Tools.builder().setWebSearch().build())
         .addSystemPrompt(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_JOB_SEARCH,
             "blacklist",
             properties.getJobsHunter().getBlacklist()
         ))
-        .addUserPrompt(userPrompt)
+        .addUserPrompt(userPrompt, request.getFileId())
         .build();
 
     GptResponse response = restClient.post()

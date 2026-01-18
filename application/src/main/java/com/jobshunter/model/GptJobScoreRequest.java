@@ -13,6 +13,4 @@ public class GptJobScoreRequest implements JobScoreRequest {
 
   private UserCvEntity userCV;
 
-  private Reasoning reasoning;
-
 }

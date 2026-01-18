@@ -7,11 +7,13 @@ import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.entities.UserJobRoleEntity;
 import com.jobshunter.dto.CompanyDto;
 import com.jobshunter.dto.CompanyDtoList;
+import com.jobshunter.dto.IpInfoDetailResponse;
 import com.jobshunter.dto.exceptions.BusinessException;
 import com.jobshunter.dto.grokRequest.GrokJobsPayload;
 import com.jobshunter.dto.grokRequest.GrokJobsPayload.GrokJobsPayloadBuilder;
 import com.jobshunter.dto.grokRequest.Reasoning;
 import com.jobshunter.dto.grokRequest.tools.Tools;
+import com.jobshunter.dto.grokRequest.tools.UserLocation;
 import com.jobshunter.dto.grokResponse.GrokResponse;
 import com.jobshunter.dto.grokResponse.OutputItem;
 import com.jobshunter.model.AiClientResponse;
@@ -74,7 +76,7 @@ public non-sealed class GrokV1JobSearchImpl implements
     try {
       GrokJobsPayloadBuilder payloadBuilder = GrokJobsPayload.builder(request.getModel())
           .temperature(DEFAULT_TEMPERATURE)
-          .reasoning(new Reasoning())
+          .reasoning(new Reasoning(REASONING_JOB_SEARCH))
           .store(request.getStoreConversation())
           .previousResponseId(request.getPrevResponseId())
           .addTools(Tools.builder().setWebSearch().build())
@@ -112,10 +114,21 @@ public non-sealed class GrokV1JobSearchImpl implements
   public List<CompanyDto> searchCompanies(GrokJobSearchRequest request) {
     try {
       UserEntity user = request.getUser();
+
+      IpInfoDetailResponse ipInfo = request.getIpInfo();
+
+      UserLocation userLocation = new UserLocation();
+      userLocation.setType("approximate");
+      //This is country iso code, like RO
+      userLocation.setCountry(ipInfo.country() != null ? ipInfo.country() : "RO");
+      userLocation.setCity(request.getUser().getCity() != null ? request.getUser().getCity() : ipInfo.city());
+
       GrokJobsPayload payload = GrokJobsPayload.builder(request.getModel())
           .temperature(DEFAULT_TEMPERATURE)
           .store(false)
+          .reasoning(new Reasoning(REASONING_COMPANY_SEARCH))
           .maxOutputTokens(2500)
+          .addTools(Tools.builder().setWebSearch().userLocation(userLocation).build())
           .addSystemPrompt(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_COMPANY_SEARCH,
               Map.of("city", user.getCity(),
                   "country", user.getCountry(),
@@ -128,7 +141,7 @@ public non-sealed class GrokV1JobSearchImpl implements
                   "country", user.getCountry(),
                   "positions", user.getJobRoles(),
                   "blacklist", properties.getJobsHunter().getBlacklist()
-              )))
+              )), request.getFileId())
           .setResponseSchema(templateRenderer.getSchema(AiSchemaType.GROK_JSON_COMPANY_SCHEMA_RESPONSE))
           .build();
 
@@ -156,17 +169,19 @@ public non-sealed class GrokV1JobSearchImpl implements
     String userPrompt = templateRenderer.getPrompt(PromptType.USER_PROMPT_JOB,
         "positions", request.getUser().getJobRoles().stream().map(UserJobRoleEntity::getJobRole).toList().toString(),
         "companies", StringUtils.join(group.stream().map(CompanyDto::companyName).toList())
+    ) + templateRenderer.getPrompt(PromptType.USER_PROMPT_JOB_BLACKLISTED,
+        "blacklist",
+        properties.getJobsHunter().getBlacklist()
     );
+
     GrokJobsPayload payload = GrokJobsPayload.builder(request.getModel())
         .temperature(DEFAULT_TEMPERATURE)
         .maxOutputTokens(7000)
+        .reasoning(new Reasoning(REASONING_JOB_SEARCH))
         .store(request.getStoreConversation())
         .previousResponseId(request.getPrevResponseId())
         .addTools(Tools.builder().setWebSearch().build())
-        .addUserPrompt(userPrompt + templateRenderer.getPrompt(PromptType.USER_PROMPT_JOB_BLACKLISTED,
-            "blacklist",
-            properties.getJobsHunter().getBlacklist()
-        ))
+        .addUserPrompt(userPrompt, request.getFileId())
         .build();
 
     GrokResponse response = restClient.post()

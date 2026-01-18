@@ -39,8 +39,7 @@ public non-sealed class JobScoringGpt implements JobScoring<GptJobScoreRequest> 
     if (context.isValidatedSuccessfully() && context.getDescription() != null) {
       log.info("Computing matching score between {} resume and description of job {}",
           context.getUser().getUsername(), job.getUrl());
-      GptJobScoreRequest request
-          = new GptJobScoreRequest(context.getDescription(), context.getUser().getCv(), new Reasoning("none"));
+      GptJobScoreRequest request = new GptJobScoreRequest(context.getDescription(), context.getUser().getCv());
       score = calculator.computeScore(request);
     } else {
       score = -1;

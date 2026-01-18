@@ -31,6 +31,7 @@ public class GptJobHunting extends AiConversationJobHunting<GptJobSearchRequest>
 
   @Override
   public GptJobSearchRequest createRequest(SearchJobOrder order, UserPromptEntity prompt) {
+    //TODO does it worth to have this selection of CV here or is better to move it in the client?
     UserRemoteCvEntity remoteCV = order.getUser().getRemoteCvs().stream()
         .filter(p -> p.getProvider() == EngineType.GPT).findAny()
         .orElseThrow(() -> new ValidationException("No GPT CV found for user " + order.getUser().getId()));
@@ -46,8 +47,15 @@ public class GptJobHunting extends AiConversationJobHunting<GptJobSearchRequest>
 
   @Override
   public GptJobSearchRequest createCompaniesRequest(SearchJobOrder order) {
+    //TODO does it worth to have this selection of CV here or is better to move it in the client?
+    UserRemoteCvEntity remoteCV = order.getUser().getRemoteCvs().stream()
+        .filter(p -> p.getProvider() == EngineType.GPT).findAny()
+        .orElseThrow(() -> new ValidationException("No GPT CV found for user " + order.getUser().getId()));
+
+    //TODO not sure if design is ok about the field searchCompanies from the request
     GptJobSearchRequest request = new GptJobSearchRequest(order);
     request.setSearchCompanies(true);
+    request.setFileId(remoteCV.getFileId());
     return request;
   }
 

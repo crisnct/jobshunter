@@ -3,6 +3,7 @@ package com.jobshunter.service.clients.grok;
 import com.jobshunter.ApplicationProperties;
 import com.jobshunter.database.entities.UserRemoteCvEntity;
 import com.jobshunter.dto.exceptions.ValidationException;
+import com.jobshunter.dto.grokRequest.Reasoning;
 import com.jobshunter.dto.grokRequest.GrokScorePayload;
 import com.jobshunter.dto.grokResponse.ContentItem;
 import com.jobshunter.dto.grokResponse.GrokResponse;
@@ -33,7 +34,7 @@ import org.springframework.web.client.RestClient;
 @RequiredArgsConstructor
 public non-sealed class GrokJobScoreCalculatorClientImpl implements JobScoreCalculatorClient<GrokJobScoreRequest> {
 
-  private static final String AI_MODEL = "grok-2-1212";
+  private static final String AI_MODEL = "grok-4-1-fast-reasoning";
 
   private static final URI DEFAULT_URI = URI.create("https://api.x.ai/v1/responses");
 
@@ -54,9 +55,11 @@ public non-sealed class GrokJobScoreCalculatorClientImpl implements JobScoreCalc
           .orElseThrow(() -> new ValidationException("No GROK CV found for user" + request.getUserCV().getUser().getUsername()));
 
       String userPrompt = templateRenderer.getPrompt(PromptType.USER_PROMPT_MATCH_SCORE, "description", request.getJobDescription());
-      GrokScorePayload payload = GrokScorePayload.builder()
+      //TODO
+      GrokScorePayload payload = GrokScorePayload.builder(null)
           .model(AI_MODEL)
           .store(false)
+          .reasoning(new Reasoning(REASONING_SCORING))
           .temperature(DEFAULT_SCORE_TEMPERATURE)
           .max_output_tokens(16)
           .addSystemPrompt(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_MATCH_SCORE))

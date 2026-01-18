@@ -46,8 +46,13 @@ public class GrokJobHunting extends AiConversationJobHunting<GrokJobSearchReques
 
   @Override
   public GrokJobSearchRequest createCompaniesRequest(SearchJobOrder order) {
+    UserRemoteCvEntity remoteCV = order.getUser().getRemoteCvs().stream()
+        .filter(p -> p.getProvider() == EngineType.GROK).findAny()
+        .orElseThrow(() -> new ValidationException("No GROK CV found for user " + order.getUser().getId()));
+
     GrokJobSearchRequest request = new GrokJobSearchRequest(order);
     request.setSearchCompanies(true);
+    request.setFileId(remoteCV.getFileId());
     return request;
   }
 
