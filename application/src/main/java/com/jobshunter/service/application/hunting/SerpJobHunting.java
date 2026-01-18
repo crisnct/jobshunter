@@ -33,9 +33,8 @@ public class SerpJobHunting extends GenericJobHunting<SearchWithSerpRequest> {
   public SearchWithSerpRequest createRequest(SearchJobOrder order, UserPromptEntity prompt) {
     try {
       SearchWithSerpRequest request = mapper.readValue(prompt.getPrompt(), SearchWithSerpRequest.class);
-      request.setUser(order.getUser());
+      request.setOrder(order);
       request.setPromptId(prompt.getId());
-      request.setSearchCompanies(false);
       return request;
     } catch (JsonProcessingException e) {
       throw new RuntimeException(e);

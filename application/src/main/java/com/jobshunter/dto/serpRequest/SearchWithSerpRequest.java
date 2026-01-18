@@ -3,9 +3,8 @@ package com.jobshunter.dto.serpRequest;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.jobshunter.database.entities.AiModelEntity;
-import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.dto.AIJobSearchRequest;
+import com.jobshunter.model.SearchJobOrder;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -23,13 +22,8 @@ public class SearchWithSerpRequest extends AIJobSearchRequest {
   @JsonProperty("q")
   private String query;
 
-  /// Possible values:
-  /// {@snippet :
-  ///   google.cl
-  ///   google.ro
-  ///   google.com
-  ///   .....
-  ///}
+  /// Possible values: google.cl google.ro google.com .....
+  ///
   //See more here https://serpapi.com/google-domains
   @Size(max = 255)
   @JsonProperty("google_domain")
@@ -73,17 +67,16 @@ public class SearchWithSerpRequest extends AIJobSearchRequest {
   @Nullable
   private String language;
 
-  public SearchWithSerpRequest(UserEntity user, AiModelEntity model) {
-    super(user, model);
+  public SearchWithSerpRequest(SearchJobOrder order) {
+    super(order);
   }
 
   @Override
   public SearchWithSerpRequest copy() {
-    SearchWithSerpRequest copy = new SearchWithSerpRequest(this.getUser(), getModel());
+    SearchWithSerpRequest copy = new SearchWithSerpRequest(getOrder());
     // Copy parent fields
     copy.setPromptId(this.getPromptId());
     copy.setUserPrompt(this.getUserPrompt());
-    copy.setSearchCompanies(this.isSearchCompanies());
     // Copy SearchWithSerpRequest specific fields
     copy.query = this.query;
     copy.googleDomain = this.googleDomain;

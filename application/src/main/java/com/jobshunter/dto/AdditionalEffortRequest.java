@@ -1,7 +1,6 @@
 package com.jobshunter.dto;
 
-import com.jobshunter.database.entities.AiModelEntity;
-import com.jobshunter.database.entities.UserEntity;
+import com.jobshunter.model.SearchJobOrder;
 import java.util.List;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -15,8 +14,8 @@ public abstract class AdditionalEffortRequest extends AIJobSearchRequest {
   private String fileId;
   private List<String> previousURL;
 
-  public AdditionalEffortRequest(UserEntity user, AiModelEntity model) {
-    super(user, model);
+  public AdditionalEffortRequest(SearchJobOrder order) {
+    super(order);
   }
 
 }

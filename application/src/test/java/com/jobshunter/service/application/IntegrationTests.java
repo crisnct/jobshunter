@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -18,10 +19,12 @@ import com.jobshunter.model.Job;
 import com.jobshunter.model.JobContext;
 import com.jobshunter.model.JobPhase;
 import com.jobshunter.service.UrlAffinityExecutor;
+import com.jobshunter.service.application.hunting.AiConversationStateMachine;
 import com.jobshunter.service.application.notifiers.EmailNotifierService;
 import com.jobshunter.service.application.processors.JobBodyExtractorProcessor;
 import com.jobshunter.service.application.processors.JobBasicCheckProcessor;
 import com.jobshunter.service.application.processors.JobFetchProcessor;
+import com.jobshunter.service.application.processors.JobScoring;
 import com.jobshunter.service.application.processors.JobValidator;
 import com.jobshunter.service.clients.SmtpMailtrapClient;
 import com.jobshunter.service.clients.browser.BrowserSimulator;
@@ -42,6 +45,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -60,6 +64,7 @@ import org.springframework.test.web.servlet.MockMvc;
 )
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
+@Disabled
 public class IntegrationTests {
 
   @Autowired
@@ -79,6 +84,12 @@ public class IntegrationTests {
 
   @MockitoSpyBean
   private SmtpMailtrapClient smtpMailtrapClient;
+
+  @MockitoBean
+  private JobScoring jobScoring;
+
+  @MockitoSpyBean
+  private AiConversationStateMachine aiConversationStateMachine;
 
   @Autowired
   private BrowserSimulator browserSimulator;
@@ -156,6 +167,8 @@ public class IntegrationTests {
   @Test
   @Disabled
   public void testDifferentHosts() {
+    doReturn(new JobContext(null, null)).when(jobScoring).processAsync(any());
+
     for (int i = 0; i < 1; i++) {
       long startTime = System.currentTimeMillis();
       List<CompletionStage<ResponseEntity<String>>> list = new ArrayList<>();

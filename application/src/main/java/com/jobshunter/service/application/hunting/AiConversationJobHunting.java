@@ -4,6 +4,7 @@ import com.jobshunter.dto.AdditionalEffortRequest;
 import com.jobshunter.model.AiClientResponse;
 import com.jobshunter.model.Job;
 import com.jobshunter.model.PromptType;
+import com.jobshunter.model.SearchJobOrder;
 import com.jobshunter.service.TemplateRenderer;
 import com.jobshunter.service.application.UserCvService;
 import com.jobshunter.service.clients.AiJobsClient;
@@ -100,7 +101,9 @@ public abstract class AiConversationJobHunting<T extends AdditionalEffortRequest
       }
 
       AiClientResponse anotherResponse = jobsClient.searchJobs(request);
-      log.info("Found {} jobs for {}", anotherResponse.getJobs().size(), request.getUser().getUsername());
+      SearchJobOrder order = request.getOrder();
+
+      log.info("Found {} jobs for {}", anotherResponse.getJobs().size(), order.getUser().getUsername());
       response.addAll(anotherResponse);
 
       //This is mandatory, otherwise the AI model will reply nothing in conversation.
@@ -123,12 +126,12 @@ public abstract class AiConversationJobHunting<T extends AdditionalEffortRequest
       };
       String prompt = templateRenderer.getPrompt(promptType, params);
 
-      log.info("Searching jobs for user {} with model {} with prompt {}", request.getUser().getUsername(), model,
+      log.info("Searching jobs for user {} with model {} with prompt {}", order.getUser().getUsername(), model,
           StringUtils.abbreviate(prompt, 50));
       request.setUserPrompt(prompt);
       request.setPrevResponseId(prevId);
       AiClientResponse otherResponse = jobsClient.searchJobs(request);
-      log.info("Found {} jobs for {}", otherResponse.getJobs().size(), request.getUser().getUsername());
+      log.info("Found {} jobs for {}", otherResponse.getJobs().size(), order.getUser().getUsername());
 
       response.addAll(otherResponse);
       prevId = otherResponse.getId();

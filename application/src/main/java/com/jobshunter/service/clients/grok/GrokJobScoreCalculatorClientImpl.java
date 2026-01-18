@@ -3,13 +3,13 @@ package com.jobshunter.service.clients.grok;
 import com.jobshunter.ApplicationProperties;
 import com.jobshunter.database.entities.UserRemoteCvEntity;
 import com.jobshunter.dto.exceptions.ValidationException;
-import com.jobshunter.dto.grokRequest.Reasoning;
 import com.jobshunter.dto.grokRequest.GrokScorePayload;
+import com.jobshunter.dto.grokRequest.Reasoning;
 import com.jobshunter.dto.grokResponse.ContentItem;
 import com.jobshunter.dto.grokResponse.GrokResponse;
 import com.jobshunter.dto.grokResponse.OutputItem;
 import com.jobshunter.model.EngineType;
-import com.jobshunter.model.GrokJobScoreRequest;
+import com.jobshunter.model.JobScoreRequest;
 import com.jobshunter.model.PromptType;
 import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.TemplateRenderer;
@@ -32,9 +32,7 @@ import org.springframework.web.client.RestClient;
 @PackageExpected("com.jobshunter.service.clients.grok")
 @ConditionalOnProperty(name = "grok.enabled", havingValue = "true")
 @RequiredArgsConstructor
-public non-sealed class GrokJobScoreCalculatorClientImpl implements JobScoreCalculatorClient<GrokJobScoreRequest> {
-
-  private static final String AI_MODEL = "grok-4-1-fast-reasoning";
+public non-sealed class GrokJobScoreCalculatorClientImpl implements JobScoreCalculatorClient {
 
   private static final URI DEFAULT_URI = URI.create("https://api.x.ai/v1/responses");
 
@@ -48,16 +46,14 @@ public non-sealed class GrokJobScoreCalculatorClientImpl implements JobScoreCalc
   @RateLimiter(name = "grokLimiter")
   @CircuitBreaker(name = "grokCircuitBreaker", fallbackMethod = "fallbackComputeScore")
   @Bulkhead(name = "grokBulkhead")
-  public int computeScore(GrokJobScoreRequest request) {
+  public int computeScore(JobScoreRequest request) {
     try {
       UserRemoteCvEntity remoteCV = request.getUserCV().getUser().getRemoteCvs().stream()
           .filter(p -> p.getProvider() == EngineType.GROK).findAny()
           .orElseThrow(() -> new ValidationException("No GROK CV found for user" + request.getUserCV().getUser().getUsername()));
 
       String userPrompt = templateRenderer.getPrompt(PromptType.USER_PROMPT_MATCH_SCORE, "description", request.getJobDescription());
-      //TODO
-      GrokScorePayload payload = GrokScorePayload.builder(null)
-          .model(AI_MODEL)
+      GrokScorePayload payload = GrokScorePayload.builder(request.getModel())
           .store(false)
           .reasoning(new Reasoning(REASONING_SCORING))
           .temperature(DEFAULT_SCORE_TEMPERATURE)
@@ -99,7 +95,7 @@ public non-sealed class GrokJobScoreCalculatorClientImpl implements JobScoreCalc
   }
 
   @SuppressWarnings("unused")
-  private int fallbackComputeScore(GrokJobScoreRequest request, Throwable t) {
+  private int fallbackComputeScore(JobScoreRequest request, Throwable t) {
     log.error("{} call short-circuited/bulkheaded: {}", getClass().getSimpleName(), t.getMessage());
     return -1;
   }

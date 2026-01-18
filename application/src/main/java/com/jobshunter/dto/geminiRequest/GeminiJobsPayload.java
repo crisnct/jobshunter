@@ -105,14 +105,12 @@ public record GeminiJobsPayload(
     }
 
     public GeminiJobsPayloadBuilder addModelContent(String text) {
-      if (isEnabledCapability(AiCapabilityType.CHAIN_CONVERSATIONS)) {
-        List<Part> parts = new ArrayList<>();
-        if (text != null && !text.isBlank()) {
-          parts.add(Part.text(text));
-        }
-        if (!parts.isEmpty()) {
-          this.contents.add(new Content("model", parts));
-        }
+      List<Part> parts = new ArrayList<>();
+      if (text != null && !text.isBlank()) {
+        parts.add(Part.text(text));
+      }
+      if (!parts.isEmpty()) {
+        this.contents.add(new Content("model", parts));
       }
       return this;
     }

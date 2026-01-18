@@ -141,7 +141,7 @@ public class TestController {
   public ResponseEntity<?> testGPTModels() {
     List<String> modelsSupported = new ArrayList<>();
     for (String model : GPT_MODELS) {
-      AiModelEntity aiModel = modelsDBService.getModelById(EngineType.GPT, model).get();
+      AiModelEntity aiModel = modelsDBService.getModel(EngineType.GPT, model).get();
 
       GptJobsPayload payload = GptJobsPayload.builder(aiModel)
           .model(model)
@@ -203,7 +203,7 @@ public class TestController {
   public ResponseEntity<?> testGROKModels() {
     List<String> modelsSupported = new ArrayList<>();
     for (String model : GROK_MODELS) {
-      AiModelEntity aiModel = modelsDBService.getModelById(EngineType.GROK, model).get();
+      AiModelEntity aiModel = modelsDBService.getModel(EngineType.GROK, model).get();
       GrokJobsPayload payload = GrokJobsPayload.builder(aiModel)
           .model(model)
           .maxOutputTokens(200)
@@ -265,7 +265,7 @@ public class TestController {
   public ResponseEntity<?> testGeminiModels() {
     List<String> modelsSupported = new ArrayList<>();
     for (String model : GEMINI_MODELS) {
-      AiModelEntity aiModel = modelsDBService.getModelById(EngineType.GEMINI, model).get();
+      AiModelEntity aiModel = modelsDBService.getModel(EngineType.GEMINI, model).get();
       GenerationConfig generationConfig = GenerationConfig.builder(aiModel)
           .temperature(0.2)
           .responseMimeType("application/json")
@@ -349,7 +349,7 @@ public class TestController {
       @RequestBody
       String payload
   ) {
-    AiModelEntity aiModel = modelsDBService.getModelById(EngineType.GPT, model).get();
+    AiModelEntity aiModel = modelsDBService.getModel(EngineType.GPT, model).get();
     GptJobsPayload gptPayload = GptJobsPayload.builder(aiModel)
         .model(model)
         .maxOutputTokens(2000)

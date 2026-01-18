@@ -10,7 +10,7 @@ import com.jobshunter.service.testdata.FakeGptJobScoreCalculator;
 import com.jobshunter.service.testdata.FakeGrokJobScoreCalculator;
 
 @PackageExpected("com.jobshunter.service.application")
-public sealed interface JobScoreCalculatorClient<T extends JobScoreRequest>
+public sealed interface JobScoreCalculatorClient
     permits GeminiJobScoreCalculatorClientImpl, GptJobScoreCalculatorClientImpl, GrokJobScoreCalculatorClientImpl, FakeGeminiJobScoreCalculator,
     FakeGptJobScoreCalculator, FakeGrokJobScoreCalculator {
 
@@ -18,6 +18,6 @@ public sealed interface JobScoreCalculatorClient<T extends JobScoreRequest>
 
   String REASONING_SCORING = "medium";
 
-  int computeScore(T request);
+  int computeScore(JobScoreRequest request);
 
 }

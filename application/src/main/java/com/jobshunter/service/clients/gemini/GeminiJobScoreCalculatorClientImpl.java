@@ -1,7 +1,8 @@
 package com.jobshunter.service.clients.gemini;
 
 import com.jobshunter.ApplicationProperties;
-import com.jobshunter.database.entities.AiModelEntity;
+import com.jobshunter.database.entities.UserRemoteCvEntity;
+import com.jobshunter.dto.exceptions.ValidationException;
 import com.jobshunter.dto.geminiRequest.FileData;
 import com.jobshunter.dto.geminiRequest.GeminiJobsPayload;
 import com.jobshunter.dto.geminiRequest.GenerationConfig;
@@ -9,7 +10,8 @@ import com.jobshunter.dto.geminiRequest.Part;
 import com.jobshunter.dto.geminiRequest.ThinkingConfig;
 import com.jobshunter.dto.geminiResponse.GeminiGenerateContentResponse;
 import com.jobshunter.dto.geminiResponse.GeminiGenerateContentResponse.Candidate;
-import com.jobshunter.model.GeminiJobScoreRequest;
+import com.jobshunter.model.EngineType;
+import com.jobshunter.model.JobScoreRequest;
 import com.jobshunter.model.PromptType;
 import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.TemplateRenderer;
@@ -34,9 +36,7 @@ import org.springframework.web.client.RestClient;
 @PackageExpected("com.jobshunter.service.clients.gpt")
 @ConditionalOnProperty(name = "gemini.enabled", havingValue = "true")
 @RequiredArgsConstructor
-public non-sealed class GeminiJobScoreCalculatorClientImpl implements JobScoreCalculatorClient<GeminiJobScoreRequest> {
-
-  private static final String AI_MODEL = "gemini-2.0-flash-lite";
+public non-sealed class GeminiJobScoreCalculatorClientImpl implements JobScoreCalculatorClient {
 
   private static final String GENERATE_CONTENT_URI = "https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent?key=%s";
 
@@ -52,20 +52,21 @@ public non-sealed class GeminiJobScoreCalculatorClientImpl implements JobScoreCa
   @RateLimiter(name = "geminiLimiter")
   @Bulkhead(name = "geminiBulkhead")
   @CircuitBreaker(name = "geminiCircuitBreaker", fallbackMethod = "fallbackComputeScore")
-  public int computeScore(GeminiJobScoreRequest request) {
+  public int computeScore(JobScoreRequest request) {
     try {
-      //TODO
-      AiModelEntity model = null;
-
-      GenerationConfig generationConfig = GenerationConfig.builder(model)
+      GenerationConfig generationConfig = GenerationConfig.builder(request.getModel())
           .temperature(DEFAULT_SCORE_TEMPERATURE)
           .maxOutputTokens(20)
           .thinkingConfig(new ThinkingConfig(256))//how reasoning it is
           .build();
 
-      FileData resume = new FileData(String.format(FILES_URI, request.getResumeFileId()), MediaType.APPLICATION_PDF_VALUE);
+      UserRemoteCvEntity remoteCV = request.getUserCV().getUser().getRemoteCvs().stream()
+          .filter(p -> p.getProvider() == EngineType.GEMINI).findAny()
+          .orElseThrow(() -> new ValidationException("No GEMINI CV found for user " + request.getUserCV().getUser().getUsername()));
 
-      GeminiJobsPayload payload = GeminiJobsPayload.builder(model)
+      FileData resume = new FileData(String.format(FILES_URI, remoteCV.getFileId()), MediaType.APPLICATION_PDF_VALUE);
+
+      GeminiJobsPayload payload = GeminiJobsPayload.builder(request.getModel())
           .addSystemInstruction(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_MATCH_SCORE))
           .addUserContent(templateRenderer.getPrompt(PromptType.USER_PROMPT_MATCH_SCORE, "description", request.getJobDescription()),
               List.of(resume))
@@ -73,12 +74,13 @@ public non-sealed class GeminiJobScoreCalculatorClientImpl implements JobScoreCa
           .build();
 
       GeminiGenerateContentResponse response = restClient.post()
-          .uri(URI.create(String.format(GENERATE_CONTENT_URI, AI_MODEL, properties.getGemini().getApiKey())))
+          .uri(URI.create(String.format(GENERATE_CONTENT_URI, request.getModel().getModel(), properties.getGemini().getApiKey())))
           .contentType(MediaType.APPLICATION_JSON)
           .body(payload)
           .retrieve()
           .body(GeminiGenerateContentResponse.class);
 
+      //noinspection DataFlowIssue
       return extractScore(response);
     } catch (Exception e) {
       log.error("❌ GEMINI job API call failed", e);
@@ -94,7 +96,7 @@ public non-sealed class GeminiJobScoreCalculatorClientImpl implements JobScoreCa
   }
 
   @SuppressWarnings("unused")
-  private int fallbackComputeScore(GeminiJobScoreRequest request, Throwable t) {
+  private int fallbackComputeScore(JobScoreRequest request, Throwable t) {
     log.error("{} call short-circuited/bulkheaded: {}", getClass().getSimpleName(), t.getMessage());
     return 0;
   }

@@ -24,7 +24,7 @@ public class ModelsDBService {
     return aiModelRepository.findAll();
   }
 
-  public Optional<AiModelEntity> getModelById(EngineType provider, String model) {
+  public Optional<AiModelEntity> getModel(EngineType provider, String model) {
     return aiModelRepository.findByProviderAndModel(provider, model);
   }
 

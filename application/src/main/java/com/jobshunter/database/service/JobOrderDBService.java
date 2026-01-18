@@ -84,6 +84,7 @@ public class JobOrderDBService {
     JobOrderEntity order = jobOrderRepository.findById(jobId).orElseThrow();
     Hibernate.initialize(order);
     userDBService.initialize(order.getUser());
+    Hibernate.initialize(order.getUser().getJobs());
     modelsDBService.initialize(order.getAiModel());
     return order;
   }

@@ -21,6 +21,7 @@ import com.jobshunter.model.AiSchemaType;
 import com.jobshunter.model.GptJobSearchRequest;
 import com.jobshunter.model.Job;
 import com.jobshunter.model.PromptType;
+import com.jobshunter.model.SearchJobOrder;
 import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.TemplateRenderer;
 import com.jobshunter.service.application.UrlExtractor;
@@ -75,15 +76,16 @@ public non-sealed class GptV1JobSearchImpl implements
   @Bulkhead(name = "gptBulkhead")
   public AiClientResponse searchJobs(GptJobSearchRequest request) {
     try {
-      IpInfoDetailResponse ipInfo = request.getIpInfo();
+      SearchJobOrder order = request.getOrder();
+      IpInfoDetailResponse ipInfo = order.getIpInfo();
 
       UserLocation userLocation = new UserLocation();
       userLocation.setType("approximate");
       //This is country iso code, like RO
       userLocation.setCountry(ipInfo.country() != null ? ipInfo.country() : "RO");
-      userLocation.setCity(request.getUser().getCity() != null ? request.getUser().getCity() : ipInfo.city());
+      userLocation.setCity(order.getUser().getCity() != null ? order.getUser().getCity() : ipInfo.city());
 
-      GptJobsPayload payload = GptJobsPayload.builder(request.getModel())
+      GptJobsPayload payload = GptJobsPayload.builder(order.getModel())
           .temperature(DEFAULT_TEMPERATURE)
           .reasoning(new Reasoning(REASONING_JOB_SEARCH))
           .store(request.getStoreConversation())
@@ -125,17 +127,16 @@ public non-sealed class GptV1JobSearchImpl implements
   @Bulkhead(name = "gptBulkhead")
   public List<CompanyDto> searchCompanies(GptJobSearchRequest request) {
     try {
-      UserEntity user = request.getUser();
-
-      IpInfoDetailResponse ipInfo = request.getIpInfo();
+      UserEntity user = request.getOrder().getUser();
+      IpInfoDetailResponse ipInfo = request.getOrder().getIpInfo();
 
       UserLocation userLocation = new UserLocation();
       userLocation.setType("approximate");
       //This is country iso code, like RO
       userLocation.setCountry(ipInfo.country() != null ? ipInfo.country() : "RO");
-      userLocation.setCity(request.getUser().getCity() != null ? request.getUser().getCity() : ipInfo.city());
+      userLocation.setCity(user.getCity() != null ? user.getCity() : ipInfo.city());
 
-      GptJobsPayload payload = GptJobsPayload.builder(request.getModel())
+      GptJobsPayload payload = GptJobsPayload.builder(request.getOrder().getModel())
           .temperature(DEFAULT_TEMPERATURE)
           .maxOutputTokens(2500)
           .store(false)
@@ -178,10 +179,10 @@ public non-sealed class GptV1JobSearchImpl implements
   @Bulkhead(name = "gptBulkhead")
   public AiClientResponse searchJobsFromCompanies(GptJobSearchRequest request, List<CompanyDto> group) {
     String userPrompt = templateRenderer.getPrompt(PromptType.USER_PROMPT_JOB,
-        "positions", request.getUser().getJobRoles().stream().map(UserJobRoleEntity::getJobRole).toList().toString(),
+        "positions", request.getOrder().getUser().getJobRoles().stream().map(UserJobRoleEntity::getJobRole).toList().toString(),
         "companies", StringUtils.join(group.stream().map(CompanyDto::companyName).toList())
     );
-    GptJobsPayload payload = GptJobsPayload.builder(request.getModel())
+    GptJobsPayload payload = GptJobsPayload.builder(request.getOrder().getModel())
         .temperature(DEFAULT_TEMPERATURE)
         .maxOutputTokens(3500)
         .store(request.getStoreConversation())

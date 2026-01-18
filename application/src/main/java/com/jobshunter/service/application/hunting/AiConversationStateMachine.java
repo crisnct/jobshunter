@@ -10,7 +10,9 @@ import com.jobshunter.model.JobMetadataType;
 import com.jobshunter.service.application.processors.JobsStateMachine;
 import io.github.resilience4j.ratelimiter.RequestNotPermitted;
 import jakarta.annotation.Nonnull;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.Executor;
@@ -55,18 +57,34 @@ public class AiConversationStateMachine {
       ConversationCleanup<R> conversationCleanup
   ) {
     return CompletableFuture.supplyAsync(() -> searchExecutor.searchJobsSync(request), executor)
+        .thenCompose(response -> removeDuplicates(request, response))
         .thenCompose(response -> validateJobsUrl(request, accumulatedResponse, response))
         .thenCompose(contexts -> collectValidJobs(accumulatedResponse, contexts))
         .thenCompose(contexts -> askAIForRejectedURLs(request, executor, retryCount, accumulatedResponse, contexts,
             searchExecutor, promptGenerator, retryRequestFactory, conversationCleanup))
-        .whenComplete((result, error) -> CompletableFuture.runAsync(() -> {
+        .whenComplete((_, _) -> CompletableFuture.runAsync(() -> {
           try {
             conversationCleanup.cleanup(request);
           } catch (Exception cleanupEx) {
-            log.warn("Failed to cleanup conversation for user {}: {}", request.getUser().getUsername(), cleanupEx.getMessage());
+            log.warn("Failed to cleanup conversation for user {}: {}", request.getOrder().getUser().getUsername(), cleanupEx.getMessage());
           }
         }))
         .exceptionally(ex -> handlePipelineError(request, accumulatedResponse, ex));
+  }
+
+  private <R extends AdditionalEffortRequest> CompletableFuture<AiClientResponse> removeDuplicates(
+      R request,
+      AiClientResponse response) {
+    Set<String> seenUrls = new HashSet<>(request.getOrder().getIgnoredURLs());
+    AiClientResponse aiClientResponse = new AiClientResponse();
+    aiClientResponse.setId(response.getId());
+    aiClientResponse.addAll(response.getJobs().stream()
+        .filter(jc -> {
+          String url = jc.getUrl();
+          return url != null && seenUrls.add(url);
+        })
+        .toList());
+    return CompletableFuture.completedFuture(aiClientResponse);
   }
 
   private <R extends AdditionalEffortRequest> CompletableFuture<List<JobContext>> validateJobsUrl(
@@ -78,13 +96,13 @@ public class AiConversationStateMachine {
     request.setPrevResponseId(response.getId());
     List<Job> jobsFound = response.getJobs()
         .stream()
-        .filter(p -> !accumulatedResponse.contains(p.getUrl()))
+        .filter(p -> !accumulatedResponse.getJobs().contains(p))
         .toList();
     if (jobsFound.isEmpty()) {
       return CompletableFuture.completedFuture(List.of());
     } else {
       // Process Phase: Pass jobs to state machine for processing
-      return jobsStateMachine.processAsync(CompletableFuture.completedFuture(jobsFound), request.getUser());
+      return jobsStateMachine.processAsync(CompletableFuture.completedFuture(jobsFound), request.getOrder().getUser());
     }
   }
 
@@ -108,7 +126,7 @@ public class AiConversationStateMachine {
     // Retry Phase: Retry if there are rejected jobs and retry limit not reached
     if (!rejectedJobs.isEmpty() && retryCount < maxRetries) {
       log.info("Found {} rejected jobs for user {}. Retrying search (attempt {}/{})",
-          rejectedJobs.size(), request.getUser().getUsername(), retryCount + 1, maxRetries);
+          rejectedJobs.size(), request.getOrder().getUser().getUsername(), retryCount + 1, maxRetries);
 
       String newPrompt = promptGenerator.generate(rejectedJobs);
       R retryRequest = retryRequestFactory.create(request, accumulatedResponse, newPrompt);
@@ -117,7 +135,7 @@ public class AiConversationStateMachine {
     } else {
       if (!rejectedJobs.isEmpty()) {
         log.warn("Max retries ({}) reached for user {}. {} jobs remain rejected.",
-            maxRetries, request.getUser().getUsername(), rejectedJobs.size());
+            maxRetries, request.getOrder().getUser().getUsername(), rejectedJobs.size());
       }
       return CompletableFuture.completedFuture(accumulatedResponse);
     }
@@ -144,13 +162,13 @@ public class AiConversationStateMachine {
       Throwable ex
   ) {
     Throwable cause = unwrap(ex);
-    AiModelEntity engineConfig = request.getModel();
+    AiModelEntity model = request.getOrder().getModel();
     if (cause instanceof RequestNotPermitted) {
       log.error("Rate limit exceeded for user {}, engine: {}, model: {}",
-          request.getUser().getUsername(), engineConfig.getProvider(), engineConfig.getModel());
+          request.getOrder().getUser().getUsername(), model.getProvider(), model.getModel());
     } else {
       log.error("Unexpected error at gathering jobs from model {}: {} for prompt {}",
-          engineConfig.getModel(), cause != null ? cause.getMessage() : ex.getMessage(), request.getUserPrompt());
+          model.getModel(), cause != null ? cause.getMessage() : ex.getMessage(), request.getUserPrompt());
     }
     log.error("Pipeline failed for searchAsync", ex);
     return accumulatedResponse.getJobs().isEmpty() ? new AiClientResponse() : accumulatedResponse;

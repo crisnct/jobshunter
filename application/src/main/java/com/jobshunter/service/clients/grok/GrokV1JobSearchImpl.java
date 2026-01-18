@@ -74,7 +74,7 @@ public non-sealed class GrokV1JobSearchImpl implements
   @Bulkhead(name = "grokBulkhead")
   public AiClientResponse searchJobs(GrokJobSearchRequest request) {
     try {
-      GrokJobsPayloadBuilder payloadBuilder = GrokJobsPayload.builder(request.getModel())
+      GrokJobsPayloadBuilder payloadBuilder = GrokJobsPayload.builder(request.getOrder().getModel())
           .temperature(DEFAULT_TEMPERATURE)
           .reasoning(new Reasoning(REASONING_JOB_SEARCH))
           .store(request.getStoreConversation())
@@ -113,17 +113,17 @@ public non-sealed class GrokV1JobSearchImpl implements
   @Bulkhead(name = "grokBulkhead")
   public List<CompanyDto> searchCompanies(GrokJobSearchRequest request) {
     try {
-      UserEntity user = request.getUser();
+      UserEntity user = request.getOrder().getUser();
 
-      IpInfoDetailResponse ipInfo = request.getIpInfo();
+      IpInfoDetailResponse ipInfo = request.getOrder().getIpInfo();
 
       UserLocation userLocation = new UserLocation();
       userLocation.setType("approximate");
       //This is country iso code, like RO
       userLocation.setCountry(ipInfo.country() != null ? ipInfo.country() : "RO");
-      userLocation.setCity(request.getUser().getCity() != null ? request.getUser().getCity() : ipInfo.city());
+      userLocation.setCity(user.getCity() != null ? user.getCity() : ipInfo.city());
 
-      GrokJobsPayload payload = GrokJobsPayload.builder(request.getModel())
+      GrokJobsPayload payload = GrokJobsPayload.builder(request.getOrder().getModel())
           .temperature(DEFAULT_TEMPERATURE)
           .store(false)
           .reasoning(new Reasoning(REASONING_COMPANY_SEARCH))
@@ -167,14 +167,14 @@ public non-sealed class GrokV1JobSearchImpl implements
   @Bulkhead(name = "grokBulkhead")
   public AiClientResponse searchJobsFromCompanies(GrokJobSearchRequest request, List<CompanyDto> group) {
     String userPrompt = templateRenderer.getPrompt(PromptType.USER_PROMPT_JOB,
-        "positions", request.getUser().getJobRoles().stream().map(UserJobRoleEntity::getJobRole).toList().toString(),
+        "positions", request.getOrder().getUser().getJobRoles().stream().map(UserJobRoleEntity::getJobRole).toList().toString(),
         "companies", StringUtils.join(group.stream().map(CompanyDto::companyName).toList())
     ) + templateRenderer.getPrompt(PromptType.USER_PROMPT_JOB_BLACKLISTED,
         "blacklist",
         properties.getJobsHunter().getBlacklist()
     );
 
-    GrokJobsPayload payload = GrokJobsPayload.builder(request.getModel())
+    GrokJobsPayload payload = GrokJobsPayload.builder(request.getOrder().getModel())
         .temperature(DEFAULT_TEMPERATURE)
         .maxOutputTokens(7000)
         .reasoning(new Reasoning(REASONING_JOB_SEARCH))

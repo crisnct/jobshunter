@@ -41,7 +41,6 @@ public class GptJobHunting extends AiConversationJobHunting<GptJobSearchRequest>
     request.setPromptId(prompt.getId());
     request.setFileId(remoteCV.getFileId());
     request.setStoreConversation(true);
-    request.setSearchCompanies(false);
     return request;
   }
 
@@ -54,7 +53,6 @@ public class GptJobHunting extends AiConversationJobHunting<GptJobSearchRequest>
 
     //TODO not sure if design is ok about the field searchCompanies from the request
     GptJobSearchRequest request = new GptJobSearchRequest(order);
-    request.setSearchCompanies(true);
     request.setFileId(remoteCV.getFileId());
     return request;
   }

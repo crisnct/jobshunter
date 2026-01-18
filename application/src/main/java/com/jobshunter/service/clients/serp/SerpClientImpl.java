@@ -76,7 +76,7 @@ public non-sealed class SerpClientImpl implements AiJobsClient<SearchWithSerpReq
     AiClientResponse response = new AiClientResponse();
     response.setId(results.id());
     for (SerpJobHit serpJob : results.jobs()) {
-      Job job = new Job(-1, serpJob.applyLinks().getFirst(), request.getModel().getModel());
+      Job job = new Job(-1, serpJob.applyLinks().getFirst(), request.getOrder().getModel().getModel());
       job.addMetadata(JobMetadataType.SERP_DESCRIPTION, serpJob.description() + "\n" + serpJob.highlights());
       response.add(job);
     }
@@ -128,7 +128,7 @@ public non-sealed class SerpClientImpl implements AiJobsClient<SearchWithSerpReq
     parameters.add("api_key");
     parameters.add(applicationProperties.getSerp().getApiKey());
     parameters.add("engine");
-    parameters.add(request.getModel().getModel().toLowerCase());
+    parameters.add(request.getOrder().getModel().getModel().toLowerCase());
     parameters.add("q");
     parameters.add(encode(request.getQuery()));
 

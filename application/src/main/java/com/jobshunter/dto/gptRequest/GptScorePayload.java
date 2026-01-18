@@ -1,5 +1,6 @@
-package com.jobshunter.dto.grokRequest;
+package com.jobshunter.dto.gptRequest;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.jobshunter.database.entities.AiModelEntity;
 import com.jobshunter.model.AiCapabilityType;
 import java.util.ArrayList;
@@ -8,47 +9,49 @@ import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
 
 @Builder
-public record GrokScorePayload(
+public record GptScorePayload(
     String model,
     Reasoning reasoning,
-    Boolean store,
     double temperature,
-    int max_output_tokens,
+    Boolean store,
+    @JsonProperty("max_output_tokens")
+    int maxOutputTokens,
     List<Input> input
 ) {
 
-  public static GrokScorePayloadBuilder builder(AiModelEntity aiModel) {
-    return new GrokScorePayloadBuilder(aiModel);
+
+  public static GptScorePayloadBuilder builder(AiModelEntity aiModel) {
+    return new GptScorePayloadBuilder(aiModel);
   }
 
   @Slf4j
   @SuppressWarnings({"MismatchedQueryAndUpdateOfCollection", "FieldMayBeFinal"})
-  public static class GrokScorePayloadBuilder {
-
-    private List<Input> input = new ArrayList<>();
+  public static class GptScorePayloadBuilder {
 
     private AiModelEntity aiModel;
 
-    private GrokScorePayloadBuilder(AiModelEntity aiModel) {
+    private List<Input> input = new ArrayList<>();
+
+    public GptScorePayloadBuilder(AiModelEntity aiModel) {
       this.aiModel = aiModel;
       this.model = aiModel.getModel();
     }
 
-    public GrokScorePayloadBuilder addSystemPrompt(String systemPrompt) {
-      if (isEnabledCapability(AiCapabilityType.SYSTEM_PROMPT)) {
-        input.add(new Input("system", List.of(new InputMessage("input_text", systemPrompt))));
-      }
-      return this;
-    }
-
-    public GrokScorePayloadBuilder reasoning(Reasoning reasoning) {
+    public GptScorePayloadBuilder reasoning(Reasoning reasoning) {
       if (isEnabledCapability(AiCapabilityType.REASONING)) {
         this.reasoning = reasoning;
       }
       return this;
     }
 
-    public GrokScorePayloadBuilder addUserPrompt(String userPrompt, String fileId) {
+    public GptScorePayloadBuilder addSystemPrompt(String systemPrompt) {
+      if (isEnabledCapability(AiCapabilityType.SYSTEM_PROMPT)) {
+        input.add(new Input("system", List.of(new InputMessage("input_text", systemPrompt))));
+      }
+      return this;
+    }
+
+    public GptScorePayloadBuilder addUserPrompt(String userPrompt, String fileId) {
       final List<InputObj> dataList = new ArrayList<>();
       dataList.add(new InputMessage("input_text", userPrompt));
       if (isEnabledCapability(AiCapabilityType.FILE_UPLOAD)) {
@@ -65,7 +68,6 @@ public record GrokScorePayload(
       }
       return enabledCapability;
     }
-
   }
 
 }

@@ -89,10 +89,10 @@ public abstract non-sealed class GenericJobHunting<T extends AIJobSearchRequest>
   protected CompletableFuture<AiClientResponse> searchAsync(T request, Executor executor) {
     return CompletableFuture.supplyAsync(() -> searchSync(request), executor)
         .exceptionally(throwable -> {
-          AiModelEntity aiModel = request.getModel();
+          AiModelEntity aiModel = request.getOrder().getModel();
           if (throwable.getCause() != null && throwable.getCause() instanceof RequestNotPermitted) {
             log.error("❌ Rate limit exceeded for user {}, engine: {}, eodel: {}",
-                request.getUser().getUsername(), aiModel.getProvider(), aiModel.getModel());
+                request.getOrder().getUser().getUsername(), aiModel.getProvider(), aiModel.getModel());
           } else {
             log.error("Unexpected error at gathering jobs from model {}: {} for prompt {}", aiModel.getModel(),
                 throwable.getMessage(), request.getUserPrompt());
@@ -102,11 +102,12 @@ public abstract non-sealed class GenericJobHunting<T extends AIJobSearchRequest>
   }
 
   protected AiClientResponse searchSync(T request) {
-    AiModelEntity aiModel = request.getModel();
-    log.info("Searching jobs for user {} with model {}", request.getUser().getUsername(), aiModel.getModel());
-    if (request.getUser().getCv() != null) {
+    AiModelEntity aiModel = request.getOrder().getModel();
+    UserEntity user = request.getOrder().getUser();
+    log.info("Searching jobs for user {} with model {}", user.getUsername(), aiModel.getModel());
+    if (user.getCv() != null) {
       //Upload cv if needed
-      userCvService.refreshUserCvIfNeeded(request.getUser(), request.getModel().getProvider());
+      userCvService.refreshUserCvIfNeeded(user, aiModel.getProvider());
     }
     AiClientResponse response = jobsClient.searchJobs(request);
     response.getJobs().forEach(job -> {
@@ -119,9 +120,10 @@ public abstract non-sealed class GenericJobHunting<T extends AIJobSearchRequest>
   }
 
   private List<Job> searchCompaniesSync(T request, AiModelEntity model) {
-    log.info("Searching companies for user {} with model {}", request.getUser().getUsername(), model.getModel());
+    UserEntity user = request.getOrder().getUser();
+    log.info("Searching companies for user {} with model {}", user.getUsername(), model.getModel());
     List<CompanyDto> companies = jobsClient.searchCompanies(request);
-    log.info("Found {} companies for user {} with model {}, searching jobs now...", companies.size(), request.getUser().getUsername(),
+    log.info("Found {} companies for user {} with model {}, searching jobs now...", companies.size(), user.getUsername(),
         model.getModel());
     List<List<CompanyDto>> companiesGrouped = companies.stream()
         .gather(Gatherers.windowFixed(5))
@@ -129,11 +131,11 @@ public abstract non-sealed class GenericJobHunting<T extends AIJobSearchRequest>
 
     List<Job> jobsFound = new ArrayList<>();
     for (List<CompanyDto> group : companiesGrouped) {
-      log.info("Searching jobs for user {} from companies: {}", request.getUser().getUsername(),
+      log.info("Searching jobs for user {} from companies: {}", user.getUsername(),
           String.join(", ", group.stream().map(CompanyDto::companyName).toList()));
       List<Job> jobs = jobsClient.searchJobsFromCompanies(request, group).getJobs();
       jobsFound.addAll(jobs);
-      log.info("Found {} jobs for user {} from current group of companies.", jobs.size(), request.getUser().getUsername());
+      log.info("Found {} jobs for user {} from current group of companies.", jobs.size(), user.getUsername());
     }
     jobsFound.forEach(job -> job.setSource("COMP-" + model.getModel()));
     return jobsFound;

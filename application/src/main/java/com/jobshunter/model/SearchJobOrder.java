@@ -3,7 +3,9 @@ package com.jobshunter.model;
 import com.jobshunter.database.entities.AiModelEntity;
 import com.jobshunter.database.entities.JobOrderEntity;
 import com.jobshunter.database.entities.UserEntity;
+import com.jobshunter.database.entities.UserJobEntity;
 import com.jobshunter.dto.IpInfoDetailResponse;
+import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -16,6 +18,8 @@ public class SearchJobOrder {
   private final boolean searchByUserPrompt;
   private final boolean searchCompanies;
   private final JobOrderEntity jobOrder;
+  private final List<String> ignoredURLs;
+
   @Setter
   //TODO move it to login functionality. When the user login get the IP info and store country and city in the database in user_session table in new fields
   private IpInfoDetailResponse ipInfo;
@@ -26,6 +30,7 @@ public class SearchJobOrder {
     this.searchCompanies = jobOrder.isSearchCompanies();
     this.searchByUserPrompt = jobOrder.isSearchByPrompts();
     this.model = jobOrder.getAiModel();
+    this.ignoredURLs = jobOrder.getUser().getJobs().stream().map(UserJobEntity::getUrl).toList();
   }
 
 }

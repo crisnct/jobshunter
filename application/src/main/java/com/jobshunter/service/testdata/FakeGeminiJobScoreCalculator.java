@@ -1,6 +1,6 @@
 package com.jobshunter.service.testdata;
 
-import com.jobshunter.model.GeminiJobScoreRequest;
+import com.jobshunter.model.JobScoreRequest;
 import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.clients.JobScoreCalculatorClient;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
@@ -16,18 +16,18 @@ import org.springframework.stereotype.Component;
 @PackageExpected("com.jobshunter.service.clients.gemini")
 @ConditionalOnProperty(name = "gemini.enabled", havingValue = "false")
 @RequiredArgsConstructor
-public non-sealed class FakeGeminiJobScoreCalculator implements JobScoreCalculatorClient<GeminiJobScoreRequest> {
+public non-sealed class FakeGeminiJobScoreCalculator implements JobScoreCalculatorClient {
 
   @Override
   @RateLimiter(name = "geminiLimiter")
   @CircuitBreaker(name = "geminiCircuitBreaker", fallbackMethod = "fallbackComputeScore")
   @Bulkhead(name = "geminiBulkhead")
-  public int computeScore(GeminiJobScoreRequest request) {
-    return request.getResumeFileId().charAt(0) % 15 + 85;
+  public int computeScore(JobScoreRequest request) {
+    return request.getJobDescription().charAt(0) % 15 + 85;
   }
 
   @SuppressWarnings("unused")
-  private int fallbackComputeScore(GeminiJobScoreRequest request, Throwable t) {
+  private int fallbackComputeScore(JobScoreRequest request, Throwable t) {
     log.error("{} call short-circuited/bulkheaded: {}", getClass().getSimpleName(), t.getMessage());
     return -1;
   }

@@ -3,13 +3,13 @@ package com.jobshunter.service.clients.gpt;
 import com.jobshunter.ApplicationProperties;
 import com.jobshunter.database.entities.UserRemoteCvEntity;
 import com.jobshunter.dto.exceptions.ValidationException;
-import com.jobshunter.dto.gptRequest.Gpt4ScorePayload;
+import com.jobshunter.dto.gptRequest.GptScorePayload;
 import com.jobshunter.dto.gptRequest.Reasoning;
 import com.jobshunter.dto.gptResponse.ContentItem;
 import com.jobshunter.dto.gptResponse.GptResponse;
 import com.jobshunter.dto.gptResponse.OutputItem;
 import com.jobshunter.model.EngineType;
-import com.jobshunter.model.GptJobScoreRequest;
+import com.jobshunter.model.JobScoreRequest;
 import com.jobshunter.model.PromptType;
 import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.TemplateRenderer;
@@ -32,9 +32,7 @@ import org.springframework.web.client.RestClient;
 @PackageExpected("com.jobshunter.service.clients.gpt")
 @ConditionalOnProperty(name = "gpt.enabled", havingValue = "true")
 @RequiredArgsConstructor
-public non-sealed class GptJobScoreCalculatorClientImpl implements JobScoreCalculatorClient<GptJobScoreRequest> {
-
-  private static final String AI_MODEL = "gpt-5-nano";
+public non-sealed class GptJobScoreCalculatorClientImpl implements JobScoreCalculatorClient {
 
   private static final URI DEFAULT_URI = URI.create("https://api.openai.com/v1/responses");
 
@@ -48,17 +46,16 @@ public non-sealed class GptJobScoreCalculatorClientImpl implements JobScoreCalcu
   @RateLimiter(name = "gptLimiter")
   @CircuitBreaker(name = "gptCircuitBreaker", fallbackMethod = "fallbackComputeScore")
   @Bulkhead(name = "gptBulkhead")
-  public int computeScore(GptJobScoreRequest request) {
+  public int computeScore(JobScoreRequest request) {
     try {
       String userPrompt = templateRenderer.getPrompt(PromptType.USER_PROMPT_MATCH_SCORE, "description", request.getJobDescription());
       UserRemoteCvEntity remoteCV = request.getUserCV().getUser().getRemoteCvs().stream()
           .filter(p -> p.getProvider() == EngineType.GPT).findAny()
           .orElseThrow(() -> new ValidationException("No GPT CV found for user " + request.getUserCV().getUser().getUsername()));
 
-      Gpt4ScorePayload payload = Gpt4ScorePayload.builder()
-          .model(AI_MODEL)
+      GptScorePayload payload = GptScorePayload.builder(request.getModel())
           .temperature(DEFAULT_SCORE_TEMPERATURE)
-          .max_output_tokens(16)
+          .maxOutputTokens(16)
           .reasoning(new Reasoning(REASONING_SCORING))
           .store(false)
           .addSystemPrompt(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_MATCH_SCORE))
@@ -98,7 +95,7 @@ public non-sealed class GptJobScoreCalculatorClientImpl implements JobScoreCalcu
   }
 
   @SuppressWarnings("unused")
-  private int fallbackComputeScore(GptJobScoreRequest request, Throwable t) {
+  private int fallbackComputeScore(JobScoreRequest request, Throwable t) {
     log.error("{} call short-circuited/bulkheaded: {}", getClass().getSimpleName(), t.getMessage());
     return -1;
   }

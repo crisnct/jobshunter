@@ -36,7 +36,6 @@ public class GrokJobHunting extends AiConversationJobHunting<GrokJobSearchReques
         .orElseThrow(() -> new ValidationException("No GROK CV found for user " + order.getUser().getId()));
 
     GrokJobSearchRequest request = new GrokJobSearchRequest(order);
-    request.setSearchCompanies(false);
     request.setPromptId(prompt.getId());
     request.setFileId(remoteCV.getFileId());
     request.setStoreConversation(true);
@@ -51,7 +50,6 @@ public class GrokJobHunting extends AiConversationJobHunting<GrokJobSearchReques
         .orElseThrow(() -> new ValidationException("No GROK CV found for user " + order.getUser().getId()));
 
     GrokJobSearchRequest request = new GrokJobSearchRequest(order);
-    request.setSearchCompanies(true);
     request.setFileId(remoteCV.getFileId());
     return request;
   }

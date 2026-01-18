@@ -1,6 +1,7 @@
 package com.jobshunter.service.clients.gemini;
 
 import com.jobshunter.ApplicationProperties;
+import com.jobshunter.database.entities.AiModelEntity;
 import com.jobshunter.dto.CompanyDto;
 import com.jobshunter.dto.geminiRequest.GeminiJobsPayload;
 import com.jobshunter.dto.geminiRequest.GenerationConfig;
@@ -54,13 +55,14 @@ public non-sealed class GeminiV1JobSearchImpl implements AiJobsClient<GeminiJobS
   @RateLimiter(name = "geminiLimiter")
   public AiClientResponse searchJobs(GeminiJobSearchRequest request) {
     try {
-      GenerationConfig generationConfig = GenerationConfig.builder(request.getModel())
+      AiModelEntity model = request.getOrder().getModel();
+      GenerationConfig generationConfig = GenerationConfig.builder(model)
           .temperature(DEFAULT_TEMPERATURE)
           .maxOutputTokens(3500)
           .thinkingConfig(new ThinkingConfig(128))//how reasoning it is
           .build();
 
-      GeminiJobsPayload payload = GeminiJobsPayload.builder(request.getModel())
+      GeminiJobsPayload payload = GeminiJobsPayload.builder(model)
                     .addSystemInstruction(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_JOB_SEARCH,
               "blacklist",
               properties.getJobsHunter().getBlacklist()
@@ -71,8 +73,7 @@ public non-sealed class GeminiV1JobSearchImpl implements AiJobsClient<GeminiJobS
           .build();
 
       GeminiGenerateContentResponse response = restClient.post()
-          .uri(URI.create(String.format(GEMINI_URI, request.getModel().getModel(),
-              properties.getGemini().getApiKey())))
+          .uri(URI.create(String.format(GEMINI_URI, model.getModel(), properties.getGemini().getApiKey())))
           .contentType(MediaType.APPLICATION_JSON)
           .body(payload)
           .retrieve()

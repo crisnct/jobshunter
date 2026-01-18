@@ -83,16 +83,12 @@ public record GrokJobsPayload(
     }
 
     public GrokJobsPayloadBuilder store(Boolean store) {
-      if (!store || isEnabledCapability(AiCapabilityType.CHAIN_CONVERSATIONS)) {
-        this.store = store;
-      }
+      this.store = store;
       return this;
     }
 
     public GrokJobsPayloadBuilder previousResponseId(String previousResponseId) {
-      if (isEnabledCapability(AiCapabilityType.CHAIN_CONVERSATIONS)) {
-        this.previousResponseId = previousResponseId;
-      }
+      this.previousResponseId = previousResponseId;
       return this;
     }
 
@@ -129,9 +125,7 @@ public record GrokJobsPayload(
     }
 
     public GrokJobsPayloadBuilder addAssistantPrompt(String prompt) {
-      if (isEnabledCapability(AiCapabilityType.CHAIN_CONVERSATIONS)) {
-        input.add(new AssistantInput("assistant", prompt));
-      }
+      input.add(new AssistantInput("assistant", prompt));
       return this;
     }
 

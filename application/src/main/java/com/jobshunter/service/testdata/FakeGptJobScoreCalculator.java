@@ -1,6 +1,6 @@
 package com.jobshunter.service.testdata;
 
-import com.jobshunter.model.GptJobScoreRequest;
+import com.jobshunter.model.JobScoreRequest;
 import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.clients.JobScoreCalculatorClient;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
@@ -14,18 +14,18 @@ import org.springframework.stereotype.Component;
 @Component("GptJobScoreCalculator")
 @PackageExpected("com.jobshunter.service.clients.gpt")
 @ConditionalOnProperty(name = "gpt.enabled", havingValue = "false")
-public non-sealed class FakeGptJobScoreCalculator implements JobScoreCalculatorClient<GptJobScoreRequest> {
+public non-sealed class FakeGptJobScoreCalculator implements JobScoreCalculatorClient {
 
   @Override
   @RateLimiter(name = "gptLimiter")
   @CircuitBreaker(name = "gptCircuitBreaker", fallbackMethod = "fallbackComputeScore")
   @Bulkhead(name = "gptBulkhead")
-  public int computeScore(GptJobScoreRequest request) {
+  public int computeScore(JobScoreRequest request) {
     return request.getJobDescription().charAt(0) % 15 + 85;
   }
 
   @SuppressWarnings("unused")
-  private int fallbackComputeScore(GptJobScoreRequest request, Throwable t) {
+  private int fallbackComputeScore(JobScoreRequest request, Throwable t) {
     log.error("{} call short-circuited/bulkheaded: {}", getClass().getSimpleName(), t.getMessage());
     return -1;
   }

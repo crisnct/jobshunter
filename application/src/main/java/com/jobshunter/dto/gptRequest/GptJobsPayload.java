@@ -69,9 +69,7 @@ public record GptJobsPayload(
     }
 
     public GptJobsPayloadBuilder store(Boolean store) {
-      if (!store || isEnabledCapability(AiCapabilityType.CHAIN_CONVERSATIONS)) {
-        this.store = store;
-      }
+      this.store = store;
       return this;
     }
 
@@ -116,18 +114,14 @@ public record GptJobsPayload(
     }
 
     public GptJobsPayloadBuilder addAssistantPrompt(String prompt) {
-      if (isEnabledCapability(AiCapabilityType.CHAIN_CONVERSATIONS)) {
-        input.add(new AssistantInput("assistant", prompt));
-      }
+      input.add(new AssistantInput("assistant", prompt));
       return this;
     }
 
     public GptJobsPayloadBuilder addDeveloperPrompt(String userPrompt) {
-      if (isEnabledCapability(AiCapabilityType.DEVELOPER_PROMPT)) {
-        input.add(new Input("developer", List.of(
-            new InputMessage("input_text", userPrompt)
-        )));
-      }
+      input.add(new Input("developer", List.of(
+          new InputMessage("input_text", userPrompt)
+      )));
       return this;
     }
 

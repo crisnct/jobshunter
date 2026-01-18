@@ -25,14 +25,7 @@ public class JobsStateMachine {
       JobFetchProcessor fetchPageProcessor,
       JobBasicCheckProcessor fakeUrlFilterProcessor,
       JobBodyExtractorProcessor bodyExtractorProcessor,
-
-      @Qualifier("jobScoringGemini")
-      JobScoring<?> geminiScoringProcessor,
-      @Qualifier("jobScoringGpt")
-      JobScoring<?> gptScoringProcessor,
-      @Qualifier("jobScoringGrok")
-      JobScoring<?> grokScoringProcessor,
-
+      JobScoring scoringProcessor,
       @Qualifier("urlFetchRestClientExecutor") Executor urlFetchRestClientExecutor,
       @Qualifier("geminiSearchExecutor") Executor geminiExecutor,
       @Qualifier("grokSearchExecutor") Executor grokExecutor,
@@ -40,12 +33,20 @@ public class JobsStateMachine {
       @Qualifier("jobProcessingExecutor") Executor jobProcessingExecutor
   ) {
     this.jobProcessingExecutor = jobProcessingExecutor;
+
+    Executor scoringExecutor = (switch (JobScoring.ENGINE_SELECTION.type()) {
+      case GEMINI -> geminiExecutor;
+      case GROK -> grokExecutor;
+      case GPT -> gptExecutor;
+      default -> throw new IllegalStateException("Unexpected value: " + JobScoring.ENGINE_SELECTION.type());
+    });
+
     this.pipelineSteps = List.of(
         new PipelineStep(JobPhase.BASIC_CHECK, fakeUrlFilterProcessor, jobProcessingExecutor),
         new PipelineStep(JobPhase.FETCH, fetchPageProcessor, urlFetchRestClientExecutor),
         new PipelineStep(JobPhase.BODY_EXTRACTION, bodyExtractorProcessor, jobProcessingExecutor),
         new PipelineStep(JobPhase.VALIDATION, validatorProcessor, jobProcessingExecutor),
-        new PipelineStep(JobPhase.SCORING, gptScoringProcessor, gptExecutor)
+        new PipelineStep(JobPhase.SCORING, scoringProcessor, scoringExecutor)
     );
   }
 
