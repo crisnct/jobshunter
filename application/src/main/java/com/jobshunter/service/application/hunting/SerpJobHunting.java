@@ -15,7 +15,7 @@ import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
-public class SerpJobHunting extends GenericJobHunting<SearchWithSerpRequest> {
+public final class SerpJobHunting extends GenericJobHunting<SearchWithSerpRequest> {
 
   private final JsonMapper mapper;
 

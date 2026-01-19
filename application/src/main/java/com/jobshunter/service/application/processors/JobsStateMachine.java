@@ -21,11 +21,11 @@ public class JobsStateMachine {
   private final List<PipelineStep> pipelineSteps;
 
   public JobsStateMachine(
-      JobValidator validatorProcessor,
+      JobValidatorProcessor validatorProcessor,
       JobFetchProcessor fetchPageProcessor,
       JobBasicCheckProcessor fakeUrlFilterProcessor,
       JobBodyExtractorProcessor bodyExtractorProcessor,
-      JobScoring scoringProcessor,
+      JobScoringProcessor scoringProcessor,
       @Qualifier("urlFetchRestClientExecutor") Executor urlFetchRestClientExecutor,
       @Qualifier("geminiSearchExecutor") Executor geminiExecutor,
       @Qualifier("grokSearchExecutor") Executor grokExecutor,
@@ -34,11 +34,11 @@ public class JobsStateMachine {
   ) {
     this.jobProcessingExecutor = jobProcessingExecutor;
 
-    Executor scoringExecutor = (switch (JobScoring.ENGINE_SELECTION.type()) {
+    Executor scoringExecutor = (switch (JobScoringProcessor.ENGINE_SELECTION.type()) {
       case GEMINI -> geminiExecutor;
       case GROK -> grokExecutor;
       case GPT -> gptExecutor;
-      default -> throw new IllegalStateException("Unexpected value: " + JobScoring.ENGINE_SELECTION.type());
+      default -> throw new IllegalStateException("Unexpected value: " + JobScoringProcessor.ENGINE_SELECTION.type());
     });
 
     this.pipelineSteps = List.of(

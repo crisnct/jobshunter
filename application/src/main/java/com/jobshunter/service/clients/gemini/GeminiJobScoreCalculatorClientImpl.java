@@ -55,9 +55,8 @@ public non-sealed class GeminiJobScoreCalculatorClientImpl implements JobScoreCa
   public int computeScore(JobScoreRequest request) {
     try {
       GenerationConfig generationConfig = GenerationConfig.builder(request.getModel())
-          .temperature(DEFAULT_SCORE_TEMPERATURE)
           .maxOutputTokens(20)
-          .thinkingConfig(new ThinkingConfig(256))//how reasoning it is
+          .thinkingConfig(new ThinkingConfig(1024))//how reasoning it is
           .build();
 
       UserRemoteCvEntity remoteCV = request.getUserCV().getUser().getRemoteCvs().stream()

@@ -2,17 +2,19 @@ package com.jobshunter.dto.gptRequest;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.jobshunter.database.entities.AiModelEntity;
+import com.jobshunter.dto.exceptions.BusinessException;
 import com.jobshunter.model.AiCapabilityType;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 
 @Builder
 public record GptScorePayload(
     String model,
     Reasoning reasoning,
-    double temperature,
+    Double temperature,
     Boolean store,
     @JsonProperty("max_output_tokens")
     int maxOutputTokens,
@@ -44,6 +46,13 @@ public record GptScorePayload(
       return this;
     }
 
+    public GptScorePayloadBuilder temperature(Double temperature) {
+      if (isEnabledCapability(AiCapabilityType.TEMPERATURE)) {
+        this.temperature = temperature;
+      }
+      return this;
+    }
+
     public GptScorePayloadBuilder addSystemPrompt(String systemPrompt) {
       if (isEnabledCapability(AiCapabilityType.SYSTEM_PROMPT)) {
         input.add(new Input("system", List.of(new InputMessage("input_text", systemPrompt))));
@@ -68,6 +77,21 @@ public record GptScorePayload(
       }
       return enabledCapability;
     }
+
+    public GptScorePayload build() {
+      if (reasoning != null && temperature != null) {
+          throw new BusinessException(HttpStatus.NOT_FOUND, "TEMPERATURE and REASONING can not be set both for GPT models.");
+      }
+      return new GptScorePayload(
+          model,
+          reasoning,
+          temperature,
+          store,
+          maxOutputTokens,
+          input
+      );
+    }
+
   }
 
 }

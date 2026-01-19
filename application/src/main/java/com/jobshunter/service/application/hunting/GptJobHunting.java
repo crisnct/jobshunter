@@ -17,7 +17,7 @@ import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
-public class GptJobHunting extends AiConversationJobHunting<GptJobSearchRequest> {
+public final class GptJobHunting extends AiConversationJobHunting<GptJobSearchRequest> {
 
   public GptJobHunting(
       @Qualifier("gptSearchExecutor") Executor gptSearchExecutor,

@@ -14,9 +14,7 @@ public sealed interface JobScoreCalculatorClient
     permits GeminiJobScoreCalculatorClientImpl, GptJobScoreCalculatorClientImpl, GrokJobScoreCalculatorClientImpl, FakeGeminiJobScoreCalculator,
     FakeGptJobScoreCalculator, FakeGrokJobScoreCalculator {
 
-  double DEFAULT_SCORE_TEMPERATURE = 0.25;
-
-  String REASONING_SCORING = "medium";
+  String REASONING_SCORING = "low";
 
   int computeScore(JobScoreRequest request);
 

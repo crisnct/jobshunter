@@ -14,6 +14,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hc.client5.http.protocol.HttpClientContext;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -62,12 +63,29 @@ public class BrowserSimulator {
     return openPageAsync(url, restClientNoRedirection);
   }
 
-  public CompletionStage<ResponseEntity<String>> openPageAsyncRedirect(String url) {
-    return openPageAsync(url, restClientWithRedirection);
+  public CompletionStage<ResponseEntity<String>> openPageAsyncRedirect(String url, HttpClientContext httpContext) {
+    return openPageAsync(url, restClientWithRedirection, httpContext);
   }
 
   private CompletionStage<ResponseEntity<String>> openPageAsync(String url, RestClient restClient) {
-    return executor.submit(url, () -> openPageSyncRestClient(url, restClient))
+    return openPageAsync(url, restClient, null);
+  }
+
+  private CompletionStage<ResponseEntity<String>> openPageAsync(String url, RestClient restClient, HttpClientContext httpContext) {
+    // Pass httpContext through executor by setting ThreadLocal in executor thread
+    return executor.submit(url, () -> {
+          try {
+            if (httpContext != null) {
+              RedirectFetchPage.setThreadLocalContext(httpContext);
+            }
+            return openPageSyncRestClient(url, restClient);
+          } finally {
+            // Clean up ThreadLocal in executor thread
+            if (httpContext != null) {
+              RedirectFetchPage.removeThreadLocalContext();
+            }
+          }
+        })
         .orTimeout(TIMEOUT, TimeUnit.SECONDS)
         .handle((response, error) -> {
           if (error == null && response != null && response.getStatusCode().is2xxSuccessful()) {

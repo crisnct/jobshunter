@@ -21,13 +21,15 @@ import com.jobshunter.model.JobPhase;
 import com.jobshunter.service.UrlAffinityExecutor;
 import com.jobshunter.service.application.hunting.AiConversationStateMachine;
 import com.jobshunter.service.application.notifiers.EmailNotifierService;
-import com.jobshunter.service.application.processors.JobBodyExtractorProcessor;
 import com.jobshunter.service.application.processors.JobBasicCheckProcessor;
+import com.jobshunter.service.application.processors.JobBodyExtractorProcessor;
 import com.jobshunter.service.application.processors.JobFetchProcessor;
-import com.jobshunter.service.application.processors.JobScoring;
-import com.jobshunter.service.application.processors.JobValidator;
+import com.jobshunter.service.application.processors.JobScoringProcessor;
+import com.jobshunter.service.application.processors.JobValidatorProcessor;
 import com.jobshunter.service.clients.SmtpMailtrapClient;
 import com.jobshunter.service.clients.browser.BrowserSimulator;
+import com.jobshunter.service.clients.browser.HttpFetchResult;
+import com.jobshunter.service.clients.browser.RedirectFetchPage;
 import io.jsonwebtoken.lang.Assert;
 import java.util.ArrayList;
 import java.util.List;
@@ -86,7 +88,7 @@ public class IntegrationTests {
   private SmtpMailtrapClient smtpMailtrapClient;
 
   @MockitoBean
-  private JobScoring jobScoring;
+  private JobScoringProcessor jobScoring;
 
   @MockitoSpyBean
   private AiConversationStateMachine aiConversationStateMachine;
@@ -95,13 +97,16 @@ public class IntegrationTests {
   private BrowserSimulator browserSimulator;
 
   @Autowired
+  private RedirectFetchPage redirectFetchPage;
+
+  @Autowired
   private UrlAffinityExecutor executor;
 
   @Autowired
   private JobBasicCheckProcessor jobBasicCheckProcessor;
 
   @Autowired
-  private JobValidator jobValidator;
+  private JobValidatorProcessor jobValidator;
 
   @Autowired
   private JobFetchProcessor jobFetchProcessor;
@@ -236,6 +241,13 @@ public class IntegrationTests {
 
   @Test
   @Disabled
+  public void testRedirection() {
+    HttpFetchResult result = redirectFetchPage.fetch("https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEdoYtUm9AVmPKK7dy51GXRPMD604I35SzG8yFmb14kFecBtnRDL2v3HF1UUZB5YtpuBoU0W4pMUnwCQ-HDyua_hdmy4xXDWcRMfv-MkE7zSlo3rGb7GggEEHnwnRKVDakWl387P0X1zlcQdcL9wqndBKkp4ifvAUyS7UlnUv1c3h9yo0MXPs1_Q6H7ziAsG3Cu");
+    System.out.println(result.finalUrl());
+  }
+
+  @Test
+  @Disabled
   public void testInvalidRedirectedLink() {
     List<CompletionStage<ResponseEntity<String>>> list = new ArrayList<>();
     list.add(browserSimulator.openPageAsync("https://angel.co/company/techstartup/jobs/senior-java-developer-remote-321654987"));
@@ -244,7 +256,7 @@ public class IntegrationTests {
       completableFuture.join();
       try {
         ResponseEntity<String> respBody = completableFuture.get();
-        System.out.println("code="+respBody.getStatusCode()+", body="+respBody.getBody());
+        System.out.println("code=" + respBody.getStatusCode() + ", body=" + respBody.getBody());
       } catch (InterruptedException e) {
         throw new RuntimeException(e);
       } catch (ExecutionException e) {
@@ -260,8 +272,10 @@ public class IntegrationTests {
 
   @Test
   @Disabled
-  public void testJobFakelUrFilter(){
-    Job job = new Job(-1, "https://www.bestjobs.eu/en/job/accounts-receivable-accountant-with-german-cabs-continental-automotive-romania-srl-timisoara-5b5f5e5e-5b5f-5e5e-5b5f-5b5f5e5e5b5f", null );
+  public void testJobFakelUrFilter() {
+    Job job = new Job(-1,
+        "https://www.bestjobs.eu/en/job/accounts-receivable-accountant-with-german-cabs-continental-automotive-romania-srl-timisoara-5b5f5e5e-5b5f-5e5e-5b5f-5b5f5e5e5b5f",
+        null);
 
     JobContext jc = new JobContext(job, null);
     jc = jobBasicCheckProcessor.processAsync(jc);

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.jobshunter.database.entities.AiModelEntity;
+import com.jobshunter.dto.exceptions.BusinessException;
 import com.jobshunter.dto.gptRequest.tools.Tools;
 import com.jobshunter.model.AiCapabilityType;
 import java.util.ArrayList;
@@ -13,6 +14,7 @@ import java.util.Map;
 import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
+import org.springframework.http.HttpStatus;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -147,6 +149,24 @@ public record GptJobsPayload(
         this.tools.add(tool);
       }
       return this;
+    }
+
+    public GptJobsPayload build() {
+      if (reasoning != null && temperature != null) {
+        throw new BusinessException(HttpStatus.NOT_FOUND, "TEMPERATURE and REASONING can not be set both for GPT models.");
+      }
+      return new GptJobsPayload(
+          model,
+          temperature,
+          reasoning,
+          maxOutputTokens,
+          tools.isEmpty() ? null : tools,
+          instructions,
+          store,
+          previousResponseId,
+          text,
+          input
+      );
     }
 
   }

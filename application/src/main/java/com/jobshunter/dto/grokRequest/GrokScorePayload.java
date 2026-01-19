@@ -1,18 +1,21 @@
 package com.jobshunter.dto.grokRequest;
 
 import com.jobshunter.database.entities.AiModelEntity;
+import com.jobshunter.dto.exceptions.BusinessException;
+import com.jobshunter.dto.gptRequest.GptScorePayload;
 import com.jobshunter.model.AiCapabilityType;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 
 @Builder
 public record GrokScorePayload(
     String model,
     Reasoning reasoning,
     Boolean store,
-    double temperature,
+    Double temperature,
     int max_output_tokens,
     List<Input> input
 ) {
@@ -48,6 +51,13 @@ public record GrokScorePayload(
       return this;
     }
 
+    public GrokScorePayloadBuilder temperature(Double temperature) {
+      if (isEnabledCapability(AiCapabilityType.TEMPERATURE)) {
+        this.temperature = temperature;
+      }
+      return this;
+    }
+
     public GrokScorePayloadBuilder addUserPrompt(String userPrompt, String fileId) {
       final List<InputObj> dataList = new ArrayList<>();
       dataList.add(new InputMessage("input_text", userPrompt));
@@ -64,6 +74,20 @@ public record GrokScorePayload(
         log.debug(type + " capability is not supported by model " + aiModel.getModel());
       }
       return enabledCapability;
+    }
+
+    public GrokScorePayload build() {
+      if (reasoning != null && temperature != null) {
+        throw new BusinessException(HttpStatus.NOT_FOUND, "TEMPERATURE and REASONING can not be set both for GPT models.");
+      }
+      return new GrokScorePayload(
+          model,
+          reasoning,
+          store,
+          temperature,
+          max_output_tokens,
+          input
+      );
     }
 
   }

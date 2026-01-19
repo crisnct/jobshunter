@@ -17,7 +17,7 @@ import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
-public class GrokJobHunting extends AiConversationJobHunting<GrokJobSearchRequest> {
+public final class GrokJobHunting extends AiConversationJobHunting<GrokJobSearchRequest> {
 
   public GrokJobHunting(
       @Qualifier("grokSearchExecutor") Executor executor,

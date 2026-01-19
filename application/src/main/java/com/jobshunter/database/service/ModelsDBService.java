@@ -24,8 +24,14 @@ public class ModelsDBService {
     return aiModelRepository.findAll();
   }
 
+  @Transactional(readOnly = true)
   public Optional<AiModelEntity> getModel(EngineType provider, String model) {
-    return aiModelRepository.findByProviderAndModel(provider, model);
+    return aiModelRepository
+        .findByProviderAndModel(provider, model)
+        .map(entity -> {
+          initialize(entity);
+          return entity;
+        });
   }
 
   public List<AiCapabilityType> getCapabilities(AiModelEntity model) {

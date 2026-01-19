@@ -54,8 +54,7 @@ public non-sealed class GptJobScoreCalculatorClientImpl implements JobScoreCalcu
           .orElseThrow(() -> new ValidationException("No GPT CV found for user " + request.getUserCV().getUser().getUsername()));
 
       GptScorePayload payload = GptScorePayload.builder(request.getModel())
-          .temperature(DEFAULT_SCORE_TEMPERATURE)
-          .maxOutputTokens(16)
+          .maxOutputTokens(20)
           .reasoning(new Reasoning(REASONING_SCORING))
           .store(false)
           .addSystemPrompt(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_MATCH_SCORE))

@@ -6,6 +6,7 @@ import com.jobshunter.service.application.UserMessagesFactory;
 import com.jobshunter.service.application.UserMessagesFactory.MessageTemplate;
 import com.jobshunter.service.clients.RestMailtrapClient;
 import com.jobshunter.service.clients.SmtpMailtrapClient;
+import com.jobshunter.service.clients.tinyurl.TinyUrlClient;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -22,6 +23,7 @@ public final class EmailNotifierService implements ServiceNotifier {
   private final SmtpMailtrapClient emailClient;
   private final RestMailtrapClient restMailtrapClient;
   private final UserMessagesFactory userMessagesFactory;
+  private final TinyUrlClient tinyUrlClient;
 
   public void sendCustomEmail(String to, String subject, String body, MultipartFile attachment) {
     emailClient.sendEmail(List.of(to), subject, body, attachment);
@@ -36,7 +38,30 @@ public final class EmailNotifierService implements ServiceNotifier {
 
   @Override
   public void sendUsingTemplate(List<Job> jobs, UserEntity user) {
-    restMailtrapClient.sendEmailWithNewJobs(user.getUsername(), user.getEmail(), ServiceNotifier.formatJobs(jobs));
+    String body = formatJobs(jobs, false);
+    if (body.length() >= 10000) {
+      body = formatJobs(jobs, true);
+    }
+    restMailtrapClient.sendEmailWithNewJobs(user.getUsername(), user.getEmail(), body);
+  }
+
+  private String formatJobs(List<Job> jobs, boolean shortenUrls) {
+    StringBuilder builder = new StringBuilder();
+    for (int i = 0; i < jobs.size(); i++) {
+      if (i > 0) {
+        builder.append("\n\n");
+      }
+      Job job = jobs.get(i);
+      builder.append(i + 1)
+          .append(".  Match: ")
+          .append(job.getScore())
+          .append("%")
+          .append(", Source: ")
+          .append(job.getSource())
+          .append(", URL: ")
+          .append(shortenUrls ? tinyUrlClient.shorten(job.getUrl()) : job.getUrl());
+    }
+    return builder.toString();
   }
 
   public void sendVerificationToken(UserEntity user) {

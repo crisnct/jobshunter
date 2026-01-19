@@ -57,7 +57,7 @@ public non-sealed class GrokV1JobSearchImpl implements
     DeleteConvAiClient {
 
   public static final URI DEFAULT_URI = URI.create("https://api.x.ai/v1/responses");
-  private static final double DEFAULT_TEMPERATURE = 0.2;
+
   private final ApplicationProperties properties;
 
   private final RestClient restClient;
@@ -75,12 +75,11 @@ public non-sealed class GrokV1JobSearchImpl implements
   public AiClientResponse searchJobs(GrokJobSearchRequest request) {
     try {
       GrokJobsPayloadBuilder payloadBuilder = GrokJobsPayload.builder(request.getOrder().getModel())
-          .temperature(DEFAULT_TEMPERATURE)
+          .maxOutputTokens(1200)
           .reasoning(new Reasoning(REASONING_JOB_SEARCH))
           .store(request.getStoreConversation())
           .previousResponseId(request.getPrevResponseId())
           .addTools(Tools.builder().setWebSearch().build())
-          .maxOutputTokens(7000)
           .addUserPrompt(request.getUserPrompt() + templateRenderer.getPrompt(PromptType.USER_PROMPT_JOB_BLACKLISTED,
               "blacklist",
               properties.getJobsHunter().getBlacklist()
@@ -124,10 +123,9 @@ public non-sealed class GrokV1JobSearchImpl implements
       userLocation.setCity(user.getCity() != null ? user.getCity() : ipInfo.city());
 
       GrokJobsPayload payload = GrokJobsPayload.builder(request.getOrder().getModel())
-          .temperature(DEFAULT_TEMPERATURE)
           .store(false)
           .reasoning(new Reasoning(REASONING_COMPANY_SEARCH))
-          .maxOutputTokens(2500)
+          .maxOutputTokens(1200)
           .addTools(Tools.builder().setWebSearch().userLocation(userLocation).build())
           .addSystemPrompt(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_COMPANY_SEARCH,
               Map.of("city", user.getCity(),
@@ -175,13 +173,13 @@ public non-sealed class GrokV1JobSearchImpl implements
     );
 
     GrokJobsPayload payload = GrokJobsPayload.builder(request.getOrder().getModel())
-        .temperature(DEFAULT_TEMPERATURE)
-        .maxOutputTokens(7000)
-        .reasoning(new Reasoning(REASONING_JOB_SEARCH))
+        .maxOutputTokens(1200)
+        .reasoning(new Reasoning(REASONING_JOB_SEARCH_BY_COMPANIES))
         .store(request.getStoreConversation())
         .previousResponseId(request.getPrevResponseId())
         .addTools(Tools.builder().setWebSearch().build())
-        .addUserPrompt(userPrompt, request.getFileId())
+        .addSystemPrompt(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_JOBS_BY_COMPANY))
+        .addUserPrompt(userPrompt)
         .build();
 
     GrokResponse response = restClient.post()

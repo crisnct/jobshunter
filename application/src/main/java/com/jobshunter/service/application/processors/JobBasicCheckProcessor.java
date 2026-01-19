@@ -19,7 +19,7 @@ import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
-public class JobBasicCheckProcessor implements JobProcessor {
+public final class JobBasicCheckProcessor implements JobProcessor {
 
   private final Set<String> whitelistDomains;
   private final Set<String> blacklistDomains;
@@ -37,7 +37,7 @@ public class JobBasicCheckProcessor implements JobProcessor {
 
   @Override
   public JobContext processAsync(JobContext context) {
-    log.info("Checking reachability for URL: {}", StringUtils.abbreviate(context.getJob().getUrl(), 50));
+    log.info("Checking reachability for URL: {}", context.getJob().getUrl());
     String host = extractHost(context);
     context.setHost(host);
     if (blacklistDomains.contains(host)) {

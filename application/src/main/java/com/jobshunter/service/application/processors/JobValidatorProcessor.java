@@ -15,11 +15,11 @@ import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
-public class JobValidator implements JobProcessor {
+public final class JobValidatorProcessor implements JobProcessor {
 
   private List<Pattern> expiredJobsPatterns;
 
-  public JobValidator(
+  public JobValidatorProcessor(
       ApplicationProperties properties
   ) {
     expiredJobsPatterns = new ArrayList<>();

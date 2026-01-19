@@ -58,7 +58,6 @@ public non-sealed class GptV1JobSearchImpl implements
     DeleteConvAiClient {
 
   public static final URI DEFAULT_URI = URI.create("https://api.openai.com/v1/responses");
-  private static final double DEFAULT_TEMPERATURE = 0.2;
 
   private final ApplicationProperties properties;
 
@@ -86,11 +85,10 @@ public non-sealed class GptV1JobSearchImpl implements
       userLocation.setCity(order.getUser().getCity() != null ? order.getUser().getCity() : ipInfo.city());
 
       GptJobsPayload payload = GptJobsPayload.builder(order.getModel())
-          .temperature(DEFAULT_TEMPERATURE)
           .reasoning(new Reasoning(REASONING_JOB_SEARCH))
           .store(request.getStoreConversation())
           .previousResponseId(request.getPrevResponseId())
-          .maxOutputTokens(3500)
+          .maxOutputTokens(1200)
           .addTools(Tools.builder().setWebSearch().userLocation(userLocation).build())
           .instructions(templateRenderer.getPrompt(PromptType.SYSTEM_INSTRUCTIONS))
           .addSystemPrompt(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_JOB_SEARCH,
@@ -137,8 +135,7 @@ public non-sealed class GptV1JobSearchImpl implements
       userLocation.setCity(user.getCity() != null ? user.getCity() : ipInfo.city());
 
       GptJobsPayload payload = GptJobsPayload.builder(request.getOrder().getModel())
-          .temperature(DEFAULT_TEMPERATURE)
-          .maxOutputTokens(2500)
+          .maxOutputTokens(1200)
           .store(false)
           .reasoning(new Reasoning(REASONING_COMPANY_SEARCH))
           .addTools(Tools.builder().setWebSearch().userLocation(userLocation).build())
@@ -183,17 +180,13 @@ public non-sealed class GptV1JobSearchImpl implements
         "companies", StringUtils.join(group.stream().map(CompanyDto::companyName).toList())
     );
     GptJobsPayload payload = GptJobsPayload.builder(request.getOrder().getModel())
-        .temperature(DEFAULT_TEMPERATURE)
-        .maxOutputTokens(3500)
+        .maxOutputTokens(1200)
         .store(request.getStoreConversation())
         .previousResponseId(request.getPrevResponseId())
-        .reasoning(new Reasoning(REASONING_JOB_SEARCH))
+        .reasoning(new Reasoning(REASONING_JOB_SEARCH_BY_COMPANIES))
         .addTools(Tools.builder().setWebSearch().build())
-        .addSystemPrompt(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_JOB_SEARCH,
-            "blacklist",
-            properties.getJobsHunter().getBlacklist()
-        ))
-        .addUserPrompt(userPrompt, request.getFileId())
+        .addSystemPrompt(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_JOBS_BY_COMPANY))
+        .addUserPrompt(userPrompt)
         .build();
 
     GptResponse response = restClient.post()

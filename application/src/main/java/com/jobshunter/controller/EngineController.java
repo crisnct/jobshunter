@@ -66,11 +66,14 @@ public class EngineController {
       if (!request.searchWithUserPrompts() && !request.searchCompanies()) {
         throw new ValidationException("At least one of searchWithUserPrompts or searchCompanies must be true");
       }
+    }
+
+    @SuppressWarnings("OptionalGetWithoutIsPresent")
+    UserEntity user = userDBService.getUser(authentication.getName()).get();
+
+    for (JobOrderRequest request : requests) {
       log.info("Creating job order for user: {}, model: {}, searchCompanies: {}, searchWithUserPrompts: {}",
           authentication.getName(), request.model(), request.searchCompanies(), request.searchWithUserPrompts());
-
-      @SuppressWarnings("OptionalGetWithoutIsPresent")
-      UserEntity user = userDBService.getUser(authentication.getName()).get();
       jobOrderDBService.createJobOrder(user, request);
       log.info("Job order created successfully {}-{}", request.model(), request.provider().name());
     }

@@ -145,15 +145,15 @@ public class TestController {
 
       GptJobsPayload payload = GptJobsPayload.builder(aiModel)
           .model(model)
-          .maxOutputTokens(200)
+          .maxOutputTokens(16)
           //.addTools(Tools.builder().setWebSearch().build())
-          //.reasoning(new Reasoning())
-          //.store(true)
+          //.reasoning(new Reasoning("low"))
+          .store(false)
           //.previousResponseId("resp_04290e486a986c7b0069694046f22c8192ace2d3fe38c6f46a")
-         // .temperature(0.2)
+          .temperature(0.2)
           //.addSystemPrompt("Act like a job search assistant and search jobs for me")
           //.setResponseSchema(templateRenderer.getSchema(AiSchemaType.GPT_JSON_SCHEMA_RESPONSE))
-          .addUserPrompt("Search java developers jobs for me", "file-MD9RCwJjJ132DLKRosNQUt")
+          .addUserPrompt("Search java developers jobs for me", "file-GkWtEj4ffrWUxakq22yBLf")
           //.addDeveloperPrompt("Act like a stressed developer")
           .build();
       boolean supported = false;

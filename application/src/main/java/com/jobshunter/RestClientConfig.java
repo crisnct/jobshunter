@@ -110,8 +110,10 @@ public class RestClientConfig {
     HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory(httpClient);
 
     requestFactory.setHttpContextFactory((request, context) -> {
-      if (RedirectFetchPage.HTTP_CONTEXT.isBound()) {
-        return RedirectFetchPage.HTTP_CONTEXT.get();
+      // Get HttpClientContext from ThreadLocal (set in executor thread)
+      HttpClientContext threadLocalCtx = RedirectFetchPage.getThreadLocalContext();
+      if (threadLocalCtx != null) {
+        return threadLocalCtx;
       }
       return HttpClientContext.create();
     });

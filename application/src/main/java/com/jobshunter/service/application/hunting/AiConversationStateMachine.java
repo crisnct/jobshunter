@@ -57,7 +57,7 @@ public class AiConversationStateMachine {
       ConversationCleanup<R> conversationCleanup
   ) {
     return CompletableFuture.supplyAsync(() -> searchExecutor.searchJobsSync(request), executor)
-        .thenCompose(response -> removeDuplicates(request, response))
+        .thenCompose(response -> removeDuplicatesAndIgnored(request, response))
         .thenCompose(response -> validateJobsUrl(request, accumulatedResponse, response))
         .thenCompose(contexts -> collectValidJobs(accumulatedResponse, contexts))
         .thenCompose(contexts -> askAIForRejectedURLs(request, executor, retryCount, accumulatedResponse, contexts,
@@ -72,7 +72,7 @@ public class AiConversationStateMachine {
         .exceptionally(ex -> handlePipelineError(request, accumulatedResponse, ex));
   }
 
-  private <R extends AdditionalEffortRequest> CompletableFuture<AiClientResponse> removeDuplicates(
+  private <R extends AdditionalEffortRequest> CompletableFuture<AiClientResponse> removeDuplicatesAndIgnored(
       R request,
       AiClientResponse response) {
     Set<String> seenUrls = new HashSet<>(request.getOrder().getIgnoredURLs());

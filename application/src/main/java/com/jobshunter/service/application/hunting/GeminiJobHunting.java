@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
-public class GeminiJobHunting extends GenericJobHunting<GeminiJobSearchRequest> {
+public final class GeminiJobHunting extends GenericJobHunting<GeminiJobSearchRequest> {
 
   public GeminiJobHunting(
       @Qualifier("geminiSearchExecutor") Executor geminiSearchExecutor,

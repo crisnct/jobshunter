@@ -2,7 +2,10 @@ package com.jobshunter.service.clients.gemini;
 
 import com.jobshunter.ApplicationProperties;
 import com.jobshunter.database.entities.AiModelEntity;
+import com.jobshunter.database.entities.UserRemoteCvEntity;
 import com.jobshunter.dto.CompanyDto;
+import com.jobshunter.dto.exceptions.ValidationException;
+import com.jobshunter.dto.geminiRequest.FileData;
 import com.jobshunter.dto.geminiRequest.GeminiJobsPayload;
 import com.jobshunter.dto.geminiRequest.GenerationConfig;
 import com.jobshunter.dto.geminiRequest.GoogleSearchTool;
@@ -11,6 +14,7 @@ import com.jobshunter.dto.geminiRequest.ThinkingConfig;
 import com.jobshunter.dto.geminiResponse.GeminiGenerateContentResponse;
 import com.jobshunter.dto.geminiResponse.GeminiGenerateContentResponse.Candidate;
 import com.jobshunter.model.AiClientResponse;
+import com.jobshunter.model.EngineType;
 import com.jobshunter.model.GeminiJobSearchRequest;
 import com.jobshunter.model.Job;
 import com.jobshunter.model.PromptType;
@@ -40,7 +44,9 @@ import org.springframework.web.client.RestClient;
 public non-sealed class GeminiV1JobSearchImpl implements AiJobsClient<GeminiJobSearchRequest, AiClientResponse> {
 
   public static final String GEMINI_URI = "https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent?key=%s";
-  private static final double DEFAULT_TEMPERATURE = 0.3;
+
+  private static final String FILES_URI = "https://generativelanguage.googleapis.com/%s";
+
   private final ApplicationProperties properties;
 
   private final RestClient restClient;
@@ -56,20 +62,28 @@ public non-sealed class GeminiV1JobSearchImpl implements AiJobsClient<GeminiJobS
   public AiClientResponse searchJobs(GeminiJobSearchRequest request) {
     try {
       AiModelEntity model = request.getOrder().getModel();
+
+      UserRemoteCvEntity remoteCV = request.getOrder().getUser().getRemoteCvs().stream()
+          .filter(p -> p.getProvider() == EngineType.GEMINI).findAny()
+          .orElseThrow(() -> new ValidationException("No GEMINI CV found for user" + request.getOrder().getUser().getUsername()));
+
       GenerationConfig generationConfig = GenerationConfig.builder(model)
-          .temperature(DEFAULT_TEMPERATURE)
-          .maxOutputTokens(3500)
-          .thinkingConfig(new ThinkingConfig(128))//how reasoning it is
+          .maxOutputTokens(1200)
+          .thinkingConfig(new ThinkingConfig(512))//how reasoning it is
           .build();
 
+      String systemPrompt = templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_JOB_SEARCH,
+          "blacklist",
+          properties.getJobsHunter().getBlacklist()
+      );
+
+      FileData resume = new FileData(String.format(FILES_URI, remoteCV.getFileId()), MediaType.APPLICATION_PDF_VALUE);
+
       GeminiJobsPayload payload = GeminiJobsPayload.builder(model)
-                    .addSystemInstruction(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_JOB_SEARCH,
-              "blacklist",
-              properties.getJobsHunter().getBlacklist()
-          ))
-          .addUserContent(request.getUserPrompt(), "application/pdf", request.getBase64CV())
           .generationConfig(generationConfig)
           .tools(List.of(new GoogleSearchTool()))
+          .addSystemInstruction(systemPrompt)
+          .addUserContent(request.getUserPrompt(), List.of(resume))
           .build();
 
       GeminiGenerateContentResponse response = restClient.post()

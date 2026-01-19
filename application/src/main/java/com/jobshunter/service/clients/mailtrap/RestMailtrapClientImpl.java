@@ -53,8 +53,7 @@ public non-sealed class RestMailtrapClientImpl implements RestMailtrapClient {
       @NonNull String body
   ) {
     log.info("Sending email to {}", username);
-    MailtrapTemplateRequest payload
-        = new MailtrapTemplateRequest(
+    MailtrapTemplateRequest payload = new MailtrapTemplateRequest(
         new From(configuredFrom, appName),
         List.of(new To(email)),
         templateUUID,

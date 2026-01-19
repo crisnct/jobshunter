@@ -56,7 +56,6 @@ public non-sealed class GrokJobScoreCalculatorClientImpl implements JobScoreCalc
       GrokScorePayload payload = GrokScorePayload.builder(request.getModel())
           .store(false)
           .reasoning(new Reasoning(REASONING_SCORING))
-          .temperature(DEFAULT_SCORE_TEMPERATURE)
           .max_output_tokens(16)
           .addSystemPrompt(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_MATCH_SCORE))
           .addUserPrompt(userPrompt, remoteCV.getFileId())

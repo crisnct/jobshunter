@@ -22,6 +22,8 @@ public sealed interface AiJobsClient
 
   String REASONING_JOB_SEARCH = "low";
 
+  String REASONING_JOB_SEARCH_BY_COMPANIES = "low";
+
   String REASONING_COMPANY_SEARCH = "low";
 
   @NotNull
