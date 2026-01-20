@@ -15,7 +15,6 @@ import com.jobshunter.service.clients.AiJobsClient;
 import com.jobshunter.service.clients.AiJobsCompaniesClient;
 import io.github.resilience4j.ratelimiter.RequestNotPermitted;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -60,7 +59,7 @@ public abstract non-sealed class GenericJobHunting implements JobHunting {
     //Search companies and then for each company search jobs
     CompletableFuture<List<Job>> futures = CompletableFuture.completedFuture(List.of());
     //Search jobs based on user requests
-    boolean isAImodel = Arrays.stream(EngineType.values()).anyMatch(p -> p == order.getModel().getProvider());
+    boolean isAImodel = order.getModel().getProvider().isAiProvider();
     for (UserPromptEntity prompt : order.getUser().getPrompts()) {
       if (((prompt.getEngineCategory() == EngineCategory.AI) && isAImodel)
           || ((prompt.getEngineCategory() != EngineCategory.AI) && !isAImodel)) {

@@ -64,7 +64,6 @@ public non-sealed class GeminiJobScoreCalculatorClientImpl implements JobScoreCa
           .orElseThrow(() -> new ValidationException("No GEMINI CV found for user " + request.getUserCV().getUser().getUsername()));
 
       FileData resume = new FileData(String.format(FILES_URI, remoteCV.getFileId()), MediaType.APPLICATION_PDF_VALUE);
-
       GeminiJobsPayload payload = GeminiJobsPayload.builder(request.getModel())
           .addSystemInstruction(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_MATCH_SCORE))
           .addUserContent(templateRenderer.getPrompt(PromptType.USER_PROMPT_MATCH_SCORE, "description", request.getJobDescription()),

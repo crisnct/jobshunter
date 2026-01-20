@@ -89,9 +89,9 @@ public non-sealed class SerpClientImpl implements AiJobsClient {
   }
 
   @SuppressWarnings("unused")
-  private List<Job> fallbackSearch(@NotNull AIJobSearchRequest request, Throwable t) {
+  private AiClientResponse fallbackSearch(@NotNull AIJobSearchRequest request, Throwable t) {
     log.error("Serp search short-circuited/bulkheaded: {}", t.getMessage());
-    return List.of();
+    return new AiClientResponse();
   }
 
   private SerpJobsResult consolidate(SerpJobsResult results1, SerpJobsResult results2) {

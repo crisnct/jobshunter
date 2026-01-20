@@ -228,6 +228,7 @@ public class UserCvService {
     UserRemoteCvEntity remoteCV = user.getRemoteCvs().stream().filter(p -> p.getProvider() == type)
         .findFirst().orElse(null);
     if (user.getCv() != null
+        && type.isAiProvider()
         && user.getCv().getByteArray() != null
         && (remoteCV == null || (remoteCV.getExpireTime() != null) && remoteCV.getExpireTime().isBefore(Instant.now()))
     ) {

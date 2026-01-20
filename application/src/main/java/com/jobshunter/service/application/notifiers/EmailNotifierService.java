@@ -53,10 +53,10 @@ public final class EmailNotifierService implements ServiceNotifier {
       }
       Job job = jobs.get(i);
       builder.append(i + 1)
-          .append(".  Match: ")
-          .append(job.getScore())
-          .append("%")
-          .append(", Source: ")
+//          .append(".  Match: ")
+//          .append(job.getScore())
+//          .append("%")
+          .append(". Source: ")
           .append(job.getSource())
           .append(", URL: ")
           .append(shortenUrls ? tinyUrlClient.shorten(job.getUrl()) : job.getUrl());

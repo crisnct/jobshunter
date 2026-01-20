@@ -14,4 +14,8 @@ public enum EngineType {
     }
     return null;
   }
+
+  public boolean isAiProvider() {
+    return this != EngineType.SERP;
+  }
 }
