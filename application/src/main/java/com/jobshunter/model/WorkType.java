@@ -1,4 +1,4 @@
-package com.jobshunter.dto.serpRequest;
+package com.jobshunter.model;
 
 public enum WorkType {
   REMOTE,

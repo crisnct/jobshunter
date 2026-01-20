@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.jobshunter.ApplicationProperties;
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.entities.UserJobRoleEntity;
+import com.jobshunter.dto.AIJobSearchRequest;
 import com.jobshunter.dto.CompanyDto;
 import com.jobshunter.dto.CompanyDtoList;
 import com.jobshunter.dto.IpInfoDetailResponse;
@@ -18,7 +19,6 @@ import com.jobshunter.dto.gptResponse.JobSearchResponse;
 import com.jobshunter.dto.gptResponse.OutputItem;
 import com.jobshunter.model.AiClientResponse;
 import com.jobshunter.model.AiSchemaType;
-import com.jobshunter.model.GptJobSearchRequest;
 import com.jobshunter.model.Job;
 import com.jobshunter.model.PromptType;
 import com.jobshunter.model.SearchJobOrder;
@@ -26,13 +26,13 @@ import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.TemplateRenderer;
 import com.jobshunter.service.application.UrlExtractor;
 import com.jobshunter.service.clients.AiJobsClient;
+import com.jobshunter.service.clients.AiJobsCompaniesClient;
 import com.jobshunter.service.clients.DeleteConvAiClient;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import io.jsonwebtoken.lang.Collections;
 import java.net.URI;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -40,7 +40,6 @@ import java.util.Objects;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -53,9 +52,7 @@ import org.springframework.web.client.RestClient;
 @PackageExpected("com.jobshunter.service.clients.gpt")
 @ConditionalOnProperty(name = "gpt.enabled", havingValue = "true")
 @AllArgsConstructor
-public non-sealed class GptV1JobSearchImpl implements
-    AiJobsClient<GptJobSearchRequest, AiClientResponse>,
-    DeleteConvAiClient {
+public non-sealed class GptV1JobSearchImpl implements AiJobsClient, AiJobsCompaniesClient, DeleteConvAiClient {
 
   public static final URI DEFAULT_URI = URI.create("https://api.openai.com/v1/responses");
 
@@ -73,7 +70,7 @@ public non-sealed class GptV1JobSearchImpl implements
   @CircuitBreaker(name = "gptCircuitBreaker", fallbackMethod = "fallbackSearch")
   @RateLimiter(name = "gptLimiter")
   @Bulkhead(name = "gptBulkhead")
-  public AiClientResponse searchJobs(GptJobSearchRequest request) {
+  public AiClientResponse searchJobs(AIJobSearchRequest request) {
     try {
       SearchJobOrder order = request.getOrder();
       IpInfoDetailResponse ipInfo = order.getIpInfo();
@@ -123,7 +120,7 @@ public non-sealed class GptV1JobSearchImpl implements
   @CircuitBreaker(name = "gptCircuitBreaker", fallbackMethod = "fallbackSearchCompanies")
   @RateLimiter(name = "gptLimiter")
   @Bulkhead(name = "gptBulkhead")
-  public List<CompanyDto> searchCompanies(GptJobSearchRequest request) {
+  public List<CompanyDto> searchCompanies(AIJobSearchRequest request) {
     try {
       UserEntity user = request.getOrder().getUser();
       IpInfoDetailResponse ipInfo = request.getOrder().getIpInfo();
@@ -134,22 +131,19 @@ public non-sealed class GptV1JobSearchImpl implements
       userLocation.setCountry(ipInfo.country() != null ? ipInfo.country() : "RO");
       userLocation.setCity(user.getCity() != null ? user.getCity() : ipInfo.city());
 
-      GptJobsPayload payload = GptJobsPayload.builder(request.getOrder().getModel())
-          .maxOutputTokens(1200)
+      GptJobsPayload payload = GptJobsPayload.builder(request.getCompaniesModel())
+          .maxOutputTokens(800)
           .store(false)
-          .reasoning(new Reasoning(REASONING_COMPANY_SEARCH))
-          .addTools(Tools.builder().setWebSearch().userLocation(userLocation).build())
           .addSystemPrompt(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_COMPANY_SEARCH,
               "city", user.getCity(),
-              "country", user.getCountry(),
-              "timestamp", String.valueOf(Instant.now())
+              "country", user.getCountry()
           ))
           .addUserPrompt(templateRenderer.getPrompt(PromptType.USER_PROMPT_COMPANIES,
               Map.of(
                   "domain", user.getJobDomain(),
                   "city", user.getCity(),
                   "country", user.getCountry(),
-                  "positions", user.getJobRoles()
+                  "positions", user.getJobRoles().stream().map(UserJobRoleEntity::getJobRole).toList()
               )))
           .setResponseSchema(templateRenderer.getSchema(AiSchemaType.GPT_JSON_COMPANY_SCHEMA_RESPONSE))
           .build();
@@ -174,18 +168,19 @@ public non-sealed class GptV1JobSearchImpl implements
   @CircuitBreaker(name = "gptCircuitBreaker", fallbackMethod = "fallbackSearchJobsFromCompanies")
   @RateLimiter(name = "gptLimiter")
   @Bulkhead(name = "gptBulkhead")
-  public AiClientResponse searchJobsFromCompanies(GptJobSearchRequest request, List<CompanyDto> group) {
+  public AiClientResponse searchJobsFromCompanies(AIJobSearchRequest request) {
     String userPrompt = templateRenderer.getPrompt(PromptType.USER_PROMPT_JOB,
-        "positions", request.getOrder().getUser().getJobRoles().stream().map(UserJobRoleEntity::getJobRole).toList().toString(),
-        "companies", StringUtils.join(group.stream().map(CompanyDto::companyName).toList())
+        "positions", request.getOrder().getUser().getJobRoles().stream().map(UserJobRoleEntity::getJobRole).toList(),
+        "company", request.getCompany()
     );
     GptJobsPayload payload = GptJobsPayload.builder(request.getOrder().getModel())
         .maxOutputTokens(1200)
         .store(request.getStoreConversation())
         .previousResponseId(request.getPrevResponseId())
-        .reasoning(new Reasoning(REASONING_JOB_SEARCH_BY_COMPANIES))
         .addTools(Tools.builder().setWebSearch().build())
-        .addSystemPrompt(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_JOBS_BY_COMPANY))
+        .addSystemPrompt(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_JOBS_BY_COMPANY,
+            "blacklist", properties.getJobsHunter().getBlacklistJobsCompanySearch())
+        )
         .addUserPrompt(userPrompt)
         .build();
 
@@ -223,19 +218,19 @@ public non-sealed class GptV1JobSearchImpl implements
   }
 
   @SuppressWarnings("unused")
-  private AiClientResponse fallbackSearchJobsFromCompanies(GptJobSearchRequest request, List<CompanyDto> group, Throwable t) {
+  private AiClientResponse fallbackSearchJobsFromCompanies(AIJobSearchRequest request, Throwable t) {
     log.error("{} call short-circuited/bulkheaded: {}", getClass().getSimpleName(), t.getMessage());
     return new AiClientResponse();
   }
 
   @SuppressWarnings("unused")
-  private AiClientResponse fallbackSearch(GptJobSearchRequest request, Throwable t) {
+  private AiClientResponse fallbackSearch(AIJobSearchRequest request, Throwable t) {
     log.error("{} call short-circuited/bulkheaded: {}", getClass().getSimpleName(), t.getMessage());
     return new AiClientResponse();
   }
 
   @SuppressWarnings("unused")
-  private List<CompanyDto> fallbackSearchCompanies(GptJobSearchRequest request, Throwable t) {
+  private List<CompanyDto> fallbackSearchCompanies(AIJobSearchRequest request, Throwable t) {
     log.error("{} call short-circuited/bulkheaded: {}", getClass().getSimpleName(), t.getMessage());
     return List.of();
   }

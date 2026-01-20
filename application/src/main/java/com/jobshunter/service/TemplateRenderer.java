@@ -3,11 +3,18 @@ package com.jobshunter.service;
 import com.github.mustachejava.DefaultMustacheFactory;
 import com.github.mustachejava.Mustache;
 import com.github.mustachejava.MustacheFactory;
+import com.github.mustachejava.codes.ValueCode;
 import com.jobshunter.model.AiSchemaType;
 import com.jobshunter.model.PromptType;
+import jakarta.annotation.Nonnull;
 import jakarta.annotation.PostConstruct;
 import java.io.StringWriter;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -19,19 +26,19 @@ public class TemplateRenderer {
   private void validate() {
     // Validate that all templates are present
     for (PromptType type : PromptType.values()) {
-      getPrompt(type);
+      getString("prompts/", type.name(), ".mustache", false, Map.of());
     }
     for (AiSchemaType type : AiSchemaType.values()) {
-      getSchema(type);
+      getString("schema/", type.name(), ".json", false, Map.of());
     }
   }
 
   public String getPrompt(PromptType type, Map<String, Object> vars) {
-    return getString("prompts/", type.name(), ".mustache", vars);
+    return getString("prompts/", type.name(), ".mustache", true, vars);
   }
 
   public String getSchema(AiSchemaType type, Map<String, Object> vars) {
-    return getString("schema/", type.name(), ".json", vars);
+    return getString("schema/", type.name(), ".json", true, vars);
   }
 
   public String getSchema(AiSchemaType type) {
@@ -54,11 +61,31 @@ public class TemplateRenderer {
     return getPrompt(type, Map.of(param1, value1, param2, value2, param3, value3));
   }
 
-  private String getString(String path, String type, String extension, Map<String, Object> vars) {
+  private String getString(String path, String type, String extension, boolean validateParameters, Map<String, Object> vars) {
     Mustache mustache = factory.compile(path + type.toLowerCase() + extension);
+    if (validateParameters) {
+      long paramsFromFile = Arrays.stream(mustache.getCodes()).filter(p -> p instanceof ValueCode).count();
+      if (paramsFromFile != vars.size()) {
+        throw new IllegalArgumentException("TemplateRenderer is not called for prompt " + type + " with all the parameters!!!");
+      }
+    }
     StringWriter writer = new StringWriter();
-    mustache.execute(writer, vars);
+    mustache.execute(writer, this.manipulateVars(vars));
     return writer.toString();
+  }
+
+  @Nonnull
+  private Map<String, Object> manipulateVars(Map<String, Object> vars) {
+    final Map<String, Object> modifiedVars = new HashMap<>();
+    for (Entry<String, Object> entry : vars.entrySet()) {
+      String key = entry.getKey();
+      Object value = entry.getValue();
+      if (value instanceof Collection<?> collection) {
+        value = collection.stream().map(Object::toString).collect(Collectors.joining(", "));
+      }
+      modifiedVars.put(key, value);
+    }
+    return modifiedVars;
   }
 
 }

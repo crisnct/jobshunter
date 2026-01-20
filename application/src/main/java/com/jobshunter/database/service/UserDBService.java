@@ -80,6 +80,8 @@ public class UserDBService {
         if (jobRole != null && !jobRole.trim().isEmpty() && jobRole.length() <= 35) {
           UserJobRoleEntity entity = new UserJobRoleEntity(user, jobRole.trim());
           user.getJobRoles().add(entity);
+          // Explicitly save the entity to persist it in the database
+          userJobRoleRepository.save(entity);
         }
       });
     }
@@ -94,6 +96,8 @@ public class UserDBService {
         if (jobType != null) {
           UserJobTypeEntity entity = new UserJobTypeEntity(user, jobType);
           user.getJobTypes().add(entity);
+          // Explicitly save the entity to persist it in the database
+          userJobTypeRepository.save(entity);
         }
       });
     }
@@ -108,6 +112,8 @@ public class UserDBService {
         if (contractType != null) {
           UserContractTypeEntity entity = new UserContractTypeEntity(user, contractType);
           user.getContractTypes().add(entity);
+          // Explicitly save the entity to persist it in the database
+          userContractTypeRepository.save(entity);
         }
       });
     }

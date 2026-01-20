@@ -1,11 +1,7 @@
 package com.jobshunter.service.application.hunting;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.json.JsonMapper;
-import com.jobshunter.database.entities.UserPromptEntity;
-import com.jobshunter.dto.serpRequest.SearchWithSerpRequest;
-import com.jobshunter.model.AiClientResponse;
-import com.jobshunter.model.SearchJobOrder;
+import com.jobshunter.model.EngineType;
+import com.jobshunter.service.TemplateRenderer;
 import com.jobshunter.service.application.UserCvService;
 import com.jobshunter.service.clients.AiJobsClient;
 import java.util.concurrent.Executor;
@@ -15,35 +11,21 @@ import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
-public final class SerpJobHunting extends GenericJobHunting<SearchWithSerpRequest> {
-
-  private final JsonMapper mapper;
+public final class SerpJobHunting extends AiConversationJobHunting {
 
   public SerpJobHunting(
-      @Qualifier("JobsClientSerp") AiJobsClient<SearchWithSerpRequest, AiClientResponse> serpClient,
+      @Qualifier("JobsClientSerp") AiJobsClient serpClient,
       @Qualifier("serpExecutor") Executor serpExecutor,
-      JsonMapper mapper,
-      UserCvService userCvService
+      TemplateRenderer templateRenderer,
+      UserCvService userCvService,
+      AiConversationStateMachine conversationStateMachine
   ) {
-    super(serpExecutor, serpClient, userCvService);
-    this.mapper = mapper;
+    super(serpExecutor, serpClient, userCvService, templateRenderer, conversationStateMachine);
   }
 
   @Override
-  public SearchWithSerpRequest createRequest(SearchJobOrder order, UserPromptEntity prompt) {
-    try {
-      SearchWithSerpRequest request = mapper.readValue(prompt.getPrompt(), SearchWithSerpRequest.class);
-      request.setOrder(order);
-      request.setPromptId(prompt.getId());
-      return request;
-    } catch (JsonProcessingException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  @Override
-  public SearchWithSerpRequest createCompaniesRequest(SearchJobOrder order) {
-    return null;
+  public EngineType getEngineType() {
+    return EngineType.SERP;
   }
 
 }

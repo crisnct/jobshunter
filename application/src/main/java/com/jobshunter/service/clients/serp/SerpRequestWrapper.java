@@ -1,21 +1,19 @@
-package com.jobshunter.dto.serpRequest;
+package com.jobshunter.service.clients.serp;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.jobshunter.dto.AIJobSearchRequest;
 import com.jobshunter.model.SearchJobOrder;
+import com.jobshunter.model.WorkType;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 
 @Data
-@EqualsAndHashCode(callSuper = true)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class SearchWithSerpRequest extends AIJobSearchRequest {
+public class SerpRequestWrapper {
 
   @NotBlank(message = "Query must not be blank")
   @Size(max = 2000)
@@ -67,26 +65,6 @@ public class SearchWithSerpRequest extends AIJobSearchRequest {
   @Nullable
   private String language;
 
-  public SearchWithSerpRequest(SearchJobOrder order) {
-    super(order);
-  }
-
-  @Override
-  public SearchWithSerpRequest copy() {
-    SearchWithSerpRequest copy = new SearchWithSerpRequest(getOrder());
-    // Copy parent fields
-    copy.setPromptId(this.getPromptId());
-    copy.setUserPrompt(this.getUserPrompt());
-    // Copy SearchWithSerpRequest specific fields
-    copy.query = this.query;
-    copy.googleDomain = this.googleDomain;
-    copy.datePosted = this.datePosted;
-    copy.country = this.country;
-    copy.location = this.location;
-    copy.workType = this.workType;
-    copy.radius = this.radius;
-    copy.language = this.language;
-    return copy;
-  }
+  private SearchJobOrder order;
 
 }

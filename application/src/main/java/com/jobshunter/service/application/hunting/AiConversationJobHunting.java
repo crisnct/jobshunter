@@ -1,6 +1,6 @@
 package com.jobshunter.service.application.hunting;
 
-import com.jobshunter.dto.AdditionalEffortRequest;
+import com.jobshunter.dto.AIJobSearchRequest;
 import com.jobshunter.model.AiClientResponse;
 import com.jobshunter.model.Job;
 import com.jobshunter.model.PromptType;
@@ -18,14 +18,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
 @Slf4j
-public abstract class AiConversationJobHunting<T extends AdditionalEffortRequest> extends GenericJobHunting<T> {
+public abstract class AiConversationJobHunting extends GenericJobHunting {
 
   private final TemplateRenderer templateRenderer;
 
   private final AiConversationStateMachine conversationStateMachine;
 
   public AiConversationJobHunting(Executor executor,
-      AiJobsClient<T, AiClientResponse> jobsClient,
+      AiJobsClient jobsClient,
       UserCvService userCvService,
       TemplateRenderer templateRenderer,
       AiConversationStateMachine conversationStateMachine
@@ -36,7 +36,7 @@ public abstract class AiConversationJobHunting<T extends AdditionalEffortRequest
   }
 
   @Override
-  protected CompletableFuture<AiClientResponse> searchAsync(T request, Executor executor) {
+  protected CompletableFuture<AiClientResponse> searchAsync(AIJobSearchRequest request, Executor executor) {
     return conversationStateMachine.processAsync(
         request,
         executor,
@@ -47,7 +47,7 @@ public abstract class AiConversationJobHunting<T extends AdditionalEffortRequest
     );
   }
 
-  private void deleteConversationSync(T request) {
+  private void deleteConversationSync(AIJobSearchRequest request) {
     if (jobsClient instanceof DeleteConvAiClient client && request.getPrevResponseId() != null) {
       client.deleteConversation(request.getPrevResponseId());
       log.info("Deleted conversation with id {}", request.getPrevResponseId());
@@ -60,29 +60,21 @@ public abstract class AiConversationJobHunting<T extends AdditionalEffortRequest
         .toList();
     return templateRenderer.getPrompt(PromptType.USER_PROMPT_JOB_BLAME_1,
         "timestamp", Instant.now(),
-        "invalid_urls", String.join(", ", rejectedUrls));
+        "invalid_urls", rejectedUrls);
   }
 
-  @SuppressWarnings("unchecked")
-  private T createRetryRequest(T originalRequest, AiClientResponse prevResponse, String newPrompt) {
-    try {
-      // Create a copy using Copyable interface
-      T retryRequest = (T) originalRequest.copy();
+  private AIJobSearchRequest createRetryRequest(AIJobSearchRequest originalRequest, AiClientResponse prevResponse, String newPrompt) {
+    // Create a copy using Copyable interface
+    AIJobSearchRequest retryRequest = originalRequest.copy();
 
-      // Override specific fields for retry
-      retryRequest.setUserPrompt(newPrompt);
-      retryRequest.setFileId(null);
-      retryRequest.setPrevResponseId(prevResponse.getId());
-      return retryRequest;
-    } catch (Exception e) {
-      log.warn("Failed to create retry request copy, modifying original request instead", e);
-      // Fallback: modify original request (safe in single-threaded CompletableFuture chain)
-      originalRequest.setUserPrompt(newPrompt);
-      return originalRequest;
-    }
+    // Override specific fields for retry
+    retryRequest.setUserPrompt(newPrompt);
+    retryRequest.setFileId(null);
+    retryRequest.setPrevResponseId(prevResponse.getId());
+    return retryRequest;
   }
 
-  private void chainConversation(T request, AiClientResponse response, String model) {
+  private void chainConversation(AIJobSearchRequest request, AiClientResponse response, String model) {
     request.setPreviousURL(response.getJobs().stream().map(Job::getUrl).toList());
     String prevId = response.getId();
     for (PromptType promptType : List.of(
@@ -128,7 +120,7 @@ public abstract class AiConversationJobHunting<T extends AdditionalEffortRequest
 
       log.info("Searching jobs for user {} with model {} with prompt {}", order.getUser().getUsername(), model,
           StringUtils.abbreviate(prompt, 50));
-      request.setUserPrompt(prompt);
+      //request.setPrompt(prompt);
       request.setPrevResponseId(prevId);
       AiClientResponse otherResponse = jobsClient.searchJobs(request);
       log.info("Found {} jobs for {}", otherResponse.getJobs().size(), order.getUser().getUsername());

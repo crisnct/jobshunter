@@ -1,8 +1,7 @@
 package com.jobshunter.service.testdata;
 
-import com.jobshunter.dto.CompanyDto;
+import com.jobshunter.dto.AIJobSearchRequest;
 import com.jobshunter.model.AiClientResponse;
-import com.jobshunter.model.GeminiJobSearchRequest;
 import com.jobshunter.model.Job;
 import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.clients.AiJobsClient;
@@ -18,13 +17,13 @@ import org.springframework.stereotype.Component;
 @Component("JobsClientGemini")
 @PackageExpected("com.jobshunter.service.clients.gemini")
 @ConditionalOnProperty(name = "gemini.enabled", havingValue = "false")
-public non-sealed class FakeGeminiClient implements AiJobsClient<GeminiJobSearchRequest, AiClientResponse> {
+public non-sealed class FakeGeminiClient implements AiJobsClient {
 
   @Override
   @CircuitBreaker(name = "geminiCircuitBreaker", fallbackMethod = "fallbackSearch")
   @RateLimiter(name = "geminiLimiter")
   @Bulkhead(name = "geminiBulkhead")
-  public AiClientResponse searchJobs(GeminiJobSearchRequest request) {
+  public AiClientResponse searchJobs(AIJobSearchRequest request) {
     AiClientResponse result = new AiClientResponse();
     result.addAll(List.of(
         new Job(-1,
@@ -51,22 +50,8 @@ public non-sealed class FakeGeminiClient implements AiJobsClient<GeminiJobSearch
     return result;
   }
 
-  @Override
-  @RateLimiter(name = "geminiLimiter")
-  @Bulkhead(name = "geminiBulkhead")
-  public List<CompanyDto> searchCompanies(GeminiJobSearchRequest request) {
-    return List.of();
-  }
-
-  @Override
-  @RateLimiter(name = "geminiLimiter")
-  @Bulkhead(name = "geminiBulkhead")
-  public AiClientResponse searchJobsFromCompanies(GeminiJobSearchRequest request, List<CompanyDto> group) {
-    return new AiClientResponse();
-  }
-
   @SuppressWarnings("unused")
-  private AiClientResponse fallbackSearch(GeminiJobSearchRequest request, Throwable t) {
+  private AiClientResponse fallbackSearch(AIJobSearchRequest request, Throwable t) {
     log.error("{} call short-circuited/bulkheaded: {}", getClass().getSimpleName(), t.getMessage());
     return new AiClientResponse();
   }

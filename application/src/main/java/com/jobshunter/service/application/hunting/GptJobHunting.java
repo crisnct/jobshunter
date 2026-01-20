@@ -1,11 +1,11 @@
 package com.jobshunter.service.application.hunting;
 
+import com.jobshunter.database.entities.AiModelEntity;
 import com.jobshunter.database.entities.UserPromptEntity;
-import com.jobshunter.database.entities.UserRemoteCvEntity;
-import com.jobshunter.dto.exceptions.ValidationException;
-import com.jobshunter.model.AiClientResponse;
+import com.jobshunter.database.service.ModelsDBService;
+import com.jobshunter.dto.AIJobSearchRequest;
+import com.jobshunter.model.EngineSelection;
 import com.jobshunter.model.EngineType;
-import com.jobshunter.model.GptJobSearchRequest;
 import com.jobshunter.model.SearchJobOrder;
 import com.jobshunter.service.TemplateRenderer;
 import com.jobshunter.service.application.UserCvService;
@@ -17,44 +17,37 @@ import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
-public final class GptJobHunting extends AiConversationJobHunting<GptJobSearchRequest> {
+public final class GptJobHunting extends AiConversationJobHunting {
+
+  private final AiModelEntity discoveryModel;
+
+  private final AiModelEntity companiesModel;
 
   public GptJobHunting(
       @Qualifier("gptSearchExecutor") Executor gptSearchExecutor,
-      @Qualifier("JobsClientGPT") AiJobsClient<GptJobSearchRequest, AiClientResponse> gptClient,
+      @Qualifier("JobsClientGPT") AiJobsClient gptClient,
       UserCvService userCvService,
       TemplateRenderer templateRenderer,
+      ModelsDBService modelsDBService,
       AiConversationStateMachine conversationStateMachine
   ) {
     super(gptSearchExecutor, gptClient, userCvService, templateRenderer, conversationStateMachine);
+    this.discoveryModel = modelsDBService.getModel(new EngineSelection(EngineType.GPT, "gpt-4o-mini")).orElseThrow();
+    this.companiesModel = modelsDBService.getModel(new EngineSelection(EngineType.GPT, "gpt-4o-mini")).orElseThrow();
   }
 
   @Override
-  public GptJobSearchRequest createRequest(SearchJobOrder order, UserPromptEntity prompt) {
-    //TODO does it worth to have this selection of CV here or is better to move it in the client?
-    UserRemoteCvEntity remoteCV = order.getUser().getRemoteCvs().stream()
-        .filter(p -> p.getProvider() == EngineType.GPT).findAny()
-        .orElseThrow(() -> new ValidationException("No GPT CV found for user " + order.getUser().getId()));
-
-    GptJobSearchRequest request = new GptJobSearchRequest(order);
-    request.setUserPrompt(prompt.getPrompt());
-    request.setPromptId(prompt.getId());
-    request.setFileId(remoteCV.getFileId());
-    request.setStoreConversation(true);
+  public AIJobSearchRequest createRequest(SearchJobOrder order, UserPromptEntity prompt) {
+    AIJobSearchRequest request = super.createRequest(order, prompt);
+    request.setDiscoveryModel(discoveryModel);
+    request.setCompaniesModel(companiesModel);
     return request;
   }
 
   @Override
-  public GptJobSearchRequest createCompaniesRequest(SearchJobOrder order) {
-    //TODO does it worth to have this selection of CV here or is better to move it in the client?
-    UserRemoteCvEntity remoteCV = order.getUser().getRemoteCvs().stream()
-        .filter(p -> p.getProvider() == EngineType.GPT).findAny()
-        .orElseThrow(() -> new ValidationException("No GPT CV found for user " + order.getUser().getId()));
-
-    //TODO not sure if design is ok about the field searchCompanies from the request
-    GptJobSearchRequest request = new GptJobSearchRequest(order);
-    request.setFileId(remoteCV.getFileId());
-    return request;
+  public EngineType getEngineType() {
+    return EngineType.GPT;
   }
+
 
 }

@@ -28,7 +28,35 @@ public final class JobBodyExtractorProcessor implements JobProcessor {
     Document document = Jsoup.parse(body);
     document.select("script, style, nav, footer, header, aside").remove();
     document.select("button, a").remove();
-    return document.text();
+    String[] noisePhrases = {
+        "about us", "who we are", "why join", "benefits",
+        "equal opportunity", "application process",
+        "how to apply", "we offer", "our culture",
+        "diversity", "values"
+    };
+    document.select("p, li").forEach(el -> {
+      String text = el.text().toLowerCase();
+      for (String phrase : noisePhrases) {
+        if (text.contains(phrase)) {
+          el.remove();
+          break;
+        }
+      }
+    });
+    document.select("p").forEach(p -> {
+      if (p.text().length() > 400) {
+        p.remove(); // long marketing prose
+      }
+    });
+
+    String cleanedText = document.text()
+        .replaceAll("\\s+", " ")
+        .trim();
+
+    if (cleanedText.length() > 4000) {
+      cleanedText = cleanedText.substring(0, 4000);
+    }
+    return cleanedText;
   }
 
 }

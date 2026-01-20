@@ -1,15 +1,13 @@
 package com.jobshunter.service.testdata;
 
-import com.jobshunter.dto.CompanyDto;
+import com.jobshunter.dto.AIJobSearchRequest;
 import com.jobshunter.model.AiClientResponse;
-import com.jobshunter.model.GrokJobSearchRequest;
 import com.jobshunter.model.Job;
 import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.clients.AiJobsClient;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
-import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
@@ -18,13 +16,13 @@ import org.springframework.stereotype.Component;
 @Component("JobsClientGROK")
 @PackageExpected("com.jobshunter.service.clients.grok")
 @ConditionalOnProperty(name = "grok.enabled", havingValue = "false")
-public non-sealed class FakeGrokClient implements AiJobsClient<GrokJobSearchRequest, AiClientResponse> {
+public non-sealed class FakeGrokClient implements AiJobsClient {
 
   @Override
   @CircuitBreaker(name = "grokCircuitBreaker", fallbackMethod = "fallbackSearch")
   @RateLimiter(name = "grokLimiter")
   @Bulkhead(name = "grokBulkhead")
-  public AiClientResponse searchJobs(GrokJobSearchRequest request) {
+  public AiClientResponse searchJobs(AIJobSearchRequest request) {
     AiClientResponse result = new AiClientResponse();
     for (int i = 0; i < 100; i++) {
       result.add(new Job(-1,
@@ -135,22 +133,8 @@ public non-sealed class FakeGrokClient implements AiJobsClient<GrokJobSearchRequ
     return result;
   }
 
-  @Override
-  @RateLimiter(name = "grokLimiter")
-  @Bulkhead(name = "grokBulkhead")
-  public List<CompanyDto> searchCompanies(GrokJobSearchRequest request) {
-    return List.of();
-  }
-
-  @Override
-  @RateLimiter(name = "grokLimiter")
-  @Bulkhead(name = "grokBulkhead")
-  public AiClientResponse searchJobsFromCompanies(GrokJobSearchRequest request, List<CompanyDto> group) {
-    return new AiClientResponse();
-  }
-
   @SuppressWarnings("unused")
-  private AiClientResponse fallbackSearch(GrokJobSearchRequest request, Throwable t) {
+  private AiClientResponse fallbackSearch(AIJobSearchRequest request, Throwable t) {
     log.error("{} call short-circuited/bulkheaded: {}", getClass().getSimpleName(), t.getMessage());
     return new AiClientResponse();
   }

@@ -9,13 +9,13 @@
           "company_name": {
             "type": "string"
           },
-          "company_location": {
+          "source_url": {
             "type": "string"
           }
         },
         "required": [
           "company_name",
-          "company_location"
+          "source_url"
         ],
         "additionalProperties": false
       }

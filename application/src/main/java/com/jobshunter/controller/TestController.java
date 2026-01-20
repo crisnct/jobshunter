@@ -17,14 +17,12 @@ import com.jobshunter.dto.gptRequest.tools.Tools;
 import com.jobshunter.dto.gptResponse.GptResponse;
 import com.jobshunter.dto.grokRequest.GrokJobsPayload;
 import com.jobshunter.dto.grokResponse.GrokResponse;
-import com.jobshunter.dto.serpRequest.SearchWithSerpRequest;
-import com.jobshunter.model.AiClientResponse;
 import com.jobshunter.model.AiSchemaType;
+import com.jobshunter.model.EngineSelection;
 import com.jobshunter.model.EngineType;
 import com.jobshunter.model.PromptType;
 import com.jobshunter.service.TemplateRenderer;
 import com.jobshunter.service.application.notifiers.EmailNotifierService;
-import com.jobshunter.service.clients.AiJobsClient;
 import com.jobshunter.service.clients.gemini.GeminiV1JobSearchImpl;
 import com.jobshunter.service.clients.gpt.GptV1JobSearchImpl;
 import com.jobshunter.service.clients.grok.GrokV1JobSearchImpl;
@@ -39,7 +37,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -68,8 +65,6 @@ public class TestController {
 
   private final RestClient restClient;
 
-  private final AiJobsClient<SearchWithSerpRequest, AiClientResponse> serpClient;
-
   private final TemplateRenderer templateRenderer;
 
   private final ModelsDBService modelsDBService;
@@ -80,15 +75,13 @@ public class TestController {
       ApplicationProperties properties,
       RestClient restClient,
       ModelsDBService modelsDBService,
-      @Qualifier("JobsClientSerp") AiJobsClient<SearchWithSerpRequest, AiClientResponse> serpClient,
       TemplateRenderer templateRenderer
   ) {
     this.emailNotifierService = emailNotifierService;
     this.userDBService = userDBService;
-    this.serpClient = serpClient;
     this.properties = properties;
     this.restClient = restClient;
-    this.modelsDBService=modelsDBService;
+    this.modelsDBService = modelsDBService;
     this.templateRenderer = templateRenderer;
   }
 
@@ -120,28 +113,13 @@ public class TestController {
     return ResponseEntity.ok(Map.of("message", "Email sent successfully"));
   }
 
-  @PostMapping(value = "/searchWithSerp", consumes = MediaType.APPLICATION_JSON_VALUE)
-  public ResponseEntity<?> searchJobsWithSERP(
-      @Valid
-      @RequestBody
-      SearchWithSerpRequest request,
-
-      @AuthenticationPrincipal
-      UserDetails userDetails
-  ) {
-    UserEntity user = userDBService.getUser(userDetails.getUsername())
-        .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "User not found"));
-    log.info("Searching jobs for {}", user.getUsername());
-    return ResponseEntity.ok(serpClient.searchJobs(request));
-  }
-
   @PostMapping(value = "/testGptModels", consumes = MediaType.APPLICATION_JSON_VALUE)
   @PreAuthorize("hasRole('ADMIN')")
   @RateLimiter(name = "gptLimiter")
   public ResponseEntity<?> testGPTModels() {
     List<String> modelsSupported = new ArrayList<>();
     for (String model : GPT_MODELS) {
-      AiModelEntity aiModel = modelsDBService.getModel(EngineType.GPT, model).get();
+      AiModelEntity aiModel = modelsDBService.getModel(new EngineSelection(EngineType.GPT, model)).get();
 
       GptJobsPayload payload = GptJobsPayload.builder(aiModel)
           .model(model)
@@ -183,10 +161,10 @@ public class TestController {
 
     StringBuilder ret = new StringBuilder();
     for (String model : GPT_MODELS) {
-      if (!ret.isEmpty()){
+      if (!ret.isEmpty()) {
         ret.append("\n");
       }
-      if (modelsSupported.contains(model)){
+      if (modelsSupported.contains(model)) {
         ret.append(1);
       } else {
         ret.append(0);
@@ -203,7 +181,7 @@ public class TestController {
   public ResponseEntity<?> testGROKModels() {
     List<String> modelsSupported = new ArrayList<>();
     for (String model : GROK_MODELS) {
-      AiModelEntity aiModel = modelsDBService.getModel(EngineType.GROK, model).get();
+      AiModelEntity aiModel = modelsDBService.getModel(new EngineSelection(EngineType.GROK, model)).get();
       GrokJobsPayload payload = GrokJobsPayload.builder(aiModel)
           .model(model)
           .maxOutputTokens(200)
@@ -211,7 +189,7 @@ public class TestController {
           //.reasoning(new Reasoning())
           //.store(true)
           //.previousResponseId("65224478-5394-d462-c1a9-015ef2be2b0e")
-           .temperature(0.2)
+          .temperature(0.2)
           //.addSystemPrompt("Act like a job search assistant and search jobs for me")
           //.setResponseSchema(templateRenderer.getSchema(AiSchemaType.GROK_JSON_SCHEMA_RESPONSE))
           //.reasoning(new com.jobshunter.dto.grokRequest.Reasoning("high"))
@@ -245,10 +223,10 @@ public class TestController {
 
     StringBuilder ret = new StringBuilder();
     for (String model : GROK_MODELS) {
-      if (!ret.isEmpty()){
+      if (!ret.isEmpty()) {
         ret.append("\n");
       }
-      if (modelsSupported.contains(model)){
+      if (modelsSupported.contains(model)) {
         ret.append(1);
       } else {
         ret.append(0);
@@ -265,7 +243,7 @@ public class TestController {
   public ResponseEntity<?> testGeminiModels() {
     List<String> modelsSupported = new ArrayList<>();
     for (String model : GEMINI_MODELS) {
-      AiModelEntity aiModel = modelsDBService.getModel(EngineType.GEMINI, model).get();
+      AiModelEntity aiModel = modelsDBService.getModel(new EngineSelection(EngineType.GEMINI, model)).get();
       GenerationConfig generationConfig = GenerationConfig.builder(aiModel)
           .temperature(0.2)
           .responseMimeType("application/json")
@@ -311,10 +289,10 @@ public class TestController {
 
     StringBuilder ret = new StringBuilder();
     for (String model : GEMINI_MODELS) {
-      if (!ret.isEmpty()){
+      if (!ret.isEmpty()) {
         ret.append("\n");
       }
-      if (modelsSupported.contains(model)){
+      if (modelsSupported.contains(model)) {
         ret.append(1);
       } else {
         ret.append(0);
@@ -349,7 +327,7 @@ public class TestController {
       @RequestBody
       String payload
   ) {
-    AiModelEntity aiModel = modelsDBService.getModel(EngineType.GPT, model).get();
+    AiModelEntity aiModel = modelsDBService.getModel(new EngineSelection(EngineType.GPT, model)).get();
     GptJobsPayload gptPayload = GptJobsPayload.builder(aiModel)
         .model(model)
         .maxOutputTokens(2000)

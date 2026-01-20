@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.jobshunter.ApplicationProperties;
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.entities.UserJobRoleEntity;
+import com.jobshunter.dto.AIJobSearchRequest;
 import com.jobshunter.dto.CompanyDto;
 import com.jobshunter.dto.CompanyDtoList;
 import com.jobshunter.dto.IpInfoDetailResponse;
@@ -18,20 +19,19 @@ import com.jobshunter.dto.grokResponse.GrokResponse;
 import com.jobshunter.dto.grokResponse.OutputItem;
 import com.jobshunter.model.AiClientResponse;
 import com.jobshunter.model.AiSchemaType;
-import com.jobshunter.model.GrokJobSearchRequest;
 import com.jobshunter.model.Job;
 import com.jobshunter.model.PromptType;
 import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.TemplateRenderer;
 import com.jobshunter.service.application.UrlExtractor;
 import com.jobshunter.service.clients.AiJobsClient;
+import com.jobshunter.service.clients.AiJobsCompaniesClient;
 import com.jobshunter.service.clients.DeleteConvAiClient;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import io.jsonwebtoken.lang.Collections;
 import java.net.URI;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -39,7 +39,6 @@ import java.util.Objects;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -52,9 +51,7 @@ import org.springframework.web.client.RestClient;
 @PackageExpected("com.jobshunter.service.clients.grok")
 @ConditionalOnProperty(name = "grok.enabled", havingValue = "true")
 @AllArgsConstructor
-public non-sealed class GrokV1JobSearchImpl implements
-    AiJobsClient<GrokJobSearchRequest, AiClientResponse>,
-    DeleteConvAiClient {
+public non-sealed class GrokV1JobSearchImpl implements AiJobsClient, AiJobsCompaniesClient, DeleteConvAiClient {
 
   public static final URI DEFAULT_URI = URI.create("https://api.x.ai/v1/responses");
 
@@ -72,7 +69,7 @@ public non-sealed class GrokV1JobSearchImpl implements
   @CircuitBreaker(name = "grokCircuitBreaker", fallbackMethod = "fallbackSearch")
   @RateLimiter(name = "grokLimiter")
   @Bulkhead(name = "grokBulkhead")
-  public AiClientResponse searchJobs(GrokJobSearchRequest request) {
+  public AiClientResponse searchJobs(AIJobSearchRequest request) {
     try {
       GrokJobsPayloadBuilder payloadBuilder = GrokJobsPayload.builder(request.getOrder().getModel())
           .maxOutputTokens(1200)
@@ -110,35 +107,23 @@ public non-sealed class GrokV1JobSearchImpl implements
   @CircuitBreaker(name = "grokCircuitBreaker", fallbackMethod = "fallbackSearchCompanies")
   @RateLimiter(name = "grokLimiter")
   @Bulkhead(name = "grokBulkhead")
-  public List<CompanyDto> searchCompanies(GrokJobSearchRequest request) {
+  public List<CompanyDto> searchCompanies(AIJobSearchRequest request) {
     try {
       UserEntity user = request.getOrder().getUser();
 
-      IpInfoDetailResponse ipInfo = request.getOrder().getIpInfo();
-
-      UserLocation userLocation = new UserLocation();
-      userLocation.setType("approximate");
-      //This is country iso code, like RO
-      userLocation.setCountry(ipInfo.country() != null ? ipInfo.country() : "RO");
-      userLocation.setCity(user.getCity() != null ? user.getCity() : ipInfo.city());
-
-      GrokJobsPayload payload = GrokJobsPayload.builder(request.getOrder().getModel())
+      GrokJobsPayload payload = GrokJobsPayload.builder(request.getCompaniesModel())
           .store(false)
-          .reasoning(new Reasoning(REASONING_COMPANY_SEARCH))
-          .maxOutputTokens(1200)
-          .addTools(Tools.builder().setWebSearch().userLocation(userLocation).build())
+          .maxOutputTokens(800)
           .addSystemPrompt(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_COMPANY_SEARCH,
               Map.of("city", user.getCity(),
-                  "country", user.getCountry(),
-                  "timestamp", String.valueOf(Instant.now())
+                  "country", user.getCountry()
               )))
           .addUserPrompt(templateRenderer.getPrompt(PromptType.USER_PROMPT_COMPANIES,
               Map.of(
                   "domain", user.getJobDomain(),
                   "city", user.getCity(),
                   "country", user.getCountry(),
-                  "positions", user.getJobRoles(),
-                  "blacklist", properties.getJobsHunter().getBlacklist()
+                  "positions", user.getJobRoles().stream().map(UserJobRoleEntity::getJobRole).toList()
               )), request.getFileId())
           .setResponseSchema(templateRenderer.getSchema(AiSchemaType.GROK_JSON_COMPANY_SCHEMA_RESPONSE))
           .build();
@@ -163,22 +148,23 @@ public non-sealed class GrokV1JobSearchImpl implements
   @CircuitBreaker(name = "grokCircuitBreaker", fallbackMethod = "fallbackSearchJobsFromCompanies")
   @RateLimiter(name = "grokLimiter")
   @Bulkhead(name = "grokBulkhead")
-  public AiClientResponse searchJobsFromCompanies(GrokJobSearchRequest request, List<CompanyDto> group) {
+  public AiClientResponse searchJobsFromCompanies(AIJobSearchRequest request) {
     String userPrompt = templateRenderer.getPrompt(PromptType.USER_PROMPT_JOB,
-        "positions", request.getOrder().getUser().getJobRoles().stream().map(UserJobRoleEntity::getJobRole).toList().toString(),
-        "companies", StringUtils.join(group.stream().map(CompanyDto::companyName).toList())
+        "positions", request.getOrder().getUser().getJobRoles().stream().map(UserJobRoleEntity::getJobRole).toList(),
+        "company", request.getCompany()
     ) + templateRenderer.getPrompt(PromptType.USER_PROMPT_JOB_BLACKLISTED,
         "blacklist",
         properties.getJobsHunter().getBlacklist()
     );
 
-    GrokJobsPayload payload = GrokJobsPayload.builder(request.getOrder().getModel())
-        .maxOutputTokens(1200)
-        .reasoning(new Reasoning(REASONING_JOB_SEARCH_BY_COMPANIES))
+    GrokJobsPayload payload = GrokJobsPayload.builder(request.getDiscoveryModel())
+        .maxOutputTokens(800)
         .store(request.getStoreConversation())
         .previousResponseId(request.getPrevResponseId())
         .addTools(Tools.builder().setWebSearch().build())
-        .addSystemPrompt(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_JOBS_BY_COMPANY))
+        .addSystemPrompt(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_JOBS_BY_COMPANY,
+            "blacklist", properties.getJobsHunter().getBlacklistJobsCompanySearch())
+        )
         .addUserPrompt(userPrompt)
         .build();
 
@@ -216,24 +202,30 @@ public non-sealed class GrokV1JobSearchImpl implements
   }
 
   @SuppressWarnings("unused")
+  private AiClientResponse fallbackCompanies(AIJobSearchRequest request, Throwable t) {
+    log.error("{} call short-circuited/bulkheaded: {}", getClass().getSimpleName(), t.getMessage());
+    return new AiClientResponse();
+  }
+
+  @SuppressWarnings("unused")
   private void fallbackDeleteConversation(String id, Throwable t) {
     log.error("{} call short-circuited/bulkheaded: {}", getClass().getSimpleName(), t.getMessage());
   }
 
   @SuppressWarnings("unused")
-  private AiClientResponse fallbackSearchJobsFromCompanies(GrokJobSearchRequest request, List<CompanyDto> group, Throwable t) {
+  private AiClientResponse fallbackSearchJobsFromCompanies(AIJobSearchRequest request, Throwable t) {
     log.error("{} call short-circuited/bulkheaded: {}", getClass().getSimpleName(), t.getMessage());
     return new AiClientResponse();
   }
 
   @SuppressWarnings("unused")
-  private AiClientResponse fallbackSearch(GrokJobSearchRequest request, Throwable t) {
+  private AiClientResponse fallbackSearch(AIJobSearchRequest request, Throwable t) {
     log.error("{} call short-circuited/bulkheaded: {}", getClass().getSimpleName(), t.getMessage());
     return new AiClientResponse();
   }
 
   @SuppressWarnings("unused")
-  private List<CompanyDto> fallbackSearchCompanies(GrokJobSearchRequest request, Throwable t) {
+  private List<CompanyDto> fallbackSearchCompanies(AIJobSearchRequest request, Throwable t) {
     log.error("{} call short-circuited/bulkheaded: {}", getClass().getSimpleName(), t.getMessage());
     return List.of();
   }

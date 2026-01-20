@@ -2,9 +2,7 @@ package com.jobshunter.service.clients.gemini;
 
 import com.jobshunter.ApplicationProperties;
 import com.jobshunter.database.entities.AiModelEntity;
-import com.jobshunter.database.entities.UserRemoteCvEntity;
-import com.jobshunter.dto.CompanyDto;
-import com.jobshunter.dto.exceptions.ValidationException;
+import com.jobshunter.dto.AIJobSearchRequest;
 import com.jobshunter.dto.geminiRequest.FileData;
 import com.jobshunter.dto.geminiRequest.GeminiJobsPayload;
 import com.jobshunter.dto.geminiRequest.GenerationConfig;
@@ -14,8 +12,6 @@ import com.jobshunter.dto.geminiRequest.ThinkingConfig;
 import com.jobshunter.dto.geminiResponse.GeminiGenerateContentResponse;
 import com.jobshunter.dto.geminiResponse.GeminiGenerateContentResponse.Candidate;
 import com.jobshunter.model.AiClientResponse;
-import com.jobshunter.model.EngineType;
-import com.jobshunter.model.GeminiJobSearchRequest;
 import com.jobshunter.model.Job;
 import com.jobshunter.model.PromptType;
 import com.jobshunter.processor.PackageExpected;
@@ -41,7 +37,7 @@ import org.springframework.web.client.RestClient;
 @PackageExpected("com.jobshunter.service.clients.gpt")
 @ConditionalOnProperty(name = "gemini.enabled", havingValue = "true")
 @AllArgsConstructor
-public non-sealed class GeminiV1JobSearchImpl implements AiJobsClient<GeminiJobSearchRequest, AiClientResponse> {
+public non-sealed class GeminiV1JobSearchImpl implements AiJobsClient {
 
   public static final String GEMINI_URI = "https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent?key=%s";
 
@@ -59,13 +55,9 @@ public non-sealed class GeminiV1JobSearchImpl implements AiJobsClient<GeminiJobS
   @CircuitBreaker(name = "geminiCircuitBreaker", fallbackMethod = "fallbackSearch")
   @Bulkhead(name = "geminiBulkhead")
   @RateLimiter(name = "geminiLimiter")
-  public AiClientResponse searchJobs(GeminiJobSearchRequest request) {
+  public AiClientResponse searchJobs(AIJobSearchRequest request) {
     try {
       AiModelEntity model = request.getOrder().getModel();
-
-      UserRemoteCvEntity remoteCV = request.getOrder().getUser().getRemoteCvs().stream()
-          .filter(p -> p.getProvider() == EngineType.GEMINI).findAny()
-          .orElseThrow(() -> new ValidationException("No GEMINI CV found for user" + request.getOrder().getUser().getUsername()));
 
       GenerationConfig generationConfig = GenerationConfig.builder(model)
           .maxOutputTokens(1200)
@@ -77,7 +69,7 @@ public non-sealed class GeminiV1JobSearchImpl implements AiJobsClient<GeminiJobS
           properties.getJobsHunter().getBlacklist()
       );
 
-      FileData resume = new FileData(String.format(FILES_URI, remoteCV.getFileId()), MediaType.APPLICATION_PDF_VALUE);
+      FileData resume = new FileData(String.format(FILES_URI, request.getFileId()), MediaType.APPLICATION_PDF_VALUE);
 
       GeminiJobsPayload payload = GeminiJobsPayload.builder(model)
           .generationConfig(generationConfig)
@@ -105,18 +97,8 @@ public non-sealed class GeminiV1JobSearchImpl implements AiJobsClient<GeminiJobS
     }
   }
 
-  @Override
-  public List<CompanyDto> searchCompanies(GeminiJobSearchRequest request) {
-    return List.of();
-  }
-
-  @Override
-  public AiClientResponse searchJobsFromCompanies(GeminiJobSearchRequest request, List<CompanyDto> group) {
-    return new AiClientResponse();
-  }
-
   @SuppressWarnings("unused")
-  private AiClientResponse fallbackSearch(GeminiJobSearchRequest request, Throwable t) {
+  private AiClientResponse fallbackSearch(AiJobsClient request, Throwable t) {
     log.error("{} call short-circuited/bulkheaded: {}", getClass().getSimpleName(), t.getMessage());
     return new AiClientResponse();
   }

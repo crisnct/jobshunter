@@ -1,8 +1,8 @@
 package com.jobshunter.service.clients.serp;
 
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.jobshunter.ApplicationProperties;
-import com.jobshunter.dto.CompanyDto;
-import com.jobshunter.dto.serpRequest.SearchWithSerpRequest;
+import com.jobshunter.dto.AIJobSearchRequest;
 import com.jobshunter.dto.serpResponse.SerpJobHit;
 import com.jobshunter.dto.serpResponse.SerpJobsResult;
 import com.jobshunter.model.AiClientResponse;
@@ -36,7 +36,7 @@ import org.springframework.stereotype.Component;
 @Component("JobsClientSerp")
 @ConditionalOnProperty(name = "serp.enabled", havingValue = "true")
 @RequiredArgsConstructor
-public non-sealed class SerpClientImpl implements AiJobsClient<SearchWithSerpRequest, AiClientResponse> {
+public non-sealed class SerpClientImpl implements AiJobsClient {
 
   private static final URI BASE = URI.create("https://serpapi.com/search");
 
@@ -49,6 +49,8 @@ public non-sealed class SerpClientImpl implements AiJobsClient<SearchWithSerpReq
 
   private final ApplicationProperties applicationProperties;
 
+  private final JsonMapper mapper;
+
   private static String encode(String s) {
     return URLEncoder.encode(s, StandardCharsets.UTF_8);
   }
@@ -57,15 +59,18 @@ public non-sealed class SerpClientImpl implements AiJobsClient<SearchWithSerpReq
   @RateLimiter(name = "serpLimiter")
   @CircuitBreaker(name = "serp", fallbackMethod = "fallbackSearch")
   @Bulkhead(name = "serpBulkhead")
-  public AiClientResponse searchJobs(@NotNull SearchWithSerpRequest request) {
+  public AiClientResponse searchJobs(@NotNull AIJobSearchRequest request) {
     SerpJobsResult results;
     try {
-      results = searchJobsPagination(request, null);
+      SerpRequestWrapper requestDetails = mapper.readValue(request.getUserPrompt(), SerpRequestWrapper.class);
+      requestDetails.setOrder(request.getOrder());
+
+      results = searchJobsPagination(requestDetails, null);
       for (int i = 0; i < applicationProperties.getSerp().getMaxPageSearch(); i++) {
         if (results.nextPageToken() == null) {
           break;
         } else {
-          SerpJobsResult results2 = searchJobsPagination(request, results.nextPageToken());
+          SerpJobsResult results2 = searchJobsPagination(requestDetails, results.nextPageToken());
           results = consolidate(results, results2);
         }
       }
@@ -83,18 +88,8 @@ public non-sealed class SerpClientImpl implements AiJobsClient<SearchWithSerpReq
     return response;
   }
 
-  @Override
-  public List<CompanyDto> searchCompanies(SearchWithSerpRequest request) {
-    return List.of();
-  }
-
-  @Override
-  public AiClientResponse searchJobsFromCompanies(SearchWithSerpRequest request, List<CompanyDto> group) {
-    return new AiClientResponse();
-  }
-
   @SuppressWarnings("unused")
-  private List<Job> fallbackSearch(@NotNull SearchWithSerpRequest request, Throwable t) {
+  private List<Job> fallbackSearch(@NotNull AIJobSearchRequest request, Throwable t) {
     log.error("Serp search short-circuited/bulkheaded: {}", t.getMessage());
     return List.of();
   }
@@ -105,7 +100,7 @@ public non-sealed class SerpClientImpl implements AiJobsClient<SearchWithSerpReq
     return new SerpJobsResult(results1.id(), jobs, results2.nextPageToken());
   }
 
-  private SerpJobsResult searchJobsPagination(SearchWithSerpRequest request, String nextPageToken) throws IOException {
+  private SerpJobsResult searchJobsPagination(SerpRequestWrapper request, String nextPageToken) throws IOException {
     log.info("Searching jobs with Serp Api, query: {}", request.getQuery());
     final URI uri = this.buildUri(request, nextPageToken);
     try {
@@ -123,7 +118,7 @@ public non-sealed class SerpClientImpl implements AiJobsClient<SearchWithSerpReq
     }
   }
 
-  private URI buildUri(SearchWithSerpRequest request, String nextPageToken) {
+  private URI buildUri(SerpRequestWrapper request, String nextPageToken) {
     List<String> parameters = new ArrayList<>();
     parameters.add("api_key");
     parameters.add(applicationProperties.getSerp().getApiKey());

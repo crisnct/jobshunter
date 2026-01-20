@@ -1,7 +1,6 @@
 package com.jobshunter.service.testdata;
 
-import com.jobshunter.dto.CompanyDto;
-import com.jobshunter.dto.serpRequest.SearchWithSerpRequest;
+import com.jobshunter.dto.AIJobSearchRequest;
 import com.jobshunter.model.AiClientResponse;
 import com.jobshunter.model.Job;
 import com.jobshunter.processor.PackageExpected;
@@ -18,13 +17,13 @@ import org.springframework.stereotype.Component;
 @Component("JobsClientSerp")
 @ConditionalOnProperty(name = "serp.enabled", havingValue = "false")
 @PackageExpected("com.jobshunter.service.clients.serp")
-public non-sealed class FakeSerpClient implements AiJobsClient<SearchWithSerpRequest, AiClientResponse> {
+public non-sealed class FakeSerpClient implements AiJobsClient {
 
   @Override
   @RateLimiter(name = "serpLimiter")
   @CircuitBreaker(name = "serp", fallbackMethod = "fallbackSearch")
   @Bulkhead(name = "serpBulkhead")
-  public AiClientResponse searchJobs(SearchWithSerpRequest request) {
+  public AiClientResponse searchJobs(AIJobSearchRequest request) {
     AiClientResponse result = new AiClientResponse();
     result.addAll(List.of(
         new Job(-1,
@@ -43,18 +42,8 @@ public non-sealed class FakeSerpClient implements AiJobsClient<SearchWithSerpReq
     return result;
   }
 
-  @Override
-  public List<CompanyDto> searchCompanies(SearchWithSerpRequest request) {
-    return List.of();
-  }
-
-  @Override
-  public AiClientResponse searchJobsFromCompanies(SearchWithSerpRequest request, List<CompanyDto> group) {
-    return new AiClientResponse();
-  }
-
   @SuppressWarnings("unused")
-  private AiClientResponse fallbackSearch(SearchWithSerpRequest request, Throwable t) {
+  private AiClientResponse fallbackSearch(AIJobSearchRequest request, Throwable t) {
     log.error("{} call short-circuited/bulkheaded: {}", getClass().getSimpleName(), t.getMessage());
     return new AiClientResponse();
   }

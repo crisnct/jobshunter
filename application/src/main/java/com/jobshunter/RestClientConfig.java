@@ -40,7 +40,7 @@ import org.springframework.web.client.RestClient;
 @Slf4j
 public class RestClientConfig {
 
-  private static final int RESPONSE_TIMEOUT = 15;//minutes
+  private static final int RESPONSE_TIMEOUT = 30;//minutes
 
   /**
    * Shared connection pool for all HTTP clients. Singleton bean to ensure efficient resource usage across the application.

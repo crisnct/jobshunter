@@ -1,8 +1,7 @@
 package com.jobshunter.service.testdata;
 
-import com.jobshunter.dto.CompanyDto;
+import com.jobshunter.dto.AIJobSearchRequest;
 import com.jobshunter.model.AiClientResponse;
-import com.jobshunter.model.GptJobSearchRequest;
 import com.jobshunter.model.Job;
 import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.clients.AiJobsClient;
@@ -18,13 +17,13 @@ import org.springframework.stereotype.Component;
 @Component("JobsClientGPT")
 @PackageExpected("com.jobshunter.service.clients.gpt")
 @ConditionalOnProperty(name = "gpt.enabled", havingValue = "false")
-public non-sealed class FakeGptClient implements AiJobsClient<GptJobSearchRequest, AiClientResponse> {
+public non-sealed class FakeGptClient implements AiJobsClient {
 
   @Override
   @CircuitBreaker(name = "gptCircuitBreaker", fallbackMethod = "fallbackSearch")
   @RateLimiter(name = "gptLimiter")
   @Bulkhead(name = "gptBulkhead")
-  public AiClientResponse searchJobs(GptJobSearchRequest request) {
+  public AiClientResponse searchJobs(AIJobSearchRequest request) {
     AiClientResponse result = new AiClientResponse();
     result.addAll(List.of(
         new Job(-1,
@@ -51,22 +50,8 @@ public non-sealed class FakeGptClient implements AiJobsClient<GptJobSearchReques
     return result;
   }
 
-  @Override
-  @RateLimiter(name = "gptLimiter")
-  @Bulkhead(name = "gptBulkhead")
-  public List<CompanyDto> searchCompanies(GptJobSearchRequest request) {
-    return List.of();
-  }
-
-  @Override
-  @RateLimiter(name = "gptLimiter")
-  @Bulkhead(name = "gptBulkhead")
-  public AiClientResponse searchJobsFromCompanies(GptJobSearchRequest request, List<CompanyDto> group) {
-    return new AiClientResponse();
-  }
-
   @SuppressWarnings("unused")
-  private AiClientResponse fallbackSearch(GptJobSearchRequest request, Throwable t) {
+  private AiClientResponse fallbackSearch(AIJobSearchRequest request, Throwable t) {
     log.error("{} call short-circuited/bulkheaded: {}", getClass().getSimpleName(), t.getMessage());
     return new AiClientResponse();
   }

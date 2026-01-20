@@ -27,6 +27,7 @@ public class ApplicationProperties {
     private Scheduler scheduler = new Scheduler();
     private RateLimitPolicy rateLimit = new RateLimitPolicy();
     private String blacklist;
+    private String blacklistJobsCompanySearch;
     private String whitelistSkipValidation;
     private AppThreads threads = new AppThreads();
     private AdditionalEffort additionalEffort = new AdditionalEffort();

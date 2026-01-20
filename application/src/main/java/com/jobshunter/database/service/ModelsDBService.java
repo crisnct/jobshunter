@@ -5,7 +5,7 @@ import com.jobshunter.database.entities.AiModelsCapabilityEntity;
 import com.jobshunter.database.repository.AiModelRepository;
 import com.jobshunter.database.repository.AiModelsCapabilityRepository;
 import com.jobshunter.model.AiCapabilityType;
-import com.jobshunter.model.EngineType;
+import com.jobshunter.model.EngineSelection;
 import java.util.List;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
@@ -25,9 +25,9 @@ public class ModelsDBService {
   }
 
   @Transactional(readOnly = true)
-  public Optional<AiModelEntity> getModel(EngineType provider, String model) {
+  public Optional<AiModelEntity> getModel(EngineSelection engine) {
     return aiModelRepository
-        .findByProviderAndModel(provider, model)
+        .findByProviderAndModel(engine.type(), engine.model())
         .map(entity -> {
           initialize(entity);
           return entity;

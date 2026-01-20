@@ -2,7 +2,7 @@ package com.jobshunter.service.application.hunting;
 
 import com.jobshunter.ApplicationProperties;
 import com.jobshunter.database.entities.AiModelEntity;
-import com.jobshunter.dto.AdditionalEffortRequest;
+import com.jobshunter.dto.AIJobSearchRequest;
 import com.jobshunter.model.AiClientResponse;
 import com.jobshunter.model.Job;
 import com.jobshunter.model.JobContext;
@@ -34,27 +34,27 @@ public class AiConversationStateMachine {
     this.maxRetries = applicationProperties.getJobsHunter().getAdditionalEffort().getMaxRetries();
   }
 
-  public <R extends AdditionalEffortRequest> CompletableFuture<AiClientResponse> processAsync(
-      R request,
+  public CompletableFuture<AiClientResponse> processAsync(
+      AIJobSearchRequest request,
       Executor executor,
-      SearchExecutor<R> searchExecutor,
+      SearchExecutor searchExecutor,
       PromptGenerator promptGenerator,
-      RetryRequestFactory<R> retryRequestFactory,
-      ConversationCleanup<R> conversationCleanup
+      RetryRequestFactory retryRequestFactory,
+      ConversationCleanup conversationCleanup
   ) {
     return processAsyncWithRetry(request, executor, 0, new AiClientResponse(),
         searchExecutor, promptGenerator, retryRequestFactory, conversationCleanup);
   }
 
-  private <R extends AdditionalEffortRequest> CompletableFuture<AiClientResponse> processAsyncWithRetry(
-      R request,
+  private CompletableFuture<AiClientResponse> processAsyncWithRetry(
+      AIJobSearchRequest request,
       Executor executor,
       int retryCount,
       AiClientResponse accumulatedResponse,
-      SearchExecutor<R> searchExecutor,
+      SearchExecutor searchExecutor,
       PromptGenerator promptGenerator,
-      RetryRequestFactory<R> retryRequestFactory,
-      ConversationCleanup<R> conversationCleanup
+      RetryRequestFactory retryRequestFactory,
+      ConversationCleanup conversationCleanup
   ) {
     return CompletableFuture.supplyAsync(() -> searchExecutor.searchJobsSync(request), executor)
         .thenCompose(response -> removeDuplicatesAndIgnored(request, response))
@@ -72,8 +72,8 @@ public class AiConversationStateMachine {
         .exceptionally(ex -> handlePipelineError(request, accumulatedResponse, ex));
   }
 
-  private <R extends AdditionalEffortRequest> CompletableFuture<AiClientResponse> removeDuplicatesAndIgnored(
-      R request,
+  private CompletableFuture<AiClientResponse> removeDuplicatesAndIgnored(
+      AIJobSearchRequest request,
       AiClientResponse response) {
     Set<String> seenUrls = new HashSet<>(request.getOrder().getIgnoredURLs());
     AiClientResponse aiClientResponse = new AiClientResponse();
@@ -87,8 +87,8 @@ public class AiConversationStateMachine {
     return CompletableFuture.completedFuture(aiClientResponse);
   }
 
-  private <R extends AdditionalEffortRequest> CompletableFuture<List<JobContext>> validateJobsUrl(
-      R request,
+  private CompletableFuture<List<JobContext>> validateJobsUrl(
+      AIJobSearchRequest request,
       AiClientResponse accumulatedResponse,
       AiClientResponse response
   ) {
@@ -107,16 +107,16 @@ public class AiConversationStateMachine {
   }
 
   @Nonnull
-  private <R extends AdditionalEffortRequest> CompletableFuture<AiClientResponse> askAIForRejectedURLs(
-      R request,
+  private CompletableFuture<AiClientResponse> askAIForRejectedURLs(
+      AIJobSearchRequest request,
       Executor executor,
       int retryCount,
       AiClientResponse accumulatedResponse,
       List<JobContext> contexts,
-      SearchExecutor<R> searchExecutor,
+      SearchExecutor searchExecutor,
       PromptGenerator promptGenerator,
-      RetryRequestFactory<R> retryRequestFactory,
-      ConversationCleanup<R> conversationCleanup
+      RetryRequestFactory retryRequestFactory,
+      ConversationCleanup conversationCleanup
   ) {
     List<Job> rejectedJobs = contexts.stream()
         .filter(ctx -> !ctx.isFailed() && !ctx.isValidatedSuccessfully())
@@ -129,7 +129,7 @@ public class AiConversationStateMachine {
           rejectedJobs.size(), request.getOrder().getUser().getUsername(), retryCount + 1, maxRetries);
 
       String newPrompt = promptGenerator.generate(rejectedJobs);
-      R retryRequest = retryRequestFactory.create(request, accumulatedResponse, newPrompt);
+      AIJobSearchRequest retryRequest = retryRequestFactory.create(request, accumulatedResponse, newPrompt);
       return processAsyncWithRetry(retryRequest, executor, retryCount + 1, accumulatedResponse,
           searchExecutor, promptGenerator, retryRequestFactory, conversationCleanup);
     } else {
@@ -156,8 +156,8 @@ public class AiConversationStateMachine {
     return CompletableFuture.completedFuture(contexts);
   }
 
-  private <R extends AdditionalEffortRequest> AiClientResponse handlePipelineError(
-      R request,
+  private AiClientResponse handlePipelineError(
+      AIJobSearchRequest request,
       AiClientResponse accumulatedResponse,
       Throwable ex
   ) {
@@ -183,9 +183,9 @@ public class AiConversationStateMachine {
   }
 
   @FunctionalInterface
-  public interface SearchExecutor<R extends AdditionalEffortRequest> {
+  public interface SearchExecutor {
 
-    AiClientResponse searchJobsSync(R request);
+    AiClientResponse searchJobsSync(AIJobSearchRequest request);
   }
 
   @FunctionalInterface
@@ -195,15 +195,15 @@ public class AiConversationStateMachine {
   }
 
   @FunctionalInterface
-  public interface RetryRequestFactory<R extends AdditionalEffortRequest> {
+  public interface RetryRequestFactory {
 
-    R create(R originalRequest, AiClientResponse prevResponse, String newPrompt);
+    AIJobSearchRequest create(AIJobSearchRequest originalRequest, AiClientResponse prevResponse, String newPrompt);
   }
 
   @FunctionalInterface
-  public interface ConversationCleanup<R extends AdditionalEffortRequest> {
+  public interface ConversationCleanup {
 
-    void cleanup(R request);
+    void cleanup(AIJobSearchRequest request);
   }
 
 }

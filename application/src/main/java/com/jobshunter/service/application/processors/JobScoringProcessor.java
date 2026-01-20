@@ -47,7 +47,7 @@ public final class JobScoringProcessor implements JobProcessor {
 
   @PostConstruct
   private void init() {
-    this.aiModel = modelsDBService.getModel(ENGINE_SELECTION.type(), ENGINE_SELECTION.model()).orElseThrow();
+    this.aiModel = modelsDBService.getModel(ENGINE_SELECTION).orElseThrow();
     log.info("JobScoring initialized with model: {} from {}", ENGINE_SELECTION.model(), ENGINE_SELECTION.type());
   }
 
