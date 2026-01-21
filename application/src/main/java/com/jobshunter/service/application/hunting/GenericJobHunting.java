@@ -2,11 +2,11 @@ package com.jobshunter.service.application.hunting;
 
 import com.jobshunter.database.entities.AiModelEntity;
 import com.jobshunter.database.entities.UserEntity;
+import com.jobshunter.database.entities.UserJobRoleEntity;
 import com.jobshunter.database.entities.UserPromptEntity;
 import com.jobshunter.dto.AIJobSearchRequest;
 import com.jobshunter.dto.CompanyDto;
 import com.jobshunter.model.AiClientResponse;
-import com.jobshunter.model.EngineCategory;
 import com.jobshunter.model.EngineType;
 import com.jobshunter.model.Job;
 import com.jobshunter.model.SearchJobOrder;
@@ -14,6 +14,7 @@ import com.jobshunter.service.application.UserCvService;
 import com.jobshunter.service.clients.AiJobsClient;
 import com.jobshunter.service.clients.AiJobsCompaniesClient;
 import io.github.resilience4j.ratelimiter.RequestNotPermitted;
+import jakarta.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
@@ -27,43 +28,64 @@ public abstract non-sealed class GenericJobHunting implements JobHunting {
   protected final AiJobsClient jobsClient;
   protected final UserCvService userCvService;
   private final Executor executor;
+  private final CountryIsoCode countryIsoCode;
 
   public GenericJobHunting(
       Executor executor,
       AiJobsClient jobsClient,
+      CountryIsoCode countryIsoCode,
       UserCvService userCvService
   ) {
     this.executor = executor;
+    this.countryIsoCode = countryIsoCode;
     this.jobsClient = jobsClient;
     this.userCvService = userCvService;
   }
 
   public abstract EngineType getEngineType();
 
-  public AIJobSearchRequest createRequest(SearchJobOrder order, UserPromptEntity prompt) {
+  public AIJobSearchRequest createRequest(SearchJobOrder order) {
     AIJobSearchRequest request = new AIJobSearchRequest(order);
     order.getUser().getRemoteCvs().stream()
         .filter(p -> p.getProvider() == getEngineType()).findAny()
         .ifPresent(userRemoteCvEntity -> request.setFileId(userRemoteCvEntity.getFileId()));
     request.setBase64CV(Base64.getEncoder().encodeToString(order.getUser().getCv().getByteArray()));
     request.setStoreConversation(true);
-    if (prompt != null) {
-      request.setPromptId(prompt.getId());
-      request.setUserPrompt(prompt.getPrompt());
+    if (countryIsoCode != null) {
+      request.setCountryIsoCode(countryIsoCode.getCode(order.getUser().getCountry()));
     }
     return request;
+  }
+
+  public AIJobSearchRequest createRequest(SearchJobOrder order, String prompt, Long promptId) {
+    AIJobSearchRequest request = this.createRequest(order);
+    request.setUserPrompt(prompt);
+    request.setPromptId(promptId);
+    return request;
+  }
+
+  public AIJobSearchRequest createRequest(@NotNull SearchJobOrder order, @NotNull UserPromptEntity prompt) {
+    return createRequest(order, prompt.getPrompt(), prompt.getId());
   }
 
   @Override
   public CompletableFuture<List<Job>> searchJobsAsync(SearchJobOrder order) {
     //Search companies and then for each company search jobs
     CompletableFuture<List<Job>> futures = CompletableFuture.completedFuture(List.of());
-    //Search jobs based on user requests
-    boolean isAImodel = order.getModel().getProvider().isAiProvider();
-    for (UserPromptEntity prompt : order.getUser().getPrompts()) {
-      if (((prompt.getEngineCategory() == EngineCategory.AI) && isAImodel)
-          || ((prompt.getEngineCategory() != EngineCategory.AI) && !isAImodel)) {
 
+    if (order.getModel().getProvider() == EngineType.SERP) {
+      for (UserJobRoleEntity role : order.getUser().getJobRoles()) {
+        AIJobSearchRequest request = createRequest(order, role.getJobRole(), null);
+        CompletableFuture<AiClientResponse> jobsFound = this.searchAsync(request, executor);
+        futures = futures.thenCombine(jobsFound, (previousJobs, newJobs) -> {
+          List<Job> merged = new ArrayList<>(previousJobs);
+          merged.addAll(newJobs.getJobs());
+          return merged;
+        });
+      }
+    } else {
+      //Search jobs based on user requests
+      for (UserPromptEntity prompt : order.getUser().getPrompts()) {
         AIJobSearchRequest request = createRequest(order, prompt);
         CompletableFuture<AiClientResponse> jobsFound = this.searchAsync(request, executor);
         futures = futures.thenCombine(jobsFound, (previousJobs, newJobs) -> {
@@ -79,7 +101,7 @@ public abstract non-sealed class GenericJobHunting implements JobHunting {
 
   public CompletableFuture<List<Job>> searchJobsByCompaniesAsync(SearchJobOrder order) {
     UserEntity user = order.getUser();
-    AIJobSearchRequest request = createRequest(order, null);
+    AIJobSearchRequest request = createRequest(order);
     //TODO optimize and create an async for each of the job search for a group of companies.
     // Do it similar like in searchJobsAsync so it will run all jobs search in parallel
     if (jobsClient instanceof AiJobsCompaniesClient jobsClientComp) {
@@ -124,7 +146,11 @@ public abstract non-sealed class GenericJobHunting implements JobHunting {
     log.info("Searching jobs for user {} with model {}", user.getUsername(), aiModel.getModel());
     if (user.getCv() != null) {
       //Upload cv if needed
-      userCvService.refreshUserCvIfNeeded(user, aiModel.getProvider());
+      for (EngineType type: EngineType.values()){
+        if (type.isAiProvider()){
+          userCvService.refreshUserCvIfNeeded(user, type);
+        }
+      }
     }
     AiClientResponse response = jobsClient.searchJobs(request);
     response.getJobs().forEach(job -> {

@@ -28,9 +28,10 @@ public final class GeminiJobHunting extends AiConversationJobHunting {
       UserCvService userCvService,
       TemplateRenderer templateRenderer,
       ModelsDBService modelsDBService,
-      AiConversationStateMachine conversationStateMachine
+      AiConversationStateMachine conversationStateMachine,
+      CountryIsoCode countryIsoCode
   ) {
-    super(geminiSearchExecutor, geminiClient, userCvService, templateRenderer, conversationStateMachine);
+    super(geminiSearchExecutor, geminiClient, userCvService, templateRenderer, conversationStateMachine, countryIsoCode);
     this.discoveryModel = modelsDBService.getModel(new EngineSelection(EngineType.GEMINI, "gemini-2.5-flash-lite")).orElseThrow();
     this.companiesModel = modelsDBService.getModel(new EngineSelection(EngineType.GEMINI, "gemini-2.5-flash-lite")).orElseThrow();
   }

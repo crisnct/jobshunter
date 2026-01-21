@@ -28,9 +28,10 @@ public abstract class AiConversationJobHunting extends GenericJobHunting {
       AiJobsClient jobsClient,
       UserCvService userCvService,
       TemplateRenderer templateRenderer,
-      AiConversationStateMachine conversationStateMachine
+      AiConversationStateMachine conversationStateMachine,
+      CountryIsoCode countryIsoCode
   ) {
-    super(executor, jobsClient, userCvService);
+    super(executor, jobsClient, countryIsoCode, userCvService);
     this.templateRenderer = templateRenderer;
     this.conversationStateMachine = conversationStateMachine;
   }

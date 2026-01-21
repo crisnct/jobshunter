@@ -20,7 +20,7 @@ public final class SerpJobHunting extends AiConversationJobHunting {
       UserCvService userCvService,
       AiConversationStateMachine conversationStateMachine
   ) {
-    super(serpExecutor, serpClient, userCvService, templateRenderer, conversationStateMachine);
+    super(serpExecutor, serpClient, userCvService, templateRenderer, conversationStateMachine, null);
   }
 
   @Override

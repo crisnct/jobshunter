@@ -1,6 +1,5 @@
 package com.jobshunter.controller;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jobshunter.database.entities.RoleEntity;
 import com.jobshunter.database.entities.UserContractTypeEntity;
@@ -17,7 +16,6 @@ import com.jobshunter.dto.ChangePasswordRequest;
 import com.jobshunter.dto.UserInfoResponse;
 import com.jobshunter.dto.UserJobResponse;
 import com.jobshunter.dto.UserUpdateRequest;
-import com.jobshunter.dto.exceptions.ValidationException;
 import com.jobshunter.model.ContractType;
 import com.jobshunter.model.EngineCategory;
 import com.jobshunter.model.EngineType;
@@ -222,18 +220,6 @@ public class UserController {
     }
 
     List<Long> promptsToDelete = new ArrayList<>(user.getPrompts().stream().map(UserPromptEntity::getId).toList());
-
-    if (request.serpPrompts() != null) {
-      request.serpPrompts().forEach(serpPrompt -> {
-        try {
-          String promptJson = objectMapper.writeValueAsString(serpPrompt);
-          UserPromptEntity prompt = userDBService.updatePrompt(user, EngineCategory.SERP, serpPrompt.id(), promptJson);
-          promptsToDelete.remove(prompt.getId());
-        } catch (JsonProcessingException e) {
-          throw new ValidationException("Invalid SERP prompt payload", e);
-        }
-      });
-    }
 
     if (request.aiPrompts() != null) {
       request.aiPrompts().forEach(aiPrompt -> {

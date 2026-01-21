@@ -1,6 +1,5 @@
 package com.jobshunter.service.clients.serp;
 
-import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.jobshunter.ApplicationProperties;
 import com.jobshunter.dto.AIJobSearchRequest;
 import com.jobshunter.dto.serpResponse.SerpJobHit;
@@ -13,14 +12,12 @@ import com.jobshunter.service.clients.browser.BrowserSimulator;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,20 +37,9 @@ public non-sealed class SerpClientImpl implements AiJobsClient {
 
   private static final URI BASE = URI.create("https://serpapi.com/search");
 
-  private static final double KM_TO_MILES = 0.621371;
-
-  // Prefix standard Google pentru uule
-  private static final String UULE_PREFIX = "w+CAIQICI";
-
   private final BrowserSimulator browserSimulator;
 
   private final ApplicationProperties applicationProperties;
-
-  private final JsonMapper mapper;
-
-  private static String encode(String s) {
-    return URLEncoder.encode(s, StandardCharsets.UTF_8);
-  }
 
   @Override
   @RateLimiter(name = "serpLimiter")
@@ -62,15 +48,12 @@ public non-sealed class SerpClientImpl implements AiJobsClient {
   public AiClientResponse searchJobs(@NotNull AIJobSearchRequest request) {
     SerpJobsResult results;
     try {
-      SerpRequestWrapper requestDetails = mapper.readValue(request.getUserPrompt(), SerpRequestWrapper.class);
-      requestDetails.setOrder(request.getOrder());
-
-      results = searchJobsPagination(requestDetails, null);
+      results = searchJobsPagination(request, null);
       for (int i = 0; i < applicationProperties.getSerp().getMaxPageSearch(); i++) {
         if (results.nextPageToken() == null) {
           break;
         } else {
-          SerpJobsResult results2 = searchJobsPagination(requestDetails, results.nextPageToken());
+          SerpJobsResult results2 = searchJobsPagination(request, results.nextPageToken());
           results = consolidate(results, results2);
         }
       }
@@ -81,9 +64,13 @@ public non-sealed class SerpClientImpl implements AiJobsClient {
     AiClientResponse response = new AiClientResponse();
     response.setId(results.id());
     for (SerpJobHit serpJob : results.jobs()) {
-      Job job = new Job(-1, serpJob.applyLinks().getFirst(), request.getOrder().getModel().getModel());
-      job.addMetadata(JobMetadataType.SERP_DESCRIPTION, serpJob.description() + "\n" + serpJob.highlights());
-      response.add(job);
+      if (serpJob.applyLinks().isEmpty()) {
+        log.warn("Not found apply link from company {}", serpJob.company());
+      } else {
+        Job job = new Job(-1, serpJob.applyLinks().getFirst(), request.getOrder().getModel().getModel());
+        job.addMetadata(JobMetadataType.SERP_DESCRIPTION, serpJob.description() + "\n" + serpJob.highlights());
+        response.add(job);
+      }
     }
     return response;
   }
@@ -100,8 +87,8 @@ public non-sealed class SerpClientImpl implements AiJobsClient {
     return new SerpJobsResult(results1.id(), jobs, results2.nextPageToken());
   }
 
-  private SerpJobsResult searchJobsPagination(SerpRequestWrapper request, String nextPageToken) throws IOException {
-    log.info("Searching jobs with Serp Api, query: {}", request.getQuery());
+  private SerpJobsResult searchJobsPagination(AIJobSearchRequest request, String nextPageToken) throws IOException {
+    log.info("Searching jobs with Serp Api, query: {}", request.getUserPrompt());
     final URI uri = this.buildUri(request, nextPageToken);
     try {
       ResponseEntity<String> response = browserSimulator.openPageAsync(uri.toString()).toCompletableFuture().get();
@@ -118,52 +105,24 @@ public non-sealed class SerpClientImpl implements AiJobsClient {
     }
   }
 
-  private URI buildUri(SerpRequestWrapper request, String nextPageToken) {
+  private URI buildUri(AIJobSearchRequest request, String nextPageToken) {
     List<String> parameters = new ArrayList<>();
     parameters.add("api_key");
     parameters.add(applicationProperties.getSerp().getApiKey());
+
     parameters.add("engine");
     parameters.add(request.getOrder().getModel().getModel().toLowerCase());
-    parameters.add("q");
-    parameters.add(encode(request.getQuery()));
 
-    if (request.getLocation() != null) {
-      parameters.add("uule");
-      parameters.add(encodeLocation(request.getLocation()));
-      if (request.getRadius() != null) {
-        parameters.add("lrad");
-        parameters.add(String.valueOf(kilometersToMiles(request.getRadius())));
-      }
-    }
-    if (request.getWorkType() != null) {
-      parameters.add("ltype");
-      String value = switch (request.getWorkType()) {
-        case ONSITE -> "1";
-        case REMOTE -> "2";
-        case HYBRID -> "3";
-      };
-      parameters.add(value);
-    }
+    parameters.add("q");
+    parameters.add(encode(request.getUserPrompt()));
 
     parameters.add("chips");
-    if (request.getDatePosted() == null) {
-      parameters.add("date_posted:last_3_days");
-    } else {
-      parameters.add("date_posted:" + request.getDatePosted());
-    }
+    parameters.add("remote,employment_type:CONTRACTOR,date_posted:14days");
 
-    if (request.getGoogleDomain() != null) {
-      parameters.add("google_domain");
-      parameters.add(request.getGoogleDomain());
-    }
-    if (request.getLanguage() != null) {
-      parameters.add("hl");
-      parameters.add(request.getLanguage());
-    }
-    if (request.getCountry() != null) {
-      parameters.add("gl");
-      parameters.add(request.getCountry());
-    }
+    //language of the Google interface
+    parameters.add("hl");
+    parameters.add("en");
+
     if (nextPageToken != null) {
       parameters.add("next_page_token");
       parameters.add(nextPageToken);
@@ -183,17 +142,8 @@ public non-sealed class SerpClientImpl implements AiJobsClient {
     return URI.create(sb.toString());
   }
 
-  private String encodeLocation(@NotBlank String location) {
-    byte[] utf8Bytes = location.getBytes(StandardCharsets.UTF_8);
-    String base64 = Base64.getEncoder().encodeToString(utf8Bytes);
-    return UULE_PREFIX + base64;
-  }
-
-  private double kilometersToMiles(double kilometers) {
-    if (kilometers < 0) {
-      throw new RuntimeException("Distance cannot be negative");
-    }
-    return kilometers * KM_TO_MILES;
+  private static String encode(String s) {
+    return URLEncoder.encode(s, StandardCharsets.UTF_8);
   }
 
 }

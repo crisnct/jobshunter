@@ -2,6 +2,7 @@ package com.jobshunter.controller;
 
 import com.jobshunter.database.entities.AiModelEntity;
 import com.jobshunter.database.entities.JobOrderEntity;
+import com.jobshunter.database.entities.UserContractTypeEntity;
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.service.JobOrderDBService;
 import com.jobshunter.database.service.ModelsDBService;
@@ -9,13 +10,17 @@ import com.jobshunter.database.service.UserDBService;
 import com.jobshunter.dto.JobOrderRequest;
 import com.jobshunter.dto.JobOrderResponse;
 import com.jobshunter.model.AiModel;
+import com.jobshunter.model.ContractType;
+import com.jobshunter.model.JobType;
 import jakarta.validation.Valid;
 import jakarta.validation.ValidationException;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.Hibernate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -62,6 +67,7 @@ public class EngineController {
       @Valid @RequestBody List<JobOrderRequest> requests,
       Authentication authentication
   ) {
+    //Basic validation
     for (JobOrderRequest request : requests) {
       if (!request.searchWithUserPrompts() && !request.searchCompanies()) {
         throw new ValidationException("At least one of searchWithUserPrompts or searchCompanies must be true");
@@ -70,6 +76,20 @@ public class EngineController {
 
     @SuppressWarnings("OptionalGetWithoutIsPresent")
     UserEntity user = userDBService.getUser(authentication.getName()).get();
+    Hibernate.initialize(user.getContractTypes());
+    Hibernate.initialize(user.getJobTypes());
+    Hibernate.initialize(user.getCv());
+    EnumSet<ContractType> contractTypes = user.getContractTypes().stream()
+        .map(UserContractTypeEntity::getContractType)
+        .collect(Collectors.toCollection(() -> EnumSet.noneOf(ContractType.class)));
+    boolean userAcceptsRemoteOtherCountry = user.getJobTypes().stream().anyMatch(p -> p.getJobType() == JobType.REMOTE)
+        && (contractTypes.contains(ContractType.B2B) || contractTypes.contains(ContractType.EOR));
+    if (!userAcceptsRemoteOtherCountry){
+      throw new ValidationException("User does not accept remote jobs from other countries");
+    }
+    if (user.getCv() == null){
+      throw new ValidationException("User does not have any cv attached in his profile");
+    }
 
     for (JobOrderRequest request : requests) {
       log.info("Creating job order for user: {}, model: {}, searchCompanies: {}, searchWithUserPrompts: {}",

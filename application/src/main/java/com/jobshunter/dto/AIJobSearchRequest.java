@@ -16,7 +16,8 @@ public class AIJobSearchRequest implements Copyable<AIJobSearchRequest> {
   private SearchJobOrder order;
 
   private String userPrompt;
-  private long promptId;
+  private Long promptId;
+  private String countryIsoCode;
   private String fileId;
   private String base64CV;
 
@@ -41,6 +42,7 @@ public class AIJobSearchRequest implements Copyable<AIJobSearchRequest> {
     copy.setPreviousURL(this.getPreviousURL() != null ? new ArrayList<>(this.getPreviousURL()) : null);
     copy.userPrompt = userPrompt;
     copy.promptId = promptId;
+    copy.countryIsoCode = countryIsoCode;
     copy.company = company;
     copy.base64CV = base64CV;
     copy.discoveryModel = discoveryModel;

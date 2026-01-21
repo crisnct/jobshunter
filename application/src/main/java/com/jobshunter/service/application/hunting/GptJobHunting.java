@@ -29,9 +29,10 @@ public final class GptJobHunting extends AiConversationJobHunting {
       UserCvService userCvService,
       TemplateRenderer templateRenderer,
       ModelsDBService modelsDBService,
-      AiConversationStateMachine conversationStateMachine
+      AiConversationStateMachine conversationStateMachine,
+      CountryIsoCode countryIsoCode
   ) {
-    super(gptSearchExecutor, gptClient, userCvService, templateRenderer, conversationStateMachine);
+    super(gptSearchExecutor, gptClient, userCvService, templateRenderer, conversationStateMachine, countryIsoCode);
     this.discoveryModel = modelsDBService.getModel(new EngineSelection(EngineType.GPT, "gpt-4o-mini")).orElseThrow();
     this.companiesModel = modelsDBService.getModel(new EngineSelection(EngineType.GPT, "gpt-4o-mini")).orElseThrow();
   }

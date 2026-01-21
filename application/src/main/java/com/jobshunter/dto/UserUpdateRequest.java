@@ -2,11 +2,9 @@ package com.jobshunter.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.jobshunter.model.ContractType;
 import com.jobshunter.model.JobType;
 import com.jobshunter.model.Relocation;
-import com.jobshunter.model.WorkType;
 import com.jobshunter.processor.SqlInjectionSafe;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotBlank;
@@ -21,7 +19,6 @@ public record UserUpdateRequest(
     @NotBlank @Size(max = 30) @SqlInjectionSafe String phoneNumber,
     boolean notifyWhatsapp,
     boolean notifyEmail,
-    List<SerpPromptUpdate> serpPrompts,
     List<AiPromptUpdate> aiPrompts,
     @Nullable @Size(max = 64) @SqlInjectionSafe String city,
     @Nullable @Size(max = 64) @SqlInjectionSafe String country,
@@ -32,51 +29,6 @@ public record UserUpdateRequest(
     @Nullable Relocation relocation,
     @Nullable List<ContractType> contractTypes
 ) {
-
-  @JsonInclude(JsonInclude.Include.NON_NULL)
-  @JsonIgnoreProperties(ignoreUnknown = true)
-  public record SerpPromptUpdate(
-      @Nullable
-      @Positive
-      Long id,
-
-      @NotBlank(message = "Query must not be blank")
-      @Size(max = 2000)
-      @JsonProperty("q")
-      @SqlInjectionSafe
-      String query,
-
-      @Size(max = 255)
-      @JsonProperty("google_domain")
-      @SqlInjectionSafe
-      String googleDomain,
-
-      @Size(max = 128)
-      @JsonProperty("date_posted")
-      @SqlInjectionSafe
-      String datePosted,
-
-      @Size(max = 2)
-      @JsonProperty("gl")
-      @SqlInjectionSafe
-      String country,
-
-      @SqlInjectionSafe
-      String location,
-
-      WorkType workType,
-
-      @Nullable
-      @Positive
-      Integer radius,
-
-      @Size(max = 2)
-      @JsonProperty("hl")
-      @SqlInjectionSafe
-      String language
-  ) {
-
-  }
 
   @JsonInclude(JsonInclude.Include.NON_NULL)
   @JsonIgnoreProperties(ignoreUnknown = true)

@@ -12,6 +12,7 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.Hibernate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -53,6 +54,7 @@ public class UserCvDBService {
     entity.setFilename(fileInfo.filename());
     entity.setExpireTime(fileInfo.expireAt());
     userRemoteCvRepository.saveAndFlush(entity);
+    Hibernate.initialize(user.getRemoteCvs());
   }
 
   @Transactional(readOnly = true)

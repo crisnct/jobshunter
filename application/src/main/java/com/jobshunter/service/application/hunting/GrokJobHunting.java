@@ -28,9 +28,10 @@ public final class GrokJobHunting extends AiConversationJobHunting {
       UserCvService userCvService,
       TemplateRenderer templateRenderer,
       ModelsDBService modelsDBService,
-      AiConversationStateMachine conversationStateMachine
+      AiConversationStateMachine conversationStateMachine,
+      CountryIsoCode countryIsoCode
   ) {
-    super(executor, aiClient, userCvService, templateRenderer, conversationStateMachine);
+    super(executor, aiClient, userCvService, templateRenderer, conversationStateMachine, countryIsoCode);
     this.discoveryModel = modelsDBService.getModel(new EngineSelection(EngineType.GROK, "grok-4-1-fast-non-reasoning")).orElseThrow();
     this.companiesModel = modelsDBService.getModel(new EngineSelection(EngineType.GROK, "grok-4-1-fast-non-reasoning")).orElseThrow();
   }

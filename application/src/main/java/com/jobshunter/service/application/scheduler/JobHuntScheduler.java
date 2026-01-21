@@ -1,7 +1,6 @@
 package com.jobshunter.service.application.scheduler;
 
 import com.jobshunter.database.entities.JobOrderEntity;
-import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.entities.UserSessionEntity;
 import com.jobshunter.database.service.JobOrderDBService;
 import com.jobshunter.database.service.UserDBService;
@@ -11,10 +10,6 @@ import com.jobshunter.model.SearchJobOrder;
 import com.jobshunter.service.application.JobHuntService;
 import com.jobshunter.service.application.UserCvService;
 import com.jobshunter.service.clients.IpInfo;
-import java.time.Duration;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -111,18 +106,18 @@ public class JobHuntScheduler {
   }
 
   public void notifyUsersSync() {
-    final List<UserEntity> usersToNotify = new ArrayList<>();
-    for (var user : userDBService.getAllUsers()) {
-      if (user.isNotifyWhatsapp() || user.isNotifyEmail()) {
-        if (user.getLastJobs() != null && user.getLastJobs().plus(Duration.ofDays(1)).isBefore(Instant.now())) {
-          usersToNotify.add(user);
-        }
-      }
-    }
-    if (!usersToNotify.isEmpty()) {
-      //log.info("Notifying user {} about new jobs found", user.getUsername());
-      // TODO: implement notification logic if needed
-    }
+//    final List<UserEntity> usersToNotify = new ArrayList<>();
+//    for (var user : userDBService.getAllUsers()) {
+//      if (user.isNotifyWhatsapp() || user.isNotifyEmail()) {
+//        if (user.getLastJobs() != null && user.getLastJobs().plus(Duration.ofDays(1)).isBefore(Instant.now())) {
+//          usersToNotify.add(user);
+//        }
+//      }
+//    }
+//    if (!usersToNotify.isEmpty()) {
+//      //log.info("Notifying user {} about new jobs found", user.getUsername());
+//      // TODO: implement notification logic if needed
+//    }
   }
 
   private void cleanupFilesSync() {
