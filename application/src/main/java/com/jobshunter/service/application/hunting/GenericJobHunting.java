@@ -144,20 +144,11 @@ public abstract non-sealed class GenericJobHunting implements JobHunting {
     AiModelEntity aiModel = request.getOrder().getModel();
     UserEntity user = request.getOrder().getUser();
     log.info("Searching jobs for user {} with model {}", user.getUsername(), aiModel.getModel());
-    if (user.getCv() != null) {
-      //Upload cv if needed
-      for (EngineType type: EngineType.values()){
-        if (type.isAiProvider()){
-          userCvService.refreshUserCvIfNeeded(user, type);
-        }
-      }
-    }
     AiClientResponse response = jobsClient.searchJobs(request);
     response.getJobs().forEach(job -> {
       job.setPromptId(request.getPromptId());
       job.setSource(aiModel.getModel());
     });
-
     log.info("{} found {} url's and are going to be validated", aiModel.getModel(), response.getJobs().size());
     return response;
   }

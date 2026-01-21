@@ -38,15 +38,7 @@ public class JobHuntService {
 
   public JobHuntResponse searchJobsForUser(SearchJobOrder order) {
     UserEntity user = order.getUser();
-    final List<String> existingURLs;
-    boolean isEnableOneRealEngine = (properties.getGemini().isEnabled() || properties.getGpt().isEnabled() || properties.getSerp().isEnabled());
-    if (isEnableOneRealEngine) {
-      existingURLs = userJobDBService.getExistingJobUrlsForUser(user.getUsername());
-    } else {
-      existingURLs = new ArrayList<>();
-    }
-
-    CompletableFuture<List<Job>> futureJobs = huntingOrchestrator.startHunting(order, existingURLs);
+    CompletableFuture<List<Job>> futureJobs = huntingOrchestrator.startHunting(order);
     List<Job> result = jobsStateMachine.processAsync(futureJobs, user)
         .join()
         .stream()
@@ -60,7 +52,7 @@ public class JobHuntService {
 
     List<Job> jobs = jobHuntResponse.jobsFound();
     if (!jobs.isEmpty()) {
-      if (isEnableOneRealEngine) {
+      if ((properties.getGemini().isEnabled() || properties.getGpt().isEnabled() || properties.getSerp().isEnabled())) {
         this.userJobDBService.updateUserWithJobs(user, order, jobs);
       }
       if (user.isNotifyWhatsapp()) {

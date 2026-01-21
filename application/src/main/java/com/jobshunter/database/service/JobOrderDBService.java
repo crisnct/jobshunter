@@ -24,8 +24,6 @@ public class JobOrderDBService {
 
   private final JobOrderRepository jobOrderRepository;
   private final AiModelRepository aiModelRepository;
-  private final UserDBService userDBService;
-  private final ModelsDBService modelsDBService;
   private final EntityManager entityManager;
 
   @Transactional
@@ -79,14 +77,8 @@ public class JobOrderDBService {
     return Optional.of(jobId);
   }
 
-  @Transactional(readOnly = true)
   public JobOrderEntity getJobOrder(Long jobId) {
-    JobOrderEntity order = jobOrderRepository.findById(jobId).orElseThrow();
-    Hibernate.initialize(order);
-    userDBService.initialize(order.getUser());
-    Hibernate.initialize(order.getUser().getJobs());
-    modelsDBService.initialize(order.getAiModel());
-    return order;
+    return jobOrderRepository.findById(jobId).orElseThrow();
   }
 
 }

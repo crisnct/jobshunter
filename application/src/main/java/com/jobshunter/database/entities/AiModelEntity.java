@@ -49,7 +49,7 @@ public class AiModelEntity {
   @Column(name = "notes", columnDefinition = "TEXT")
   private String notes;
 
-  @OneToMany(mappedBy = "model", fetch = FetchType.LAZY)
+  @OneToMany(mappedBy = "model", fetch = FetchType.EAGER)
   private List<AiModelsCapabilityEntity> capabilities = new ArrayList<>();
 
   public AiModelEntity(EngineType provider, String model) {

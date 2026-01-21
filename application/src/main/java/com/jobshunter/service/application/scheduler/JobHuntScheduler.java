@@ -1,15 +1,21 @@
 package com.jobshunter.service.application.scheduler;
 
+import com.jobshunter.ApplicationProperties;
 import com.jobshunter.database.entities.JobOrderEntity;
+import com.jobshunter.database.entities.UserEntity;
+import com.jobshunter.database.entities.UserJobEntity;
 import com.jobshunter.database.entities.UserSessionEntity;
 import com.jobshunter.database.service.JobOrderDBService;
 import com.jobshunter.database.service.UserDBService;
+import com.jobshunter.database.service.UserJobDBService;
 import com.jobshunter.database.service.UserSessionDBService;
+import com.jobshunter.model.EngineType;
 import com.jobshunter.model.OrderStatus;
 import com.jobshunter.model.SearchJobOrder;
 import com.jobshunter.service.application.JobHuntService;
 import com.jobshunter.service.application.UserCvService;
 import com.jobshunter.service.clients.IpInfo;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -31,9 +37,13 @@ public class JobHuntScheduler {
 
   private final UserDBService userDBService;
 
+  private final UserJobDBService userJobDBService;
+
   private final JobOrderDBService jobOrderDBService;
 
   private final UserCvService userCvService;
+
+  private final ApplicationProperties properties;
 
   private final Executor ordersExecutor;
 
@@ -50,6 +60,8 @@ public class JobHuntScheduler {
       UserDBService userDBService,
       JobOrderDBService jobOrderDBService,
       UserCvService userCvService,
+      ApplicationProperties properties,
+      UserJobDBService userJobDBService,
       UserSessionDBService userSessionDBService,
       IpInfo ipInfoClient,
       @Qualifier("ordersExecutor") Executor ordersExecutor,
@@ -62,9 +74,11 @@ public class JobHuntScheduler {
     this.userSessionDBService = userSessionDBService;
     this.jobOrderDBService = jobOrderDBService;
     this.userCvService = userCvService;
+    this.userJobDBService = userJobDBService;
     this.ordersExecutor = ordersExecutor;
     this.notificationsExecutor = notificationsExecutor;
     this.maintenanceExecutor = maintenanceExecutor;
+    this.properties = properties;
   }
 
   @Scheduled(fixedDelayString = "${jobshunter.scheduler.processOrderFrequency:5000}")
@@ -77,7 +91,7 @@ public class JobHuntScheduler {
     this.performActionAsync("notifyUsersAsync", this::notifyUsersSync, notificationsExecutor);
   }
 
-  @Scheduled(fixedDelayString = "${jobshunter.scheduler.cleanupFiles:86400000}",  initialDelayString = "PT12H")
+  @Scheduled(fixedDelayString = "${jobshunter.scheduler.cleanupFiles:86400000}", initialDelayString = "PT12H")
   public void cleanupFilesAsync() {
     this.performActionAsync("cleanupFiles", this::cleanupFilesSync, maintenanceExecutor);
   }
@@ -88,10 +102,26 @@ public class JobHuntScheduler {
       return;
     }
     JobOrderEntity jobOrder = jobOrderDBService.getJobOrder(jobIdOp.get());
+    String username = jobOrder.getUser().getUsername();
     log.info("Start processing job order id={} for user {}", jobOrder.getId(), jobOrder.getUser().getUsername());
     try {
-      UserSessionEntity session = userSessionDBService.findByUser(jobOrder.getUser());
-      SearchJobOrder order = new SearchJobOrder(jobOrder);
+      for (EngineType type : EngineType.values()) {
+        if (type.isAiProvider()) {
+          userCvService.refreshUserCvIfNeeded(jobOrder.getUser(), type);
+        }
+      }
+
+      UserEntity user = userDBService.getUserCompleteInfo(username).orElseThrow();
+      UserSessionEntity session = userSessionDBService.findByUser(user);
+
+      boolean isEnableOneRealEngine = (properties.getGemini().isEnabled() || properties.getGpt().isEnabled() || properties.getSerp().isEnabled());
+      final List<String> ignoredURLs;
+      if (isEnableOneRealEngine) {
+        ignoredURLs = userJobDBService.getUserJobs(username).stream().map(UserJobEntity::getUrl).toList();
+      } else {
+        ignoredURLs = List.of();
+      }
+      SearchJobOrder order = new SearchJobOrder(jobOrder, user, ignoredURLs);
       order.setIpInfo(ipInfoClient.getIpDetailInfo(session.getIpAddress()));
       jobHuntService.searchJobsForUser(order);
       jobOrder.setStatus(OrderStatus.COMPLETED);

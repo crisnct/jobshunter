@@ -159,7 +159,6 @@ public class UserDBService {
     Hibernate.initialize(user.getPrompts());
     Hibernate.initialize(user.getRoles());
     Hibernate.initialize(user.getCv());
-    Hibernate.initialize(user.getRemoteCvs());
     Hibernate.initialize(user.getJobRoles());
     Hibernate.initialize(user.getJobTypes());
     Hibernate.initialize(user.getContractTypes());

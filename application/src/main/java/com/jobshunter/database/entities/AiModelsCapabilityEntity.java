@@ -25,12 +25,12 @@ public class AiModelsCapabilityEntity {
   @EmbeddedId
   private AiModelsCapabilityId id;
 
-  @ManyToOne(fetch = FetchType.LAZY)
+  @ManyToOne(fetch = FetchType.EAGER)
   @MapsId("modelId")
   @JoinColumn(name = "model_id", nullable = false)
   private AiModelEntity model;
 
-  @ManyToOne(fetch = FetchType.LAZY)
+  @ManyToOne(fetch = FetchType.EAGER)
   @MapsId("capabilityId")
   @JoinColumn(name = "capability_id", nullable = false)
   private AiCapabilityEntity capability;

@@ -25,7 +25,7 @@ public class HuntingOrchestrator {
 
   private final GeminiJobHunting geminiJobHunting;
 
-  public CompletableFuture<List<Job>> startHunting(SearchJobOrder order, List<String> existingURLs) {
+  public CompletableFuture<List<Job>> startHunting(SearchJobOrder order) {
     List<CompletableFuture<List<Job>>> allFutureJobs = new ArrayList<>();
 
     if (order.isSearchByUserPrompt()) {
@@ -50,7 +50,7 @@ public class HuntingOrchestrator {
             .flatMap(cf -> cf.join().stream())
             .collect(Collectors.toList())  // Mutable list
         )
-        .thenApply(jobs -> removeDuplicatesBetweenSources(jobs, existingURLs));
+        .thenApply(jobs -> removeDuplicatesBetweenSources(jobs, order.getIgnoredURLs()));
   }
 
   private List<Job> removeDuplicatesBetweenSources(

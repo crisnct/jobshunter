@@ -246,6 +246,7 @@ public class UserCvService {
         );
         ResumeFileInfo newFileInfo = client.uploadFile(tempFile);
         userCvDBService.saveRemoteCvFile(user, type, newFileInfo);
+        log.info("Upload CV complete for user {}, engine {}", user.getUsername(), type.name());
       } catch (IOException e) {
         throw new RuntimeException(e);
       } finally {

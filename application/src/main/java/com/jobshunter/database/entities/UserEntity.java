@@ -103,7 +103,7 @@ public class UserEntity implements UserDetails {
   private UserCvEntity cv;
 
   @JsonIgnore
-  @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
+  @OneToMany(mappedBy = "user", fetch = FetchType.EAGER)
   private List<UserRemoteCvEntity> remoteCvs = new ArrayList<>();
 
   @Column(name = "city", length = 64)

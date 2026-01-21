@@ -24,13 +24,13 @@ public class SearchJobOrder {
   //TODO move it to login functionality. When the user login get the IP info and store country and city in the database in user_session table in new fields
   private IpInfoDetailResponse ipInfo;
 
-  public SearchJobOrder(JobOrderEntity jobOrder) {
+  public SearchJobOrder(JobOrderEntity jobOrder, UserEntity user, List<String> ignoredURLs) {
     this.jobOrder = jobOrder;
-    this.user = jobOrder.getUser();
+    this.user = user;
     this.searchCompanies = jobOrder.isSearchCompanies();
     this.searchByUserPrompt = jobOrder.isSearchByPrompts();
     this.model = jobOrder.getAiModel();
-    this.ignoredURLs = jobOrder.getUser().getJobs().stream().map(UserJobEntity::getUrl).toList();
+    this.ignoredURLs = ignoredURLs;
   }
 
 }

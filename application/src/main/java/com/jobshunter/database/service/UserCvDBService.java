@@ -54,7 +54,6 @@ public class UserCvDBService {
     entity.setFilename(fileInfo.filename());
     entity.setExpireTime(fileInfo.expireAt());
     userRemoteCvRepository.saveAndFlush(entity);
-    Hibernate.initialize(user.getRemoteCvs());
   }
 
   @Transactional(readOnly = true)
