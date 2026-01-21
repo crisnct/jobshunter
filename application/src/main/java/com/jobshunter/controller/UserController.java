@@ -58,7 +58,6 @@ public class UserController {
   private final AuthDBService authDBService;
   private final EmailNotifierService emailService;
   private final UserCvService userCvService;
-  private final ObjectMapper objectMapper;
 
   @GetMapping("/me")
   @Transactional(readOnly = true)

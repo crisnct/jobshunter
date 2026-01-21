@@ -6,6 +6,7 @@ import com.jobshunter.dto.serpResponse.Country;
 import jakarta.annotation.PostConstruct;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -47,6 +48,12 @@ public class CountryIsoCode {
 
   public String getCode(String country) {
     return countryIsoCodes.get(country.toUpperCase());
+  }
+
+  public List<String> getAllCountries() {
+    return new ArrayList<>(countryIsoCodes.keySet()).stream()
+        .sorted()
+        .toList();
   }
 
 }
