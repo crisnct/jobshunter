@@ -9,9 +9,10 @@ import com.jobshunter.model.JobContext;
 import com.jobshunter.model.JobPhase;
 import com.jobshunter.model.JobScoreRequest;
 import com.jobshunter.service.clients.JobScoreCalculatorClient;
-import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -45,7 +46,7 @@ public final class JobScoringProcessor implements JobProcessor {
     this.grokCalculator = grokCalculator;
   }
 
-  @PostConstruct
+  @EventListener(ApplicationReadyEvent.class)
   private void init() {
     this.aiModel = modelsDBService.getModel(ENGINE_SELECTION).orElseThrow();
     log.info("JobScoring initialized with model: {} from {}", ENGINE_SELECTION.model(), ENGINE_SELECTION.type());

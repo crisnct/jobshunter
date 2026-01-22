@@ -13,14 +13,17 @@ import com.jobshunter.service.clients.AiJobsClient;
 import java.util.concurrent.Executor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
 public final class GrokJobHunting extends AiConversationJobHunting {
 
-  private final AiModelEntity discoveryModel;
-  private final AiModelEntity companiesModel;
+  private AiModelEntity discoveryModel;
+  private AiModelEntity companiesModel;
+  private final ModelsDBService modelsDBService;
 
   public GrokJobHunting(
       @Qualifier("grokSearchExecutor") Executor executor,
@@ -32,6 +35,11 @@ public final class GrokJobHunting extends AiConversationJobHunting {
       CountryIsoCode countryIsoCode
   ) {
     super(executor, aiClient, userCvService, templateRenderer, conversationStateMachine, countryIsoCode);
+    this.modelsDBService = modelsDBService;
+  }
+
+  @EventListener(ApplicationReadyEvent.class)
+  private void init() {
     this.discoveryModel = modelsDBService.getModel(new EngineSelection(EngineType.GROK, "grok-4-1-fast-non-reasoning")).orElseThrow();
     this.companiesModel = modelsDBService.getModel(new EngineSelection(EngineType.GROK, "grok-4-1-fast-non-reasoning")).orElseThrow();
   }

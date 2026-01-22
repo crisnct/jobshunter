@@ -13,15 +13,19 @@ import com.jobshunter.service.clients.AiJobsClient;
 import java.util.concurrent.Executor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
 public final class GptJobHunting extends AiConversationJobHunting {
 
-  private final AiModelEntity discoveryModel;
+  private AiModelEntity discoveryModel;
 
-  private final AiModelEntity companiesModel;
+  private AiModelEntity companiesModel;
+
+  private final ModelsDBService modelsDBService;
 
   public GptJobHunting(
       @Qualifier("gptSearchExecutor") Executor gptSearchExecutor,
@@ -33,9 +37,15 @@ public final class GptJobHunting extends AiConversationJobHunting {
       CountryIsoCode countryIsoCode
   ) {
     super(gptSearchExecutor, gptClient, userCvService, templateRenderer, conversationStateMachine, countryIsoCode);
+    this.modelsDBService = modelsDBService;
+  }
+
+  @EventListener(ApplicationReadyEvent.class)
+  private void init() {
     this.discoveryModel = modelsDBService.getModel(new EngineSelection(EngineType.GPT, "gpt-4o-mini")).orElseThrow();
     this.companiesModel = modelsDBService.getModel(new EngineSelection(EngineType.GPT, "gpt-4o-mini")).orElseThrow();
   }
+
 
   @Override
   public AIJobSearchRequest createRequest(SearchJobOrder order, UserPromptEntity prompt) {

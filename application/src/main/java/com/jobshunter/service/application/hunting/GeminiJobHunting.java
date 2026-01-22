@@ -13,14 +13,18 @@ import com.jobshunter.service.clients.AiJobsClient;
 import java.util.concurrent.Executor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
 public final class GeminiJobHunting extends AiConversationJobHunting {
 
-  private final AiModelEntity discoveryModel;
-  private final AiModelEntity companiesModel;
+  private AiModelEntity discoveryModel;
+  private AiModelEntity companiesModel;
+
+  private final ModelsDBService modelsDBService;
 
   public GeminiJobHunting(
       @Qualifier("geminiSearchExecutor") Executor geminiSearchExecutor,
@@ -32,6 +36,11 @@ public final class GeminiJobHunting extends AiConversationJobHunting {
       CountryIsoCode countryIsoCode
   ) {
     super(geminiSearchExecutor, geminiClient, userCvService, templateRenderer, conversationStateMachine, countryIsoCode);
+    this.modelsDBService = modelsDBService;
+  }
+
+  @EventListener(ApplicationReadyEvent.class)
+  private void init() {
     this.discoveryModel = modelsDBService.getModel(new EngineSelection(EngineType.GEMINI, "gemini-2.5-flash-lite")).orElseThrow();
     this.companiesModel = modelsDBService.getModel(new EngineSelection(EngineType.GEMINI, "gemini-2.5-flash-lite")).orElseThrow();
   }
