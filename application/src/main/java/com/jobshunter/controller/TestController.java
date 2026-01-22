@@ -7,6 +7,7 @@ import com.jobshunter.database.service.ModelsDBService;
 import com.jobshunter.database.service.UserDBService;
 import com.jobshunter.dto.EmailRequest;
 import com.jobshunter.dto.JobHuntResponse;
+import com.jobshunter.dto.JobScoreRequestDto;
 import com.jobshunter.dto.exceptions.BusinessException;
 import com.jobshunter.dto.exceptions.ValidationException;
 import com.jobshunter.dto.geminiRequest.GeminiJobsPayload;
@@ -20,13 +21,13 @@ import com.jobshunter.dto.grokResponse.GrokResponse;
 import com.jobshunter.model.AiSchemaType;
 import com.jobshunter.model.EngineSelection;
 import com.jobshunter.model.EngineType;
-import com.jobshunter.model.PromptType;
-import com.jobshunter.service.TemplateRenderer;
-import com.jobshunter.service.application.notifiers.EmailNotifierService;
-import com.jobshunter.dto.JobScoreRequestDto;
 import com.jobshunter.model.Job;
 import com.jobshunter.model.JobContext;
 import com.jobshunter.model.JobScoreRequest;
+import com.jobshunter.model.PromptType;
+import com.jobshunter.service.TemplateRenderer;
+import com.jobshunter.service.application.TestService;
+import com.jobshunter.service.application.notifiers.EmailNotifierService;
 import com.jobshunter.service.application.processors.JobBodyExtractorProcessor;
 import com.jobshunter.service.application.processors.JobFetchProcessor;
 import com.jobshunter.service.clients.JobScoreCalculatorClient;
@@ -34,7 +35,6 @@ import com.jobshunter.service.clients.gemini.GeminiV1JobSearchImpl;
 import com.jobshunter.service.clients.gpt.GptV1JobSearchImpl;
 import com.jobshunter.service.clients.grok.GrokV1JobSearchImpl;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
-import org.springframework.beans.factory.annotation.Qualifier;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import java.net.URI;
@@ -44,6 +44,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -63,6 +64,7 @@ import org.springframework.web.client.RestClient;
 @RestController
 @RequestMapping("/api/test")
 @PreAuthorize("hasRole('TEST')")
+@AllArgsConstructor
 public class TestController {
 
   private final EmailNotifierService emailNotifierService;
@@ -81,37 +83,7 @@ public class TestController {
 
   private final JobBodyExtractorProcessor jobBodyExtractorProcessor;
 
-  private final JobScoreCalculatorClient gptJobScoreCalculator;
-
-  private final JobScoreCalculatorClient geminiJobScoreCalculator;
-
-  private final JobScoreCalculatorClient grokJobScoreCalculator;
-
-  public TestController(
-      EmailNotifierService emailNotifierService,
-      UserDBService userDBService,
-      ApplicationProperties properties,
-      RestClient restClient,
-      ModelsDBService modelsDBService,
-      TemplateRenderer templateRenderer,
-      JobFetchProcessor jobFetchProcessor,
-      JobBodyExtractorProcessor jobBodyExtractorProcessor,
-      @Qualifier("GptJobScoreCalculator") JobScoreCalculatorClient gptJobScoreCalculator,
-      @Qualifier("GeminiJobScoreCalculator") JobScoreCalculatorClient geminiJobScoreCalculator,
-      @Qualifier("GrokJobScoreCalculator") JobScoreCalculatorClient grokJobScoreCalculator
-  ) {
-    this.emailNotifierService = emailNotifierService;
-    this.userDBService = userDBService;
-    this.properties = properties;
-    this.restClient = restClient;
-    this.modelsDBService = modelsDBService;
-    this.templateRenderer = templateRenderer;
-    this.jobFetchProcessor = jobFetchProcessor;
-    this.jobBodyExtractorProcessor = jobBodyExtractorProcessor;
-    this.gptJobScoreCalculator = gptJobScoreCalculator;
-    this.geminiJobScoreCalculator = geminiJobScoreCalculator;
-    this.grokJobScoreCalculator = grokJobScoreCalculator;
-  }
+  private final TestService testService;
 
   @PostMapping(value = "/email/send", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ResponseEntity<?> send(
@@ -409,12 +381,12 @@ public class TestController {
     // Fetch HTML from job URL using JobFetchProcessor
     Job job = new Job(0, request.jobUrl(), "SCORE_ENDPOINT");
     JobContext jobContext = new JobContext(job, user);
-    
+
     try {
       jobContext = jobFetchProcessor.processAsync(jobContext);
       if (jobContext.isFailed() || !jobContext.hasFetchResult()) {
-        throw new BusinessException(HttpStatus.BAD_REQUEST, 
-            "Failed to fetch job URL: " + (jobContext.getFinalizationMessage() != null 
+        throw new BusinessException(HttpStatus.BAD_REQUEST,
+            "Failed to fetch job URL: " + (jobContext.getFinalizationMessage() != null
                 ? jobContext.getFinalizationMessage() : request.jobUrl()));
       }
     } catch (Exception e) {
@@ -426,15 +398,15 @@ public class TestController {
     try {
       jobContext = jobBodyExtractorProcessor.processAsync(jobContext);
       if (jobContext.isFailed() || jobContext.getBody() == null) {
-        throw new BusinessException(HttpStatus.BAD_REQUEST, 
-            "Failed to extract job description: " + (jobContext.getFinalizationMessage() != null 
+        throw new BusinessException(HttpStatus.BAD_REQUEST,
+            "Failed to extract job description: " + (jobContext.getFinalizationMessage() != null
                 ? jobContext.getFinalizationMessage() : "Unknown error"));
       }
     } catch (Exception e) {
       log.error("Error extracting job description: {}", e.getMessage());
       throw new BusinessException(HttpStatus.BAD_REQUEST, "Failed to extract job description: " + e.getMessage());
     }
-    
+
     String jobDescription = jobContext.getBody();
 
     // Get model entity
@@ -442,12 +414,7 @@ public class TestController {
         .orElseThrow(() -> new BusinessException(HttpStatus.BAD_REQUEST, "Model not found: " + request.engineModel()));
 
     // Select appropriate calculator client
-    JobScoreCalculatorClient calculator = switch (engineType) {
-      case GPT -> gptJobScoreCalculator;
-      case GEMINI -> geminiJobScoreCalculator;
-      case GROK -> grokJobScoreCalculator;
-      default -> throw new ValidationException("Invalid engine provider. Must be GPT, GEMINI, or GROK");
-    };
+    JobScoreCalculatorClient calculator = testService.getScoreCalculator(engineType);
 
     // Create JobScoreRequest and compute score
     JobScoreRequest scoreRequest = new JobScoreRequest(aiModel, jobDescription, user.getCv());
