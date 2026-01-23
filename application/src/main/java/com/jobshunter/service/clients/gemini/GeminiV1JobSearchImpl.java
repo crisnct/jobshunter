@@ -18,9 +18,12 @@ import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.TemplateRenderer;
 import com.jobshunter.service.application.UrlExtractor;
 import com.jobshunter.service.clients.AiJobsClient;
+import com.jobshunter.service.retry.RetryPolicies;
+import com.jobshunter.service.retry.RetryTemplate;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
+import jakarta.annotation.Nonnull;
 import java.net.URI;
 import java.util.List;
 import java.util.function.Function;
@@ -51,50 +54,52 @@ public non-sealed class GeminiV1JobSearchImpl implements AiJobsClient {
 
   private final TemplateRenderer templateRenderer;
 
+  private final RetryTemplate retryTemplate;
+
   @Override
   @CircuitBreaker(name = "geminiCircuitBreaker", fallbackMethod = "fallbackSearch")
   @Bulkhead(name = "geminiBulkhead")
   @RateLimiter(name = "geminiLimiter")
   public AiClientResponse searchJobs(AIJobSearchRequest request) {
-    try {
-      AiModelEntity model = request.getOrder().getModel();
+    return retryTemplate.execute(RetryPolicies.JOB_SEARCH, "GEMINI", () -> searchJobsOnce(request));
+  }
 
-      GenerationConfig generationConfig = GenerationConfig.builder(model)
-          .maxOutputTokens(1200)
-          .thinkingConfig(new ThinkingConfig(512))//how reasoning it is
-          .build();
+  @Nonnull
+  private AiClientResponse searchJobsOnce(AIJobSearchRequest request) {
+    AiModelEntity model = request.getOrder().getModel();
 
-      String systemPrompt = templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_JOB_SEARCH,
-          "blacklist",
-          properties.getJobsHunter().getBlacklist()
-      );
+    GenerationConfig generationConfig = GenerationConfig.builder(model)
+        .maxOutputTokens(1200)
+        .thinkingConfig(new ThinkingConfig(512))//how reasoning it is
+        .build();
 
-      FileData resume = new FileData(String.format(FILES_URI, request.getFileId()), MediaType.APPLICATION_PDF_VALUE);
+    String systemPrompt = templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_JOB_SEARCH,
+        "blacklist",
+        properties.getJobsHunter().getBlacklist()
+    );
 
-      GeminiJobsPayload payload = GeminiJobsPayload.builder(model)
-          .generationConfig(generationConfig)
-          .tools(List.of(new GoogleSearchTool()))
-          .addSystemInstruction(systemPrompt)
-          .addUserContent(request.getUserPrompt(), List.of(resume))
-          .build();
+    FileData resume = new FileData(String.format(FILES_URI, request.getFileId()), MediaType.APPLICATION_PDF_VALUE);
 
-      GeminiGenerateContentResponse response = restClient.post()
-          .uri(URI.create(String.format(GEMINI_URI, model.getModel(), properties.getGemini().getApiKey())))
-          .contentType(MediaType.APPLICATION_JSON)
-          .body(payload)
-          .retrieve()
-          .body(GeminiGenerateContentResponse.class);
+    GeminiJobsPayload payload = GeminiJobsPayload.builder(model)
+        .generationConfig(generationConfig)
+        .tools(List.of(new GoogleSearchTool()))
+        .addSystemInstruction(systemPrompt)
+        .addUserContent(request.getUserPrompt(), List.of(resume))
+        .build();
 
-      List<Job> jobs = extractContentList(response);
-      AiClientResponse result = new AiClientResponse();
-      result.addAll(jobs);
-      //noinspection DataFlowIssue
-      result.setId(response.responseId());
-      return result;
-    } catch (Exception e) {
-      log.error("Gemini job API call failed", e);
-      return new AiClientResponse();
-    }
+    GeminiGenerateContentResponse response = restClient.post()
+        .uri(URI.create(String.format(GEMINI_URI, model.getModel(), properties.getGemini().getApiKey())))
+        .contentType(MediaType.APPLICATION_JSON)
+        .body(payload)
+        .retrieve()
+        .body(GeminiGenerateContentResponse.class);
+
+    List<Job> jobs = extractContentList(response);
+    AiClientResponse result = new AiClientResponse();
+    result.addAll(jobs);
+    //noinspection DataFlowIssue
+    result.setId(response.responseId());
+    return result;
   }
 
   @SuppressWarnings("unused")
