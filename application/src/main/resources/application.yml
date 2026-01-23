@@ -131,9 +131,21 @@ logging:
   level:
     root: INFO
     com.jobshunter: DEBUG
-    io.github.resilience4j.ratelimiter: DEBUG
     org.hibernate.SQL: WARN
     org.hibernate.orm.jdbc.bind: WARN
+    # Core Resilience4j
+    io.github.resilience4j.retry: WARN
+    io.github.resilience4j.circuitbreaker: WARN
+    io.github.resilience4j.bulkhead: WARN
+    io.github.resilience4j.ratelimiter: WARN
+    # AOP Aspects (FOARTE IMPORTANT)
+    io.github.resilience4j.retry.internal: WARN
+    io.github.resilience4j.circuitbreaker.internal: WARN
+    io.github.resilience4j.bulkhead.internal: WARN
+    io.github.resilience4j.ratelimiter.internal: WARN
+    # Spring AOP proxying
+    org.springframework.aop: WARN
+    org.springframework.aop.framework: WARN
 
 springdoc:
   api-docs:

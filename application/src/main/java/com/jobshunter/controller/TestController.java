@@ -2,12 +2,18 @@ package com.jobshunter.controller;
 
 import com.jobshunter.ApplicationProperties;
 import com.jobshunter.database.entities.AiModelEntity;
+import com.jobshunter.database.entities.JobOrderEntity;
 import com.jobshunter.database.entities.UserEntity;
+import com.jobshunter.database.entities.UserJobRoleEntity;
 import com.jobshunter.database.service.ModelsDBService;
 import com.jobshunter.database.service.UserDBService;
+import com.jobshunter.dto.AIJobSearchRequest;
+import com.jobshunter.dto.CompanyDto;
 import com.jobshunter.dto.EmailRequest;
+import com.jobshunter.dto.IpInfoDetailResponse;
 import com.jobshunter.dto.JobHuntResponse;
 import com.jobshunter.dto.JobScoreRequestDto;
+import com.jobshunter.dto.SearchCompaniesRequest;
 import com.jobshunter.dto.exceptions.BusinessException;
 import com.jobshunter.dto.exceptions.ValidationException;
 import com.jobshunter.dto.geminiRequest.GeminiJobsPayload;
@@ -25,11 +31,13 @@ import com.jobshunter.model.Job;
 import com.jobshunter.model.JobContext;
 import com.jobshunter.model.JobScoreRequest;
 import com.jobshunter.model.PromptType;
+import com.jobshunter.model.SearchJobOrder;
 import com.jobshunter.service.TemplateRenderer;
 import com.jobshunter.service.application.TestService;
 import com.jobshunter.service.application.notifiers.EmailNotifierService;
 import com.jobshunter.service.application.processors.JobBodyExtractorProcessor;
 import com.jobshunter.service.application.processors.JobFetchProcessor;
+import com.jobshunter.service.clients.AiJobsCompaniesClient;
 import com.jobshunter.service.clients.JobScoreCalculatorClient;
 import com.jobshunter.service.clients.gemini.GeminiV1JobSearchImpl;
 import com.jobshunter.service.clients.gpt.GptV1JobSearchImpl;
@@ -351,6 +359,63 @@ public class TestController {
       e.printStackTrace();
       return ResponseEntity.badRequest().body(e.getMessage());
     }
+  }
+
+  @PostMapping(value = "/searchCompanies", consumes = MediaType.APPLICATION_JSON_VALUE)
+  public ResponseEntity<List<CompanyDto>> searchCompanies(
+      @Valid @RequestBody SearchCompaniesRequest request
+  ) {
+    // Parse engine type
+    EngineType engineType;
+    try {
+      engineType = EngineType.valueOf(request.engineType().toUpperCase());
+      if (engineType == EngineType.SERP) {
+        throw new ValidationException("Invalid engine type. Must be GPT, GEMINI, or GROK");
+      }
+    } catch (IllegalArgumentException e) {
+      throw new ValidationException("Invalid engine type. Must be GPT, GEMINI, or GROK");
+    }
+
+    // Get model entity
+    AiModelEntity aiModel = modelsDBService.getModel(new EngineSelection(engineType, request.aiModel()))
+        .orElseThrow(() -> new BusinessException(HttpStatus.BAD_REQUEST,
+            "Model not found: " + request.aiModel() + " for engine type: " + engineType));
+
+    // Create minimal user entity for testing
+    UserEntity testUser = createTestUser(request);
+
+    // Create minimal job order entity
+    JobOrderEntity jobOrder = new JobOrderEntity(testUser, aiModel, true, false);
+
+    // Create SearchJobOrder
+    SearchJobOrder searchJobOrder = new SearchJobOrder(jobOrder, testUser, List.of());
+    searchJobOrder.setIpInfo(new IpInfoDetailResponse("Europe", "RO", "RO", "Timisoara", "Europe/Bucharest", false));
+
+    // Create AIJobSearchRequest
+    AIJobSearchRequest aiRequest = new AIJobSearchRequest(searchJobOrder);
+    aiRequest.setCompaniesModel(aiModel);
+
+    // Get the appropriate client and search
+    AiJobsCompaniesClient client = testService.getCompaniesClient(engineType);
+    return ResponseEntity.ok(client.searchCompanies(aiRequest));
+  }
+
+  private UserEntity createTestUser(SearchCompaniesRequest request) {
+    UserEntity user = new UserEntity();
+    user.setUsername("test");
+    user.setCity(request.city());
+    user.setCountry(request.country() != null ? request.country() : "");
+    user.setJobDomain(request.domain() != null ? request.domain() : "");
+
+    // Create job roles from positions
+    List<UserJobRoleEntity> jobRoles = new ArrayList<>();
+    for (String position : request.positions()) {
+      UserJobRoleEntity jobRole = new UserJobRoleEntity(user, position);
+      jobRoles.add(jobRole);
+    }
+    user.setJobRoles(jobRoles);
+
+    return user;
   }
 
   @PostMapping(value = "/score", consumes = MediaType.APPLICATION_JSON_VALUE)

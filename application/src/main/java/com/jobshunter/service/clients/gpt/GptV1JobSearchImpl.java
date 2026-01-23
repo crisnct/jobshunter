@@ -28,6 +28,8 @@ import com.jobshunter.service.application.UrlExtractor;
 import com.jobshunter.service.clients.AiJobsClient;
 import com.jobshunter.service.clients.AiJobsCompaniesClient;
 import com.jobshunter.service.clients.DeleteConvAiClient;
+import com.jobshunter.service.retry.RetryPolicies;
+import com.jobshunter.service.retry.RetryTemplate;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
@@ -64,6 +66,8 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient, AiJobsCompan
 
   private final UrlExtractor urlExtractor;
 
+  private final RetryTemplate retryTemplate;
+
   private final TemplateRenderer templateRenderer;
 
   @Override
@@ -71,49 +75,48 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient, AiJobsCompan
   @RateLimiter(name = "gptLimiter")
   @Bulkhead(name = "gptBulkhead")
   public AiClientResponse searchJobs(AIJobSearchRequest request) {
-    try {
-      SearchJobOrder order = request.getOrder();
-      IpInfoDetailResponse ipInfo = order.getIpInfo();
+    return retryTemplate.execute(RetryPolicies.JOB_SEARCH, "GPT", () -> searchJobsOnce(request));
+  }
 
-      UserLocation userLocation = new UserLocation();
-      userLocation.setType("approximate");
-      //This is country iso code, like RO
-      userLocation.setCountry(ipInfo.country() != null ? ipInfo.country() : "RO");
-      userLocation.setCity(order.getUser().getCity() != null ? order.getUser().getCity() : ipInfo.city());
+  private AiClientResponse searchJobsOnce(AIJobSearchRequest request) {
+    SearchJobOrder order = request.getOrder();
+    IpInfoDetailResponse ipInfo = order.getIpInfo();
 
-      GptJobsPayload payload = GptJobsPayload.builder(order.getModel())
-          .reasoning(new Reasoning(REASONING_JOB_SEARCH))
-          .store(request.getStoreConversation())
-          .previousResponseId(request.getPrevResponseId())
-          .maxOutputTokens(1200)
-          .addTools(Tools.builder().setWebSearch().userLocation(userLocation).build())
-          .instructions(templateRenderer.getPrompt(PromptType.SYSTEM_INSTRUCTIONS))
-          .addSystemPrompt(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_JOB_SEARCH,
-              "blacklist",
-              properties.getJobsHunter().getBlacklist()
-          ))
-          .addUserPrompt(request.getUserPrompt(), request.getFileId())
-          .setResponseSchema(templateRenderer.getSchema(AiSchemaType.GPT_JSON_SCHEMA_RESPONSE))
-          .build();
+    UserLocation userLocation = new UserLocation();
+    userLocation.setType("approximate");
+    //This is country iso code, like RO
+    userLocation.setCountry(ipInfo.country() != null ? ipInfo.country() : "RO");
+    userLocation.setCity(order.getUser().getCity() != null ? order.getUser().getCity() : ipInfo.city());
 
-      GptResponse response = restClient.post()
-          .uri(DEFAULT_URI)
-          .headers((h) -> h.setBearerAuth(properties.getGpt().getApiKey()))
-          .contentType(MediaType.APPLICATION_JSON)
-          .body(payload)
-          .retrieve()
-          .body(GptResponse.class);
+    GptJobsPayload payload = GptJobsPayload.builder(order.getModel())
+        .reasoning(new Reasoning(REASONING_JOB_SEARCH))
+        .store(request.getStoreConversation())
+        .previousResponseId(request.getPrevResponseId())
+        .maxOutputTokens(1200)
+        .addTools(Tools.builder().setWebSearch().userLocation(userLocation).build())
+        .instructions(templateRenderer.getPrompt(PromptType.SYSTEM_INSTRUCTIONS))
+        .addSystemPrompt(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_JOB_SEARCH,
+            "blacklist",
+            properties.getJobsHunter().getBlacklist()
+        ))
+        .addUserPrompt(request.getUserPrompt(), request.getFileId())
+        .setResponseSchema(templateRenderer.getSchema(AiSchemaType.GPT_JSON_SCHEMA_RESPONSE))
+        .build();
 
-      //noinspection DataFlowIssue
-      List<Job> jobs = extractJobs(response);
-      AiClientResponse result = new AiClientResponse();
-      result.setId(response.id());
-      result.addAll(jobs);
-      return result;
-    } catch (Exception e) {
-      log.error("❌ GPT API call failed", e);
-      return new AiClientResponse();
-    }
+    GptResponse response = restClient.post()
+        .uri(DEFAULT_URI)
+        .headers((h) -> h.setBearerAuth(properties.getGpt().getApiKey()))
+        .contentType(MediaType.APPLICATION_JSON)
+        .body(payload)
+        .retrieve()
+        .body(GptResponse.class);
+
+    //noinspection DataFlowIssue
+    List<Job> jobs = extractJobs(response);
+    AiClientResponse result = new AiClientResponse();
+    result.setId(response.id());
+    result.addAll(jobs);
+    return result;
   }
 
   @Override
@@ -121,47 +124,50 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient, AiJobsCompan
   @RateLimiter(name = "gptLimiter")
   @Bulkhead(name = "gptBulkhead")
   public List<CompanyDto> searchCompanies(AIJobSearchRequest request) {
-    try {
-      UserEntity user = request.getOrder().getUser();
-      IpInfoDetailResponse ipInfo = request.getOrder().getIpInfo();
+    return retryTemplate.execute(RetryPolicies.COMPANY_SEARCH, "GPT", () -> searchCompaniesOnce(request));
+  }
 
-      UserLocation userLocation = new UserLocation();
-      userLocation.setType("approximate");
-      //This is country iso code, like RO
-      userLocation.setCountry(ipInfo.country() != null ? ipInfo.country() : "RO");
-      userLocation.setCity(user.getCity() != null ? user.getCity() : ipInfo.city());
+  /**
+   * @Retry - is only for retrying when exception occurs. For the situations when result is empty it will be considered  retryTemplate
+   */
+  private List<CompanyDto> searchCompaniesOnce(AIJobSearchRequest request) {
+    UserEntity user = request.getOrder().getUser();
+    IpInfoDetailResponse ipInfo = request.getOrder().getIpInfo();
 
-      GptJobsPayload payload = GptJobsPayload.builder(request.getCompaniesModel())
-          .maxOutputTokens(800)
-          .store(false)
-          .addSystemPrompt(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_COMPANY_SEARCH,
-              "city", user.getCity(),
-              "country", user.getCountry()
-          ))
-          .addUserPrompt(templateRenderer.getPrompt(PromptType.USER_PROMPT_COMPANIES,
-              Map.of(
-                  "domain", user.getJobDomain(),
-                  "city", user.getCity(),
-                  "country", user.getCountry(),
-                  "positions", user.getJobRoles().stream().map(UserJobRoleEntity::getJobRole).toList()
-              )))
-          .setResponseSchema(templateRenderer.getSchema(AiSchemaType.GPT_JSON_COMPANY_SCHEMA_RESPONSE))
-          .build();
+    UserLocation userLocation = new UserLocation();
+    userLocation.setType("approximate");
+    //This is country iso code, like RO
+    userLocation.setCountry(ipInfo.country() != null ? ipInfo.country() : "RO");
+    userLocation.setCity(user.getCity() != null ? user.getCity() : ipInfo.city());
 
-      GptResponse response = restClient.post()
-          .uri(DEFAULT_URI)
-          .headers((h) -> h.setBearerAuth(properties.getGpt().getApiKey()))
-          .contentType(MediaType.APPLICATION_JSON)
-          .body(payload)
-          .retrieve()
-          .body(GptResponse.class);
+    GptJobsPayload payload = GptJobsPayload.builder(request.getCompaniesModel())
+        .maxOutputTokens(1500)
+        .store(false)
+        .addSystemPrompt(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_COMPANY_SEARCH,
+            Map.of(
+                "city", user.getCity(),
+                "country", user.getCountry()
+            )
+        ))
+        .addUserPrompt(templateRenderer.getPrompt(PromptType.USER_PROMPT_COMPANIES,
+            Map.of(
+                "city", user.getCity(),
+                "country", user.getCountry(),
+                "domain", user.getJobDomain()
+            )))
+        .setResponseSchema(templateRenderer.getSchema(AiSchemaType.GPT_JSON_COMPANY_SCHEMA_RESPONSE))
+        .build();
 
-      //noinspection DataFlowIssue
-      return extractCompanies(response);
-    } catch (Exception e) {
-      log.error("GPT job API call failed", e);
-      return List.of();
-    }
+    GptResponse response = restClient.post()
+        .uri(DEFAULT_URI)
+        .headers((h) -> h.setBearerAuth(properties.getGpt().getApiKey()))
+        .contentType(MediaType.APPLICATION_JSON)
+        .body(payload)
+        .retrieve()
+        .body(GptResponse.class);
+
+    //noinspection DataFlowIssue
+    return extractCompanies(response);
   }
 
   @Override
@@ -173,7 +179,7 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient, AiJobsCompan
         "positions", request.getOrder().getUser().getJobRoles().stream().map(UserJobRoleEntity::getJobRole).toList(),
         "company", request.getCompany()
     );
-    GptJobsPayload payload = GptJobsPayload.builder(request.getOrder().getModel())
+    GptJobsPayload payload = GptJobsPayload.builder(request.getDiscoveryModel())
         .maxOutputTokens(1200)
         .store(request.getStoreConversation())
         .previousResponseId(request.getPrevResponseId())

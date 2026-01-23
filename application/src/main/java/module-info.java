@@ -43,6 +43,7 @@ open module com.jobshunter.application {
   requires org.apache.httpcomponents.client5.httpclient5;
   requires org.apache.httpcomponents.core5.httpcore5;
 
+  requires io.github.resilience4j.core;
   requires io.github.resilience4j.annotations;
   requires io.github.resilience4j.ratelimiter;
   requires io.github.resilience4j.bulkhead;

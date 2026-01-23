@@ -8,13 +8,11 @@ import com.jobshunter.database.entities.UserJobRoleEntity;
 import com.jobshunter.dto.AIJobSearchRequest;
 import com.jobshunter.dto.CompanyDto;
 import com.jobshunter.dto.CompanyDtoList;
-import com.jobshunter.dto.IpInfoDetailResponse;
 import com.jobshunter.dto.exceptions.BusinessException;
 import com.jobshunter.dto.grokRequest.GrokJobsPayload;
 import com.jobshunter.dto.grokRequest.GrokJobsPayload.GrokJobsPayloadBuilder;
 import com.jobshunter.dto.grokRequest.Reasoning;
 import com.jobshunter.dto.grokRequest.tools.Tools;
-import com.jobshunter.dto.grokRequest.tools.UserLocation;
 import com.jobshunter.dto.grokResponse.GrokResponse;
 import com.jobshunter.dto.grokResponse.OutputItem;
 import com.jobshunter.model.AiClientResponse;
@@ -27,6 +25,8 @@ import com.jobshunter.service.application.UrlExtractor;
 import com.jobshunter.service.clients.AiJobsClient;
 import com.jobshunter.service.clients.AiJobsCompaniesClient;
 import com.jobshunter.service.clients.DeleteConvAiClient;
+import com.jobshunter.service.retry.RetryPolicies;
+import com.jobshunter.service.retry.RetryTemplate;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
@@ -59,6 +59,8 @@ public non-sealed class GrokV1JobSearchImpl implements AiJobsClient, AiJobsCompa
 
   private final RestClient restClient;
 
+  private final RetryTemplate retryTemplate;
+
   private final JsonMapper mapper;
 
   private final UrlExtractor urlExtractor;
@@ -70,37 +72,36 @@ public non-sealed class GrokV1JobSearchImpl implements AiJobsClient, AiJobsCompa
   @RateLimiter(name = "grokLimiter")
   @Bulkhead(name = "grokBulkhead")
   public AiClientResponse searchJobs(AIJobSearchRequest request) {
-    try {
-      GrokJobsPayloadBuilder payloadBuilder = GrokJobsPayload.builder(request.getOrder().getModel())
-          .maxOutputTokens(1200)
-          .reasoning(new Reasoning(REASONING_JOB_SEARCH))
-          .store(request.getStoreConversation())
-          .previousResponseId(request.getPrevResponseId())
-          .addTools(Tools.builder().setWebSearch().build())
-          .addUserPrompt(request.getUserPrompt() + templateRenderer.getPrompt(PromptType.USER_PROMPT_JOB_BLACKLISTED,
-              "blacklist",
-              properties.getJobsHunter().getBlacklist()
-          ), request.getFileId());
+    return retryTemplate.execute(RetryPolicies.JOB_SEARCH, "GROK", () -> searchJobsOnce(request));
+  }
 
-      GrokJobsPayload payload = payloadBuilder.build();
-      GrokResponse response = restClient.post()
-          .uri(DEFAULT_URI)
-          .headers((h) -> h.setBearerAuth(properties.getGrok().getApiKey()))
-          .contentType(MediaType.APPLICATION_JSON)
-          .body(payload)
-          .retrieve()
-          .body(GrokResponse.class);
+  private AiClientResponse searchJobsOnce(AIJobSearchRequest request) {
+    GrokJobsPayloadBuilder payloadBuilder = GrokJobsPayload.builder(request.getOrder().getModel())
+        .maxOutputTokens(1200)
+        .reasoning(new Reasoning(REASONING_JOB_SEARCH))
+        .store(request.getStoreConversation())
+        .previousResponseId(request.getPrevResponseId())
+        .addTools(Tools.builder().setWebSearch().build())
+        .addUserPrompt(request.getUserPrompt() + templateRenderer.getPrompt(PromptType.USER_PROMPT_JOB_BLACKLISTED,
+            "blacklist",
+            properties.getJobsHunter().getBlacklist()
+        ), request.getFileId());
 
-      //noinspection DataFlowIssue
-      List<Job> jobs = extractJobs(response);
-      AiClientResponse result = new AiClientResponse();
-      result.setId(response.id());
-      result.addAll(jobs);
-      return result;
-    } catch (Exception e) {
-      log.error("GROK API call failed", e);
-      return new AiClientResponse();
-    }
+    GrokJobsPayload payload = payloadBuilder.build();
+    GrokResponse response = restClient.post()
+        .uri(DEFAULT_URI)
+        .headers((h) -> h.setBearerAuth(properties.getGrok().getApiKey()))
+        .contentType(MediaType.APPLICATION_JSON)
+        .body(payload)
+        .retrieve()
+        .body(GrokResponse.class);
+
+    //noinspection DataFlowIssue
+    List<Job> jobs = extractJobs(response);
+    AiClientResponse result = new AiClientResponse();
+    result.setId(response.id());
+    result.addAll(jobs);
+    return result;
   }
 
   @Override
@@ -108,40 +109,37 @@ public non-sealed class GrokV1JobSearchImpl implements AiJobsClient, AiJobsCompa
   @RateLimiter(name = "grokLimiter")
   @Bulkhead(name = "grokBulkhead")
   public List<CompanyDto> searchCompanies(AIJobSearchRequest request) {
-    try {
-      UserEntity user = request.getOrder().getUser();
+    return retryTemplate.execute(RetryPolicies.COMPANY_SEARCH, "GROK", () -> searchCompaniesOnce(request));
+  }
 
-      GrokJobsPayload payload = GrokJobsPayload.builder(request.getCompaniesModel())
-          .store(false)
-          .maxOutputTokens(800)
-          .addSystemPrompt(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_COMPANY_SEARCH,
-              Map.of("city", user.getCity(),
-                  "country", user.getCountry()
-              )))
-          .addUserPrompt(templateRenderer.getPrompt(PromptType.USER_PROMPT_COMPANIES,
-              Map.of(
-                  "domain", user.getJobDomain(),
-                  "city", user.getCity(),
-                  "country", user.getCountry(),
-                  "positions", user.getJobRoles().stream().map(UserJobRoleEntity::getJobRole).toList()
-              )), request.getFileId())
-          .setResponseSchema(templateRenderer.getSchema(AiSchemaType.GROK_JSON_COMPANY_SCHEMA_RESPONSE))
-          .build();
+  private List<CompanyDto> searchCompaniesOnce(AIJobSearchRequest request) {
+    UserEntity user = request.getOrder().getUser();
+    GrokJobsPayload payload = GrokJobsPayload.builder(request.getCompaniesModel())
+        .store(false)
+        .maxOutputTokens(1500)
+        .addSystemPrompt(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_COMPANY_SEARCH,
+            Map.of("city", user.getCity(),
+                "country", user.getCountry()
+            )))
+        .addUserPrompt(templateRenderer.getPrompt(PromptType.USER_PROMPT_COMPANIES,
+            Map.of(
+                "domain", user.getJobDomain(),
+                "city", user.getCity(),
+                "country", user.getCountry()
+            )), request.getFileId())
+        .setResponseSchema(templateRenderer.getSchema(AiSchemaType.GROK_JSON_COMPANY_SCHEMA_RESPONSE))
+        .build();
 
-      GrokResponse response = restClient.post()
-          .uri(DEFAULT_URI)
-          .headers((h) -> h.setBearerAuth(properties.getGrok().getApiKey()))
-          .contentType(MediaType.APPLICATION_JSON)
-          .body(payload)
-          .retrieve()
-          .body(GrokResponse.class);
+    GrokResponse response = restClient.post()
+        .uri(DEFAULT_URI)
+        .headers((h) -> h.setBearerAuth(properties.getGrok().getApiKey()))
+        .contentType(MediaType.APPLICATION_JSON)
+        .body(payload)
+        .retrieve()
+        .body(GrokResponse.class);
 
-      //noinspection DataFlowIssue
-      return extractCompanies(response);
-    } catch (Exception e) {
-      log.error("GROK job API call failed", e);
-      return List.of();
-    }
+    //noinspection DataFlowIssue
+    return extractCompanies(response);
   }
 
   @Override

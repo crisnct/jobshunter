@@ -3,19 +3,22 @@
   "properties": {
     "results": {
       "type": "array",
+      "description": "List of discovered companies matching domain and location criteria",
       "items": {
         "type": "object",
         "properties": {
-          "company": {
-            "type": "string"
+          "company_name": {
+            "type": "string",
+            "description": "Official registered or commonly used company name"
           },
-          "url": {
-            "type": "string"
+          "official_website_url": {
+            "type": "string",
+            "description": "Official public website of the company"
           }
         },
         "required": [
-          "company",
-          "url"
+          "company_name",
+          "official_website_url"
         ],
         "additionalProperties": false
       }

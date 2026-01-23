@@ -1,5 +1,6 @@
 package com.jobshunter.service;
 
+import com.github.mustachejava.Code;
 import com.github.mustachejava.DefaultMustacheFactory;
 import com.github.mustachejava.Mustache;
 import com.github.mustachejava.MustacheFactory;
@@ -14,6 +15,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.stream.Collectors;
 import org.springframework.stereotype.Component;
 
@@ -64,8 +66,11 @@ public class TemplateRenderer {
   private String getString(String path, String type, String extension, boolean validateParameters, Map<String, Object> vars) {
     Mustache mustache = factory.compile(path + type.toLowerCase() + extension);
     if (validateParameters) {
-      long paramsFromFile = Arrays.stream(mustache.getCodes()).filter(p -> p instanceof ValueCode).count();
-      if (paramsFromFile != vars.size()) {
+      Set<String> paramsFromFile = Arrays.stream(mustache.getCodes())
+          .filter(p -> p instanceof ValueCode)
+          .map(Code::getName)
+          .collect(Collectors.toSet());
+      if (paramsFromFile.size() != vars.size()) {
         throw new IllegalArgumentException("TemplateRenderer is not called for prompt " + type + " with all the parameters!!!");
       }
     }

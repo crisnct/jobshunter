@@ -1,6 +1,21 @@
-List up to 30 {{domain}} companies located in {{city}}, {{country}} that appear to be actively hiring for any of the following positions:
-{{positions}}
+## Task
+List up to **50 companies** operating in the `{{domain}}` domain
+that have an **evidence-based presence** in `{{city}}` or `{{country}}`.
 
-Rules:
-- If fewer than 30 matching companies are found, return only those identified.
-- Include only companies that appear to be actively hiring
+## Output Requirements
+For each company, return **ONLY**:
+- `company_name`
+- `official_website_url`
+
+## Inclusion Rules
+- Include companies even if:
+- hiring information is missing
+- open roles are not specified
+- Exclude any company whose presence **cannot be reasonably verified**
+through its **official website**.
+
+## Output Format
+- Plain list
+- No explanations
+- No commentary
+- No additional fields

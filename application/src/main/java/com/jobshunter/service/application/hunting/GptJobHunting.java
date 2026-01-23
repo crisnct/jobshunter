@@ -42,14 +42,13 @@ public final class GptJobHunting extends AiConversationJobHunting {
 
   @EventListener(ApplicationReadyEvent.class)
   private void init() {
+    this.companiesModel = modelsDBService.getModel(new EngineSelection(EngineType.GPT, "gpt-5.2-2025-12-11")).orElseThrow();
     this.discoveryModel = modelsDBService.getModel(new EngineSelection(EngineType.GPT, "gpt-4o-mini")).orElseThrow();
-    this.companiesModel = modelsDBService.getModel(new EngineSelection(EngineType.GPT, "gpt-4o-mini")).orElseThrow();
   }
 
-
   @Override
-  public AIJobSearchRequest createRequest(SearchJobOrder order, UserPromptEntity prompt) {
-    AIJobSearchRequest request = super.createRequest(order, prompt);
+  public AIJobSearchRequest createRequest(SearchJobOrder order) {
+    AIJobSearchRequest request = super.createRequest(order);
     request.setDiscoveryModel(discoveryModel);
     request.setCompaniesModel(companiesModel);
     return request;
