@@ -41,7 +41,7 @@ public final class GrokJobHunting extends AiConversationJobHunting {
   @EventListener(ApplicationReadyEvent.class)
   private void init() {
     this.discoveryModel = modelsDBService.getModel(new EngineSelection(EngineType.GROK, "grok-4-1-fast-non-reasoning")).orElseThrow();
-    this.companiesModel = modelsDBService.getModel(new EngineSelection(EngineType.GROK, "grok-4-1-fast-non-reasoning")).orElseThrow();
+    this.companiesModel = modelsDBService.getModel(new EngineSelection(EngineType.GROK, "grok-4-1-fast-reasoning")).orElseThrow();
   }
 
   @Override

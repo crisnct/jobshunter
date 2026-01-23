@@ -116,7 +116,7 @@ public non-sealed class GrokV1JobSearchImpl implements AiJobsClient, AiJobsCompa
     UserEntity user = request.getOrder().getUser();
     GrokJobsPayload payload = GrokJobsPayload.builder(request.getCompaniesModel())
         .store(false)
-        .maxOutputTokens(1500)
+        .maxOutputTokens(2500)
         .addSystemPrompt(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_COMPANY_SEARCH,
             Map.of("city", user.getCity(),
                 "country", user.getCountry()
@@ -126,7 +126,7 @@ public non-sealed class GrokV1JobSearchImpl implements AiJobsClient, AiJobsCompa
                 "domain", user.getJobDomain(),
                 "city", user.getCity(),
                 "country", user.getCountry()
-            )), request.getFileId())
+            )))
         .setResponseSchema(templateRenderer.getSchema(AiSchemaType.GROK_JSON_COMPANY_SCHEMA_RESPONSE))
         .build();
 

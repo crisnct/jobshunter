@@ -141,7 +141,7 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient, AiJobsCompan
     userLocation.setCity(user.getCity() != null ? user.getCity() : ipInfo.city());
 
     GptJobsPayload payload = GptJobsPayload.builder(request.getCompaniesModel())
-        .maxOutputTokens(1500)
+        .maxOutputTokens(2500)
         .store(false)
         .addSystemPrompt(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_COMPANY_SEARCH,
             Map.of(
