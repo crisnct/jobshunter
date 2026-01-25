@@ -1,6 +1,5 @@
 package com.jobshunter.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jobshunter.database.entities.RoleEntity;
 import com.jobshunter.database.entities.UserContractTypeEntity;
 import com.jobshunter.database.entities.UserEntity;
@@ -172,17 +171,21 @@ public class UserController {
   ) {
     //noinspection OptionalGetWithoutIsPresent
     UserEntity user = userDBService.getUser(username).get();
+
+    String responseMessage;
     if (Strings.isEmpty(rejectReason)) {
       if (user.isApproved()) {
         return ResponseEntity.badRequest().body(Map.of("error", "User already approved"));
       }
+      responseMessage = "User approved";
       user.setApproved(true);
       userDBService.updateUser(user);
       emailService.accountApproved(user);
     } else {
+      responseMessage = "User rejected with reason: " + rejectReason;
       emailService.accountRejected(user, rejectReason);
     }
-    return ResponseEntity.ok(Map.of("message", "User approved"));
+    return ResponseEntity.ok(Map.of("message", responseMessage));
   }
 
   @DeleteMapping("/delete")

@@ -7,6 +7,7 @@ import com.github.mustachejava.MustacheFactory;
 import com.github.mustachejava.codes.ValueCode;
 import com.jobshunter.model.AiSchemaType;
 import com.jobshunter.model.PromptType;
+import com.jobshunter.model.UserMessageType;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.PostConstruct;
 import java.io.StringWriter;
@@ -24,6 +25,8 @@ public class TemplateRenderer {
 
   private final MustacheFactory factory = new DefaultMustacheFactory();
 
+  private static final String USER_MESSAGE_PATH = "messageTemplates/";
+
   @PostConstruct
   private void validate() {
     // Validate that all templates are present
@@ -33,6 +36,15 @@ public class TemplateRenderer {
     for (AiSchemaType type : AiSchemaType.values()) {
       getString("schema/", type.name(), ".json", false, Map.of());
     }
+
+    for (UserMessageType type : UserMessageType.values()) {
+      getString(USER_MESSAGE_PATH, type.name(), ".mustache", false, Map.of());
+    }
+  }
+
+
+  public String getUserMessage(UserMessageType type, Map<String, Object> vars) {
+    return getString(USER_MESSAGE_PATH, type.name(), ".mustache", true, vars);
   }
 
   public String getPrompt(PromptType type, Map<String, Object> vars) {

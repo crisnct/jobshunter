@@ -3,8 +3,8 @@ package com.jobshunter.service.application.notifiers;
 import com.jobshunter.ApplicationProperties;
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.model.Job;
-import com.jobshunter.service.application.UserMessagesFactory;
-import com.jobshunter.service.application.UserMessagesFactory.MessageTemplate;
+import com.jobshunter.model.UserMessageType;
+import com.jobshunter.service.TemplateRenderer;
 import com.jobshunter.service.clients.TwilioClient;
 import com.jobshunter.service.clients.tinyurl.TinyUrlClient;
 import com.jobshunter.service.clients.twilio.TwilioClientImpl;
@@ -21,7 +21,7 @@ import org.springframework.stereotype.Service;
 public final class WhatsappNotifierService implements ServiceNotifier {
 
   private final ApplicationProperties properties;
-  private final UserMessagesFactory userMessagesFactory;
+  private final TemplateRenderer templateRenderer;
   private final TwilioClient twilioClient;
   private final TinyUrlClient tinyUrlClient;
 
@@ -53,7 +53,7 @@ public final class WhatsappNotifierService implements ServiceNotifier {
     }
 
     String timestamp = LocalDateTime.now().format(JOB_TIMESTAMP_FORMAT);
-    String body = userMessagesFactory.build(MessageTemplate.JOBS_NOTIFY, Map.of("1", timestamp, "2", formattedJobs));
+    String body = templateRenderer.getUserMessage(UserMessageType.JOBS_NOTIFY, Map.of("1", timestamp, "2", formattedJobs));
 
     if (!twilioClient.trySend(user.getPhoneNumber(), properties.getTwilio().getFromNumber(), body)) {
       log.warn("WhatsApp send skipped after attempting available senders. Printing jobs to the console instead.");
