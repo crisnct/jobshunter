@@ -22,10 +22,8 @@ public class Job {
   private String source;
   private Long promptId;
 
-  public Job(int score, String url, String source) {
-    this.score = score;
+  public Job(String url) {
     this.url = url;
-    this.source = source;
   }
 
   @Override

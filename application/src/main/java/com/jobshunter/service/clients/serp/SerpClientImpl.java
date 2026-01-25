@@ -67,7 +67,7 @@ public non-sealed class SerpClientImpl implements AiJobsClient {
       if (serpJob.applyLinks().isEmpty()) {
         log.warn("Not found apply link from company {}", serpJob.company());
       } else {
-        Job job = new Job(-1, serpJob.applyLinks().getFirst(), request.getOrder().getModel().getModel());
+        Job job = new Job(serpJob.applyLinks().getFirst());
         job.addMetadata(JobMetadataType.SERP_DESCRIPTION, serpJob.description() + "\n" + serpJob.highlights());
         response.add(job);
       }

@@ -1,5 +1,16 @@
-For this company {{company}}, check whether it appears to be hiring for any of the following positions:
+Search for job postings with titles that contain EXACTLY one of the following expressions (as a contiguous, case-insensitive word sequence, without reordering or substitution):
 {{positions}}
 
-Return the most relevant URLs that indicate hiring activity.
-Prefer direct job posting URLs when clearly identifiable.
+Location constraints:
+- Fully remote positions available from {{country}}
+OR
+- On-site / hybrid positions located in {{city}}, {{country}}
+
+Source constraints:
+- Search only on the company's official careers page:
+{{company_careers_url}}
+or on ATS pages officially linked from that domain.
+- Exclude career homepages, category pages, job listings, search/filter results, and language/country selectors.
+
+Company:
+{{company_name}}

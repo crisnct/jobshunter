@@ -14,6 +14,7 @@ import com.jobshunter.dto.grokRequest.GrokJobsPayload.GrokJobsPayloadBuilder;
 import com.jobshunter.dto.grokRequest.Reasoning;
 import com.jobshunter.dto.grokRequest.tools.Tools;
 import com.jobshunter.dto.grokResponse.GrokResponse;
+import com.jobshunter.dto.grokResponse.JobSearchResponse;
 import com.jobshunter.dto.grokResponse.OutputItem;
 import com.jobshunter.model.AiClientResponse;
 import com.jobshunter.model.AiSchemaType;
@@ -147,23 +148,30 @@ public non-sealed class GrokV1JobSearchImpl implements AiJobsClient, AiJobsCompa
   @RateLimiter(name = "grokLimiter")
   @Bulkhead(name = "grokBulkhead")
   public AiClientResponse searchJobsFromCompanies(AIJobSearchRequest request) {
-    String userPrompt = templateRenderer.getPrompt(PromptType.USER_PROMPT_JOB,
-        "positions", request.getOrder().getUser().getJobRoles().stream().map(UserJobRoleEntity::getJobRole).toList(),
-        "company", request.getCompany()
-    ) + templateRenderer.getPrompt(PromptType.USER_PROMPT_JOB_BLACKLISTED,
-        "blacklist",
-        properties.getJobsHunter().getBlacklist()
-    );
+    return retryTemplate.execute(RetryPolicies.JOB_SEARCH_BY_COMPANY, "GROK", () -> searchJobsByCompanyOnce(request));
+  }
+
+  private AiClientResponse searchJobsByCompanyOnce(AIJobSearchRequest request) {
+    UserEntity user = request.getOrder().getUser();
+    List<String> positions = user.getJobRoles().stream().map(UserJobRoleEntity::getJobRole).toList();
 
     GrokJobsPayload payload = GrokJobsPayload.builder(request.getDiscoveryModel())
         .maxOutputTokens(800)
+        .temperature(0.15)
         .store(request.getStoreConversation())
         .previousResponseId(request.getPrevResponseId())
         .addTools(Tools.builder().setWebSearch().build())
-        .addSystemPrompt(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_JOBS_BY_COMPANY,
-            "blacklist", properties.getJobsHunter().getBlacklistJobsCompanySearch())
-        )
-        .addUserPrompt(userPrompt)
+        .addSystemPrompt(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_JOBS_BY_COMPANY))
+        .addUserPrompt(templateRenderer.getPrompt(PromptType.USER_PROMPT_JOB,
+            Map.of(
+                "company_name", request.getCompany().companyName(),
+                "company_careers_url", request.getCompany().officialWebsiteUrl(),
+                "positions", positions,
+                "city", user.getCity(),
+                "country", user.getCountry()
+            )
+        ))
+        .setResponseSchema(templateRenderer.getSchema(AiSchemaType.GROK_JSON_SCHEMA_RESPONSE))
         .build();
 
     GrokResponse response = restClient.post()
@@ -240,7 +248,14 @@ public non-sealed class GrokV1JobSearchImpl implements AiJobsClient, AiJobsCompa
       item.get().content().stream()
           .filter(c -> c.text().length() > 2)
           .filter(c -> Objects.equals("output_text", c.type()))
-          .forEach(o -> jobs.addAll(urlExtractor.parseJobs(o.text())));
+          .forEach(o -> {
+            try {
+              JobSearchResponse resp = mapper.readValue(o.text(), JobSearchResponse.class);
+              jobs.addAll(resp.results().stream().map(p -> new Job(p.job_posting_url())).toList());
+            } catch (Exception e) {
+              jobs.addAll(urlExtractor.parseJobs(o.text()));
+            }
+          });
       return jobs;
     } else {
       return java.util.Collections.emptyList();

@@ -26,25 +26,20 @@ public non-sealed class FakeGptClient implements AiJobsClient {
   public AiClientResponse searchJobs(AIJobSearchRequest request) {
     AiClientResponse result = new AiClientResponse();
     result.addAll(List.of(
-        new Job(-1,
-            "https://br.bebee.com/job/63c331e10c2e5c04df61d25ef8219be8?utm_campaign=google_jobs_apply&utm_source=google_jobs_apply&utm_medium=organic",
-            null
+        new Job(
+            "https://br.bebee.com/job/63c331e10c2e5c04df61d25ef8219be8?utm_campaign=google_jobs_apply&utm_source=google_jobs_apply&utm_medium=organic"
         ),
-        new Job(-1,
-            "https://www.dice.com/job-detail/1f3c5759-dfad-40d7-9e0a-aa6fdd24db5c?utm_source=openai",
-            null
+        new Job(
+            "https://www.dice.com/job-detail/1f3c5759-dfad-40d7-9e0a-aa6fdd24db5c?utm_source=openai"
         ),
-        new Job(-1,
-            "https://www.linkedin.com/jobs/collections/recommended/?currentJobId=42955246261",
-            null
+        new Job(
+            "https://www.linkedin.com/jobs/collections/recommended/?currentJobId=42955246261"
         ),
-        new Job(-1,
-            "https://weworkremotely.com/remote-jobs/h2corporation-vice-president-of-engineering-usa",
-            null
+        new Job(
+            "https://weworkremotely.com/remote-jobs/h2corporation-vice-president-of-engineering-usa"
         ),
-        new Job(-1,
-            "https://weworkremotely.com/remote-jobs/h2corporation-vice-president-of-engineering-usa",
-            null
+        new Job(
+            "https://weworkremotely.com/remote-jobs/h2corporation-vice-president-of-engineering-usa"
         )
     ));
     return result;

@@ -95,10 +95,11 @@ public non-sealed class GeminiFileClientImpl implements FileClient {
   @Bulkhead(name = "geminiBulkhead")
   @RateLimiter(name = "geminiLimiter")
   public void deleteFile(@NotBlank String fileId) {
-    restClient.delete()
+    String body = restClient.delete()
         .uri(DELETE_URI + "/" + fileId + "?key=" + properties.getGemini().getApiKey())
         .retrieve()
-        .body(Void.class);
+        .body(String.class);
+    log.info("gemini Deleted fileId:{} with bodyResponse: {}", fileId, body);
   }
 
   @Override

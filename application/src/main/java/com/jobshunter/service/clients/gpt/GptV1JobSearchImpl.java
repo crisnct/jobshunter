@@ -175,19 +175,30 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient, AiJobsCompan
   @RateLimiter(name = "gptLimiter")
   @Bulkhead(name = "gptBulkhead")
   public AiClientResponse searchJobsFromCompanies(AIJobSearchRequest request) {
-    String userPrompt = templateRenderer.getPrompt(PromptType.USER_PROMPT_JOB,
-        "positions", request.getOrder().getUser().getJobRoles().stream().map(UserJobRoleEntity::getJobRole).toList(),
-        "company", request.getCompany()
-    );
+    return retryTemplate.execute(RetryPolicies.JOB_SEARCH_BY_COMPANY, "GPT", () -> searchJobsFromCompanyOnce(request));
+  }
+
+  private AiClientResponse searchJobsFromCompanyOnce(AIJobSearchRequest request) {
+    UserEntity user = request.getOrder().getUser();
+    List<String> positions = user.getJobRoles().stream().map(UserJobRoleEntity::getJobRole).toList();
+
     GptJobsPayload payload = GptJobsPayload.builder(request.getDiscoveryModel())
         .maxOutputTokens(1200)
+        .temperature(0.15)
         .store(request.getStoreConversation())
         .previousResponseId(request.getPrevResponseId())
         .addTools(Tools.builder().setWebSearch().build())
-        .addSystemPrompt(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_JOBS_BY_COMPANY,
-            "blacklist", properties.getJobsHunter().getBlacklistJobsCompanySearch())
-        )
-        .addUserPrompt(userPrompt)
+        .addSystemPrompt(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_JOBS_BY_COMPANY))
+        .addUserPrompt(templateRenderer.getPrompt(PromptType.USER_PROMPT_JOB,
+            Map.of(
+                "company_name", request.getCompany().companyName(),
+                "company_careers_url", request.getCompany().officialWebsiteUrl(),
+                "positions", positions,
+                "city", user.getCity(),
+                "country", user.getCountry()
+            )
+        ))
+        .setResponseSchema(templateRenderer.getSchema(AiSchemaType.GPT_JSON_SCHEMA_RESPONSE))
         .build();
 
     GptResponse response = restClient.post()
@@ -256,11 +267,7 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient, AiJobsCompan
           .forEach(o -> {
             try {
               JobSearchResponse resp = mapper.readValue(o.text(), JobSearchResponse.class);
-              jobs.addAll(resp.results().stream()
-                  .filter(p -> p.url() != null && p.url().length() > 5)
-                  .map(p -> new Job(-1, p.url(), null))
-                  .toList()
-              );
+              jobs.addAll(resp.results().stream().map(p -> new Job(p.job_posting_url())).toList());
             } catch (Exception e) {
               log.warn("Exception for mapping jobs from GPT to response {}", e.getMessage());
               jobs.addAll(urlExtractor.parseJobs(o.text()));

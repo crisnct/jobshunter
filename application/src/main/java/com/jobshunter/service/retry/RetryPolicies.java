@@ -13,6 +13,16 @@ public final class RetryPolicies {
       new RetryPolicy<>(
           "JOB_SEARCH",
           5,
+          2_000,
+          r -> r != null && r.getJobs() != null && !r.getJobs().isEmpty(),
+          ex -> ex instanceof RuntimeException,
+          new AiClientResponse()
+      );
+
+  public static final RetryPolicy<AiClientResponse> JOB_SEARCH_BY_COMPANY =
+      new RetryPolicy<>(
+          "JOB_SEARCH",
+          3,
           1_000,
           r -> r != null && r.getJobs() != null && !r.getJobs().isEmpty(),
           ex -> ex instanceof RuntimeException,

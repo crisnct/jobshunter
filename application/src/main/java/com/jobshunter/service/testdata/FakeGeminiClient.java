@@ -26,25 +26,20 @@ public non-sealed class FakeGeminiClient implements AiJobsClient {
   public AiClientResponse searchJobs(AIJobSearchRequest request) {
     AiClientResponse result = new AiClientResponse();
     result.addAll(List.of(
-        new Job(-1,
-            "https://devjob.ro/en/jobs/Evantage-Soft-SRL-Senior-Java-Full-Stack-Developer",
-            null
+        new Job(
+            "https://devjob.ro/en/jobs/Evantage-Soft-SRL-Senior-Java-Full-Stack-Developer"
         ),
-        new Job(-1,
-            "https://jobs.citi.com/job/pune/java-spark-senior-lead-developer-java-spark-hdfs-hive-vice-president/287/88303699072",
-            null
+        new Job(
+            "https://jobs.citi.com/job/pune/java-spark-senior-lead-developer-java-spark-hdfs-hive-vice-president/287/88303699072"
         ),
-        new Job(-1,
-            "https://jobs.citi.com/job/dublin/technical-java-lead-vice-president/287/89302337248",
-            null
+        new Job(
+            "https://jobs.citi.com/job/dublin/technical-java-lead-vice-president/287/89302337248"
         ),
-        new Job(-1,
-            "https://weworkremotely.com/remote-jobs/h2corporation-vice-president-of-engineering-usa",
-            null
+        new Job(
+            "https://weworkremotely.com/remote-jobs/h2corporation-vice-president-of-engineering-usa"
         ),
-        new Job(-1,
-            "https://weworkremotely.com/remote-jobs/h2corporation-vice-president-of-engineering-usa",
-            null
+        new Job(
+            "https://weworkremotely.com/remote-jobs/h2corporation-vice-president-of-engineering-usa"
         )
     ));
     return result;
