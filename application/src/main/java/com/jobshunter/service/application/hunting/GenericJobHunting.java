@@ -165,7 +165,7 @@ public abstract non-sealed class GenericJobHunting implements JobHunting {
     for (CompanyDto company : companies) {
       log.info("{}/{} Searching jobs for user {} from company: {} with model {}",
           ++counter, companies.size(), user.getUsername(), company.companyName(), request.getDiscoveryModel().getModel());
-      request.setCompany(company.companyName());
+      request.setCompany(company);
       List<Job> jobs = aiJobCompany.searchJobsFromCompanies(request).getJobs();
       jobsFound.addAll(jobs);
       log.info("Found {} jobs for user {} from company {}", jobs.size(), user.getUsername(), company.companyName());

@@ -236,7 +236,11 @@ public class UserCvService {
       try {
         FileClient client = clients.get(type);
         if (remoteCV != null) {
-          client.deleteFile(remoteCV.getFileId());
+          try {
+            client.deleteFile(remoteCV.getFileId());
+          } catch (Exception e) {
+            log.warn("Can not delete file for user {} on {} client: {}", user.getUsername(), type.name(), e.getMessage());
+          }
         }
         tempFile = Files.createTempFile("cv-" + user.getUsername() + "-", ".pdf");
         Files.write(tempFile, user.getCv().getByteArray(),

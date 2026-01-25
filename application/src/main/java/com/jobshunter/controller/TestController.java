@@ -14,6 +14,7 @@ import com.jobshunter.dto.IpInfoDetailResponse;
 import com.jobshunter.dto.JobHuntResponse;
 import com.jobshunter.dto.JobScoreRequestDto;
 import com.jobshunter.dto.SearchCompaniesRequest;
+import com.jobshunter.dto.SearchJobsByCompanyRequest;
 import com.jobshunter.dto.exceptions.BusinessException;
 import com.jobshunter.dto.exceptions.ValidationException;
 import com.jobshunter.dto.geminiRequest.GeminiJobsPayload;
@@ -24,6 +25,7 @@ import com.jobshunter.dto.gptRequest.tools.Tools;
 import com.jobshunter.dto.gptResponse.GptResponse;
 import com.jobshunter.dto.grokRequest.GrokJobsPayload;
 import com.jobshunter.dto.grokResponse.GrokResponse;
+import com.jobshunter.model.AiClientResponse;
 import com.jobshunter.model.AiSchemaType;
 import com.jobshunter.model.EngineSelection;
 import com.jobshunter.model.EngineType;
@@ -394,10 +396,52 @@ public class TestController {
     // Create AIJobSearchRequest
     AIJobSearchRequest aiRequest = new AIJobSearchRequest(searchJobOrder);
     aiRequest.setCompaniesModel(aiModel);
+    aiRequest.setStoreConversation(false);
 
     // Get the appropriate client and search
     AiJobsCompaniesClient client = testService.getCompaniesClient(engineType);
     return ResponseEntity.ok(client.searchCompanies(aiRequest));
+  }
+
+  @PostMapping(value = "/searchJobsByCompany", consumes = MediaType.APPLICATION_JSON_VALUE)
+  public ResponseEntity<AiClientResponse> searchJobsByCompany(
+      @Valid @RequestBody SearchJobsByCompanyRequest request
+  ) {
+    // Parse engine type
+    EngineType engineType;
+    try {
+      engineType = EngineType.valueOf(request.engineType().toUpperCase());
+      if (engineType == EngineType.SERP) {
+        throw new ValidationException("Invalid engine type. Must be GPT, GEMINI, or GROK");
+      }
+    } catch (IllegalArgumentException e) {
+      throw new ValidationException("Invalid engine type. Must be GPT, GEMINI, or GROK");
+    }
+
+    // Get model entity
+    AiModelEntity aiModel = modelsDBService.getModel(new EngineSelection(engineType, request.aiModel()))
+        .orElseThrow(() -> new BusinessException(HttpStatus.BAD_REQUEST,
+            "Model not found: " + request.aiModel() + " for engine type: " + engineType));
+
+    // Create minimal user entity for testing
+    UserEntity testUser = createTestUserForJobs(request);
+
+    // Create minimal job order entity
+    JobOrderEntity jobOrder = new JobOrderEntity(testUser, aiModel, true, false);
+
+    // Create SearchJobOrder
+    SearchJobOrder searchJobOrder = new SearchJobOrder(jobOrder, testUser, List.of());
+    searchJobOrder.setIpInfo(new IpInfoDetailResponse("Europe", "RO", "RO", "Timisoara", "Europe/Bucharest", false));
+
+    // Create AIJobSearchRequest
+    AIJobSearchRequest aiRequest = new AIJobSearchRequest(searchJobOrder);
+    aiRequest.setStoreConversation(false);
+    aiRequest.setCompany(new CompanyDto(request.company(), request.company_url()));
+    aiRequest.setDiscoveryModel(aiModel);
+
+    // Get the appropriate client and search
+    AiJobsCompaniesClient client = testService.getCompaniesClient(engineType);
+    return ResponseEntity.ok(client.searchJobsFromCompanies(aiRequest));
   }
 
   private UserEntity createTestUser(SearchCompaniesRequest request) {
@@ -415,6 +459,16 @@ public class TestController {
     }
     user.setJobRoles(jobRoles);
 
+    return user;
+  }
+
+  private UserEntity createTestUserForJobs(SearchJobsByCompanyRequest request) {
+    UserEntity user = new UserEntity();
+    user.setUsername("test");
+    user.setCity(request.city());
+    user.setCountry(request.country());
+    user.setJobDomain(request.jobDomain());
+    user.setJobRoles(request.positions().stream().map(p -> new UserJobRoleEntity(user, p)).toList());
     return user;
   }
 
@@ -444,7 +498,7 @@ public class TestController {
     }
 
     // Fetch HTML from job URL using JobFetchProcessor
-    Job job = new Job(0, request.jobUrl(), "SCORE_ENDPOINT");
+    Job job = new Job( request.jobUrl());
     JobContext jobContext = new JobContext(job, user);
 
     try {

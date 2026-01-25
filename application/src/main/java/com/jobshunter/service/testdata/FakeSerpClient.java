@@ -26,18 +26,10 @@ public non-sealed class FakeSerpClient implements AiJobsClient {
   public AiClientResponse searchJobs(AIJobSearchRequest request) {
     AiClientResponse result = new AiClientResponse();
     result.addAll(List.of(
-        new Job(-1,
-            "https://jobs.digitalhire.com/job-listing/opening/6W2b0Y7QrlHiOrwemePL8C?utm_campaign=google_jobs_apply&utm_source=google_jobs_apply&utm_medium=organic",
-            null
-        ),
-        new Job(72,
-            "https://www.accenture.com/us-en/careers/jobdetails?id=R00298524_en&title=SAP+Intercompany+Manager+-+Life+Sciences",
-            null
-        ),
-        new Job(71,
-            "https://www.linkedin.com/jobs/collections/recommended/?currentJobId=4263267426",
-            null
-        )
+        new Job(
+            "https://jobs.digitalhire.com/job-listing/opening/6W2b0Y7QrlHiOrwemePL8C?utm_campaign=google_jobs_apply&utm_source=google_jobs_apply&utm_medium=organic"),
+        new Job("https://www.accenture.com/us-en/careers/jobdetails?id=R00298524_en&title=SAP+Intercompany+Manager+-+Life+Sciences"),
+        new Job("https://www.linkedin.com/jobs/collections/recommended/?currentJobId=4263267426")
     ));
     return result;
   }

@@ -25,7 +25,7 @@ public class AIJobSearchRequest implements Copyable<AIJobSearchRequest> {
   private String prevResponseId;
 
   private List<String> previousURL;
-  private String company;
+  private CompanyDto company;
   private AiModelEntity discoveryModel;
   private AiModelEntity companiesModel;
 

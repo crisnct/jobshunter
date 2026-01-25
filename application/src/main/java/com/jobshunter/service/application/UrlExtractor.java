@@ -26,7 +26,7 @@ public class UrlExtractor {
     while (matcher.find()) {
       String url = normalize(matcher.group());
       if (url.length() > 5) {
-        results.add(new Job(-1, url, null));
+        results.add(new Job(url));
       }
     }
     return results;

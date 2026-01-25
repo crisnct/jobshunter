@@ -6,8 +6,8 @@ package com.jobshunter.dto.grokResponse;
  */
  //@formatter:on
 public record JobResult(
-    String url,
-    String company
+    String job_posting_url,
+    String company_name
 ) {
 
 }

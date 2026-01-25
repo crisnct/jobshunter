@@ -49,7 +49,7 @@ public non-sealed class GptFileClientImpl implements FileClient {
     log.info("Uploading file to GPT {}...", cvPath.getFileName());
     try (var ignored = Files.newInputStream(cvPath)) {
       MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
-      body.add("purpose", "assistants");
+      body.add("purpose", "user_data");
       body.add("file", new FileSystemResource(cvPath));
 
       UploadFileResponse uploadResponse = restClient

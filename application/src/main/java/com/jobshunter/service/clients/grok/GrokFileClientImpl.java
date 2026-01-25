@@ -49,7 +49,6 @@ public non-sealed class GrokFileClientImpl implements FileClient {
     log.info("Uploading file to GROK {}...", cvPath.getFileName());
     try (var ignored = Files.newInputStream(cvPath)) {
       MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
-      body.add("purpose", "assistants");
       body.add("file", new FileSystemResource(cvPath));
 
       UploadFileResponse response = restClient.post()
@@ -71,11 +70,12 @@ public non-sealed class GrokFileClientImpl implements FileClient {
   @Bulkhead(name = "grokBulkhead")
   @RateLimiter(name = "grokLimiter")
   public void deleteFile(@NotBlank String fileId) {
-    restClient.delete()
+    String body = restClient.delete()
         .uri(API_URI + "/" + fileId)
         .headers((h) -> h.setBearerAuth(properties.getGrok().getApiKey()))
         .retrieve()
-        .body(Void.class);
+        .body(String.class);
+    log.info("grok Deleted fileId:{} with bodyResponse: {}", fileId, body);
   }
 
   @Override
