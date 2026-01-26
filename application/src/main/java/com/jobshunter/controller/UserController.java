@@ -1,6 +1,5 @@
 package com.jobshunter.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jobshunter.database.entities.RoleEntity;
 import com.jobshunter.database.entities.UserContractTypeEntity;
 import com.jobshunter.database.entities.UserEntity;

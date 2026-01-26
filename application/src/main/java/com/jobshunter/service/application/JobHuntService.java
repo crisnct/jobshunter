@@ -11,7 +11,6 @@ import com.jobshunter.service.application.hunting.HuntingOrchestrator;
 import com.jobshunter.service.application.notifiers.EmailNotifierService;
 import com.jobshunter.service.application.notifiers.WhatsappNotifierService;
 import com.jobshunter.service.application.processors.JobsStateMachine;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;

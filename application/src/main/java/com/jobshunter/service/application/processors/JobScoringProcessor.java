@@ -21,14 +21,13 @@ public final class JobScoringProcessor implements JobProcessor {
 
   //public static final EngineSelection ENGINE_SELECTION = new EngineSelection(EngineType.GPT, "gpt-5.2-2025-12-11");
   //public static final EngineSelection ENGINE_SELECTION =  new EngineSelection(EngineType.GROK, "grok-4-1-fast-reasoning");
-  public static final EngineSelection ENGINE_SELECTION =  new EngineSelection(EngineType.GEMINI, "gemini-2.5-flash-lite");
+  public static final EngineSelection ENGINE_SELECTION = new EngineSelection(EngineType.GEMINI, "gemini-2.5-flash-lite");
 
   private final JobScoreCalculatorClient gptCalculator;
   private final JobScoreCalculatorClient geminiCalculator;
   private final JobScoreCalculatorClient grokCalculator;
-
-  private AiModelEntity aiModel;
   private final ModelsDBService modelsDBService;
+  private AiModelEntity aiModel;
 
   public JobScoringProcessor(
       ModelsDBService modelsDBService,
@@ -48,8 +47,10 @@ public final class JobScoringProcessor implements JobProcessor {
 
   @EventListener(ApplicationReadyEvent.class)
   private void init() {
-    this.aiModel = modelsDBService.getModel(ENGINE_SELECTION).orElseThrow();
-    log.info("JobScoring initialized with model: {} from {}", ENGINE_SELECTION.model(), ENGINE_SELECTION.type());
+    if (modelsDBService != null) {
+      this.aiModel = modelsDBService.getModel(ENGINE_SELECTION).orElseThrow();
+      log.info("JobScoring initialized with model: {} from {}", ENGINE_SELECTION.model(), ENGINE_SELECTION.type());
+    }
   }
 
   @Override

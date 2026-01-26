@@ -15,12 +15,31 @@ import org.springframework.stereotype.Component;
 @AllArgsConstructor
 public class RedirectFetchPage implements HttpFetcher {
 
+  public static final int TIMEOUT_REDIRECTION = 60; //sec
   // ThreadLocal to pass HttpClientContext across thread boundaries (for async executor calls)
   private static final ThreadLocal<HttpClientContext> THREAD_LOCAL_CONTEXT = new ThreadLocal<>();
-
-  public static final int TIMEOUT_REDIRECTION = 60; //sec
-
   private final BrowserSimulator browserSimulator;
+
+  /**
+   * Gets the HttpClientContext from ThreadLocal. Used by RestClientConfig to access the context when making HTTP requests in executor threads.
+   */
+  public static HttpClientContext getThreadLocalContext() {
+    return THREAD_LOCAL_CONTEXT.get();
+  }
+
+  /**
+   * Sets the HttpClientContext in ThreadLocal. Used by BrowserSimulator to set context in executor thread.
+   */
+  public static void setThreadLocalContext(HttpClientContext context) {
+    THREAD_LOCAL_CONTEXT.set(context);
+  }
+
+  /**
+   * Removes the HttpClientContext from ThreadLocal. Used for cleanup.
+   */
+  public static void removeThreadLocalContext() {
+    THREAD_LOCAL_CONTEXT.remove();
+  }
 
   @Override
   public HttpFetchResult fetch(String url) {
@@ -29,6 +48,16 @@ public class RedirectFetchPage implements HttpFetcher {
     // Set ThreadLocal before async call so it's available in executor thread
     THREAD_LOCAL_CONTEXT.set(httpcontext);
     try {
+      ResponseEntity<String> responseFirst = browserSimulator.openPageAsync(url)
+          .toCompletableFuture()
+          .orTimeout(TIMEOUT_REDIRECTION, TimeUnit.SECONDS)
+          .join();
+      if (responseFirst.getBody() == null || responseFirst.getBody().contains("<title>Access Denied</title>")) {
+        throw new IllegalStateException("Not valid url");
+      }
+
+      Thread.sleep(500);
+
       // Pass httpContext directly to ensure it's available in executor thread
       ResponseEntity<String> response = browserSimulator.openPageAsyncRedirect(url, httpcontext)
           .toCompletableFuture()
@@ -40,7 +69,7 @@ public class RedirectFetchPage implements HttpFetcher {
       List<URI> redirects = ctx.getRedirectLocations().getAll();
       URI finalUri = redirects.isEmpty() ? URI.create(url) : redirects.getLast();
       String redirectedURL = finalUri.toString();
-      
+
       if (!redirectedURL.equals(url)) {
         log.info("Redirected(code {}) from {} to {}", response.getStatusCode().value(), url, redirectedURL);
       }
@@ -53,28 +82,6 @@ public class RedirectFetchPage implements HttpFetcher {
       // Clean up ThreadLocal after use
       THREAD_LOCAL_CONTEXT.remove();
     }
-  }
-  
-  /**
-   * Gets the HttpClientContext from ThreadLocal. Used by RestClientConfig to access the context
-   * when making HTTP requests in executor threads.
-   */
-  public static HttpClientContext getThreadLocalContext() {
-    return THREAD_LOCAL_CONTEXT.get();
-  }
-  
-  /**
-   * Sets the HttpClientContext in ThreadLocal. Used by BrowserSimulator to set context in executor thread.
-   */
-  public static void setThreadLocalContext(HttpClientContext context) {
-    THREAD_LOCAL_CONTEXT.set(context);
-  }
-  
-  /**
-   * Removes the HttpClientContext from ThreadLocal. Used for cleanup.
-   */
-  public static void removeThreadLocalContext() {
-    THREAD_LOCAL_CONTEXT.remove();
   }
 
 }

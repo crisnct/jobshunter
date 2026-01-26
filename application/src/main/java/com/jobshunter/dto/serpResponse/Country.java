@@ -10,4 +10,5 @@ public record Country(
     @JsonProperty("country_name")
     String countryName
 ) {
+
 }

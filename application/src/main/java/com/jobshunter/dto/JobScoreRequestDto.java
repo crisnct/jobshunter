@@ -13,13 +13,14 @@ public record JobScoreRequestDto(
     @Size(max = 2048)
     @SqlInjectionSafe
     String jobUrl,
-    
+
     @NotBlank
     @SqlInjectionSafe
     String engineProvider,
-    
+
     @NotBlank
     @SqlInjectionSafe
     String engineModel
 ) {
+
 }

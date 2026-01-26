@@ -24,8 +24,12 @@ public class AiModelsCapabilityId implements Serializable {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
     AiModelsCapabilityId that = (AiModelsCapabilityId) o;
     return Objects.equals(modelId, that.modelId) && Objects.equals(capabilityId, that.capabilityId);
   }

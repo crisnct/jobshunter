@@ -20,9 +20,8 @@ import org.springframework.stereotype.Component;
 @AllArgsConstructor
 public class CountryIsoCode {
 
-  private Map<String, String> countryIsoCodes;
-
   private final JsonMapper mapper;
+  private Map<String, String> countryIsoCodes;
 
   @PostConstruct
   public void init() throws IOException {

@@ -49,7 +49,7 @@ public class ModelsDBService {
   public void initialize(AiModelEntity model) {
     Hibernate.initialize(model);
     Hibernate.initialize(model.getCapabilities());
-    for (AiModelsCapabilityEntity entity: model.getCapabilities()){
+    for (AiModelsCapabilityEntity entity : model.getCapabilities()) {
       Hibernate.initialize(entity.getCapability());
     }
   }

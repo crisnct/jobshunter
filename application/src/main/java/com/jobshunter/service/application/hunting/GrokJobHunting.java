@@ -1,7 +1,6 @@
 package com.jobshunter.service.application.hunting;
 
 import com.jobshunter.database.entities.AiModelEntity;
-import com.jobshunter.database.entities.UserPromptEntity;
 import com.jobshunter.database.service.ModelsDBService;
 import com.jobshunter.dto.AIJobSearchRequest;
 import com.jobshunter.model.EngineSelection;
@@ -21,9 +20,9 @@ import org.springframework.stereotype.Service;
 @Service
 public final class GrokJobHunting extends AiConversationJobHunting {
 
+  private final ModelsDBService modelsDBService;
   private AiModelEntity discoveryModel;
   private AiModelEntity companiesModel;
-  private final ModelsDBService modelsDBService;
 
   public GrokJobHunting(
       @Qualifier("grokSearchExecutor") Executor executor,

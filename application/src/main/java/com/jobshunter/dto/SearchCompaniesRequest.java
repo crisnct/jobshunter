@@ -14,23 +14,24 @@ public record SearchCompaniesRequest(
     @NotBlank
     @SqlInjectionSafe
     String engineType,
-    
+
     @NotBlank
     @SqlInjectionSafe
     String aiModel,
-    
+
     @NotBlank
     @SqlInjectionSafe
     String city,
-    
+
     @SqlInjectionSafe
     String country,
-    
+
     @SqlInjectionSafe
     String domain,
-    
+
     @NotNull
     @NotEmpty
     List<@NotBlank String> positions
 ) {
+
 }

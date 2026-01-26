@@ -3,7 +3,6 @@ package com.jobshunter.model;
 import com.jobshunter.database.entities.AiModelEntity;
 import com.jobshunter.database.entities.JobOrderEntity;
 import com.jobshunter.database.entities.UserEntity;
-import com.jobshunter.database.entities.UserJobEntity;
 import com.jobshunter.dto.IpInfoDetailResponse;
 import java.util.List;
 import lombok.Getter;

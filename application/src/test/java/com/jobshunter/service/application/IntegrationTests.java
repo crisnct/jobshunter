@@ -13,9 +13,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.jobshunter.database.entities.AiModelEntity;
 import com.jobshunter.database.entities.RoleEntity;
+import com.jobshunter.database.repository.AiModelRepository;
 import com.jobshunter.database.repository.RoleRepository;
 import com.jobshunter.database.service.AuthDBService;
 import com.jobshunter.dto.RegisterRequest;
+import com.jobshunter.model.EngineType;
 import com.jobshunter.model.Job;
 import com.jobshunter.model.JobContext;
 import com.jobshunter.model.JobPhase;
@@ -37,13 +39,14 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
+import javax.sql.DataSource;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.InitializingBean;
-import org.springframework.boot.ApplicationRunner;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.boot.test.context.TestConfiguration;
@@ -57,9 +60,6 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.web.servlet.MockMvc;
-import javax.sql.DataSource;
-import com.jobshunter.database.repository.AiModelRepository;
-import com.jobshunter.model.EngineType;
 
 @Slf4j
 @SpringBootTest(
@@ -81,7 +81,6 @@ import com.jobshunter.model.EngineType;
 )
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
-@Disabled
 public class IntegrationTests {
 
   @Autowired
@@ -260,6 +259,10 @@ public class IntegrationTests {
         "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEdoYtUm9AVmPKK7dy51GXRPMD604I35SzG8yFmb14kFecBtnRDL2v3HF1UUZB5YtpuBoU0W4pMUnwCQ-HDyua_hdmy4xXDWcRMfv-MkE7zSlo3rGb7GggEEHnwnRKVDakWl387P0X1zlcQdcL9wqndBKkp4ifvAUyS7UlnUv1c3h9yo0MXPs1_Q6H7ziAsG3Cu");
     System.out.println(result.finalUrl());
     result = redirectFetchPage.fetch("https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQG56Dsba-ERn1Z-5xSWHq62X_M6o91aH7Za5LRym93Wn2-STuJlWedFDdrsovmrKC2ryFFE7qrkThY1B0m09Bw08uACSDV9xGrMaFykSShCiaaw0NSmhArQXUWGmkOxWDRvNVX_0pB1tKosJA4EAF2AqACvO8ixKZ9QzFZfjKzcm9KhLhh05vG2BHNLuBnOUsa2qVAnY_NXBujoo2ksLOvJ4xO9fNXzLEGl8NqiiCwbblzVQKeHJ562BtODtscZ7czUNo1sGP0SvUYuYFo1");
+    System.out.println(result.finalUrl());
+    result = redirectFetchPage.fetch("https://www.nokia.com/careers/job/26912/Software-Engineer");
+    System.out.println(result.finalUrl());
+    result = redirectFetchPage.fetch("https://www.nokia.com/about-us/careers/jobs/26912");
     System.out.println(result.finalUrl());
   }
 

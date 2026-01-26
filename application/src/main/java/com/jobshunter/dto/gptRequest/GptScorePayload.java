@@ -80,7 +80,7 @@ public record GptScorePayload(
 
     public GptScorePayload build() {
       if (reasoning != null && temperature != null) {
-          throw new BusinessException(HttpStatus.NOT_FOUND, "TEMPERATURE and REASONING can not be set both for GPT models.");
+        throw new BusinessException(HttpStatus.NOT_FOUND, "TEMPERATURE and REASONING can not be set both for GPT models.");
       }
       return new GptScorePayload(
           model,

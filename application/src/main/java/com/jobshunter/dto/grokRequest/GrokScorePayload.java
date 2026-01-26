@@ -2,7 +2,6 @@ package com.jobshunter.dto.grokRequest;
 
 import com.jobshunter.database.entities.AiModelEntity;
 import com.jobshunter.dto.exceptions.BusinessException;
-import com.jobshunter.dto.gptRequest.GptScorePayload;
 import com.jobshunter.model.AiCapabilityType;
 import java.util.ArrayList;
 import java.util.List;

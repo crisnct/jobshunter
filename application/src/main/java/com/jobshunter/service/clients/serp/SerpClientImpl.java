@@ -41,6 +41,10 @@ public non-sealed class SerpClientImpl implements AiJobsClient {
 
   private final ApplicationProperties applicationProperties;
 
+  private static String encode(String s) {
+    return URLEncoder.encode(s, StandardCharsets.UTF_8);
+  }
+
   @Override
   @RateLimiter(name = "serpLimiter")
   @CircuitBreaker(name = "serp", fallbackMethod = "fallbackSearch")
@@ -140,10 +144,6 @@ public non-sealed class SerpClientImpl implements AiJobsClient {
       sb.append(kv[i]).append("=").append(kv[i + 1]);
     }
     return URI.create(sb.toString());
-  }
-
-  private static String encode(String s) {
-    return URLEncoder.encode(s, StandardCharsets.UTF_8);
   }
 
 }

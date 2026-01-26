@@ -77,22 +77,95 @@ import org.springframework.web.client.RestClient;
 @AllArgsConstructor
 public class TestController {
 
+  public static final Set<String> GROK_MODELS =
+      new LinkedHashSet<>(List.of(
+          "grok-2-1212",
+          "grok-2-image-1212",
+          "grok-2-vision-1212",
+          "grok-3",
+          "grok-3-mini",
+          "grok-4-0709",
+          "grok-4-1-fast-non-reasoning",
+          "grok-4-1-fast-reasoning",
+          "grok-4-fast-non-reasoning",
+          "grok-4-fast-reasoning",
+          "grok-code-fast-1"
+      ));
+  public static final Set<String> GEMINI_MODELS =
+      new LinkedHashSet<>(List.of(
+          "gemini-2.0-flash",
+          "gemini-2.0-flash-001",
+          "gemini-2.0-flash-exp",
+          "gemini-2.0-flash-lite",
+          "gemini-2.0-flash-lite-001",
+          "gemini-2.5-flash",
+          "gemini-2.5-flash-lite",
+          "gemini-2.5-pro"
+      ));
+  private static final Set<String> GPT_MODELS = new LinkedHashSet<>(List.of(
+      "chatgpt-4o-latest",
+      "gpt-3.5-turbo",
+      "gpt-3.5-turbo-0125",
+      "gpt-3.5-turbo-1106",
+      "gpt-4",
+      "gpt-4-0125-preview",
+      "gpt-4-0613",
+      "gpt-4-1106-preview",
+      "gpt-4-turbo",
+      "gpt-4-turbo-2024-04-09",
+      "gpt-4-turbo-preview",
+      "gpt-4.1",
+      "gpt-4.1-2025-04-14",
+      "gpt-4.1-mini",
+      "gpt-4.1-mini-2025-04-14",
+      "gpt-4.1-nano",
+      "gpt-4.1-nano-2025-04-14",
+      "gpt-4o",
+      "gpt-4o-2024-05-13",
+      "gpt-4o-2024-08-06",
+      "gpt-4o-2024-11-20",
+      "gpt-4o-mini",
+      "gpt-4o-mini-2024-07-18",
+      "gpt-5",
+      "gpt-5-2025-08-07",
+      "gpt-5-chat-latest",
+      "gpt-5-codex",
+      "gpt-5-mini",
+      "gpt-5-mini-2025-08-07",
+      "gpt-5-nano",
+      "gpt-5-nano-2025-08-07",
+      "gpt-5-pro",
+      "gpt-5-pro-2025-10-06",
+      "gpt-5.1",
+      "gpt-5.1-2025-11-13",
+      "gpt-5.1-chat-latest",
+      "gpt-5.1-codex",
+      "gpt-5.1-codex-max",
+      "gpt-5.1-codex-mini",
+      "gpt-5.2",
+      "gpt-5.2-2025-12-11",
+      "gpt-5.2-chat-latest",
+      "gpt-5.2-pro",
+      "gpt-5.2-pro-2025-12-11",
+      "o1",
+      "o1-2024-12-17",
+      "o1-pro",
+      "o1-pro-2025-03-19",
+      "o3",
+      "o3-2025-04-16",
+      "o3-mini",
+      "o3-mini-2025-01-31",
+      "o4-mini",
+      "o4-mini-2025-04-16"
+  ));
   private final EmailNotifierService emailNotifierService;
-
   private final ApplicationProperties properties;
-
   private final UserDBService userDBService;
-
   private final RestClient restClient;
-
   private final TemplateRenderer templateRenderer;
-
   private final ModelsDBService modelsDBService;
-
   private final JobFetchProcessor jobFetchProcessor;
-
   private final JobBodyExtractorProcessor jobBodyExtractorProcessor;
-
   private final TestService testService;
 
   @PostMapping(value = "/email/send", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -497,7 +570,7 @@ public class TestController {
     }
 
     // Fetch HTML from job URL using JobFetchProcessor
-    Job job = new Job( request.jobUrl());
+    Job job = new Job(request.jobUrl());
     JobContext jobContext = new JobContext(job, user);
 
     try {
@@ -540,89 +613,5 @@ public class TestController {
 
     return ResponseEntity.ok(Map.of("score", score));
   }
-
-  public static final Set<String> GROK_MODELS =
-      new LinkedHashSet<>(List.of(
-          "grok-2-1212",
-          "grok-2-image-1212",
-          "grok-2-vision-1212",
-          "grok-3",
-          "grok-3-mini",
-          "grok-4-0709",
-          "grok-4-1-fast-non-reasoning",
-          "grok-4-1-fast-reasoning",
-          "grok-4-fast-non-reasoning",
-          "grok-4-fast-reasoning",
-          "grok-code-fast-1"
-      ));
-
-  public static final Set<String> GEMINI_MODELS =
-      new LinkedHashSet<>(List.of(
-          "gemini-2.0-flash",
-          "gemini-2.0-flash-001",
-          "gemini-2.0-flash-exp",
-          "gemini-2.0-flash-lite",
-          "gemini-2.0-flash-lite-001",
-          "gemini-2.5-flash",
-          "gemini-2.5-flash-lite",
-          "gemini-2.5-pro"
-      ));
-
-  private static final Set<String> GPT_MODELS = new LinkedHashSet<>(List.of(
-      "chatgpt-4o-latest",
-      "gpt-3.5-turbo",
-      "gpt-3.5-turbo-0125",
-      "gpt-3.5-turbo-1106",
-      "gpt-4",
-      "gpt-4-0125-preview",
-      "gpt-4-0613",
-      "gpt-4-1106-preview",
-      "gpt-4-turbo",
-      "gpt-4-turbo-2024-04-09",
-      "gpt-4-turbo-preview",
-      "gpt-4.1",
-      "gpt-4.1-2025-04-14",
-      "gpt-4.1-mini",
-      "gpt-4.1-mini-2025-04-14",
-      "gpt-4.1-nano",
-      "gpt-4.1-nano-2025-04-14",
-      "gpt-4o",
-      "gpt-4o-2024-05-13",
-      "gpt-4o-2024-08-06",
-      "gpt-4o-2024-11-20",
-      "gpt-4o-mini",
-      "gpt-4o-mini-2024-07-18",
-      "gpt-5",
-      "gpt-5-2025-08-07",
-      "gpt-5-chat-latest",
-      "gpt-5-codex",
-      "gpt-5-mini",
-      "gpt-5-mini-2025-08-07",
-      "gpt-5-nano",
-      "gpt-5-nano-2025-08-07",
-      "gpt-5-pro",
-      "gpt-5-pro-2025-10-06",
-      "gpt-5.1",
-      "gpt-5.1-2025-11-13",
-      "gpt-5.1-chat-latest",
-      "gpt-5.1-codex",
-      "gpt-5.1-codex-max",
-      "gpt-5.1-codex-mini",
-      "gpt-5.2",
-      "gpt-5.2-2025-12-11",
-      "gpt-5.2-chat-latest",
-      "gpt-5.2-pro",
-      "gpt-5.2-pro-2025-12-11",
-      "o1",
-      "o1-2024-12-17",
-      "o1-pro",
-      "o1-pro-2025-03-19",
-      "o3",
-      "o3-2025-04-16",
-      "o3-mini",
-      "o3-mini-2025-01-31",
-      "o4-mini",
-      "o4-mini-2025-04-16"
-  ));
 
 }
