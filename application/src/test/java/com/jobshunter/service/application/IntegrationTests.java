@@ -264,6 +264,9 @@ public class IntegrationTests {
     System.out.println(result.finalUrl());
     result = redirectFetchPage.fetch("https://www.nokia.com/about-us/careers/jobs/26912");
     System.out.println(result.finalUrl());
+
+    result = redirectFetchPage.fetch("https://careers.nokia.com/jobs/software-engineer-26912");
+    System.out.println(result.finalUrl());
   }
 
   @Test

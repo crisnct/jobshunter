@@ -39,6 +39,7 @@ import com.jobshunter.service.application.TestService;
 import com.jobshunter.service.application.notifiers.EmailNotifierService;
 import com.jobshunter.service.application.processors.JobBodyExtractorProcessor;
 import com.jobshunter.service.application.processors.JobFetchProcessor;
+import com.jobshunter.service.application.processors.JobsStateMachine;
 import com.jobshunter.service.clients.AiJobsCompaniesClient;
 import com.jobshunter.service.clients.JobScoreCalculatorClient;
 import com.jobshunter.service.clients.gemini.GeminiV1JobSearchImpl;
@@ -54,6 +55,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -165,6 +167,7 @@ public class TestController {
   private final TemplateRenderer templateRenderer;
   private final ModelsDBService modelsDBService;
   private final JobFetchProcessor jobFetchProcessor;
+  private final JobsStateMachine jobsStateMachine;
   private final JobBodyExtractorProcessor jobBodyExtractorProcessor;
   private final TestService testService;
 
@@ -476,7 +479,7 @@ public class TestController {
   }
 
   @PostMapping(value = "/searchJobsByCompany", consumes = MediaType.APPLICATION_JSON_VALUE)
-  public ResponseEntity<AiClientResponse> searchJobsByCompany(
+  public ResponseEntity<?> searchJobsByCompany(
       @Valid @RequestBody SearchJobsByCompanyRequest request
   ) {
     // Parse engine type
@@ -513,7 +516,16 @@ public class TestController {
 
     // Get the appropriate client and search
     AiJobsCompaniesClient client = testService.getCompaniesClient(engineType);
-    return ResponseEntity.ok(client.searchJobsFromCompanies(aiRequest));
+    AiClientResponse body = client.searchJobsFromCompanies(aiRequest);
+
+    List<Job> jobs = jobsStateMachine.processAsync(CompletableFuture.completedFuture(body.getJobs()), testUser)
+        .join()
+        .stream()
+        .filter(ctx -> !ctx.isFailed() && ctx.isValidatedSuccessfully())
+        .map(JobContext::getJob)
+        .toList();
+
+    return ResponseEntity.ok(jobs);
   }
 
   private UserEntity createTestUser(SearchCompaniesRequest request) {

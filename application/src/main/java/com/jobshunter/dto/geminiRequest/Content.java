@@ -16,7 +16,7 @@ public record Content(
 
   public static class ContentBuilder {
 
-    private final List<Part> parts = new ArrayList<>();
+    private List<Part> parts = new ArrayList<>();
 
     public ContentBuilder addPart(Part part) {
       parts.add(part);
