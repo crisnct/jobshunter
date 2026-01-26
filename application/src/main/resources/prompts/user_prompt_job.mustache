@@ -1,16 +1,25 @@
-Search for job postings with titles that contain EXACTLY one of the following expressions (as a contiguous, case-insensitive word sequence, without reordering or substitution):
+Search for individual job postings published by the following company:
+{{company_name}}
+
+Primary source constraint:
+- Acceptable sources include the company’s primary domain {{company_domain}} and any subdomain that is organizationally owned and operated by the company.
+- Job-specific pages on these domains are valid final results, regardless of whether the application flow redirects to an external ATS.
+- External ATS pages are acceptable only when explicitly linked from an official company-controlled domain.
+
+Job title constraint:
+- The job title MUST contain one of the following expressions as a contiguous, case-insensitive word sequence, without reordering or substitution:
 {{positions}}
 
-Location constraints:
-- Fully remote positions available from {{country}}
-OR
-- On-site / hybrid positions located in {{city}}, {{country}}
+Discovery guidance:
+- You MAY use career listings, search results, or category pages ONLY as intermediate discovery steps.
+- Final results MUST point to a single, individual job posting page.
 
-Source constraints:
-- Search only on the company's official careers page:
-{{company_careers_url}}
-or on ATS pages officially linked from that domain.
-- Exclude career homepages, category pages, job listings, search/filter results, and language/country selectors.
+Exclusions:
+- Do NOT return:
+  - career homepages
+  - category or listing pages
+  - language or country selector pages
 
-Company:
-{{company_name}}
+Final requirement:
+- Include a job posting ONLY if all constraints above are explicitly satisfied.
+- Otherwise, exclude it.

@@ -11,6 +11,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.json.JsonMapper;
+import com.jobshunter.database.entities.AiModelEntity;
 import com.jobshunter.database.entities.RoleEntity;
 import com.jobshunter.database.repository.RoleRepository;
 import com.jobshunter.database.service.AuthDBService;
@@ -37,19 +38,28 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.boot.ApplicationRunner;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.context.annotation.Bean;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.web.servlet.MockMvc;
+import javax.sql.DataSource;
+import com.jobshunter.database.repository.AiModelRepository;
+import com.jobshunter.model.EngineType;
 
 @Slf4j
 @SpringBootTest(
@@ -61,7 +71,12 @@ import org.springframework.test.web.servlet.MockMvc;
         "spring.datasource.password=",
         "spring.jpa.hibernate.ddl-auto=create-drop",
         "spring.jpa.database-platform=org.hibernate.dialect.H2Dialect",
-        "spring.liquibase.enabled=false"
+        // Ensure data.sql runs after Hibernate creates the schema
+        "spring.jpa.defer-datasource-initialization=true",
+        "spring.liquibase.enabled=false",
+        // Ensure test data from classpath:data.sql is executed for the in-memory H2 setup
+        "spring.sql.init.mode=always",
+        "spring.sql.init.data-locations=classpath:data.sql"
     }
 )
 @AutoConfigureMockMvc
@@ -240,9 +255,11 @@ public class IntegrationTests {
   }
 
   @Test
-  @Disabled
   public void testRedirection() {
-    HttpFetchResult result = redirectFetchPage.fetch("https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEdoYtUm9AVmPKK7dy51GXRPMD604I35SzG8yFmb14kFecBtnRDL2v3HF1UUZB5YtpuBoU0W4pMUnwCQ-HDyua_hdmy4xXDWcRMfv-MkE7zSlo3rGb7GggEEHnwnRKVDakWl387P0X1zlcQdcL9wqndBKkp4ifvAUyS7UlnUv1c3h9yo0MXPs1_Q6H7ziAsG3Cu");
+    HttpFetchResult result = redirectFetchPage.fetch(
+        "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEdoYtUm9AVmPKK7dy51GXRPMD604I35SzG8yFmb14kFecBtnRDL2v3HF1UUZB5YtpuBoU0W4pMUnwCQ-HDyua_hdmy4xXDWcRMfv-MkE7zSlo3rGb7GggEEHnwnRKVDakWl387P0X1zlcQdcL9wqndBKkp4ifvAUyS7UlnUv1c3h9yo0MXPs1_Q6H7ziAsG3Cu");
+    System.out.println(result.finalUrl());
+    result = redirectFetchPage.fetch("https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQG56Dsba-ERn1Z-5xSWHq62X_M6o91aH7Za5LRym93Wn2-STuJlWedFDdrsovmrKC2ryFFE7qrkThY1B0m09Bw08uACSDV9xGrMaFykSShCiaaw0NSmhArQXUWGmkOxWDRvNVX_0pB1tKosJA4EAF2AqACvO8ixKZ9QzFZfjKzcm9KhLhh05vG2BHNLuBnOUsa2qVAnY_NXBujoo2ksLOvJ4xO9fNXzLEGl8NqiiCwbblzVQKeHJ562BtODtscZ7czUNo1sGP0SvUYuYFo1");
     System.out.println(result.finalUrl());
   }
 
@@ -273,10 +290,7 @@ public class IntegrationTests {
   @Test
   @Disabled
   public void testJobFakelUrFilter() {
-    Job job = new Job(-1,
-        "https://www.bestjobs.eu/en/job/accounts-receivable-accountant-with-german-cabs-continental-automotive-romania-srl-timisoara-5b5f5e5e-5b5f-5e5e-5b5f-5b5f5e5e5b5f",
-        null);
-
+    Job job = new Job("https://www.bestjobs.eu/en/job/accounts-receivable-accountant-with-german-cabs-continental-automotive-romania-srl-timisoara-5b5f5e5e-5b5f-5e5e-5b5f-5b5f5e5e5b5f");
     JobContext jc = new JobContext(job, null);
     jc = jobBasicCheckProcessor.processAsync(jc);
     jc = jobFetchProcessor.processAsync(jc);
@@ -286,6 +300,36 @@ public class IntegrationTests {
     Assert.state(jc.getPhase() == JobPhase.SCORING, "IP is accessible");
     Assert.isTrue(jc.getFetchResult().statusCode() == 200, "URL is reacheble");
     Assert.isTrue(!jc.isValidatedSuccessfully(), "URL is not valid");
+  }
+
+  //TODO
+  //remove this and make tests to take into consideration data.sql
+  @TestConfiguration
+  static class SqlTestDataInitializer {
+
+    @Bean
+    InitializingBean populateTestData(DataSource dataSource) {
+      return () -> {
+        ResourceDatabasePopulator populator = new ResourceDatabasePopulator(new ClassPathResource("data.sql"));
+        populator.execute(dataSource);
+      };
+    }
+
+    @Bean
+    ApplicationRunner ensureModelSeeds(AiModelRepository aiModelRepository) {
+      return args -> {
+        seedIfMissing(aiModelRepository, EngineType.GEMINI, "gemini-2.5-flash-lite");
+        seedIfMissing(aiModelRepository, EngineType.GPT, "gpt-5.2-2025-12-11");
+        seedIfMissing(aiModelRepository, EngineType.GPT, "gpt-4.1-mini-2025-04-14");
+        seedIfMissing(aiModelRepository, EngineType.GROK, "grok-4-1-fast-non-reasoning");
+        seedIfMissing(aiModelRepository, EngineType.GROK, "grok-4-1-fast-reasoning");
+      };
+    }
+
+    private void seedIfMissing(AiModelRepository repo, EngineType type, String model) {
+      repo.findByProviderAndModel(type, model)
+          .orElseGet(() -> repo.save(new AiModelEntity(type, model)));
+    }
   }
 
 }

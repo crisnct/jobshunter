@@ -22,18 +22,22 @@ public class TestService {
 
   private final AiJobsCompaniesClient grokCompaniesClient;
 
+  private final AiJobsCompaniesClient geminiCompaniesClient;
+
   public TestService(
       @Qualifier("GptJobScoreCalculator") JobScoreCalculatorClient gptJobScoreCalculator,
       @Qualifier("GeminiJobScoreCalculator") JobScoreCalculatorClient geminiJobScoreCalculator,
       @Qualifier("GrokJobScoreCalculator") JobScoreCalculatorClient grokJobScoreCalculator,
       @Qualifier("JobsClientGPT") AiJobsCompaniesClient gptCompaniesClient,
-      @Qualifier("JobsClientGROK") AiJobsCompaniesClient grokCompaniesClient
+      @Qualifier("JobsClientGROK") AiJobsCompaniesClient grokCompaniesClient,
+      @Qualifier("JobsClientGemini") AiJobsCompaniesClient geminiCompaniesClient
   ) {
     this.gptJobScoreCalculator = gptJobScoreCalculator;
     this.geminiJobScoreCalculator = geminiJobScoreCalculator;
     this.grokJobScoreCalculator = grokJobScoreCalculator;
     this.gptCompaniesClient = gptCompaniesClient;
     this.grokCompaniesClient = grokCompaniesClient;
+    this.geminiCompaniesClient = geminiCompaniesClient;
   }
 
   public JobScoreCalculatorClient getScoreCalculator(EngineType type) {
@@ -49,7 +53,7 @@ public class TestService {
     return (switch (type) {
       case GPT -> gptCompaniesClient;
       case GROK -> grokCompaniesClient;
-      case GEMINI -> throw new ValidationException("GEMINI engine type is not supported for company search");
+      case GEMINI -> geminiCompaniesClient;
       default -> throw new ValidationException("Invalid engine provider. Must be GPT or GROK");
     });
   }

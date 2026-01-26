@@ -256,7 +256,6 @@ public class TestController {
       AiModelEntity aiModel = modelsDBService.getModel(new EngineSelection(EngineType.GEMINI, model)).get();
       GenerationConfig generationConfig = GenerationConfig.builder(aiModel)
           .temperature(0.2)
-          .responseMimeType("application/json")
           .responseJsonSchema(templateRenderer.getSchema(AiSchemaType.GEMINI_JSON_SCHEMA_RESPONSE))
           //.thinkingConfig(new ThinkingConfig(1024))
           .maxOutputTokens(500)

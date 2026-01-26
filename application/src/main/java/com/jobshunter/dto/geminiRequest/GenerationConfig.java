@@ -69,6 +69,7 @@ public class GenerationConfig {
       if (isEnabledCapability(AiCapabilityType.RESPONSE_SCHEMA)) {
         try {
           responseJsonSchema = JSON_MAPPER.readValue(schema, Map.class);
+          responseMimeType = "application/json";
         } catch (Exception e) {
           throw new IllegalArgumentException("Invalid schema JSON", e);
         }
