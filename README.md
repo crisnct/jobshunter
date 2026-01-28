@@ -199,7 +199,7 @@ Once the application is running, explore the full REST API documentation via **S
 
 A huge shoutout to the amazing team behind JobsHunter!
 
-<table style="width: 100%; border-collapse: collapse;">
+<table style="width: 100%; border-collapse: collapse; table-layout: fixed;">
   <tr>
     <td valign="top" align="left" style="width: 33%;">
       <a href="https://github.com/crisnct">
