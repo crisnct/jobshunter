@@ -1,17 +1,17 @@
-<div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
-  <img src="application/src/main/resources/static/images/JobsHunterLogo.jpg" alt="JobsHunter Logo" style="width: 180px; height: 180px; border-radius: 20%; box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2); display: block;">
+<div align="center">
+  <img src="application/src/main/resources/static/images/JobsHunterLogo.jpg" alt="JobsHunter Logo" width="180" height="180" style="border-radius: 20%; box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);">
 
-  <h1 style="margin: 0;">🚀 JobsHunter</h1>
-  <p style="margin: 0; font-weight: 600;">Your AI-Powered Career Assistant</p>
+  <h1>🚀 JobsHunter</h1>
+  <p style="font-weight: 600;">Your AI-Powered Career Assistant</p>
 
-  <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 6px;">
-    <a href="https://openjdk.org/"><img src="https://img.shields.io/badge/Java_25-8A4B1F?style=flat-square&logo=openjdk&logoColor=white" alt="Java 25" style="height: 24px; display: block;"></a>
-    <a href="https://spring.io/projects/spring-boot"><img src="https://img.shields.io/badge/Spring_Boot_4.0.0-6DB33F?style=flat-square&logo=springboot&logoColor=white" alt="Spring Boot 4.0.0" style="height: 24px; display: block;"></a>
-    <a href="https://react.dev/"><img src="https://img.shields.io/badge/React_18-61DAFB?style=flat-square&logo=react&logoColor=black" alt="React 18" style="height: 24px; display: block;"></a>
-    <img src="https://img.shields.io/badge/Business_Source_License_1.1-blue?style=flat-square" alt="Business Source License 1.1" style="height: 24px; display: block;">
+  <div align="center">
+    <a href="https://openjdk.org/"><img src="https://img.shields.io/badge/Java_25-8A4B1F?style=flat-square&logo=openjdk&logoColor=white" alt="Java 25"></a>
+    <a href="https://spring.io/projects/spring-boot"><img src="https://img.shields.io/badge/Spring_Boot_4.0.0-6DB33F?style=flat-square&logo=springboot&logoColor=white" alt="Spring Boot 4.0.0"></a>
+    <a href="https://react.dev/"><img src="https://img.shields.io/badge/React_18-61DAFB?style=flat-square&logo=react&logoColor=black" alt="React 18"></a>
+    <img src="https://img.shields.io/badge/Business_Source_License_1.1-blue?style=flat-square" alt="Business Source License 1.1">
   </div>
 
-  <p style="text-align: center; margin: 6px 0 0 0;">
+  <p>
     <b>Search Smarter, Not Harder.</b><br>
     Automated job hunting tailored to your CV using state-of-the-art AI models.
   </p>
@@ -186,8 +186,8 @@ Once the application is running, explore the full REST API documentation via **S
 
 A huge shoutout to the amazing team behind JobsHunter!
 
-<div style="display: flex; flex-wrap: wrap; gap: 32px; justify-content: center; align-items: flex-start;">
-  <div style="text-align: center; max-width: 260px;">
+  <div style="display: flex; flex-wrap: wrap; gap: 32px; justify-content: center; align-items: flex-start; width: 100%;">
+  <div style="text-align: center; flex: 1 1 0;">
     <a href="https://github.com/crisnct">
       <img src="https://github.com/crisnct.png" alt="" style="width: 100px; border-radius: 50%; display: block; margin: 0 auto;"/>
       <h3 style="margin: 6px 0 6px 0;">Cristian Țone</h3>
@@ -210,7 +210,7 @@ A huge shoutout to the amazing team behind JobsHunter!
     </ul>
   </div>
 
-  <div style="text-align: center; max-width: 260px;">
+  <div style="text-align: center; flex: 1 1 0;">
     <a href="https://github.com/AyanoCode13">
       <img src="https://github.com/AyanoCode13.png" alt="" style="width: 100px; border-radius: 50%; display: block; margin: 0 auto;"/>
       <h3 style="margin: 6px 0 6px 0;">Andrei Lazăr</h3>
@@ -223,7 +223,7 @@ A huge shoutout to the amazing team behind JobsHunter!
     </ul>
   </div>
 
-  <div style="text-align: center; max-width: 260px;">
+  <div style="text-align: center; flex: 1 1 0;">
     <a href="https://github.com/ionel-vochin">
       <img src="https://github.com/ionel-vochin.png" alt="" style="width: 100px; border-radius: 50%; display: block; margin: 0 auto;"/>
       <h3 style="margin: 6px 0 6px 0;">Ionel Vochin</h3>
