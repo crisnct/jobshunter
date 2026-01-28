@@ -138,14 +138,14 @@ npm run dev
 
 ## 🧪 IntelliJ Run Configurations
 
-The project includes IntelliJ run configurations in the `.run/` folder. They are plain XML metadata that can be imported by copying the desired `.run.xml` file into `.idea/runConfigurations/` (or by opening it from the IDE and letting IntelliJ persist it in your workspace). Both configurations launch `com.jobshunter.JobshunterApplication` but switch the active Spring profile.
+Grab the provided `.run/JobsHunter-local.run.xml` or `.run/JobsHunter-prod.run.xml` and drop it into `.idea/runConfigurations/` if your IDE does not auto-import them. Both invoke `com.jobshunter.JobshunterApplication`; the only JVM argument that differs is `-Dspring.profiles.active`.
 
-| Configuration | Description |
+| Configuration | Notes |
 | :--- | :--- |
-| `JobsHunter-local` | Activates `-Dspring.profiles.active=local` so you get the local-development profile, faster iteration, and the environment variables described above. |
-| `JobsHunter-prod` | Activates `-Dspring.profiles.active=prod`, mirroring the production profile for QA and acceptance testing without the Docker overhead. |
+| `JobsHunter-local` | Uses `-Dspring.profiles.active=local`, which wires the fake AI clients (they generate dummy results so you can test without hitting paid APIs). |
+| `JobsHunter-prod` | Switches to `-Dspring.profiles.active=prod` for a production-like run with real provider integrations. |
 
-Use the one that matches the stage you are targeting; the only difference is the `-Dspring.profiles.active` JVM argument.
+Pick whichever configuration matches the environment you want to explore.
 
 ---
 
@@ -201,7 +201,7 @@ A huge shoutout to the amazing team behind JobsHunter!
 
 <table style="width: 100%; border-collapse: collapse;">
   <tr>
-    <td style="width: 33%; vertical-align: top; text-align: center;">
+    <td valign="top" align="center" style="width: 33%;">
       <a href="https://github.com/crisnct">
         <img src="https://github.com/crisnct.png" alt="" style="width: 100px; border-radius: 50%; display: block; margin: 0 auto;"/>
       </a>
@@ -223,7 +223,7 @@ A huge shoutout to the amazing team behind JobsHunter!
         <li>Started the project</li>
       </ul>
     </td>
-    <td style="width: 33%; vertical-align: top; text-align: center;">
+    <td valign="top" align="center" style="width: 33%;">
       <a href="https://github.com/AyanoCode13">
         <img src="https://github.com/AyanoCode13.png" alt="" style="width: 100px; border-radius: 50%; display: block; margin: 0 auto;"/>
       </a>
@@ -235,7 +235,7 @@ A huge shoutout to the amazing team behind JobsHunter!
         <li>Mailtrap Integration</li>
       </ul>
     </td>
-    <td style="width: 33%; vertical-align: top; text-align: center;">
+    <td valign="top" align="center" style="width: 33%;">
       <a href="https://github.com/ionel-vochin">
         <img src="https://github.com/ionel-vochin.png" alt="" style="width: 100px; border-radius: 50%; display: block; margin: 0 auto;"/>
       </a>
@@ -256,6 +256,6 @@ A huge shoutout to the amazing team behind JobsHunter!
 
 This project is licensed under the **Business Source License 1.1** until **1 Jan 2035** - see the [LICENSE-EN](LICENSE-EN) file for details.  
 
-<div style="text-align: center;">
-  <sub>Made with ❤️ by the JobsHunter Team</sub>
+<div align="left">
+  <sub>Product made with ❤️ by the JobsHunter Team</sub>
 </div>
