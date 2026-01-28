@@ -1,17 +1,17 @@
-<div style="text-align: center;">
+<div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+  <img src="application/src/main/resources/static/images/JobsHunterLogo.jpg" alt="JobsHunter Logo" style="width: 180px; height: 180px; border-radius: 20%; box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2); display: block;">
 
-  <img src="application/src/main/resources/static/images/JobsHunterLogo.jpg" alt="JobsHunter Logo" width="180" height="180" style="border-radius: 20%; box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);">
+  <h1 style="margin: 0;">🚀 JobsHunter</h1>
+  <p style="margin: 0; font-weight: 600;">Your AI-Powered Career Assistant</p>
 
-  # 🚀 JobsHunter
-  
-  **Your AI-Powered Career Assistant**
+  <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 6px;">
+    <a href="https://openjdk.org/"><img src="https://img.shields.io/badge/Java_25-8A4B1F?style=flat-square&logo=openjdk&logoColor=white" alt="Java 25" style="height: 24px; display: block;"></a>
+    <a href="https://spring.io/projects/spring-boot"><img src="https://img.shields.io/badge/Spring_Boot_4.0.0-6DB33F?style=flat-square&logo=springboot&logoColor=white" alt="Spring Boot 4.0.0" style="height: 24px; display: block;"></a>
+    <a href="https://react.dev/"><img src="https://img.shields.io/badge/React_18-61DAFB?style=flat-square&logo=react&logoColor=black" alt="React 18" style="height: 24px; display: block;"></a>
+    <img src="https://img.shields.io/badge/Business_Source_License_1.1-blue?style=flat-square" alt="Business Source License 1.1" style="height: 24px; display: block;">
+  </div>
 
-  [![Java](https://img.shields.io/badge/Java_25-8A4B1F?style=flat-square&logo=openjdk&logoColor=white)](https://openjdk.org/)
-  [![Spring Boot](https://img.shields.io/badge/Spring_Boot_4.0.0-6DB33F?style=flat-square&logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
-  [![React](https://img.shields.io/badge/React_18-61DAFB?style=flat-square&logo=react&logoColor=black)](https://react.dev/)
-  ![License](https://img.shields.io/badge/Business_Source_License_1.1-blue?style=flat-square)
-
-  <p style="text-align: center;">
+  <p style="text-align: center; margin: 6px 0 0 0;">
     <b>Search Smarter, Not Harder.</b><br>
     Automated job hunting tailored to your CV using state-of-the-art AI models.
   </p>
@@ -72,15 +72,11 @@ graph TD
 
 ## 🛠️ Tech Stack
 
-<div style="text-align: center;">
-
 | Category | Technologies |
 | :--- | :--- |
 | **Backend** | ![Java](https://img.shields.io/badge/Java-ED8B00?style=flat-square&logo=openjdk&logoColor=white) ![Spring Boot](https://img.shields.io/badge/Spring_Boot-6DB33F?style=flat-square&logo=springboot&logoColor=white) ![Liquibase](https://img.shields.io/badge/Liquibase-2962FF?style=flat-square&logo=liquibase&logoColor=white) ![Resilience4j](https://img.shields.io/badge/Resilience4j-3D5A80?style=flat-square&logo=shield&logoColor=white) ![Virtual Threads](https://img.shields.io/badge/Virtual_Threads-E63946?style=flat-square&logo=java&logoColor=white) ![Playwright](https://img.shields.io/badge/Playwright-2EAD33?style=flat-square&logo=playwright&logoColor=white) ![Jsoup](https://img.shields.io/badge/Jsoup-1E3A8A?style=flat-square&logo=html5&logoColor=white) ![Mustache](https://img.shields.io/badge/Mustache-000000?style=flat-square&logo=mustache&logoColor=white) |
 | **Frontend** | ![React](https://img.shields.io/badge/React-61DAFB?style=flat-square&logo=react&logoColor=black) ![Vite](https://img.shields.io/badge/Vite-646CFF?style=flat-square&logo=vite&logoColor=white) ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white) ![Lucide Icons](https://img.shields.io/badge/Lucide_Icons-F78C6C?style=flat-square&logo=feather&logoColor=white) |
 | **Infrastructure** | ![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat-square&logo=docker&logoColor=white) ![MySQL](https://img.shields.io/badge/MySQL-4479A1?style=flat-square&logo=mysql&logoColor=white) ![Maven](https://img.shields.io/badge/Maven-C71A36?style=flat-square&logo=apachemaven&logoColor=white) |
-
-</div>
 
 ---
 
@@ -146,35 +142,35 @@ Configure the application via environment variables or `application.yml`.
 
 ### 🔑 Essential Credentials
 
-| Variable | Description | Required? |
-| :--- | :--- | :---: |
-| `MYSQL_URL` | JDBC URL (e.g., `jdbc:mysql://localhost:3306/jobshunter`) | ✅ |
-| `MYSQL_USER` | Database username | ✅ |
-| `MYSQL_PASSWORD` | Database password | ✅ |
-| `JWT_SECRET` | Secret key for signing JWT tokens (min 32 chars) | ✅ |
+| Variable | Description |
+| :--- | :--- |
+| `MYSQL_URL` | JDBC URL (e.g., `jdbc:mysql://localhost:3306/jobshunter`) |
+| `MYSQL_USER` | Database username |
+| `MYSQL_PASSWORD` | Database password |
+| `JWT_SECRET` | Secret key for signing JWT tokens (min 32 chars) |
 
 ### 🤖 AI Providers (At least one recommended)
 
-| Variable | Description | Provider |
-| :--- | :--- | :--- |
-| `CHATGPT_API_KEY` | Key for OpenAI models (GPT-4o, etc.) | OpenAI |
-| `GEMINI_API_KEY` | Key for Google Gemini models | Google |
-| `GROK_API_KEY` | Key for xAI Grok models | xAI |
-| `SERP_API_KEY` | Key for Google Jobs Search | SerpApi |
+| Variable | Description |
+| :--- | :--- |
+| `CHATGPT_API_KEY` | Key for OpenAI models (GPT-4o, etc.) |
+| `GEMINI_API_KEY` | Key for Google Gemini models |
+| `GROK_API_KEY` | Key for xAI Grok models |
+| `SERP_API_KEY` | Key for Google Jobs Search |
 
 ### 📢 Notifications (Optional)
 
-| Variable | Description | Service |
-| :--- | :--- | :--- |
-| `TWILIO_ACCOUNT_SID` | Twilio Account SID | Twilio |
-| `TWILIO_AUTH_TOKEN` | Twilio Auth Token | Twilio |
-| `TWILIO_WHATSAPP_FROM`| Sender number (e.g., `whatsapp:+14155238886`) | Twilio |
-| `TWILIO_JOBS_NOTIFY_MESSAGE_SID` | Content Template SID for rich messages | Twilio |
-| `MAILTRAP_USERNAME` | SMTP Username | Mailtrap |
-| `MAILTRAP_PASSWORD` | SMTP Password | Mailtrap |
-| `MAILTRAP_API_KEY` | API Key for template sending | Mailtrap |
-| `MAILTRAP_TEMPLATE_NEWJOBS` | Template UUID for new jobs notification | Mailtrap |
-| `MAIL_FROM` | Sender email address (default: `no-reply@mailtrap.io`) | Mailtrap |
+| Variable | Description |
+| :--- | :--- |
+| `TWILIO_ACCOUNT_SID` | Twilio Account SID |
+| `TWILIO_AUTH_TOKEN` | Twilio Auth Token |
+| `TWILIO_WHATSAPP_FROM`| Sender number (e.g., `whatsapp:+14155238886`) |
+| `TWILIO_JOBS_NOTIFY_MESSAGE_SID` | Content Template SID for rich messages |
+| `MAILTRAP_USERNAME` | SMTP Username |
+| `MAILTRAP_PASSWORD` | SMTP Password |
+| `MAILTRAP_API_KEY` | API Key for template sending |
+| `MAILTRAP_TEMPLATE_NEWJOBS` | Template UUID for new jobs notification |
+| `MAIL_FROM` | Sender email address (default: `no-reply@mailtrap.io`) |
 
 ---
 
@@ -190,59 +186,56 @@ Once the application is running, explore the full REST API documentation via **S
 
 A huge shoutout to the amazing team behind JobsHunter!
 
-<table>
-  <tr>
-    <td style="text-align: center; vertical-align: top;">
-      <a href="https://github.com/crisnct">
-        <img src="https://github.com/crisnct.png" alt="" style="width: 100px; border-radius: 50%;"/>
-        <br />
-        <h3 style="margin-bottom: 0.5;">Cristian Țone</h3>
-      </a>
-      <b style="font-size: 1.0em; margin-top: 0.1;margin-bottom: 0.5;">🚀 Product Owner & Team Lead</b>
-      <ul style="text-align: left;">
-        <li>Strategy to search jobs by company</li>
-        <li>Strategy to search jobs by user prompts</li>
-        <li>Functionality to blame AI for the invalid URLs provided</li>
-        <li>Async Search with Virtual Threads & CompletableFuture</li>
-        <li>Rate Limiting & Circuit Breakers & Bulkhead for external services and JobsHunter endpoints</li>
-        <li>Retry policy for http requests to AI models</li>
-        <li>SERP & GPT & GEMINI & GROK Integrations</li>
-        <li>Mailtrap & Twilio & TinyURL & IpInfo Integrations</li>
-        <li>Docker & CI/CD</li>
-        <li>Annotation processor</li>
-        <li>Core Service Architecture</li>
-        <li>Authentication and authorization</li>
-        <li>Started the project </li>
-      </ul>
-    </td>
-    <td style="text-align: center; vertical-align: top;">
-      <a href="https://github.com/AyanoCode13">
-        <img src="https://github.com/AyanoCode13.png" alt="" style="width: 100px; border-radius: 50%;"/>
-        <br />
-        <h3 style="margin-bottom: 0.5;">Andrei Lazăr</h3>
-      </a>
-      <b style="font-size: 1em; margin-top: 0;margin-bottom: 0.5;">💻 Junior Backend Developer</b>
-      <ul style="text-align: left;">
-        <li>Scrapper for bestjobs.eu</li>
-        <li>Email Notification Service</li>
-        <li>Mailtrap Integration</li>
-      </ul>
-    </td>
-    <td style="text-align: center; vertical-align: top;">
-      <a href="https://github.com/ionel-vochin">
-        <img src="https://github.com/ionel-vochin.png" alt="" style="width: 100px; border-radius: 50%;"/>
-        <br />
-        <h3 style="margin-bottom: 0.5;">Ionel Vochin</h3>
-      </a>
-      <b style="font-size: 1em; margin-top: 0;margin-bottom: 0.5;">🛠️ Senior Backend Developer</b>
-      <ul style="text-align: left;">
-        <li>Refactoring & Optimization about email templates</li>        
-        <li>Liquibase Scripts Fixes</li>
-        <li>RestClient Migration</li>
-      </ul>
-    </td>
-  </tr>
-</table>
+<div style="display: flex; flex-wrap: wrap; gap: 32px; justify-content: center; align-items: flex-start;">
+  <div style="text-align: center; max-width: 260px;">
+    <a href="https://github.com/crisnct">
+      <img src="https://github.com/crisnct.png" alt="" style="width: 100px; border-radius: 50%; display: block; margin: 0 auto;"/>
+      <h3 style="margin: 6px 0 6px 0;">Cristian Țone</h3>
+    </a>
+    <b style="font-size: 1.0em; display: block; margin: 0 0 8px 0;">🚀 Product Owner & Team Lead</b>
+    <ul style="text-align: left; margin: 0; padding-left: 18px;">
+      <li>Strategy to search jobs by company</li>
+      <li>Strategy to search jobs by user prompts</li>
+      <li>Functionality to blame AI for the invalid URLs provided</li>
+      <li>Async Search with Virtual Threads & CompletableFuture</li>
+      <li>Rate Limiting & Circuit Breakers & Bulkhead for external services and JobsHunter endpoints</li>
+      <li>Retry policy for http requests to AI models</li>
+      <li>SERP & GPT & GEMINI & GROK Integrations</li>
+      <li>Mailtrap & Twilio & TinyURL & IpInfo Integrations</li>
+      <li>Docker & CI/CD</li>
+      <li>Annotation processor</li>
+      <li>Core Service Architecture</li>
+      <li>Authentication and authorization</li>
+      <li>Started the project</li>
+    </ul>
+  </div>
+
+  <div style="text-align: center; max-width: 260px;">
+    <a href="https://github.com/AyanoCode13">
+      <img src="https://github.com/AyanoCode13.png" alt="" style="width: 100px; border-radius: 50%; display: block; margin: 0 auto;"/>
+      <h3 style="margin: 6px 0 6px 0;">Andrei Lazăr</h3>
+    </a>
+    <b style="font-size: 1em; display: block; margin: 0 0 8px 0;">💻 Junior Backend Developer</b>
+    <ul style="text-align: left; margin: 0; padding-left: 18px;">
+      <li>Scrapper for bestjobs.eu</li>
+      <li>Email Notification Service</li>
+      <li>Mailtrap Integration</li>
+    </ul>
+  </div>
+
+  <div style="text-align: center; max-width: 260px;">
+    <a href="https://github.com/ionel-vochin">
+      <img src="https://github.com/ionel-vochin.png" alt="" style="width: 100px; border-radius: 50%; display: block; margin: 0 auto;"/>
+      <h3 style="margin: 6px 0 6px 0;">Ionel Vochin</h3>
+    </a>
+    <b style="font-size: 1em; display: block; margin: 0 0 8px 0;">🛠️ Senior Backend Developer</b>
+    <ul style="text-align: left; margin: 0; padding-left: 18px;">
+      <li>Refactoring & Optimization about email templates</li>
+      <li>Liquibase Scripts Fixes</li>
+      <li>RestClient Migration</li>
+    </ul>
+  </div>
+</div>
 
 ---
 
