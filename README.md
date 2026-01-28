@@ -177,7 +177,7 @@ Configure the application via environment variables or `application.yml`.
 
 Once the application is running, explore the full REST API documentation via **Swagger UI**:
 
-👉 **[http://localhost:8081/swagger-ui.html](http://localhost:8081/swagger-ui.html)**
+👉 **http://localhost:8081/swagger-ui.html**
 
 ---
 
@@ -187,13 +187,13 @@ A huge shoutout to the amazing team behind JobsHunter!
 
 <table>
   <tr>
-    <td align="center" style="vertical-align: top;">
+    <td align="center" valign="top">
       <a href="https://github.com/crisnct">
         <img src="https://github.com/crisnct.png" width="100px;" alt="" style="border-radius:50%"/>
         <br />
         <h3 style="margin-bottom: 0.5;">Cristian Țone</h3>
       </a>
-      <b style="margin-top: 0;">🚀 Product Owner & Team Lead</b>
+      <b style="font-size: 1.0em; margin-top: 0.1;">🚀 Product Owner & Team Lead</b>
       <ul align="left">
         <li>Async Search with Virtual Threads & CompletableFuture</li>
         <li>Rate Limiting & Circuit Breakers for external services and JobsHunter endpoints</li>
@@ -209,26 +209,26 @@ A huge shoutout to the amazing team behind JobsHunter!
         <li>Started the project </li>
       </ul>
     </td>
-    <td align="center" style="vertical-align: top;">
+    <td align="center" valign="top">
       <a href="https://github.com/AyanoCode13">
         <img src="https://github.com/AyanoCode13.png" width="100px;" alt="" style="border-radius:50%"/>
         <br />
         <h3 style="margin-bottom: 0.5;">Andrei Lazăr</h3>
       </a>
-      <b style="margin-top: 0;">💻 Junior Backend Developer</b>
+      <b style="font-size: 1em; margin-top: 0;">💻 Junior Backend Developer</b>
       <ul align="left">
         <li>Scrapper for bestjobs.eu</li>
         <li>Email Notification Service</li>
         <li>Mailtrap Integration</li>
       </ul>
     </td>
-    <td align="center" style="vertical-align: top;">
+    <td align="center" valign="top">
       <a href="https://github.com/ionel-vochin">
         <img src="https://github.com/ionel-vochin.png" width="100px;" alt="" style="border-radius:50%"/>
         <br />
         <h3 style="margin-bottom: 0.5;">Ionel Vochin</h3>
       </a>
-      <b style="margin-top: 0;">🛠️ Senior Backend Developer</b>
+      <b style="font-size: 1em; margin-top: 0;">🛠️ Senior Backend Developer</b>
       <ul align="left">
         <li>RestClient Migration</li>
         <li>Liquibase Scripts Fixes</li>
