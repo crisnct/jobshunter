@@ -1,5 +1,6 @@
 package com.jobshunter.dto.gptRequest;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -31,7 +32,9 @@ public record GptJobsPayload(
     @JsonProperty("previous_response_id")
     String previousResponseId,
     Text text,
-    List<Object> input
+    List<Object> input,
+    @JsonIgnore
+    AiModelEntity aiModel
 ) {
 
   public GptJobsPayload {
@@ -165,7 +168,8 @@ public record GptJobsPayload(
           store,
           previousResponseId,
           text,
-          input
+          input,
+          aiModel
       );
     }
 

@@ -1,5 +1,6 @@
 package com.jobshunter.dto.grokRequest;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -31,7 +32,9 @@ public record GrokJobsPayload(
     String instructions,
     Text text,
     Boolean store,
-    List<Object> input
+    List<Object> input,
+    @JsonIgnore
+    AiModelEntity aiModel
 ) {
 
   public GrokJobsPayload {
@@ -169,7 +172,8 @@ public record GrokJobsPayload(
           instructions,
           text,
           store,
-          input
+          input,
+          aiModel
       );
     }
   }

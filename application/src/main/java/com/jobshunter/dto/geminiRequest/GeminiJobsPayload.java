@@ -1,5 +1,6 @@
 package com.jobshunter.dto.geminiRequest;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -20,7 +21,9 @@ public record GeminiJobsPayload(
     GenerationConfig generationConfig,
     List<SafetySetting> safetySettings,
     List<Tool> tools,
-    ToolConfig toolConfig
+    ToolConfig toolConfig,
+    @JsonIgnore
+    AiModelEntity aiModel
 ) {
 
   public static GeminiJobsPayloadBuilder builder(AiModelEntity model) {
@@ -145,7 +148,8 @@ public record GeminiJobsPayload(
           generationConfig,
           safetySettings,
           tools,
-          toolConfig
+          toolConfig,
+          aiModel
       );
     }
 
