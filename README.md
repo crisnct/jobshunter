@@ -9,7 +9,7 @@
   [![Java](https://img.shields.io/badge/Java-25-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)](https://openjdk.org/)
   [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.0.0-6DB33F?style=for-the-badge&logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
   [![React](https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev/)
-  [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg?style=for-the-badge)](LICENSE)
+  ![License](https://img.shields.io/badge/License-Business%20Source%20License%201.1-blue.svg?style=for-the-badge)
 
   <p align="center">
     <b>Search Smarter, Not Harder.</b><br>
@@ -86,12 +86,12 @@ graph TD
 
 ## 🌐 External Services
 
-| Service | Badge |
-| :--- | :--- |
-| **AI Models** | ![OpenAI](https://img.shields.io/badge/OpenAI-412991?style=flat-square&logo=openai&logoColor=white) ![Google Gemini](https://img.shields.io/badge/Google_Gemini-8E75B2?style=flat-square&logo=google&logoColor=white) ![xAI Grok](https://img.shields.io/badge/xAI_Grok-000000?style=flat-square&logo=x&logoColor=white) |
-| **Job Search** | ![SERP API](https://img.shields.io/badge/SERP_API-FF6B6B?style=flat-square&logo=google&logoColor=white) |
-| **Communication** | ![Twilio](https://img.shields.io/badge/Twilio-F22F46?style=flat-square&logo=twilio&logoColor=white) ![Mailtrap](https://img.shields.io/badge/Mailtrap-F2B822?style=flat-square&logo=mailtrap&logoColor=white) |
-| **Utilities** | ![TinyURL](https://img.shields.io/badge/TinyURL-0B2C58?style=flat-square&logo=link&logoColor=white) ![IpInfo](https://img.shields.io/badge/IpInfo-246A73?style=flat-square&logo=googlemaps&logoColor=white) |
+| Service           | Badge |
+|:------------------| :--- |
+| **AI Models**     | ![OpenAI](https://img.shields.io/badge/OpenAI-412991?style=flat-square&logo=openai&logoColor=white) ![Google Gemini](https://img.shields.io/badge/Google_Gemini-8E75B2?style=flat-square&logo=google&logoColor=white) ![xAI Grok](https://img.shields.io/badge/xAI_Grok-000000?style=flat-square&logo=x&logoColor=white) |
+| **Job Search**    | ![SERP API](https://img.shields.io/badge/SERP_API-FF6B6B?style=flat-square&logo=google&logoColor=white) |
+| **Notifications** | ![Twilio](https://img.shields.io/badge/Twilio-F22F46?style=flat-square&logo=twilio&logoColor=white) ![Mailtrap](https://img.shields.io/badge/Mailtrap-F2B822?style=flat-square&logo=mailtrap&logoColor=white) |
+| **Utilities**     | ![TinyURL](https://img.shields.io/badge/TinyURL-0B2C58?style=flat-square&logo=link&logoColor=white) ![IpInfo](https://img.shields.io/badge/IpInfo-246A73?style=flat-square&logo=googlemaps&logoColor=white) |
 
 ---
 
@@ -170,6 +170,11 @@ Configure the application via environment variables or `application.yml`.
 | `TWILIO_AUTH_TOKEN` | Twilio Auth Token | Twilio |
 | `TWILIO_WHATSAPP_FROM`| Sender number (e.g., `whatsapp:+14155238886`) | Twilio |
 | `TWILIO_JOBS_NOTIFY_MESSAGE_SID` | Content Template SID for rich messages | Twilio |
+| `MAILTRAP_USERNAME` | SMTP Username | Mailtrap |
+| `MAILTRAP_PASSWORD` | SMTP Password | Mailtrap |
+| `MAILTRAP_API_KEY` | API Key for template sending | Mailtrap |
+| `MAILTRAP_TEMPLATE_NEWJOBS` | Template UUID for new jobs notification | Mailtrap |
+| `MAIL_FROM` | Sender email address (default: `no-reply@mailtrap.io`) | Mailtrap |
 
 ---
 
@@ -243,8 +248,7 @@ A huge shoutout to the amazing team behind JobsHunter!
 
 ## 📄 License
 
-This project is licensed under the **Business Source License 1.1** - see the [LICENSE](LICENSE) file for details.  
-*Free to use, free to modify, free to hunt jobs.*
+This project is licensed under the **Business Source License 1.1** until **1 Jan 2035** - see the [LICENSE-EN](LICENSE-EN) file for details.  
 
 <div align="center">
   <sub>Made with ❤️ by the JobsHunter Team</sub>
