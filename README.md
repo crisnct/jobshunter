@@ -209,10 +209,10 @@ A huge shoutout to the amazing team behind JobsHunter!
       <b style="font-size: 1.0em; display: block; margin: 0 0 8px 0; text-align: center;">🚀 Product Owner & Team Lead</b>
       <div style="text-align: left; width: 100%;">
         <ul style="margin: 0 0 4px 0; padding-left: 1em; list-style-position: inside; text-align: left;">
-        <li>Strategy to search jobs by company</li>
-        <li>Strategy to search jobs by user prompts</li>
-        <li>Functionality to blame AI for the invalid URLs provided</li>
-        <li>Async Search with Virtual Threads & CompletableFuture</li>
+        <li style="text-align: left;">Strategy to search jobs by company</li>
+        <li style="text-align: left;">Strategy to search jobs by user prompts</li>
+        <li style="text-align: left;">Functionality to blame AI for the invalid URLs provided</li>
+        <li style="text-align: left;">Async Search with Virtual Threads & CompletableFuture</li>
         <li>Rate Limiting & Circuit Breakers & Bulkhead for external services and JobsHunter endpoints</li>
         <li>Retry policy for http requests to AI models</li>
         <li>SERP & GPT & GEMINI & GROK Integrations</li>
