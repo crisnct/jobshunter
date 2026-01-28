@@ -25,16 +25,18 @@ public class TemplateRenderer {
 
   private final MustacheFactory factory = new DefaultMustacheFactory();
 
+  private static final String PROMPTS_PATH = "prompts/";
   private static final String USER_MESSAGE_PATH = "messageTemplates/";
+  private static final String SCHEMA_PATH = "schema/";
 
   @PostConstruct
   private void validate() {
     // Validate that all templates are present
     for (PromptType type : PromptType.values()) {
-      getString("prompts/", type.name(), ".mustache", false, Map.of());
+      getString(PROMPTS_PATH, type.name(), ".mustache", false, Map.of());
     }
     for (AiSchemaType type : AiSchemaType.values()) {
-      getString("schema/", type.name(), ".json", false, Map.of());
+      getString(SCHEMA_PATH, type.name(), ".json", false, Map.of());
     }
 
     for (UserMessageType type : UserMessageType.values()) {
@@ -48,11 +50,11 @@ public class TemplateRenderer {
   }
 
   public String getPrompt(PromptType type, Map<String, Object> vars) {
-    return getString("prompts/", type.name(), ".mustache", true, vars);
+    return getString(PROMPTS_PATH, type.name(), ".mustache", true, vars);
   }
 
   public String getSchema(AiSchemaType type, Map<String, Object> vars) {
-    return getString("schema/", type.name(), ".json", true, vars);
+    return getString(SCHEMA_PATH, type.name(), ".json", true, vars);
   }
 
   public String getSchema(AiSchemaType type) {
