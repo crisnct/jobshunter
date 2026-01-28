@@ -201,57 +201,51 @@ A huge shoutout to the amazing team behind JobsHunter!
 
 <table style="width: 100%; border-collapse: collapse; table-layout: fixed;">
   <tr>
-    <td width="33%" valign="top" align="center">
+    <td width="33%" valign="top" align="left">
       <a href="https://github.com/crisnct">
         <img src="https://github.com/crisnct.png" alt="" style="width: 100px; border-radius: 50%; display: block; margin: 0 auto;"/>
       </a>
-      <h3 style="margin: 6px 0 6px 0; text-align: center;">Cristian Țone</h3>
-      <b style="font-size: 1.0em; display: block; margin: 0 0 8px 0; text-align: center;">🚀 Product Owner & Team Lead</b>
-      <div style="text-align: left; width: 100%;">
-        <ul style="margin: 0 0 4px 0; padding-left: 1em; list-style-position: inside; text-align: left;">
-        <li style="text-align: left; margin:0;">Strategy to search jobs by company</li>
-        <li style="text-align: left; margin:0;">Strategy to search jobs by user prompts</li>
-        <li style="text-align: left; margin:0;">Functionality to blame AI for the invalid URLs provided</li>
-        <li style="text-align: left; margin:0;">Async Search with Virtual Threads & CompletableFuture</li>
-        <li style="text-align: left; margin:0;">Rate Limiting & Circuit Breakers & Bulkhead for external services and JobsHunter endpoints</li>
-        <li style="text-align: left; margin:0;">Retry policy for http requests to AI models</li>
-        <li style="text-align: left; margin:0;">SERP & GPT & GEMINI & GROK Integrations</li>
-        <li style="text-align: left; margin:0;">Mailtrap & Twilio & TinyURL & IpInfo Integrations</li>
-        <li style="text-align: left; margin:0;">Docker & CI/CD</li>
-        <li style="text-align: left; margin:0;">Annotation processor</li>
-        <li style="text-align: left; margin:0;">Core Service Architecture</li>
-        <li style="text-align: left; margin:0;">Authentication and authorization</li>
-        <li style="text-align: left; margin:0;">Started the project</li>
+      <h3 style="margin: 6px 0 6px 0;">Cristian Țone</h3>
+      <b style="font-size: 1.0em; display: block; margin: 0 0 8px 0;">🚀 Product Owner & Team Lead</b>
+      <ul style="text-align: left; margin: 0; padding-left: 12px; list-style-position: inside;">
+        <li>Strategy to search jobs by company</li>
+        <li>Strategy to search jobs by user prompts</li>
+        <li>Functionality to blame AI for the invalid URLs provided</li>
+        <li>Async Search with Virtual Threads & CompletableFuture</li>
+        <li>Rate Limiting & Circuit Breakers & Bulkhead for external services and JobsHunter endpoints</li>
+        <li>Retry policy for http requests to AI models</li>
+        <li>SERP & GPT & GEMINI & GROK Integrations</li>
+        <li>Mailtrap & Twilio & TinyURL & IpInfo Integrations</li>
+        <li>Docker & CI/CD</li>
+        <li>Annotation processor</li>
+        <li>Core Service Architecture</li>
+        <li>Authentication and authorization</li>
+        <li>Started the project</li>
       </ul>
-      </div>
     </td>
-    <td width="33%" valign="top" align="center">
+    <td width="33%" valign="top" align="left">
       <a href="https://github.com/AyanoCode13">
         <img src="https://github.com/AyanoCode13.png" alt="" style="width: 100px; border-radius: 50%; display: block; margin: 0 auto;"/>
       </a>
-      <h3 style="margin: 6px 0 6px 0; text-align: center;">Andrei Lazăr</h3>
-      <b style="font-size: 1em; display: block; margin: 0 0 8px 0; text-align: center;">💻 Junior Backend Developer</b>
-      <div style="text-align: left; width: 100%;">
-        <ul style="margin: 0 0 4px 0; padding-left: 1em; list-style-position: inside; text-align: left;">
-        <li style="text-align: left; margin:0;">Scrapper for bestjobs.eu</li>
-        <li style="text-align: left; margin:0;">Email Notification Service</li>
-        <li style="text-align: left; margin:0;">Mailtrap Integration</li>
+      <h3 style="margin: 6px 0 6px 0;">Andrei Lazăr</h3>
+      <b style="font-size: 1em; display: block; margin: 0 0 8px 0;">💻 Junior Backend Developer</b>
+      <ul style="text-align: left; margin: 0; padding-left: 12px; list-style-position: inside;">
+        <li>Scrapper for bestjobs.eu</li>
+        <li>Email Notification Service</li>
+        <li>Mailtrap Integration</li>
       </ul>
-      </div>
     </td>
-    <td width="33%" valign="top" align="center">
+    <td width="33%" valign="top" align="left">
       <a href="https://github.com/ionel-vochin">
         <img src="https://github.com/ionel-vochin.png" alt="" style="width: 100px; border-radius: 50%; display: block; margin: 0 auto;"/>
       </a>
-      <h3 style="margin: 6px 0 6px 0; text-align: center;">Ionel Vochin</h3>
-      <b style="font-size: 1em; display: block; margin: 0 0 8px 0; text-align: center;">🛠️ Senior Backend Developer</b>
-      <div style="text-align: left; width: 100%;">
-        <ul style="margin: 0 0 4px 0; padding-left: 1em; list-style-position: inside; text-align: left;">
-        <li style="text-align: left; margin:0;">Refactoring & Optimization about email templates</li>
-        <li style="text-align: left; margin:0;">Liquibase Scripts Fixes</li>
-        <li style="text-align: left; margin:0;">RestClient Migration</li>
+      <h3 style="margin: 6px 0 6px 0;">Ionel Vochin</h3>
+      <b style="font-size: 1em; display: block; margin: 0 0 8px 0;">🛠️ Senior Backend Developer</b>
+      <ul style="text-align: left; margin: 0; padding-left: 12px; list-style-position: inside;">
+        <li>Refactoring & Optimization about email templates</li>
+        <li>Liquibase Scripts Fixes</li>
+        <li>RestClient Migration</li>
       </ul>
-      </div>
     </td>
   </tr>
 </table>
