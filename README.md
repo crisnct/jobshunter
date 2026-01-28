@@ -207,7 +207,7 @@ A huge shoutout to the amazing team behind JobsHunter!
       </a>
       <h3 style="margin: 6px 0 6px 0;">Cristian Țone</h3>
       <b style="font-size: 1.0em; display: block; margin: 0 0 8px 0;">🚀 Product Owner & Team Lead</b>
-      <ul style="text-align: left; margin: 0 0 4px 8px; padding-left: 12px;">
+      <ul style="text-align: left; margin: 0 0 4px 0; padding-left: 1em; list-style-position: inside;">
         <li>Strategy to search jobs by company</li>
         <li>Strategy to search jobs by user prompts</li>
         <li>Functionality to blame AI for the invalid URLs provided</li>
@@ -229,7 +229,7 @@ A huge shoutout to the amazing team behind JobsHunter!
       </a>
       <h3 style="margin: 6px 0 6px 0;">Andrei Lazăr</h3>
       <b style="font-size: 1em; display: block; margin: 0 0 8px 0;">💻 Junior Backend Developer</b>
-      <ul style="text-align: left; margin: 0 0 4px 8px; padding-left: 12px;">
+      <ul style="text-align: left; margin: 0 0 4px 0; padding-left: 1em; list-style-position: inside;">
         <li>Scrapper for bestjobs.eu</li>
         <li>Email Notification Service</li>
         <li>Mailtrap Integration</li>
@@ -241,7 +241,7 @@ A huge shoutout to the amazing team behind JobsHunter!
       </a>
       <h3 style="margin: 6px 0 6px 0;">Ionel Vochin</h3>
       <b style="font-size: 1em; display: block; margin: 0 0 8px 0;">🛠️ Senior Backend Developer</b>
-      <ul style="text-align: left; margin: 0 0 4px 8px; padding-left: 12px;">
+      <ul style="text-align: left; margin: 0 0 4px 0; padding-left: 1em; list-style-position: inside;">
         <li>Refactoring & Optimization about email templates</li>
         <li>Liquibase Scripts Fixes</li>
         <li>RestClient Migration</li>
