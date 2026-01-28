@@ -1,7 +1,6 @@
 package com.jobshunter.service.application.hunting;
 
 import com.jobshunter.model.EngineType;
-import com.jobshunter.service.TemplateRenderer;
 import com.jobshunter.service.application.UserCvService;
 import com.jobshunter.service.clients.AiJobsClient;
 import java.util.concurrent.Executor;
@@ -11,16 +10,15 @@ import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
-public final class SerpJobHunting extends AiConversationJobHunting {
+public final class SerpJobHunting extends GenericJobHunting {
 
   public SerpJobHunting(
       @Qualifier("JobsClientSerp") AiJobsClient serpClient,
       @Qualifier("serpExecutor") Executor serpExecutor,
-      TemplateRenderer templateRenderer,
       UserCvService userCvService,
-      AiConversationStateMachine conversationStateMachine
+      CountryIsoCode countryIsoCode
   ) {
-    super(serpExecutor, serpClient, userCvService, templateRenderer, conversationStateMachine, null);
+    super(serpExecutor, serpClient, countryIsoCode, userCvService);
   }
 
   @Override

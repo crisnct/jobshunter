@@ -28,6 +28,7 @@ import com.jobshunter.service.application.UrlExtractor;
 import com.jobshunter.service.clients.AiJobsClient;
 import com.jobshunter.service.clients.AiJobsCompaniesClient;
 import com.jobshunter.service.clients.DeleteConvAiClient;
+import com.jobshunter.service.clients.TokenEstimationGuard;
 import com.jobshunter.service.retry.RetryPolicies;
 import com.jobshunter.service.retry.RetryTemplate;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
@@ -75,6 +76,8 @@ public non-sealed class GeminiV1JobSearchImpl implements AiJobsClient, AiJobsCom
 
   private final JsonMapper mapper;
 
+  private final TokenEstimationGuard tokenEstimationGuard;
+
   @Override
   @CircuitBreaker(name = "geminiCircuitBreaker", fallbackMethod = "fallbackSearch")
   @Bulkhead(name = "geminiBulkhead")
@@ -106,6 +109,8 @@ public non-sealed class GeminiV1JobSearchImpl implements AiJobsClient, AiJobsCom
         .addUserContent(request.getUserPrompt(), List.of(resume))
         .build();
 
+    tokenEstimationGuard.assertFitsContext(payload);
+
     GeminiGenerateContentResponse response = restClient.post()
         .uri(URI.create(String.format(GEMINI_URI, model.getModel(), properties.getGemini().getApiKey())))
         .contentType(MediaType.APPLICATION_JSON)
@@ -122,7 +127,7 @@ public non-sealed class GeminiV1JobSearchImpl implements AiJobsClient, AiJobsCom
   }
 
   @SuppressWarnings("unused")
-  private AiClientResponse fallbackSearch(AiJobsClient request, Throwable t) {
+  private AiClientResponse fallbackSearch(AIJobSearchRequest request, Throwable t) {
     log.error("{} call short-circuited/bulkheaded: {}", getClass().getSimpleName(), t.getMessage());
     return new AiClientResponse();
   }
@@ -160,6 +165,8 @@ public non-sealed class GeminiV1JobSearchImpl implements AiJobsClient, AiJobsCom
                 "domain", user.getJobDomain()
             )))
         .build();
+
+    tokenEstimationGuard.assertFitsContext(payload);
 
     GeminiGenerateContentResponse response = restClient.post()
         .uri(URI.create(String.format(GEMINI_URI, model.getModel(), properties.getGemini().getApiKey())))
@@ -222,6 +229,7 @@ public non-sealed class GeminiV1JobSearchImpl implements AiJobsClient, AiJobsCom
 
     GenerationConfig generationConfig = GenerationConfig.builder(model)
         .maxOutputTokens(1200)
+        .temperature(0.05)
         .thinkingConfig(new ThinkingConfig(512))//how reasoning it is
         .build();
 
@@ -237,6 +245,8 @@ public non-sealed class GeminiV1JobSearchImpl implements AiJobsClient, AiJobsCom
             )
         ))
         .build();
+
+    tokenEstimationGuard.assertFitsContext(payload);
 
     GeminiGenerateContentResponse response = restClient.post()
         .uri(URI.create(String.format(GEMINI_URI, model.getModel(), properties.getGemini().getApiKey())))
@@ -264,7 +274,7 @@ public non-sealed class GeminiV1JobSearchImpl implements AiJobsClient, AiJobsCom
         .retrieve()
         .onStatus(
             HttpStatusCode::isError,
-            (_, response) -> {
+            (request, response) -> {
               throw new BusinessException(HttpStatus.NOT_FOUND, "Delete failed: " + response.getStatusCode() + " for id " + id);
             }
         )

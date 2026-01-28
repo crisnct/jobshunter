@@ -37,6 +37,14 @@ public record GeminiJobsPayload(
 
     private AiModelEntity aiModel;
 
+    private GenerationConfig generationConfig;
+
+    private List<SafetySetting> safetySettings;
+
+    private List<Tool> tools;
+
+    private ToolConfig toolConfig;
+
     private GeminiJobsPayloadBuilder(AiModelEntity model) {
       this.aiModel = model;
     }
@@ -53,6 +61,21 @@ public record GeminiJobsPayload(
       if (isEnabledCapability(AiCapabilityType.WEB_SEARCH)) {
         this.tools = tools;
       }
+      return this;
+    }
+
+    public GeminiJobsPayloadBuilder generationConfig(GenerationConfig generationConfig) {
+      this.generationConfig = generationConfig;
+      return this;
+    }
+
+    public GeminiJobsPayloadBuilder safetySettings(List<SafetySetting> safetySettings) {
+      this.safetySettings = safetySettings;
+      return this;
+    }
+
+    public GeminiJobsPayloadBuilder toolConfig(ToolConfig toolConfig) {
+      this.toolConfig = toolConfig;
       return this;
     }
 
@@ -113,6 +136,17 @@ public record GeminiJobsPayload(
         this.contents.add(new Content("model", parts));
       }
       return this;
+    }
+
+    public GeminiJobsPayload build() {
+      return new GeminiJobsPayload(
+          contents,
+          systemInstruction,
+          generationConfig,
+          safetySettings,
+          tools,
+          toolConfig
+      );
     }
 
   }

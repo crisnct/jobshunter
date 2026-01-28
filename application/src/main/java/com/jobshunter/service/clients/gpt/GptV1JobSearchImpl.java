@@ -28,6 +28,7 @@ import com.jobshunter.service.application.UrlExtractor;
 import com.jobshunter.service.clients.AiJobsClient;
 import com.jobshunter.service.clients.AiJobsCompaniesClient;
 import com.jobshunter.service.clients.DeleteConvAiClient;
+import com.jobshunter.service.clients.TokenEstimationGuard;
 import com.jobshunter.service.retry.RetryPolicies;
 import com.jobshunter.service.retry.RetryTemplate;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
@@ -70,6 +71,8 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient, AiJobsCompan
 
   private final TemplateRenderer templateRenderer;
 
+  private final TokenEstimationGuard tokenEstimationGuard;
+
   @Override
   @CircuitBreaker(name = "gptCircuitBreaker", fallbackMethod = "fallbackSearch")
   @RateLimiter(name = "gptLimiter")
@@ -102,6 +105,8 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient, AiJobsCompan
         .addUserPrompt(request.getUserPrompt(), request.getFileId())
         .setResponseSchema(templateRenderer.getSchema(AiSchemaType.GPT_JSON_SCHEMA_RESPONSE))
         .build();
+
+    tokenEstimationGuard.assertFitsContext(payload);
 
     GptResponse response = restClient.post()
         .uri(DEFAULT_URI)
@@ -158,6 +163,8 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient, AiJobsCompan
         .setResponseSchema(templateRenderer.getSchema(AiSchemaType.GPT_JSON_COMPANY_SCHEMA_RESPONSE))
         .build();
 
+    tokenEstimationGuard.assertFitsContext(payload);
+
     GptResponse response = restClient.post()
         .uri(DEFAULT_URI)
         .headers((h) -> h.setBearerAuth(properties.getGpt().getApiKey()))
@@ -198,6 +205,8 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient, AiJobsCompan
         ))
         .setResponseSchema(templateRenderer.getSchema(AiSchemaType.GPT_JSON_SCHEMA_RESPONSE))
         .build();
+
+    tokenEstimationGuard.assertFitsContext(payload);
 
     GptResponse response = restClient.post()
         .uri(DEFAULT_URI)

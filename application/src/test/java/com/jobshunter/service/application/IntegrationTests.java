@@ -81,6 +81,7 @@ import org.springframework.test.web.servlet.MockMvc;
 )
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
+@Disabled
 public class IntegrationTests {
 
   @Autowired

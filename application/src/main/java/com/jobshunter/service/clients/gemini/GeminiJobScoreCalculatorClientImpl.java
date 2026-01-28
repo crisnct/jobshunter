@@ -16,6 +16,7 @@ import com.jobshunter.model.PromptType;
 import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.TemplateRenderer;
 import com.jobshunter.service.clients.JobScoreCalculatorClient;
+import com.jobshunter.service.clients.TokenEstimationGuard;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
@@ -48,6 +49,8 @@ public non-sealed class GeminiJobScoreCalculatorClientImpl implements JobScoreCa
 
   private final TemplateRenderer templateRenderer;
 
+  private final TokenEstimationGuard tokenEstimationGuard;
+
   @Override
   @RateLimiter(name = "geminiLimiter")
   @Bulkhead(name = "geminiBulkhead")
@@ -70,6 +73,8 @@ public non-sealed class GeminiJobScoreCalculatorClientImpl implements JobScoreCa
               List.of(resume))
           .generationConfig(generationConfig)
           .build();
+
+      tokenEstimationGuard.assertFitsContext(payload);
 
       GeminiGenerateContentResponse response = restClient.post()
           .uri(URI.create(String.format(GENERATE_CONTENT_URI, request.getModel().getModel(), properties.getGemini().getApiKey())))

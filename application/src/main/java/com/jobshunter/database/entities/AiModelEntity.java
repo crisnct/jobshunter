@@ -40,8 +40,12 @@ public class AiModelEntity {
   @Column(name = "model", nullable = false, length = 255)
   private String model;
 
+  //context_window = input_tokens + output_tokens + tool_tokens
   @Column(name = "context_window")
   private Integer contextWindow;
+
+  @Column(name = "tokens_per_char")
+  private Float tokensPerChar;
 
   @Column(name = "enabled", nullable = false)
   private boolean enabled = true;

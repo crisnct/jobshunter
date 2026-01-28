@@ -1,10 +1,12 @@
 package com.jobshunter.service.testdata;
 
 import com.jobshunter.dto.AIJobSearchRequest;
+import com.jobshunter.dto.CompanyDto;
 import com.jobshunter.model.AiClientResponse;
 import com.jobshunter.model.Job;
 import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.clients.AiJobsClient;
+import com.jobshunter.service.clients.AiJobsCompaniesClient;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
@@ -17,7 +19,7 @@ import org.springframework.stereotype.Component;
 @Component("JobsClientGPT")
 @PackageExpected("com.jobshunter.service.clients.gpt")
 @ConditionalOnProperty(name = "gpt.enabled", havingValue = "false")
-public non-sealed class FakeGptClient implements AiJobsClient {
+public non-sealed class FakeGptClient implements AiJobsClient, AiJobsCompaniesClient {
 
   @Override
   @CircuitBreaker(name = "gptCircuitBreaker", fallbackMethod = "fallbackSearch")
@@ -51,4 +53,13 @@ public non-sealed class FakeGptClient implements AiJobsClient {
     return new AiClientResponse();
   }
 
+  @Override
+  public List<CompanyDto> searchCompanies(AIJobSearchRequest request) {
+    return List.of();
+  }
+
+  @Override
+  public AiClientResponse searchJobsFromCompanies(AIJobSearchRequest request) {
+    return null;
+  }
 }

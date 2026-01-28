@@ -42,6 +42,7 @@ import com.jobshunter.service.application.processors.JobFetchProcessor;
 import com.jobshunter.service.application.processors.JobsStateMachine;
 import com.jobshunter.service.clients.AiJobsCompaniesClient;
 import com.jobshunter.service.clients.JobScoreCalculatorClient;
+import com.jobshunter.service.clients.TokenEstimationGuard;
 import com.jobshunter.service.clients.gemini.GeminiV1JobSearchImpl;
 import com.jobshunter.service.clients.gpt.GptV1JobSearchImpl;
 import com.jobshunter.service.clients.grok.GrokV1JobSearchImpl;
@@ -170,6 +171,7 @@ public class TestController {
   private final JobsStateMachine jobsStateMachine;
   private final JobBodyExtractorProcessor jobBodyExtractorProcessor;
   private final TestService testService;
+  private final TokenEstimationGuard tokenEstimationGuard;
 
   @PostMapping(value = "/email/send", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ResponseEntity<?> send(
@@ -220,6 +222,7 @@ public class TestController {
           .addUserPrompt("Search java developers jobs for me", "file-GkWtEj4ffrWUxakq22yBLf")
           //.addDeveloperPrompt("Act like a stressed developer")
           .build();
+      tokenEstimationGuard.assertFitsContext(payload);
       boolean supported = false;
       try {
         ResponseEntity<GptResponse> response = restClient.post()
@@ -282,6 +285,7 @@ public class TestController {
           .addUserPrompt("Search java developers jobs for me", "file_6cd02667-69ec-478b-b36e-343cc5cca014")
           //.addSystemPrompt("Act as search assistant")
           .build();
+      tokenEstimationGuard.assertFitsContext(payload);
       boolean supported = false;
       try {
         ResponseEntity<GrokResponse> response = restClient.post()
@@ -347,6 +351,7 @@ public class TestController {
           .generationConfig(generationConfig)
           //.tools(List.of(new GoogleSearchTool()))
           .build();
+      tokenEstimationGuard.assertFitsContext(payload);
       boolean supported = false;
       try {
         ResponseEntity<GeminiGenerateContentResponse> response = restClient.post()

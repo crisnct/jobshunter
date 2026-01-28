@@ -7,11 +7,15 @@ import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.clients.gemini.GeminiV1JobSearchImpl;
 import com.jobshunter.service.clients.gpt.GptV1JobSearchImpl;
 import com.jobshunter.service.clients.grok.GrokV1JobSearchImpl;
+import com.jobshunter.service.testdata.FakeGeminiClient;
+import com.jobshunter.service.testdata.FakeGptClient;
+import com.jobshunter.service.testdata.FakeGrokClient;
 import jakarta.validation.constraints.NotNull;
 import java.util.List;
 
 @PackageExpected("com.jobshunter.service.application")
-public sealed interface AiJobsCompaniesClient permits GeminiV1JobSearchImpl, GptV1JobSearchImpl, GrokV1JobSearchImpl {
+public sealed interface AiJobsCompaniesClient permits GeminiV1JobSearchImpl, GptV1JobSearchImpl, GrokV1JobSearchImpl, FakeGeminiClient, FakeGptClient,
+    FakeGrokClient {
 
   @NotNull
   List<CompanyDto> searchCompanies(AIJobSearchRequest request);

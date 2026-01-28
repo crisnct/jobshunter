@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+  xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="
+        http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.23.xsd">
+
+  <changeSet id="2026-01-11-set-ai-model-context-window" author="assistant">
+    <preConditions onFail="MARK_RAN">
+      <tableExists tableName="ai_models"/>
+    </preConditions>
+    <comment>Update context_window values for GPT, GEMINI, and GROK models based on provided matrix</comment>
+
+    <sql>
+      UPDATE ai_models SET context_window = 128000 WHERE provider = 'GPT' AND model = 'chatgpt-4o-latest';
+      UPDATE ai_models SET context_window = 1048576 WHERE provider = 'GEMINI' AND model = 'gemini-2.0-flash';
+      UPDATE ai_models SET context_window = 1048576 WHERE provider = 'GEMINI' AND model = 'gemini-2.0-flash-001';
+      UPDATE ai_models SET context_window = 1048576 WHERE provider = 'GEMINI' AND model = 'gemini-2.0-flash-exp';
+      UPDATE ai_models SET context_window = 1048576 WHERE provider = 'GEMINI' AND model = 'gemini-2.0-flash-lite';
+      UPDATE ai_models SET context_window = 1048576 WHERE provider = 'GEMINI' AND model = 'gemini-2.0-flash-lite-001';
+      UPDATE ai_models SET context_window = 1048576 WHERE provider = 'GEMINI' AND model = 'gemini-2.5-flash';
+      UPDATE ai_models SET context_window = 1048576 WHERE provider = 'GEMINI' AND model = 'gemini-2.5-flash-lite';
+      UPDATE ai_models SET context_window = 2097152 WHERE provider = 'GEMINI' AND model = 'gemini-2.5-pro';
+      UPDATE ai_models SET context_window = 16385 WHERE provider = 'GPT' AND model = 'gpt-3.5-turbo';
+      UPDATE ai_models SET context_window = 16385 WHERE provider = 'GPT' AND model = 'gpt-3.5-turbo-0125';
+      UPDATE ai_models SET context_window = 16385 WHERE provider = 'GPT' AND model = 'gpt-3.5-turbo-1106';
+      UPDATE ai_models SET context_window = 8192 WHERE provider = 'GPT' AND model = 'gpt-4';
+      UPDATE ai_models SET context_window = 128000 WHERE provider = 'GPT' AND model = 'gpt-4-0125-preview';
+      UPDATE ai_models SET context_window = 8192 WHERE provider = 'GPT' AND model = 'gpt-4-0613';
+      UPDATE ai_models SET context_window = 128000 WHERE provider = 'GPT' AND model = 'gpt-4-1106-preview';
+      UPDATE ai_models SET context_window = 128000 WHERE provider = 'GPT' AND model = 'gpt-4-turbo';
+      UPDATE ai_models SET context_window = 128000 WHERE provider = 'GPT' AND model = 'gpt-4-turbo-2024-04-09';
+      UPDATE ai_models SET context_window = 128000 WHERE provider = 'GPT' AND model = 'gpt-4-turbo-preview';
+      UPDATE ai_models SET context_window = 1048576 WHERE provider = 'GPT' AND model = 'gpt-4.1';
+      UPDATE ai_models SET context_window = 1048576 WHERE provider = 'GPT' AND model = 'gpt-4.1-2025-04-14';
+      UPDATE ai_models SET context_window = 1048576 WHERE provider = 'GPT' AND model = 'gpt-4.1-mini';
+      UPDATE ai_models SET context_window = 1048576 WHERE provider = 'GPT' AND model = 'gpt-4.1-mini-2025-04-14';
+      UPDATE ai_models SET context_window = 1048576 WHERE provider = 'GPT' AND model = 'gpt-4.1-nano';
+      UPDATE ai_models SET context_window = 1048576 WHERE provider = 'GPT' AND model = 'gpt-4.1-nano-2025-04-14';
+      UPDATE ai_models SET context_window = 128000 WHERE provider = 'GPT' AND model = 'gpt-4o';
+      UPDATE ai_models SET context_window = 128000 WHERE provider = 'GPT' AND model = 'gpt-4o-2024-05-13';
+      UPDATE ai_models SET context_window = 128000 WHERE provider = 'GPT' AND model = 'gpt-4o-2024-08-06';
+      UPDATE ai_models SET context_window = 128000 WHERE provider = 'GPT' AND model = 'gpt-4o-2024-11-20';
+      UPDATE ai_models SET context_window = 128000 WHERE provider = 'GPT' AND model = 'gpt-4o-mini';
+      UPDATE ai_models SET context_window = 128000 WHERE provider = 'GPT' AND model = 'gpt-4o-mini-2024-07-18';
+      UPDATE ai_models SET context_window = 400000 WHERE provider = 'GPT' AND model = 'gpt-5';
+      UPDATE ai_models SET context_window = 400000 WHERE provider = 'GPT' AND model = 'gpt-5-2025-08-07';
+      UPDATE ai_models SET context_window = 128000 WHERE provider = 'GPT' AND model = 'gpt-5-chat-latest';
+      UPDATE ai_models SET context_window = 400000 WHERE provider = 'GPT' AND model = 'gpt-5-codex';
+      UPDATE ai_models SET context_window = 400000 WHERE provider = 'GPT' AND model = 'gpt-5-mini';
+      UPDATE ai_models SET context_window = 400000 WHERE provider = 'GPT' AND model = 'gpt-5-mini-2025-08-07';
+      UPDATE ai_models SET context_window = 400000 WHERE provider = 'GPT' AND model = 'gpt-5-nano';
+      UPDATE ai_models SET context_window = 400000 WHERE provider = 'GPT' AND model = 'gpt-5-nano-2025-08-07';
+      UPDATE ai_models SET context_window = 400000 WHERE provider = 'GPT' AND model = 'gpt-5-pro';
+      UPDATE ai_models SET context_window = 400000 WHERE provider = 'GPT' AND model = 'gpt-5-pro-2025-10-06';
+      UPDATE ai_models SET context_window = 400000 WHERE provider = 'GPT' AND model = 'gpt-5.1';
+      UPDATE ai_models SET context_window = 400000 WHERE provider = 'GPT' AND model = 'gpt-5.1-2025-11-13';
+      UPDATE ai_models SET context_window = 128000 WHERE provider = 'GPT' AND model = 'gpt-5.1-chat-latest';
+      UPDATE ai_models SET context_window = 400000 WHERE provider = 'GPT' AND model = 'gpt-5.1-codex';
+      UPDATE ai_models SET context_window = 400000 WHERE provider = 'GPT' AND model = 'gpt-5.1-codex-max';
+      UPDATE ai_models SET context_window = 400000 WHERE provider = 'GPT' AND model = 'gpt-5.1-codex-mini';
+      UPDATE ai_models SET context_window = 400000 WHERE provider = 'GPT' AND model = 'gpt-5.2';
+      UPDATE ai_models SET context_window = 400000 WHERE provider = 'GPT' AND model = 'gpt-5.2-2025-12-11';
+      UPDATE ai_models SET context_window = 128000 WHERE provider = 'GPT' AND model = 'gpt-5.2-chat-latest';
+      UPDATE ai_models SET context_window = 400000 WHERE provider = 'GPT' AND model = 'gpt-5.2-pro';
+      UPDATE ai_models SET context_window = 400000 WHERE provider = 'GPT' AND model = 'gpt-5.2-pro-2025-12-11';
+      UPDATE ai_models SET context_window = 131072 WHERE provider = 'GROK' AND model = 'grok-2-1212';
+      UPDATE ai_models SET context_window = 131072 WHERE provider = 'GROK' AND model = 'grok-2-image-1212';
+      UPDATE ai_models SET context_window = 32768 WHERE provider = 'GROK' AND model = 'grok-2-vision-1212';
+      UPDATE ai_models SET context_window = 131072 WHERE provider = 'GROK' AND model = 'grok-3';
+      UPDATE ai_models SET context_window = 131072 WHERE provider = 'GROK' AND model = 'grok-3-mini';
+      UPDATE ai_models SET context_window = 256000 WHERE provider = 'GROK' AND model = 'grok-4-0709';
+      UPDATE ai_models SET context_window = 2000000 WHERE provider = 'GROK' AND model = 'grok-4-1-fast-non-reasoning';
+      UPDATE ai_models SET context_window = 2000000 WHERE provider = 'GROK' AND model = 'grok-4-1-fast-reasoning';
+      UPDATE ai_models SET context_window = 2000000 WHERE provider = 'GROK' AND model = 'grok-4-fast-non-reasoning';
+      UPDATE ai_models SET context_window = 2000000 WHERE provider = 'GROK' AND model = 'grok-4-fast-reasoning';
+      UPDATE ai_models SET context_window = 256000 WHERE provider = 'GROK' AND model = 'grok-code-fast-1';
+      UPDATE ai_models SET context_window = 200000 WHERE provider = 'GPT' AND model = 'o1';
+      UPDATE ai_models SET context_window = 200000 WHERE provider = 'GPT' AND model = 'o1-2024-12-17';
+      UPDATE ai_models SET context_window = 200000 WHERE provider = 'GPT' AND model = 'o1-pro';
+      UPDATE ai_models SET context_window = 200000 WHERE provider = 'GPT' AND model = 'o1-pro-2025-03-19';
+      UPDATE ai_models SET context_window = 200000 WHERE provider = 'GPT' AND model = 'o3';
+      UPDATE ai_models SET context_window = 200000 WHERE provider = 'GPT' AND model = 'o3-2025-04-16';
+      UPDATE ai_models SET context_window = 200000 WHERE provider = 'GPT' AND model = 'o3-mini';
+      UPDATE ai_models SET context_window = 200000 WHERE provider = 'GPT' AND model = 'o3-mini-2025-01-31';
+      UPDATE ai_models SET context_window = 200000 WHERE provider = 'GPT' AND model = 'o4-mini';
+      UPDATE ai_models SET context_window = 200000 WHERE provider = 'GPT' AND model = 'o4-mini-2025-04-16';
+    </sql>
+  </changeSet>
+
+  <changeSet id="2026-01-11-add-tokers-per-char" author="assistant">
+    <preConditions onFail="MARK_RAN">
+      <tableExists tableName="ai_models"/>
+      <not>
+        <columnExists tableName="ai_models" columnName="tokens_per_char"/>
+      </not>
+    </preConditions>
+    <comment>Add tokens_per_char column to ai_models</comment>
+    <addColumn tableName="ai_models">
+      <column name="tokens_per_char" type="float"/>
+    </addColumn>
+  </changeSet>
+
+  <changeSet id="2026-01-11-set-ai-model-tokens-per-char" author="assistant">
+    <preConditions onFail="MARK_RAN">
+      <tableExists tableName="ai_models"/>
+      <columnExists tableName="ai_models" columnName="tokens_per_char"/>
+    </preConditions>
+    <comment>Populate tokens_per_char values for GPT, GEMINI, and GROK models based on provided matrix</comment>
+
+    <sql>
+      UPDATE ai_models SET tokens_per_char = 0.25 WHERE provider = 'GPT' AND model = 'chatgpt-4o-latest';
+      UPDATE ai_models SET tokens_per_char = 0.3 WHERE provider = 'GEMINI' AND model = 'gemini-2.0-flash';
+      UPDATE ai_models SET tokens_per_char = 0.3 WHERE provider = 'GEMINI' AND model = 'gemini-2.0-flash-001';
+      UPDATE ai_models SET tokens_per_char = 0.3 WHERE provider = 'GEMINI' AND model = 'gemini-2.0-flash-exp';
+      UPDATE ai_models SET tokens_per_char = 0.3 WHERE provider = 'GEMINI' AND model = 'gemini-2.0-flash-lite';
+      UPDATE ai_models SET tokens_per_char = 0.3 WHERE provider = 'GEMINI' AND model = 'gemini-2.0-flash-lite-001';
+      UPDATE ai_models SET tokens_per_char = 0.28 WHERE provider = 'GEMINI' AND model = 'gemini-2.5-flash';
+      UPDATE ai_models SET tokens_per_char = 0.28 WHERE provider = 'GEMINI' AND model = 'gemini-2.5-flash-lite';
+      UPDATE ai_models SET tokens_per_char = 0.27 WHERE provider = 'GEMINI' AND model = 'gemini-2.5-pro';
+      UPDATE ai_models SET tokens_per_char = 0.25 WHERE provider = 'GPT' AND model = 'gpt-3.5-turbo';
+      UPDATE ai_models SET tokens_per_char = 0.25 WHERE provider = 'GPT' AND model = 'gpt-3.5-turbo-0125';
+      UPDATE ai_models SET tokens_per_char = 0.25 WHERE provider = 'GPT' AND model = 'gpt-3.5-turbo-1106';
+      UPDATE ai_models SET tokens_per_char = 0.25 WHERE provider = 'GPT' AND model = 'gpt-4';
+      UPDATE ai_models SET tokens_per_char = 0.25 WHERE provider = 'GPT' AND model = 'gpt-4-0125-preview';
+      UPDATE ai_models SET tokens_per_char = 0.25 WHERE provider = 'GPT' AND model = 'gpt-4-0613';
+      UPDATE ai_models SET tokens_per_char = 0.25 WHERE provider = 'GPT' AND model = 'gpt-4-1106-preview';
+      UPDATE ai_models SET tokens_per_char = 0.25 WHERE provider = 'GPT' AND model = 'gpt-4-turbo';
+      UPDATE ai_models SET tokens_per_char = 0.25 WHERE provider = 'GPT' AND model = 'gpt-4-turbo-2024-04-09';
+      UPDATE ai_models SET tokens_per_char = 0.25 WHERE provider = 'GPT' AND model = 'gpt-4-turbo-preview';
+      UPDATE ai_models SET tokens_per_char = 0.24 WHERE provider = 'GPT' AND model = 'gpt-4.1';
+      UPDATE ai_models SET tokens_per_char = 0.24 WHERE provider = 'GPT' AND model = 'gpt-4.1-2025-04-14';
+      UPDATE ai_models SET tokens_per_char = 0.24 WHERE provider = 'GPT' AND model = 'gpt-4.1-mini';
+      UPDATE ai_models SET tokens_per_char = 0.24 WHERE provider = 'GPT' AND model = 'gpt-4.1-mini-2025-04-14';
+      UPDATE ai_models SET tokens_per_char = 0.23 WHERE provider = 'GPT' AND model = 'gpt-4.1-nano';
+      UPDATE ai_models SET tokens_per_char = 0.23 WHERE provider = 'GPT' AND model = 'gpt-4.1-nano-2025-04-14';
+      UPDATE ai_models SET tokens_per_char = 0.25 WHERE provider = 'GPT' AND model = 'gpt-4o';
+      UPDATE ai_models SET tokens_per_char = 0.25 WHERE provider = 'GPT' AND model = 'gpt-4o-2024-05-13';
+      UPDATE ai_models SET tokens_per_char = 0.25 WHERE provider = 'GPT' AND model = 'gpt-4o-2024-08-06';
+      UPDATE ai_models SET tokens_per_char = 0.25 WHERE provider = 'GPT' AND model = 'gpt-4o-2024-11-20';
+      UPDATE ai_models SET tokens_per_char = 0.25 WHERE provider = 'GPT' AND model = 'gpt-4o-mini';
+      UPDATE ai_models SET tokens_per_char = 0.25 WHERE provider = 'GPT' AND model = 'gpt-4o-mini-2024-07-18';
+      UPDATE ai_models SET tokens_per_char = 0.24 WHERE provider = 'GPT' AND model = 'gpt-5';
+      UPDATE ai_models SET tokens_per_char = 0.24 WHERE provider = 'GPT' AND model = 'gpt-5-2025-08-07';
+      UPDATE ai_models SET tokens_per_char = 0.25 WHERE provider = 'GPT' AND model = 'gpt-5-chat-latest';
+      UPDATE ai_models SET tokens_per_char = 0.24 WHERE provider = 'GPT' AND model = 'gpt-5-codex';
+      UPDATE ai_models SET tokens_per_char = 0.24 WHERE provider = 'GPT' AND model = 'gpt-5-mini';
+      UPDATE ai_models SET tokens_per_char = 0.24 WHERE provider = 'GPT' AND model = 'gpt-5-mini-2025-08-07';
+      UPDATE ai_models SET tokens_per_char = 0.23 WHERE provider = 'GPT' AND model = 'gpt-5-nano';
+      UPDATE ai_models SET tokens_per_char = 0.23 WHERE provider = 'GPT' AND model = 'gpt-5-nano-2025-08-07';
+      UPDATE ai_models SET tokens_per_char = 0.24 WHERE provider = 'GPT' AND model = 'gpt-5-pro';
+      UPDATE ai_models SET tokens_per_char = 0.24 WHERE provider = 'GPT' AND model = 'gpt-5-pro-2025-10-06';
+      UPDATE ai_models SET tokens_per_char = 0.24 WHERE provider = 'GPT' AND model = 'gpt-5.1';
+      UPDATE ai_models SET tokens_per_char = 0.24 WHERE provider = 'GPT' AND model = 'gpt-5.1-2025-11-13';
+      UPDATE ai_models SET tokens_per_char = 0.25 WHERE provider = 'GPT' AND model = 'gpt-5.1-chat-latest';
+      UPDATE ai_models SET tokens_per_char = 0.24 WHERE provider = 'GPT' AND model = 'gpt-5.1-codex';
+      UPDATE ai_models SET tokens_per_char = 0.24 WHERE provider = 'GPT' AND model = 'gpt-5.1-codex-max';
+      UPDATE ai_models SET tokens_per_char = 0.24 WHERE provider = 'GPT' AND model = 'gpt-5.1-codex-mini';
+      UPDATE ai_models SET tokens_per_char = 0.24 WHERE provider = 'GPT' AND model = 'gpt-5.2';
+      UPDATE ai_models SET tokens_per_char = 0.24 WHERE provider = 'GPT' AND model = 'gpt-5.2-2025-12-11';
+      UPDATE ai_models SET tokens_per_char = 0.25 WHERE provider = 'GPT' AND model = 'gpt-5.2-chat-latest';
+      UPDATE ai_models SET tokens_per_char = 0.24 WHERE provider = 'GPT' AND model = 'gpt-5.2-pro';
+      UPDATE ai_models SET tokens_per_char = 0.24 WHERE provider = 'GPT' AND model = 'gpt-5.2-pro-2025-12-11';
+      UPDATE ai_models SET tokens_per_char = 0.32 WHERE provider = 'GROK' AND model = 'grok-2-1212';
+      UPDATE ai_models SET tokens_per_char = 0.32 WHERE provider = 'GROK' AND model = 'grok-2-image-1212';
+      UPDATE ai_models SET tokens_per_char = 0.35 WHERE provider = 'GROK' AND model = 'grok-2-vision-1212';
+      UPDATE ai_models SET tokens_per_char = 0.3 WHERE provider = 'GROK' AND model = 'grok-3';
+      UPDATE ai_models SET tokens_per_char = 0.3 WHERE provider = 'GROK' AND model = 'grok-3-mini';
+      UPDATE ai_models SET tokens_per_char = 0.28 WHERE provider = 'GROK' AND model = 'grok-4-0709';
+      UPDATE ai_models SET tokens_per_char = 0.3 WHERE provider = 'GROK' AND model = 'grok-4-1-fast-non-reasoning';
+      UPDATE ai_models SET tokens_per_char = 0.3 WHERE provider = 'GROK' AND model = 'grok-4-1-fast-reasoning';
+      UPDATE ai_models SET tokens_per_char = 0.3 WHERE provider = 'GROK' AND model = 'grok-4-fast-non-reasoning';
+      UPDATE ai_models SET tokens_per_char = 0.3 WHERE provider = 'GROK' AND model = 'grok-4-fast-reasoning';
+      UPDATE ai_models SET tokens_per_char = 0.28 WHERE provider = 'GROK' AND model = 'grok-code-fast-1';
+      UPDATE ai_models SET tokens_per_char = 0.26 WHERE provider = 'GPT' AND model = 'o1';
+      UPDATE ai_models SET tokens_per_char = 0.26 WHERE provider = 'GPT' AND model = 'o1-2024-12-17';
+      UPDATE ai_models SET tokens_per_char = 0.26 WHERE provider = 'GPT' AND model = 'o1-pro';
+      UPDATE ai_models SET tokens_per_char = 0.26 WHERE provider = 'GPT' AND model = 'o1-pro-2025-03-19';
+      UPDATE ai_models SET tokens_per_char = 0.25 WHERE provider = 'GPT' AND model = 'o3';
+      UPDATE ai_models SET tokens_per_char = 0.25 WHERE provider = 'GPT' AND model = 'o3-2025-04-16';
+      UPDATE ai_models SET tokens_per_char = 0.25 WHERE provider = 'GPT' AND model = 'o3-mini';
+      UPDATE ai_models SET tokens_per_char = 0.25 WHERE provider = 'GPT' AND model = 'o3-mini-2025-01-31';
+      UPDATE ai_models SET tokens_per_char = 0.25 WHERE provider = 'GPT' AND model = 'o4-mini';
+      UPDATE ai_models SET tokens_per_char = 0.25 WHERE provider = 'GPT' AND model = 'o4-mini-2025-04-16';
+    </sql>
+  </changeSet>
+
+</databaseChangeLog>

@@ -26,6 +26,7 @@ import com.jobshunter.service.application.UrlExtractor;
 import com.jobshunter.service.clients.AiJobsClient;
 import com.jobshunter.service.clients.AiJobsCompaniesClient;
 import com.jobshunter.service.clients.DeleteConvAiClient;
+import com.jobshunter.service.clients.TokenEstimationGuard;
 import com.jobshunter.service.retry.RetryPolicies;
 import com.jobshunter.service.retry.RetryTemplate;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
@@ -68,6 +69,8 @@ public non-sealed class GrokV1JobSearchImpl implements AiJobsClient, AiJobsCompa
 
   private final TemplateRenderer templateRenderer;
 
+  private final TokenEstimationGuard tokenEstimationGuard;
+
   @Override
   @CircuitBreaker(name = "grokCircuitBreaker", fallbackMethod = "fallbackSearch")
   @RateLimiter(name = "grokLimiter")
@@ -89,6 +92,7 @@ public non-sealed class GrokV1JobSearchImpl implements AiJobsClient, AiJobsCompa
         ), request.getFileId());
 
     GrokJobsPayload payload = payloadBuilder.build();
+    tokenEstimationGuard.assertFitsContext(payload);
     GrokResponse response = restClient.post()
         .uri(DEFAULT_URI)
         .headers((h) -> h.setBearerAuth(properties.getGrok().getApiKey()))
@@ -131,6 +135,8 @@ public non-sealed class GrokV1JobSearchImpl implements AiJobsClient, AiJobsCompa
         .setResponseSchema(templateRenderer.getSchema(AiSchemaType.GROK_JSON_COMPANY_SCHEMA_RESPONSE))
         .build();
 
+    tokenEstimationGuard.assertFitsContext(payload);
+
     GrokResponse response = restClient.post()
         .uri(DEFAULT_URI)
         .headers((h) -> h.setBearerAuth(properties.getGrok().getApiKey()))
@@ -171,6 +177,8 @@ public non-sealed class GrokV1JobSearchImpl implements AiJobsClient, AiJobsCompa
         ))
         .setResponseSchema(templateRenderer.getSchema(AiSchemaType.GROK_JSON_SCHEMA_RESPONSE))
         .build();
+
+    tokenEstimationGuard.assertFitsContext(payload);
 
     GrokResponse response = restClient.post()
         .uri(DEFAULT_URI)
