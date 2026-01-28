@@ -1,8 +1,8 @@
 <div align="center">
   <img src="application/src/main/resources/static/images/JobsHunterLogo.jpg" alt="JobsHunter Logo" width="180" height="180" style="border-radius: 20%; box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);">
 
-  <h1>🚀 JobsHunter</h1>
-  <p style="font-weight: 600;">Your AI-Powered Career Assistant</p>
+  <h1 style="margin: 0px 0 0 0;">🚀 JobsHunter</h1>
+  <p style="font-weight: 600; margin: 2px 0 8px 0;">Your AI-Powered Career Assistant</p>
 
   <div align="center">
     <a href="https://openjdk.org/"><img src="https://img.shields.io/badge/Java_25-8A4B1F?style=flat-square&logo=openjdk&logoColor=white" alt="Java 25"></a>
@@ -136,6 +136,19 @@ npm run dev
 
 ---
 
+## 🧪 IntelliJ Run Configurations
+
+The project includes IntelliJ run configurations in the `.run/` folder. They are plain XML metadata that can be imported by copying the desired `.run.xml` file into `.idea/runConfigurations/` (or by opening it from the IDE and letting IntelliJ persist it in your workspace). Both configurations launch `com.jobshunter.JobshunterApplication` but switch the active Spring profile.
+
+| Configuration | Description |
+| :--- | :--- |
+| `JobsHunter-local` | Activates `-Dspring.profiles.active=local` so you get the local-development profile, faster iteration, and the environment variables described above. |
+| `JobsHunter-prod` | Activates `-Dspring.profiles.active=prod`, mirroring the production profile for QA and acceptance testing without the Docker overhead. |
+
+Use the one that matches the stage you are targeting; the only difference is the `-Dspring.profiles.active` JVM argument.
+
+---
+
 ## ⚙️ Configuration
 
 Configure the application via environment variables or `application.yml`.
@@ -186,56 +199,56 @@ Once the application is running, explore the full REST API documentation via **S
 
 A huge shoutout to the amazing team behind JobsHunter!
 
-  <div style="display: flex; flex-wrap: wrap; gap: 32px; justify-content: center; align-items: flex-start; width: 100%;">
-  <div style="text-align: center; flex: 1 1 0;">
-    <a href="https://github.com/crisnct">
-      <img src="https://github.com/crisnct.png" alt="" style="width: 100px; border-radius: 50%; display: block; margin: 0 auto;"/>
+<table style="width: 100%; border-collapse: collapse;">
+  <tr>
+    <td style="width: 33%; vertical-align: top; text-align: center;">
+      <a href="https://github.com/crisnct">
+        <img src="https://github.com/crisnct.png" alt="" style="width: 100px; border-radius: 50%; display: block; margin: 0 auto;"/>
+      </a>
       <h3 style="margin: 6px 0 6px 0;">Cristian Țone</h3>
-    </a>
-    <b style="font-size: 1.0em; display: block; margin: 0 0 8px 0;">🚀 Product Owner & Team Lead</b>
-    <ul style="text-align: left; margin: 0; padding-left: 18px;">
-      <li>Strategy to search jobs by company</li>
-      <li>Strategy to search jobs by user prompts</li>
-      <li>Functionality to blame AI for the invalid URLs provided</li>
-      <li>Async Search with Virtual Threads & CompletableFuture</li>
-      <li>Rate Limiting & Circuit Breakers & Bulkhead for external services and JobsHunter endpoints</li>
-      <li>Retry policy for http requests to AI models</li>
-      <li>SERP & GPT & GEMINI & GROK Integrations</li>
-      <li>Mailtrap & Twilio & TinyURL & IpInfo Integrations</li>
-      <li>Docker & CI/CD</li>
-      <li>Annotation processor</li>
-      <li>Core Service Architecture</li>
-      <li>Authentication and authorization</li>
-      <li>Started the project</li>
-    </ul>
-  </div>
-
-  <div style="text-align: center; flex: 1 1 0;">
-    <a href="https://github.com/AyanoCode13">
-      <img src="https://github.com/AyanoCode13.png" alt="" style="width: 100px; border-radius: 50%; display: block; margin: 0 auto;"/>
+      <b style="font-size: 1.0em; display: block; margin: 0 0 8px 0;">🚀 Product Owner & Team Lead</b>
+      <ul style="text-align: left; margin: 0; padding-left: 18px;">
+        <li>Strategy to search jobs by company</li>
+        <li>Strategy to search jobs by user prompts</li>
+        <li>Functionality to blame AI for the invalid URLs provided</li>
+        <li>Async Search with Virtual Threads & CompletableFuture</li>
+        <li>Rate Limiting & Circuit Breakers & Bulkhead for external services and JobsHunter endpoints</li>
+        <li>Retry policy for http requests to AI models</li>
+        <li>SERP & GPT & GEMINI & GROK Integrations</li>
+        <li>Mailtrap & Twilio & TinyURL & IpInfo Integrations</li>
+        <li>Docker & CI/CD</li>
+        <li>Annotation processor</li>
+        <li>Core Service Architecture</li>
+        <li>Authentication and authorization</li>
+        <li>Started the project</li>
+      </ul>
+    </td>
+    <td style="width: 33%; vertical-align: top; text-align: center;">
+      <a href="https://github.com/AyanoCode13">
+        <img src="https://github.com/AyanoCode13.png" alt="" style="width: 100px; border-radius: 50%; display: block; margin: 0 auto;"/>
+      </a>
       <h3 style="margin: 6px 0 6px 0;">Andrei Lazăr</h3>
-    </a>
-    <b style="font-size: 1em; display: block; margin: 0 0 8px 0;">💻 Junior Backend Developer</b>
-    <ul style="text-align: left; margin: 0; padding-left: 18px;">
-      <li>Scrapper for bestjobs.eu</li>
-      <li>Email Notification Service</li>
-      <li>Mailtrap Integration</li>
-    </ul>
-  </div>
-
-  <div style="text-align: center; flex: 1 1 0;">
-    <a href="https://github.com/ionel-vochin">
-      <img src="https://github.com/ionel-vochin.png" alt="" style="width: 100px; border-radius: 50%; display: block; margin: 0 auto;"/>
+      <b style="font-size: 1em; display: block; margin: 0 0 8px 0;">💻 Junior Backend Developer</b>
+      <ul style="text-align: left; margin: 0; padding-left: 18px;">
+        <li>Scrapper for bestjobs.eu</li>
+        <li>Email Notification Service</li>
+        <li>Mailtrap Integration</li>
+      </ul>
+    </td>
+    <td style="width: 33%; vertical-align: top; text-align: center;">
+      <a href="https://github.com/ionel-vochin">
+        <img src="https://github.com/ionel-vochin.png" alt="" style="width: 100px; border-radius: 50%; display: block; margin: 0 auto;"/>
+      </a>
       <h3 style="margin: 6px 0 6px 0;">Ionel Vochin</h3>
-    </a>
-    <b style="font-size: 1em; display: block; margin: 0 0 8px 0;">🛠️ Senior Backend Developer</b>
-    <ul style="text-align: left; margin: 0; padding-left: 18px;">
-      <li>Refactoring & Optimization about email templates</li>
-      <li>Liquibase Scripts Fixes</li>
-      <li>RestClient Migration</li>
-    </ul>
-  </div>
-</div>
+      <b style="font-size: 1em; display: block; margin: 0 0 8px 0;">🛠️ Senior Backend Developer</b>
+      <ul style="text-align: left; margin: 0; padding-left: 18px;">
+        <li>Refactoring & Optimization about email templates</li>
+        <li>Liquibase Scripts Fixes</li>
+        <li>RestClient Migration</li>
+      </ul>
+    </td>
+  </tr>
+</table>
 
 ---
 
