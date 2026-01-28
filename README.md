@@ -207,8 +207,8 @@ A huge shoutout to the amazing team behind JobsHunter!
       </a>
       <h3 style="margin: 6px 0 6px 0; text-align: center;">Cristian Țone</h3>
       <b style="font-size: 1.0em; display: block; margin: 0 0 8px 0; text-align: center;">🚀 Product Owner & Team Lead</b>
-      <div style="text-align: left;">
-        <ul style="margin: 0 0 4px 0; padding-left: 18px; list-style-position: outside;">
+      <div style="text-align: left; width: 100%;">
+        <ul style="display: inline-block; margin: 0 0 4px 0; padding-left: 10px; list-style-position: inside; text-align: left;">
         <li>Strategy to search jobs by company</li>
         <li>Strategy to search jobs by user prompts</li>
         <li>Functionality to blame AI for the invalid URLs provided</li>
@@ -231,8 +231,8 @@ A huge shoutout to the amazing team behind JobsHunter!
       </a>
       <h3 style="margin: 6px 0 6px 0; text-align: center;">Andrei Lazăr</h3>
       <b style="font-size: 1em; display: block; margin: 0 0 8px 0; text-align: center;">💻 Junior Backend Developer</b>
-      <div style="text-align: left;">
-        <ul style="margin: 0 0 4px 0; padding-left: 18px; list-style-position: outside;">
+      <div style="text-align: left; width: 100%;">
+        <ul style="display: inline-block; margin: 0 0 4px 0; padding-left: 10px; list-style-position: inside; text-align: left;">
         <li>Scrapper for bestjobs.eu</li>
         <li>Email Notification Service</li>
         <li>Mailtrap Integration</li>
@@ -245,8 +245,8 @@ A huge shoutout to the amazing team behind JobsHunter!
       </a>
       <h3 style="margin: 6px 0 6px 0; text-align: center;">Ionel Vochin</h3>
       <b style="font-size: 1em; display: block; margin: 0 0 8px 0; text-align: center;">🛠️ Senior Backend Developer</b>
-      <div style="text-align: left;">
-        <ul style="margin: 0 0 4px 0; padding-left: 18px; list-style-position: outside;">
+      <div style="text-align: left; width: 100%;">
+        <ul style="display: inline-block; margin: 0 0 4px 0; padding-left: 10px; list-style-position: inside; text-align: left;">
         <li>Refactoring & Optimization about email templates</li>
         <li>Liquibase Scripts Fixes</li>
         <li>RestClient Migration</li>
