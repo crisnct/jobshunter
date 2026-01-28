@@ -201,13 +201,14 @@ A huge shoutout to the amazing team behind JobsHunter!
 
 <table style="width: 100%; border-collapse: collapse; table-layout: fixed;">
   <tr>
-    <td valign="top" align="left" style="width: 33%;">
+    <td width="33%" valign="top" align="center">
       <a href="https://github.com/crisnct">
         <img src="https://github.com/crisnct.png" alt="" style="width: 100px; border-radius: 50%; display: block; margin: 0 auto;"/>
       </a>
       <h3 style="margin: 6px 0 6px 0; text-align: center;">Cristian Țone</h3>
       <b style="font-size: 1.0em; display: block; margin: 0 0 8px 0; text-align: center;">🚀 Product Owner & Team Lead</b>
-      <ul style="text-align: left; margin: 0 0 4px 0; padding-left: 18px; list-style-position: outside;">
+      <div style="text-align: left;">
+        <ul style="margin: 0 0 4px 0; padding-left: 18px; list-style-position: outside;">
         <li>Strategy to search jobs by company</li>
         <li>Strategy to search jobs by user prompts</li>
         <li>Functionality to blame AI for the invalid URLs provided</li>
@@ -222,30 +223,35 @@ A huge shoutout to the amazing team behind JobsHunter!
         <li>Authentication and authorization</li>
         <li>Started the project</li>
       </ul>
+      </div>
     </td>
-    <td valign="top" align="left" style="width: 33%;">
+    <td width="33%" valign="top" align="center">
       <a href="https://github.com/AyanoCode13">
         <img src="https://github.com/AyanoCode13.png" alt="" style="width: 100px; border-radius: 50%; display: block; margin: 0 auto;"/>
       </a>
       <h3 style="margin: 6px 0 6px 0; text-align: center;">Andrei Lazăr</h3>
       <b style="font-size: 1em; display: block; margin: 0 0 8px 0; text-align: center;">💻 Junior Backend Developer</b>
-      <ul style="text-align: left; margin: 0 0 4px 0; padding-left: 18px; list-style-position: outside;">
+      <div style="text-align: left;">
+        <ul style="margin: 0 0 4px 0; padding-left: 18px; list-style-position: outside;">
         <li>Scrapper for bestjobs.eu</li>
         <li>Email Notification Service</li>
         <li>Mailtrap Integration</li>
       </ul>
+      </div>
     </td>
-    <td valign="top" align="left" style="width: 33%;">
+    <td width="33%" valign="top" align="center">
       <a href="https://github.com/ionel-vochin">
         <img src="https://github.com/ionel-vochin.png" alt="" style="width: 100px; border-radius: 50%; display: block; margin: 0 auto;"/>
       </a>
       <h3 style="margin: 6px 0 6px 0; text-align: center;">Ionel Vochin</h3>
       <b style="font-size: 1em; display: block; margin: 0 0 8px 0; text-align: center;">🛠️ Senior Backend Developer</b>
-      <ul style="text-align: left; margin: 0 0 4px 0; padding-left: 18px; list-style-position: outside;">
+      <div style="text-align: left;">
+        <ul style="margin: 0 0 4px 0; padding-left: 18px; list-style-position: outside;">
         <li>Refactoring & Optimization about email templates</li>
         <li>Liquibase Scripts Fixes</li>
         <li>RestClient Migration</li>
       </ul>
+      </div>
     </td>
   </tr>
 </table>
