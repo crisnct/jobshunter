@@ -2,8 +2,8 @@ package com.jobshunter.service.application.notifiers;
 
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.model.Job;
-import com.jobshunter.service.application.UserMessagesFactory;
-import com.jobshunter.service.application.UserMessagesFactory.MessageTemplate;
+import com.jobshunter.model.UserMessageType;
+import com.jobshunter.service.TemplateRenderer;
 import com.jobshunter.service.clients.RestMailtrapClient;
 import com.jobshunter.service.clients.SmtpMailtrapClient;
 import com.jobshunter.service.clients.tinyurl.TinyUrlClient;
@@ -22,7 +22,7 @@ public final class EmailNotifierService implements ServiceNotifier {
 
   private final SmtpMailtrapClient emailClient;
   private final RestMailtrapClient restMailtrapClient;
-  private final UserMessagesFactory userMessagesFactory;
+  private final TemplateRenderer templateRenderer;
   private final TinyUrlClient tinyUrlClient;
 
   public void sendCustomEmail(String to, String subject, String body, MultipartFile attachment) {
@@ -32,7 +32,7 @@ public final class EmailNotifierService implements ServiceNotifier {
   @Override
   public void send(List<Job> jobs, UserEntity user) {
     String timestamp = LocalDateTime.now().format(JOB_TIMESTAMP_FORMAT);
-    String body = userMessagesFactory.build(MessageTemplate.JOBS_NOTIFY, Map.of("1", timestamp, "2", ServiceNotifier.formatJobs(jobs)));
+    String body = templateRenderer.getUserMessage(UserMessageType.JOBS_NOTIFY, Map.of("1", timestamp, "2", ServiceNotifier.formatJobs(jobs)));
     emailClient.sendEmail(user.getEmail(), "JobsHunter - new jobs for you", body);
   }
 
@@ -65,25 +65,25 @@ public final class EmailNotifierService implements ServiceNotifier {
   }
 
   public void sendVerificationToken(UserEntity user) {
-    String body = userMessagesFactory.build(MessageTemplate.TOKEN,
+    String body = templateRenderer.getUserMessage(UserMessageType.VERIFICATION_TOKEN,
         Map.of("1", user.getUsername(), "2", user.getVerificationToken()));
     emailClient.sendEmail(user.getEmail(), "JobsHunter - verification token", body);
   }
 
   public void sendMailToApproveAccount(UserEntity user, List<String> emailAddresses) {
-    String body = userMessagesFactory.build(MessageTemplate.APPROVE_ACCOUNT,
+    String body = templateRenderer.getUserMessage(UserMessageType.APPROVE_ACCOUNT,
         Map.of("1", user.getUsername(), "2", user.getEmail()));
     emailClient.sendEmail(emailAddresses, "JobsHunter - approve account", body, null);
   }
 
   public void accountRejected(UserEntity user, String rejectReason) {
-    String body = userMessagesFactory.build(MessageTemplate.ACCOUNT_REJECTED,
+    String body = templateRenderer.getUserMessage(UserMessageType.ACCOUNT_REJECTED,
         Map.of("1", user.getUsername(), "2", rejectReason));
     emailClient.sendEmail(user.getEmail(), "JobsHunter - account rejected", body);
   }
 
   public void accountApproved(UserEntity user) {
-    String body = userMessagesFactory.build(MessageTemplate.ACCOUNT_APPROVED, Map.of("1", user.getUsername()));
+    String body = templateRenderer.getUserMessage(UserMessageType.ACCOUNT_APPROVED, Map.of("1", user.getUsername()));
     emailClient.sendEmail(user.getEmail(), "JobsHunter - account approved", body);
   }
 }
