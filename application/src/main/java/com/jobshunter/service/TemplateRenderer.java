@@ -35,15 +35,13 @@ public class TemplateRenderer {
     for (PromptType type : PromptType.values()) {
       getString(PROMPTS_PATH, type.name(), ".mustache", false, Map.of());
     }
-    for (AiSchemaType type : AiSchemaType.values()) {
-      getString(SCHEMA_PATH, type.name(), ".json", false, Map.of());
-    }
-
     for (UserMessageType type : UserMessageType.values()) {
       getString(USER_MESSAGE_PATH, type.name(), ".mustache", false, Map.of());
     }
+    for (AiSchemaType type : AiSchemaType.values()) {
+      getString(SCHEMA_PATH, type.name(), ".json", false, Map.of());
+    }
   }
-
 
   public String getUserMessage(UserMessageType type, Map<String, Object> vars) {
     return getString(USER_MESSAGE_PATH, type.name(), ".mustache", true, vars);
