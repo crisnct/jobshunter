@@ -8,7 +8,6 @@ import com.jobshunter.database.entities.UserJobRoleEntity;
 import com.jobshunter.database.entities.UserJobTypeEntity;
 import com.jobshunter.database.entities.UserPromptEntity;
 import com.jobshunter.database.service.AuthDBService;
-import com.jobshunter.database.service.UserCvDBService;
 import com.jobshunter.database.service.UserDBService;
 import com.jobshunter.database.service.UserJobDBService;
 import com.jobshunter.dto.ChangePasswordRequest;
@@ -17,7 +16,6 @@ import com.jobshunter.dto.UserJobResponse;
 import com.jobshunter.dto.UserUpdateRequest;
 import com.jobshunter.model.ContractType;
 import com.jobshunter.model.EngineCategory;
-import com.jobshunter.model.EngineType;
 import com.jobshunter.model.JobType;
 import com.jobshunter.service.application.UserCvService;
 import com.jobshunter.service.application.notifiers.EmailNotifierService;
@@ -53,7 +51,6 @@ public class UserController {
 
   private final UserDBService userDBService;
   private final UserJobDBService userJobDBService;
-  private final UserCvDBService userCvDBService;
   private final AuthDBService authDBService;
   private final EmailNotifierService emailService;
   private final UserCvService userCvService;
@@ -128,8 +125,7 @@ public class UserController {
         user.isNotifyEmail(),
         user.isEmailVerified(),
         user.getVerificationToken(),
-        userCvDBService.getRemoteCvFileId(user, EngineType.GPT).orElse(""),
-        userCvDBService.getRemoteCvFileId(user, EngineType.GROK).orElse(""),
+        user.getCv() != null ? user.getCv().getFilename() : "",
         formatDateTime(user.getLastJobs()),
         prompts.stream()
             .map(p -> String.format("id: %d, prompt: %s", p.getId(), p.getPrompt()))

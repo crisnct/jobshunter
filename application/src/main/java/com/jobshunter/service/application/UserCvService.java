@@ -36,6 +36,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class UserCvService {
 
   private static final long MAX_CV_BYTES = 10 * 1024 * 1024;
+  private static final int MAX_FILENAME_LENGTH = 128;
 
   private static final Set<String> ALLOWED_CONTENT_TYPES = Set.of(
       MediaType.APPLICATION_PDF_VALUE,
@@ -99,7 +100,7 @@ public class UserCvService {
         }
         uploadedResults.put(engine, fileInfo);
       }
-      userCvDBService.replaceUserCv(user, cvContent, uploadedResults);
+      userCvDBService.replaceUserCv(user, cvContent, sanitizeFilename(file.getOriginalFilename()), uploadedResults);
       log.info("CV uploaded successfully for user {}", username);
       return uploadedResults;
     } finally {
@@ -288,5 +289,16 @@ public class UserCvService {
     void cleanup() {
       client.deleteAllFilesExcept(fileIds);
     }
+  }
+
+  private String sanitizeFilename(String original) {
+    if (!StringUtils.hasText(original)) {
+      return "cv";
+    }
+    String baseName = Path.of(original).getFileName().toString().trim();
+    if (baseName.length() > MAX_FILENAME_LENGTH) {
+      return baseName.substring(0, MAX_FILENAME_LENGTH);
+    }
+    return baseName;
   }
 }

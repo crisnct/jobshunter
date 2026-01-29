@@ -1,18 +1,12 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   AlertCircle,
-  Bell,
-  Briefcase,
   CheckCircle2,
-  Clock,
   Globe,
   LayoutDashboard,
   Loader2,
   LogOut,
-  MoreVertical,
   Plus,
-  Search,
-  Settings,
   ShieldCheck,
   User,
 } from 'lucide-react';
@@ -27,61 +21,213 @@ const App = () => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('dash');
+  const [saving, setSaving] = useState(false);
+  const [cvUploading, setCvUploading] = useState(false);
+  const [cvDeleting, setCvDeleting] = useState(false);
+  const [deletingAccount, setDeletingAccount] = useState(false);
+  const [roleInput, setRoleInput] = useState('');
+  const cvInputRef = useRef(null);
+  const loginToastShownRef = useRef(false);
+  const refreshAttemptedRef = useRef(false);
+
+  const [profileForm, setProfileForm] = useState({
+    username: '',
+    email: '',
+    phoneNumber: '',
+    city: '',
+    country: '',
+    jobDomain: '',
+    jobRoles: [],
+    jobTypes: [],
+    contractTypes: [],
+    notifyWhatsapp: false,
+    notifyEmail: false,
+    relocation: null,
+    cvFileName: '',
+  });
+
+  const jobTypeOptions = [
+    { id: 'REMOTE', label: 'REMOTE' },
+    { id: 'HYBRID', label: 'HYBRID' },
+    { id: 'ONSITE', label: 'ONSITE' },
+  ];
+
+  const contractTypeOptions = [
+    { id: 'B2B', label: 'B2B' },
+    { id: 'EMPLOYMENT', label: 'EMPLOYMENT' },
+    { id: 'EOR', label: 'EOR' },
+    { id: 'INTERNSHIP', label: 'INTERNSHIP' },
+  ];
 
   const logMessage = useCallback((message, type = 'info') => {
     setStatus({ type, message });
   }, []);
 
+  useEffect(() => {
+    if (!status.message || status.type === 'error') {
+      return;
+    }
+    const timeout = setTimeout(() => {
+      setStatus((prev) => (prev.message ? { ...prev, message: '' } : prev));
+    }, 3000);
+    return () => clearTimeout(timeout);
+  }, [status]);
+
+  const fetchCsrfToken = useCallback(async () => {
+    const resp = await fetch(`${baseUrl}/api/auth/csrf-token`, {
+      method: 'GET',
+      credentials: 'include',
+    });
+    const data = await resp.json();
+    if (!resp.ok) {
+      throw new Error(data?.message || 'Failed to fetch CSRF token');
+    }
+    return data;
+  }, [baseUrl]);
+
+  const refreshAuthToken = useCallback(async () => {
+    const resp = await fetch(`${baseUrl}/api/auth/refresh`, {
+      method: 'POST',
+      credentials: 'include',
+    });
+    const data = await resp.json();
+    if (!resp.ok) {
+      const error = new Error(data?.message || data?.error || 'Token refresh failed');
+      error.status = resp.status;
+      error.payload = data;
+      throw error;
+    }
+    if (!data?.token) {
+      throw new Error('Token refresh response missing token');
+    }
+    setToken(data.token);
+    return data.token;
+  }, [baseUrl]);
+
+  const parseResponse = async (resp) => {
+    const text = await resp.text();
+    let parsed;
+    try {
+      parsed = text ? JSON.parse(text) : null;
+    } catch (_) {
+      parsed = text;
+    }
+    return parsed;
+  };
+
   const api = useMemo(
     () => ({
-      async call(path, { method = 'GET', body, headers = {} } = {}) {
+      async call(path, { method = 'GET', body, headers = {}, authToken = null } = {}, retrying = false) {
+        const activeToken = authToken || token;
+        const requiresCsrf = activeToken && !path.startsWith('/api/auth/');
+        const csrf = requiresCsrf ? await fetchCsrfToken() : null;
         const resp = await fetch(`${baseUrl}${path}`, {
           method,
+          credentials: 'include',
           headers: {
             'Content-Type': 'application/json',
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            ...(activeToken ? { Authorization: `Bearer ${activeToken}` } : {}),
+            ...(csrf ? { [csrf.headerName]: csrf.token } : {}),
             ...headers,
           },
           body: body ? JSON.stringify(body) : undefined,
         });
 
-        const text = await resp.text();
-        let parsed;
-        try {
-          parsed = text ? JSON.parse(text) : null;
-        } catch (_) {
-          parsed = text;
-        }
+        const parsed = await parseResponse(resp);
 
         if (!resp.ok) {
-          throw new Error((parsed && parsed.message) || parsed || `Request failed with ${resp.status}`);
+          const errorMessage = (parsed && parsed.message) || parsed || `Request failed with ${resp.status}`;
+          const error = new Error(errorMessage);
+          error.status = resp.status;
+          error.payload = parsed;
+          if (parsed?.error === 'UNAUTHORIZED' && !retrying && !path.startsWith('/api/auth/')) {
+            const newToken = await refreshAuthToken();
+            return this.call(path, { method, body, headers, authToken: newToken }, true);
+          }
+          throw error;
         }
 
         return parsed;
       },
     }),
-    [baseUrl, token]
+    [baseUrl, token, fetchCsrfToken, refreshAuthToken]
   );
 
   useEffect(() => {
+    let isMounted = true;
     if (!token) {
-      setUser(null);
-      return;
+      if (refreshAttemptedRef.current) {
+        setLoading(false);
+        return;
+      }
+      setLoading(true);
+      refreshAuthToken()
+        .then((newToken) => {
+          refreshAttemptedRef.current = false;
+          if (isMounted) {
+            setToken(newToken);
+          }
+        })
+        .catch((err) => {
+          refreshAttemptedRef.current = true;
+          if (isMounted) {
+            logMessage(err.message || 'Authentication required', 'error');
+          }
+        })
+        .finally(() => {
+          if (isMounted && !token) {
+            setLoading(false);
+          }
+        });
+      return () => {
+        isMounted = false;
+      };
     }
 
+    let isActive = true;
     setLoading(true);
     api
       .call('/api/user/me')
       .then((data) => {
+        if (!isActive) {
+          return;
+        }
         setUser(data);
-        logMessage('Secure connection established', 'success');
+        setProfileForm({
+          username: data.username || '',
+          email: data.email || '',
+          phoneNumber: data.phoneNumber || '',
+          city: data.city || '',
+          country: data.country || '',
+          jobDomain: data.jobDomain || '',
+          jobRoles: data.jobRoles || [],
+          jobTypes: data.jobTypes || [],
+          contractTypes: data.contractTypes || [],
+          notifyWhatsapp: data.notifyWhatsapp || false,
+          notifyEmail: data.notifyEmail || false,
+          relocation: data.relocation || null,
+          cvFileName: data.cvFilename || '',
+        });
+        if (!loginToastShownRef.current) {
+          logMessage('Secure connection established', 'success');
+          loginToastShownRef.current = true;
+        }
       })
       .catch((err) => {
-        logMessage(`Session expired: ${err.message}`, 'error');
-        setToken('');
+          if (isActive) {
+            logMessage(`Session expired: ${err.message}`, 'error');
+            setToken('');
+          }
       })
-      .finally(() => setLoading(false));
-  }, [token, api, logMessage]);
+      .finally(() => {
+        if (isActive) {
+          setLoading(false);
+        }
+      });
+    return () => {
+      isActive = false;
+    };
+  }, [token, api, logMessage, refreshAuthToken]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -90,6 +236,7 @@ const App = () => {
     try {
       const res = await api.call('/api/auth/login', { method: 'POST', body: loginForm });
       setToken(res.token);
+      refreshAttemptedRef.current = false;
     } catch (err) {
       setToken('');
       logMessage(err.message, 'error');
@@ -98,22 +245,92 @@ const App = () => {
     }
   };
 
-  const handleLogout = () => {
-    setToken('');
-    setUser(null);
-    setLoginForm({ username: '', password: '' });
-    logMessage('Logged out successfully.', 'info');
+  const handleLogout = useCallback(
+    async (message = 'Logged out successfully.') => {
+      const safeMessage = typeof message === 'string' ? message : 'Logged out successfully.';
+      try {
+        await api.call('/api/auth/logout', { method: 'POST' });
+      } catch (err) {
+        logMessage(err.message, 'error');
+      } finally {
+        setToken('');
+        setUser(null);
+        setLoginForm({ username: '', password: '' });
+        refreshAttemptedRef.current = true;
+        setLoading(false);
+        logMessage(safeMessage, 'info');
+        if (window.location.pathname !== '/') {
+          window.history.pushState({}, '', '/');
+        }
+      }
+    },
+    [api, logMessage]
+  );
+
+  useEffect(() => {
+    if (!token) {
+      return undefined;
+    }
+    let timeoutId;
+    const scheduleLogout = () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+      timeoutId = setTimeout(() => {
+        handleLogout('Signed out due to inactivity.');
+      }, 30 * 60 * 1000);
+    };
+
+    const handleActivity = () => {
+      scheduleLogout();
+    };
+
+    scheduleLogout();
+    const events = ['mousemove', 'keydown', 'click', 'scroll', 'touchstart'];
+    events.forEach((event) => window.addEventListener(event, handleActivity, { passive: true }));
+
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+      events.forEach((event) => window.removeEventListener(event, handleActivity));
+    };
+  }, [token, handleLogout, logMessage]);
+
+  const tabToPath = {
+    profile: '/profile',
+    dash: '/dashboard',
   };
 
-  const applications = [
-    { id: 1, company: 'TechFlow', role: 'Senior React Developer', status: 'Interview', date: '2h ago', color: 'bg-blue-100 text-blue-700' },
-    { id: 2, company: 'Innovate AI', role: 'Full Stack Engineer', status: 'Pending', date: '5h ago', color: 'bg-amber-100 text-amber-700' },
-    { id: 3, company: 'CloudScale', role: 'Frontend Lead', status: 'Rejected', date: 'Yesterday', color: 'bg-red-100 text-red-700' },
-  ];
+  const pathToTab = (path) => {
+    if (path === '/profile') return 'profile';
+    if (path === '/dashboard') return 'dash';
+    return null;
+  };
+
+  const navigateToTab = useCallback((tab) => {
+    setActiveTab(tab);
+    const nextPath = tabToPath[tab];
+    if (nextPath && window.location.pathname !== nextPath) {
+      window.history.pushState({ tab }, '', nextPath);
+    }
+  }, []);
+
+  useEffect(() => {
+    const applyPath = () => {
+      const tab = pathToTab(window.location.pathname);
+      if (tab) {
+        setActiveTab(tab);
+      }
+    };
+    applyPath();
+    window.addEventListener('popstate', applyPath);
+    return () => window.removeEventListener('popstate', applyPath);
+  }, []);
 
   const SidebarItem = ({ icon: Icon, label, id, active }) => (
     <button
-      onClick={() => setActiveTab(id)}
+      onClick={() => navigateToTab(id)}
       className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group ${
         active ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-100' : 'text-slate-500 hover:bg-slate-50 hover:text-indigo-600'
       }`}
@@ -123,7 +340,32 @@ const App = () => {
     </button>
   );
 
-  const StatusToast = () => (
+  const ToggleSwitch = ({ label, checked, onChange }) => (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      onClick={() => onChange(!checked)}
+      className="inline-flex items-center gap-3 rounded-full px-3 py-2 bg-slate-100 hover:bg-slate-200 transition-colors"
+    >
+      <span className="text-xs font-semibold text-slate-700 uppercase tracking-wide">{label}</span>
+      <span
+        className={`relative w-12 h-6 rounded-full transition-colors ${checked ? 'bg-indigo-700' : 'bg-slate-300'}`}
+      >
+        <span
+          className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
+            checked ? 'translate-x-6' : 'translate-x-0'
+          }`}
+        />
+      </span>
+    </button>
+  );
+
+  const StatusToast = () => {
+    if (!status.message) {
+      return null;
+    }
+    return (
     <div
       className={`fixed bottom-6 right-6 flex items-center gap-3 px-5 py-3 rounded-2xl shadow-2xl border transition-all duration-300 transform z-50 ${
         status.type === 'error'
@@ -137,7 +379,175 @@ const App = () => {
       {status.type === 'success' && <CheckCircle2 size={18} />}
       <span className="text-sm font-medium">{status.message}</span>
     </div>
-  );
+    );
+  };
+
+  const handleProfileChange = (field, value) => {
+    setProfileForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const toggleJobType = (type) => {
+    setProfileForm((prev) => {
+      const has = prev.jobTypes.includes(type);
+      return { ...prev, jobTypes: has ? prev.jobTypes.filter((t) => t !== type) : [...prev.jobTypes, type] };
+    });
+  };
+
+  const toggleContractType = (type) => {
+    setProfileForm((prev) => {
+      const has = prev.contractTypes.includes(type);
+      return { ...prev, contractTypes: has ? prev.contractTypes.filter((t) => t !== type) : [...prev.contractTypes, type] };
+    });
+  };
+
+  const handleAddRole = () => {
+    const role = roleInput.trim();
+    if (!role) return;
+    setProfileForm((prev) => ({
+      ...prev,
+      jobRoles: prev.jobRoles.includes(role) ? prev.jobRoles : [...prev.jobRoles, role],
+    }));
+    setRoleInput('');
+  };
+
+  const handleRemoveRole = (index) => {
+    setProfileForm((prev) => ({
+      ...prev,
+      jobRoles: prev.jobRoles.filter((_, i) => i !== index),
+    }));
+  };
+
+  const handleUpdateRole = (index, value) => {
+    setProfileForm((prev) => {
+      const nextRoles = [...prev.jobRoles];
+      nextRoles[index] = value;
+      return { ...prev, jobRoles: nextRoles };
+    });
+  };
+
+  const handleSaveProfile = async () => {
+    if (!profileForm.phoneNumber) {
+      logMessage('Phone number is required', 'error');
+      return;
+    }
+    setSaving(true);
+    try {
+      await api.call('/api/user/update', {
+        method: 'PUT',
+        body: {
+          username: profileForm.username || user?.username,
+          phoneNumber: profileForm.phoneNumber,
+          notifyWhatsapp: profileForm.notifyWhatsapp,
+          notifyEmail: profileForm.notifyEmail,
+          city: profileForm.city || null,
+          country: profileForm.country || null,
+          jobDomain: profileForm.jobDomain || null,
+          jobRoles: profileForm.jobRoles,
+          jobTypes: profileForm.jobTypes,
+          relocation: profileForm.relocation,
+          contractTypes: profileForm.contractTypes,
+          aiPrompts: null,
+        },
+      });
+      logMessage('Profile updated', 'success');
+      setUser((prev) => ({
+        ...(prev || {}),
+        username: profileForm.username || prev?.username,
+        email: profileForm.email || prev?.email,
+        phoneNumber: profileForm.phoneNumber,
+        notifyWhatsapp: profileForm.notifyWhatsapp,
+        notifyEmail: profileForm.notifyEmail,
+        city: profileForm.city || null,
+        country: profileForm.country || null,
+        jobDomain: profileForm.jobDomain || null,
+        jobRoles: profileForm.jobRoles,
+        jobTypes: profileForm.jobTypes,
+        relocation: profileForm.relocation,
+        contractTypes: profileForm.contractTypes,
+      }));
+    } catch (err) {
+      logMessage(err.message, 'error');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleUploadCv = async (file) => {
+    if (!file) return;
+    setCvUploading(true);
+    try {
+      const uploadOnce = async (authToken) => {
+        const csrf = await fetchCsrfToken();
+        const formData = new FormData();
+        formData.append('file', file);
+        return fetch(`${baseUrl}/api/cv/upload`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+            [csrf.headerName]: csrf.token,
+          },
+          body: formData,
+        });
+      };
+
+      const resp = await uploadOnce(token);
+      const parsed = await parseResponse(resp);
+      if (!resp.ok) {
+        if (parsed?.error === 'UNAUTHORIZED') {
+          const newToken = await refreshAuthToken();
+          const retryResp = await uploadOnce(newToken);
+          const retryParsed = await parseResponse(retryResp);
+          if (!retryResp.ok) {
+            throw new Error((retryParsed && retryParsed.message) || retryParsed || 'CV upload failed');
+          }
+        } else {
+          throw new Error((parsed && parsed.message) || parsed || 'CV upload failed');
+        }
+      }
+      logMessage('CV uploaded', 'success');
+      setProfileForm((prev) => ({ ...prev, cvFileName: file.name }));
+    } catch (err) {
+      logMessage(err.message, 'error');
+    } finally {
+      setCvUploading(false);
+      if (cvInputRef.current) {
+        cvInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handleDeleteCv = async () => {
+    setCvDeleting(true);
+    try {
+      await api.call('/api/cv', { method: 'DELETE' });
+      logMessage('CV deleted', 'success');
+      setProfileForm((prev) => ({ ...prev, cvFileName: '' }));
+    } catch (err) {
+      logMessage(err.message, 'error');
+    } finally {
+      setCvDeleting(false);
+    }
+  };
+
+  const handleDownloadCv = () => {
+    logMessage('CV download is not available yet', 'info');
+  };
+
+  const handleDeleteAccount = async () => {
+    const confirmed = window.confirm('Delete your account? This cannot be undone.');
+    if (!confirmed) return;
+    setDeletingAccount(true);
+    try {
+      await api.call('/api/user/delete', { method: 'DELETE' });
+      logMessage('Account deleted', 'success');
+      handleLogout();
+    } catch (err) {
+      logMessage(err.message, 'error');
+    } finally {
+      setDeletingAccount(false);
+    }
+  };
 
   if (!user && !loading && !token) {
     return (
@@ -206,14 +616,8 @@ const App = () => {
         </div>
 
         <nav className="flex-1 space-y-1.5">
+          <SidebarItem icon={User} label="Profile" id="profile" active={activeTab === 'profile'} />
           <SidebarItem icon={LayoutDashboard} label="Dashboard" id="dash" active={activeTab === 'dash'} />
-          <SidebarItem icon={Briefcase} label="My Applications" id="apps" active={activeTab === 'apps'} />
-          <SidebarItem icon={User} label="Profile Details" id="profile" active={activeTab === 'profile'} />
-          <SidebarItem icon={Bell} label="Alerts" id="notif" active={activeTab === 'notif'} />
-          <div className="pt-4 pb-2">
-            <p className="px-4 text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Preferences</p>
-          </div>
-          <SidebarItem icon={Settings} label="Account Settings" id="settings" active={activeTab === 'settings'} />
         </nav>
 
         <div className="pt-6 border-t border-slate-100">
@@ -232,35 +636,32 @@ const App = () => {
       </aside>
 
       <main className="flex-1 flex flex-col h-screen overflow-hidden">
-        <header className="bg-white/80 backdrop-blur-md border-b border-slate-200 h-20 flex items-center justify-between px-8 shrink-0 z-10">
-          <div className="flex items-center gap-4 flex-1">
-            <div className="relative max-w-md w-full">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-              <input
-                type="text"
-                placeholder="Search jobs, companies..."
-                className="w-full pl-11 pr-4 py-2.5 bg-slate-100 border-none rounded-2xl text-sm focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all"
-              />
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <button className="p-2.5 text-slate-500 hover:bg-slate-100 rounded-xl transition-colors relative">
-              <Bell size={20} />
-              <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white" />
+        <div className="lg:hidden bg-white border-b border-slate-200">
+          <div className="flex items-center justify-between px-4 py-3">
+            <button
+              onClick={() => navigateToTab('profile')}
+              className={`flex-1 text-sm font-semibold py-2 px-3 rounded-full transition ${
+                activeTab === 'profile' ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-600'
+              }`}
+            >
+              Profile
             </button>
-            <div className="h-8 w-[1px] bg-slate-200 mx-2" />
-            <div className="flex items-center gap-3 pl-2">
-              <div className="text-right hidden sm:block">
-                <p className="text-sm font-bold text-slate-900 leading-none">{user?.username}</p>
-                <p className="text-[11px] font-medium text-emerald-600 mt-1 uppercase tracking-tighter">Premium Hunter</p>
-              </div>
-              <div className="w-10 h-10 rounded-2xl bg-indigo-100 border border-indigo-200 flex items-center justify-center text-indigo-600 shadow-sm">
-                <User size={22} />
-              </div>
-            </div>
+            <button
+              onClick={() => navigateToTab('dash')}
+              className={`flex-1 ml-2 text-sm font-semibold py-2 px-3 rounded-full transition ${
+                activeTab === 'dash' ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-600'
+              }`}
+            >
+              Dashboard
+            </button>
+            <button
+              onClick={() => handleLogout()}
+              className="flex-1 ml-2 text-sm font-semibold py-2 px-3 rounded-full bg-slate-100 text-slate-600"
+            >
+              Sign out
+            </button>
           </div>
-        </header>
+        </div>
 
         <div className="flex-1 overflow-y-auto bg-slate-50/50 p-8">
           {loading ? (
@@ -282,14 +683,6 @@ const App = () => {
                         </span>
                         <h1 className="text-4xl font-extrabold mb-3 tracking-tight">Success is near, {user?.username}.</h1>
                         <p className="text-indigo-100/80 text-lg font-medium leading-relaxed">You have 3 active interviews scheduled for this week. Good luck!</p>
-                        <div className="mt-8 flex gap-4">
-                          <button className="bg-white text-indigo-900 px-6 py-3 rounded-xl font-bold text-sm shadow-xl shadow-indigo-950/20 hover:scale-105 transition-transform">
-                            View Schedule
-                          </button>
-                          <button className="bg-white/10 border border-white/20 px-6 py-3 rounded-xl font-bold text-sm backdrop-blur-sm hover:bg-white/20 transition-all">
-                            New Hunt
-                          </button>
-                        </div>
                       </div>
                       <div className="hidden md:flex justify-end">
                         <div className="grid grid-cols-2 gap-4">
@@ -305,105 +698,233 @@ const App = () => {
                     <div className="absolute -right-16 -top-16 w-80 h-80 bg-white/5 rounded-full blur-3xl" />
                     <div className="absolute -left-16 -bottom-16 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl" />
                   </section>
-
-                  <div className="grid lg:grid-cols-3 gap-8">
-                    <div className="lg:col-span-2 space-y-6">
-                      <div className="flex items-center justify-between px-2">
-                        <h3 className="font-black text-slate-800 uppercase text-xs tracking-[0.2em]">Recent Applications</h3>
-                        <button className="text-indigo-600 font-bold text-xs hover:underline">View All</button>
-                      </div>
-                      <div className="space-y-3">
-                        {applications.map((app) => (
-                          <div key={app.id} className="group bg-white p-5 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-xl hover:shadow-slate-200/50 transition-all flex items-center justify-between">
-                            <div className="flex items-center gap-5">
-                              <div className="w-14 h-14 bg-slate-50 rounded-2xl flex items-center justify-center border border-slate-100 group-hover:bg-indigo-50 group-hover:border-indigo-100 transition-colors">
-                                <Briefcase className="text-slate-400 group-hover:text-indigo-500" size={24} />
-                              </div>
-                              <div>
-                                <h4 className="font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">{app.role}</h4>
-                                <div className="flex items-center gap-3 mt-1">
-                                  <span className="text-sm font-semibold text-slate-500">{app.company}</span>
-                                  <span className="w-1 h-1 rounded-full bg-slate-300" />
-                                  <span className="text-xs text-slate-400 flex items-center gap-1 font-medium">
-                                    <Clock size={12} /> {app.date}
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-6">
-                              <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest ${app.color}`}>
-                                {app.status}
-                              </span>
-                              <button className="p-2 text-slate-300 hover:text-slate-900 transition-colors">
-                                <MoreVertical size={18} />
-                              </button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="space-y-6">
-                      <h3 className="font-black text-slate-800 uppercase text-xs tracking-[0.2em] px-2">Account Summary</h3>
-                      <div className="bg-white rounded-[2rem] border border-slate-100 p-6 shadow-sm overflow-hidden relative">
-                        <div className="space-y-6 relative z-10">
-                          <div>
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Authenticated ID</p>
-                            <p className="text-xs font-mono text-slate-600 truncate bg-slate-50 p-2 rounded-lg">{user?.id || 'Anonymous'}</p>
-                          </div>
-                          <div>
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 text-center">Profile Integrity</p>
-                            <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
-                              <div className="bg-indigo-600 h-full w-[85%]" />
-                            </div>
-                            <p className="text-right text-[10px] font-bold text-indigo-600 mt-2">85% Complete</p>
-                          </div>
-                          <button className="w-full py-3 bg-slate-900 text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-slate-800 transition-colors">
-                            Update CV <Plus size={16} />
-                          </button>
-                        </div>
-                        <div className="absolute -right-8 -bottom-10 w-40 h-40 bg-indigo-50 rounded-full blur-2xl" />
-                      </div>
-                    </div>
-                  </div>
                 </>
               )}
 
               {activeTab === 'profile' && (
                 <div className="space-y-8 max-w-4xl mx-auto">
-                  <div className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm">
-                    <div className="flex flex-col md:flex-row gap-10">
-                      <div className="shrink-0 flex flex-col items-center">
-                        <div className="w-32 h-32 rounded-[2.5rem] bg-indigo-50 border-4 border-white shadow-xl flex items-center justify-center text-indigo-600 relative overflow-hidden group">
-                          <User size={48} />
-                          <div className="absolute inset-0 bg-indigo-600/0 group-hover:bg-indigo-600/10 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
-                            <Plus className="text-white" size={24} />
+                  <div className="bg-white rounded-[2rem] border border-slate-200 shadow-sm p-8 space-y-8">
+                    <div className="space-y-3">
+                      <h2 className="text-xl font-bold text-slate-900">Profile</h2>
+                      <p className="text-sm text-slate-500">Manage your identity, preferences, and notifications.</p>
+                    </div>
+
+                    <div className="space-y-6">
+                      <div className="grid lg:grid-cols-[1fr_auto_1fr] gap-6 items-start">
+                        <div className="space-y-3">
+                          <h3 className="text-lg font-semibold text-slate-900">Identity</h3>
+                          <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-2 text-sm text-slate-700">
+                            <p>
+                              <span className="font-semibold text-slate-800">Username:</span> {user?.username || '-'}
+                            </p>
+                            <p>
+                              <span className="font-semibold text-slate-800">Email:</span> {user?.email || '-'}
+                            </p>
+                            <p>
+                              <span className="font-semibold text-slate-800">Phone:</span> {user?.phoneNumber || '-'}
+                            </p>
                           </div>
                         </div>
-                        <h2 className="mt-6 font-black text-2xl text-slate-900">{user?.username}</h2>
-                        <p className="text-slate-500 font-bold text-sm tracking-tight">Active Member since 2024</p>
-                      </div>
 
-                      <div className="flex-1 grid sm:grid-cols-2 gap-8">
-                        {[{ label: 'Primary Contact', value: `${user?.username}@jobshunter.io` }, { label: 'Location', value: 'San Francisco, CA' }, { label: 'Role Type', value: 'Full-time / Remote' }, { label: 'Experience', value: '5+ Years' }].map((item) => (
-                          <div key={item.label}>
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{item.label}</p>
-                            <p className="font-bold text-slate-800">{item.value}</p>
+                        <div className="hidden lg:block w-px bg-slate-200 h-full" />
+
+                        <div className="space-y-3">
+                          <h3 className="text-lg font-semibold text-slate-900">CV/Resume</h3>
+                          <div className="space-y-3">
+                            <div className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-600">
+                              {profileForm.cvFileName || 'No CV uploaded'}
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                              <input
+                                ref={cvInputRef}
+                                type="file"
+                                accept=".pdf,.doc,.docx,.txt"
+                                className="hidden"
+                                onChange={(e) => handleUploadCv(e.target.files?.[0])}
+                              />
+                              <button
+                                onClick={() => cvInputRef.current?.click()}
+                                disabled={cvUploading}
+                                className="px-4 py-2 rounded-lg bg-indigo-700 text-white text-sm font-semibold disabled:opacity-70"
+                              >
+                                {cvUploading ? 'Uploading...' : 'Upload'}
+                              </button>
+                              <button
+                                onClick={handleDownloadCv}
+                                className="px-4 py-2 rounded-lg border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                              >
+                                Download
+                              </button>
+                              <button
+                                onClick={handleDeleteCv}
+                                disabled={cvDeleting}
+                                className="px-4 py-2 rounded-lg bg-red-100 text-red-700 text-sm font-semibold disabled:opacity-70"
+                              >
+                                {cvDeleting ? 'Deleting...' : 'Delete'}
+                              </button>
+                            </div>
                           </div>
-                        ))}
+                        </div>
                       </div>
-                    </div>
-                  </div>
 
-                  <div className="bg-slate-900 rounded-[2.5rem] overflow-hidden border border-slate-800 shadow-2xl">
-                    <div className="p-6 border-b border-white/5 flex justify-between items-center bg-white/[0.02]">
-                      <h3 className="font-black text-white text-xs tracking-widest uppercase flex items-center gap-2">
-                        <ShieldCheck size={14} className="text-indigo-400" /> API Object Response
-                      </h3>
-                      <span className="text-[10px] font-black text-slate-500 bg-white/5 px-3 py-1 rounded-full uppercase">Raw Metadata</span>
-                    </div>
-                    <div className="p-8">
-                      <pre className="text-emerald-400 font-mono text-sm leading-relaxed overflow-x-auto selection:bg-indigo-500 selection:text-white">{JSON.stringify(user, null, 2)}</pre>
+                      <div className="border-t border-slate-200" />
+
+                      <div className="space-y-3">
+                        <h3 className="text-lg font-semibold text-slate-900">Location</h3>
+                        <div className="grid sm:grid-cols-2 gap-4">
+                          <div>
+                            <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">City</p>
+                            <input
+                              value={profileForm.city}
+                              onChange={(e) => handleProfileChange('city', e.target.value)}
+                              className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                              placeholder="Select city"
+                            />
+                          </div>
+                          <div>
+                            <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">Country</p>
+                            <input
+                              value={profileForm.country}
+                              onChange={(e) => handleProfileChange('country', e.target.value)}
+                              className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                              placeholder="Select country"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="border-t border-slate-200" />
+
+                      <div className="space-y-3">
+                        <h3 className="text-lg font-semibold text-slate-900">Job Preferences</h3>
+                        <div className="space-y-4">
+                          <div>
+                            <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">Domain</p>
+                            <input
+                              value={profileForm.jobDomain}
+                              onChange={(e) => handleProfileChange('jobDomain', e.target.value)}
+                              className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                              placeholder="Software Engineering"
+                            />
+                          </div>
+
+                          <div>
+                            <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">Roles</p>
+                          </div>
+
+                          <div className="border border-slate-200 rounded-2xl bg-slate-50">
+                            <div className="p-4 space-y-3">
+                              {profileForm.jobRoles.length === 0 && <p className="text-sm text-slate-500">No roles added yet.</p>}
+                              {profileForm.jobRoles.map((role, index) => (
+                                <div key={index} className="flex items-center justify-between text-sm text-slate-800 bg-white border border-slate-200 rounded-xl px-3 py-2 gap-3">
+                                  <input
+                                    value={role}
+                                    onChange={(e) => handleUpdateRole(index, e.target.value)}
+                                    className="flex-1 bg-transparent text-sm outline-none"
+                                  />
+                                  <button onClick={() => handleRemoveRole(index)} className="text-indigo-600 font-semibold text-xs hover:underline">
+                                    Delete
+                                  </button>
+                                </div>
+                              ))}
+                              <div className="flex flex-col sm:flex-row gap-2">
+                                <input
+                                  value={roleInput}
+                                  onChange={(e) => setRoleInput(e.target.value)}
+                                  className="flex-1 px-3 py-2 rounded-lg bg-white border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                                  placeholder="Add role"
+                                />
+                                <button
+                                  onClick={handleAddRole}
+                                  className="px-4 py-2 rounded-lg bg-indigo-700 text-white text-sm font-semibold"
+                                >
+                                  + Add role
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="space-y-4">
+                            <div>
+                              <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Job types</p>
+                              <div className="flex flex-wrap gap-3">
+                                {jobTypeOptions.map((opt) => {
+                                  const active = profileForm.jobTypes.includes(opt.id);
+                                  return (
+                                    <ToggleSwitch
+                                      key={opt.id}
+                                      label={opt.label}
+                                      checked={active}
+                                      onChange={() => toggleJobType(opt.id)}
+                                    />
+                                  );
+                                })}
+                              </div>
+                            </div>
+
+                            <div>
+                              <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Contract types</p>
+                              <div className="flex flex-wrap gap-3">
+                                {contractTypeOptions.map((opt) => {
+                                  const active = profileForm.contractTypes.includes(opt.id);
+                                  return (
+                                    <ToggleSwitch
+                                      key={opt.id}
+                                      label={opt.label}
+                                      checked={active}
+                                      onChange={() => toggleContractType(opt.id)}
+                                    />
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="border-t border-slate-200" />
+
+                      <div className="space-y-3">
+                        <h3 className="text-lg font-semibold text-slate-900">Notifications</h3>
+                        <div className="flex flex-wrap gap-3">
+                          <ToggleSwitch
+                            label="WhatsApp"
+                            checked={profileForm.notifyWhatsapp}
+                            onChange={(next) => handleProfileChange('notifyWhatsapp', next)}
+                          />
+                          <ToggleSwitch
+                            label="Email"
+                            checked={profileForm.notifyEmail}
+                            onChange={(next) => handleProfileChange('notifyEmail', next)}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="border-t border-slate-200" />
+
+                      <div className="flex flex-wrap items-center justify-between gap-4 pt-2">
+                        <button
+                          onClick={handleSaveProfile}
+                          disabled={saving}
+                          className="w-64 px-6 py-3 rounded-xl bg-indigo-700 text-white font-semibold text-sm shadow-lg shadow-indigo-200 disabled:opacity-70 flex items-center justify-center gap-2"
+                        >
+                          {saving ? (
+                            'Saving...'
+                          ) : (
+                            <>
+                              <CheckCircle2 size={18} />
+                              Save
+                            </>
+                          )}
+                        </button>
+                        <button
+                          onClick={handleDeleteAccount}
+                          disabled={deletingAccount}
+                          className="text-red-600 text-sm font-semibold underline disabled:opacity-70"
+                        >
+                          {deletingAccount ? 'Deleting...' : 'Delete account'}
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>

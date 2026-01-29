@@ -31,10 +31,16 @@ public class UserCvDBService {
   }
 
   @Transactional
-  public UserCvEntity replaceUserCv(UserEntity user, byte[] cvContent, Map<EngineType, ResumeFileInfo> result) {
+  public UserCvEntity replaceUserCv(
+      UserEntity user,
+      byte[] cvContent,
+      String filename,
+      Map<EngineType, ResumeFileInfo> result
+  ) {
     UserCvEntity entity = userCvRepository.findByUserId(user.getId())
-        .orElseGet(() -> new UserCvEntity(user, cvContent));
+        .orElseGet(() -> new UserCvEntity(user, cvContent, filename));
     entity.setByteArray(cvContent);
+    entity.setFilename(filename);
     entity = userCvRepository.save(entity);
     for (Entry<EngineType, ResumeFileInfo> entry : result.entrySet()) {
       this.saveRemoteCvFile(user, entry.getKey(), entry.getValue());

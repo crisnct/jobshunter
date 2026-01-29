@@ -89,7 +89,7 @@ public class SecurityConfig {
         )
         .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .authorizeHttpRequests(auth -> auth
-            .requestMatchers("/", "/index.html", "/css/**", "/js/**", "/images/**").permitAll()
+            .requestMatchers("/", "/profile", "/dashboard", "/index.html", "/css/**", "/js/**", "/images/**").permitAll()
             .requestMatchers("/assets/**", "/src/**", "/favicon.jpg", "/manifest.webmanifest", "/robots.txt").permitAll()
             .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**", "/openapi.yml").permitAll()
             .requestMatchers("/api/auth/**").permitAll()

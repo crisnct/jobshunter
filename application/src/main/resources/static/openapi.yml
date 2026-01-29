@@ -160,10 +160,7 @@ components:
         verificationToken:
           type: string
           nullable: true
-        gptFileId:
-          type: string
-          nullable: true
-        grokFileId:
+        cvFilename:
           type: string
           nullable: true
         lastJobs:

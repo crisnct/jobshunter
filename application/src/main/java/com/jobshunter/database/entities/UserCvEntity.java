@@ -12,6 +12,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Lob;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -38,9 +39,14 @@ public class UserCvEntity {
   @Column(name = "cv", nullable = false)
   private byte[] byteArray;
 
-  public UserCvEntity(UserEntity user, byte[] cv) {
+  @Size(max = 128)
+  @Column(name = "filename", length = 128)
+  private String filename;
+
+  public UserCvEntity(UserEntity user, byte[] cv, String filename) {
     this.user = user;
     this.byteArray = cv;
+    this.filename = filename;
   }
 }
 
