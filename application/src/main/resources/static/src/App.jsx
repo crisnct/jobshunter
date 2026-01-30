@@ -202,7 +202,7 @@ const App = () => {
   }, []);
 
   useEffect(() => {
-    if (!status.message || status.type === 'error') {
+    if (!status.message) {
       return;
     }
     const timeout = setTimeout(() => {
@@ -899,8 +899,8 @@ const App = () => {
     <div className="min-h-screen bg-slate-50 flex font-sans">
       <aside className="w-64 bg-white border-r border-slate-200 hidden lg:flex flex-col p-6 shrink-0">
         <div className="flex items-center gap-3 mb-10 px-2">
-          <div className="w-9 h-9 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-100">
-            <Globe className="text-white" size={20} />
+          <div className="w-9 h-9 rounded-xl overflow-hidden shadow-lg shadow-indigo-100">
+            <img src="/images/JobsHunterLogo.png" alt="JobsHunter logo" className="w-full h-full object-cover" />
           </div>
           <span className="font-black text-xl text-slate-900 tracking-tight">JobsHunter</span>
         </div>
