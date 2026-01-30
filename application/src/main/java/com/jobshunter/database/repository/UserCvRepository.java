@@ -5,6 +5,8 @@ import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.processor.SqlInjectionSafe;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -13,7 +15,8 @@ public interface UserCvRepository extends JpaRepository<UserCvEntity, Long> {
 
   Optional<UserCvEntity> findByUserId(Long userId);
 
-  Optional<UserCvEntity> findByUserUsernameIgnoreCase(@SqlInjectionSafe String username);
+  @Query("select cv from UserCvEntity cv where lower(cv.user.username) = lower(:username)")
+  Optional<UserCvEntity> findByUsernameIgnoreCase(@Param("username") @SqlInjectionSafe String username);
 
   void deleteByUserId(Long userId);
 }

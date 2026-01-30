@@ -128,7 +128,7 @@ public class UserController {
         user.getCv() != null ? user.getCv().getFilename() : "",
         formatDateTime(user.getLastJobs()),
         prompts.stream()
-            .map(p -> String.format("id: %d, prompt: %s", p.getId(), p.getPrompt()))
+            .map(UserPromptEntity::getPrompt)
             .toList(),
         formatDateTime(user.getCreatedAt()),
         roles,

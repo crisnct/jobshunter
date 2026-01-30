@@ -122,8 +122,9 @@ public class UserCvService {
       throw new ValidationException("User not authenticated");
     }
     UserEntity user = userDBService.getUser(username).orElseThrow(() -> new ValidationException("User not found"));
+    deleteRemoteFiles(user);
+    userCvDBService.deleteUserRemoteCvs(user);
     if (user.getCv() != null) {
-      deleteRemoteFiles(user);
       userCvDBService.deleteUserCv(user);
       userDBService.updateUser(user);
     }

@@ -26,6 +26,8 @@ const App = () => {
   const [cvDeleting, setCvDeleting] = useState(false);
   const [deletingAccount, setDeletingAccount] = useState(false);
   const [roleInput, setRoleInput] = useState('');
+  const [countries, setCountries] = useState([]);
+  const [countriesLoading, setCountriesLoading] = useState(false);
   const cvInputRef = useRef(null);
   const loginToastShownRef = useRef(false);
   const refreshAttemptedRef = useRef(false);
@@ -38,6 +40,7 @@ const App = () => {
     country: '',
     jobDomain: '',
     jobRoles: [],
+    aiPrompts: [],
     jobTypes: [],
     contractTypes: [],
     notifyWhatsapp: false,
@@ -198,6 +201,10 @@ const App = () => {
           country: data.country || '',
           jobDomain: data.jobDomain || '',
           jobRoles: data.jobRoles || [],
+          aiPrompts: (data.prompts || []).map((prompt) => ({
+            id: null,
+            prompt,
+          })),
           jobTypes: data.jobTypes || [],
           contractTypes: data.contractTypes || [],
           notifyWhatsapp: data.notifyWhatsapp || false,
@@ -225,6 +232,25 @@ const App = () => {
       isActive = false;
     };
   }, [token, api, logMessage, refreshAuthToken]);
+
+  useEffect(() => {
+    if (!token) {
+      setCountries([]);
+      return;
+    }
+    setCountriesLoading(true);
+    api
+      .call('/api/misc/countries')
+      .then((data) => {
+        const items = Array.isArray(data) ? data : [];
+        setCountries(items);
+      })
+      .catch((err) => {
+        logMessage(err.message, 'error');
+        setCountries([]);
+      })
+      .finally(() => setCountriesLoading(false));
+  }, [token, api, logMessage]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -424,6 +450,28 @@ const App = () => {
     });
   };
 
+  const handleAddPrompt = () => {
+    setProfileForm((prev) => ({
+      ...prev,
+      aiPrompts: [...prev.aiPrompts, { id: null, prompt: '' }],
+    }));
+  };
+
+  const handleRemovePrompt = (index) => {
+    setProfileForm((prev) => ({
+      ...prev,
+      aiPrompts: prev.aiPrompts.filter((_, i) => i !== index),
+    }));
+  };
+
+  const handleUpdatePrompt = (index, value) => {
+    setProfileForm((prev) => {
+      const nextPrompts = [...prev.aiPrompts];
+      nextPrompts[index] = { ...nextPrompts[index], prompt: value };
+      return { ...prev, aiPrompts: nextPrompts };
+    });
+  };
+
   const handleSaveProfile = async () => {
     if (!profileForm.phoneNumber) {
       logMessage('Phone number is required', 'error');
@@ -445,7 +493,10 @@ const App = () => {
           jobTypes: profileForm.jobTypes,
           relocation: profileForm.relocation,
           contractTypes: profileForm.contractTypes,
-          aiPrompts: null,
+          aiPrompts: profileForm.aiPrompts.map((entry) => ({
+            id: null,
+            prompt: entry.prompt,
+          })),
         },
       });
       logMessage('Profile updated', 'success');
@@ -530,7 +581,53 @@ const App = () => {
   };
 
   const handleDownloadCv = () => {
-    logMessage('CV download is not available yet', 'info');
+    const downloadOnce = async (authToken) => {
+      const csrf = token ? await fetchCsrfToken() : null;
+      return fetch(`${baseUrl}/api/cv/download`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+          ...(csrf ? { [csrf.headerName]: csrf.token } : {}),
+        },
+      });
+    };
+
+    const handleDownload = async () => {
+      try {
+        const resp = await downloadOnce(token);
+        if (!resp.ok) {
+          const parsed = await parseResponse(resp);
+          if (parsed?.error === 'UNAUTHORIZED') {
+            const newToken = await refreshAuthToken();
+            const retryResp = await downloadOnce(newToken);
+            if (!retryResp.ok) {
+              const retryParsed = await parseResponse(retryResp);
+              throw new Error((retryParsed && retryParsed.message) || retryParsed || 'CV download failed');
+            }
+            return retryResp;
+          }
+          throw new Error((parsed && parsed.message) || parsed || 'CV download failed');
+        }
+        return resp;
+      } catch (err) {
+        logMessage(err.message, 'error');
+        return null;
+      }
+    };
+
+    handleDownload().then(async (resp) => {
+      if (!resp) return;
+      const blob = await resp.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = profileForm.cvFileName || 'cv.pdf';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    });
   };
 
   const handleDeleteAccount = async () => {
@@ -725,7 +822,7 @@ const App = () => {
                           </div>
                         </div>
 
-                        <div className="hidden lg:block w-px bg-slate-200 h-full" />
+                        <div className="hidden lg:block w-1 bg-slate-400 h-full rounded-full" />
 
                         <div className="space-y-3">
                           <h3 className="text-lg font-semibold text-slate-900">CV/Resume</h3>
@@ -766,11 +863,29 @@ const App = () => {
                         </div>
                       </div>
 
-                      <div className="border-t border-slate-200" />
+                      <div className="border-t-4 border-slate-400" />
 
                       <div className="space-y-3">
                         <h3 className="text-lg font-semibold text-slate-900">Location</h3>
                         <div className="grid sm:grid-cols-2 gap-4">
+                          <div>
+                            <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">Country</p>
+                            <select
+                              value={profileForm.country || ''}
+                              onChange={(e) => handleProfileChange('country', e.target.value)}
+                              className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                              disabled={countriesLoading}
+                            >
+                              <option value="" disabled>
+                                {countriesLoading ? 'Loading countries...' : 'Select country'}
+                              </option>
+                              {countries.map((country) => (
+                                <option key={country} value={country}>
+                                  {country}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
                           <div>
                             <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">City</p>
                             <input
@@ -780,19 +895,10 @@ const App = () => {
                               placeholder="Select city"
                             />
                           </div>
-                          <div>
-                            <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">Country</p>
-                            <input
-                              value={profileForm.country}
-                              onChange={(e) => handleProfileChange('country', e.target.value)}
-                              className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                              placeholder="Select country"
-                            />
-                          </div>
                         </div>
                       </div>
 
-                      <div className="border-t border-slate-200" />
+                      <div className="border-t-4 border-slate-400" />
 
                       <div className="space-y-3">
                         <h3 className="text-lg font-semibold text-slate-900">Job Preferences</h3>
@@ -881,7 +987,48 @@ const App = () => {
                         </div>
                       </div>
 
-                      <div className="border-t border-slate-200" />
+                      <div className="border-t-4 border-slate-400" />
+
+                      <div className="space-y-3">
+                        <h3 className="text-lg font-semibold text-slate-900">Prompts</h3>
+                        <div className="border border-slate-200 rounded-2xl bg-slate-50">
+                          <div className="p-4 space-y-3">
+                            {profileForm.aiPrompts.length === 0 && (
+                              <p className="text-sm text-slate-500">No prompts added yet.</p>
+                            )}
+                            {profileForm.aiPrompts.map((entry, index) => (
+                              <div
+                                key={`prompt-${index}`}
+                                className="flex flex-col gap-2 text-sm text-slate-800 bg-white border border-slate-200 rounded-xl p-3"
+                              >
+                                <textarea
+                                  rows={3}
+                                  value={entry.prompt}
+                                  onChange={(e) => handleUpdatePrompt(index, e.target.value)}
+                                  className="w-full text-sm outline-none resize-none leading-relaxed max-h-32 overflow-y-auto"
+                                  placeholder="Write your prompt..."
+                                />
+                                <div className="flex justify-end">
+                                  <button
+                                    onClick={() => handleRemovePrompt(index)}
+                                    className="text-indigo-600 font-semibold text-xs hover:underline"
+                                  >
+                                    Delete
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
+                            <button
+                              onClick={handleAddPrompt}
+                              className="px-4 py-2 rounded-lg bg-indigo-700 text-white text-sm font-semibold"
+                            >
+                              + Add prompt
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="border-t-4 border-slate-400" />
 
                       <div className="space-y-3">
                         <h3 className="text-lg font-semibold text-slate-900">Notifications</h3>
@@ -899,7 +1046,7 @@ const App = () => {
                         </div>
                       </div>
 
-                      <div className="border-t border-slate-200" />
+                      <div className="border-t-4 border-slate-400" />
 
                       <div className="flex flex-wrap items-center justify-between gap-4 pt-2">
                         <button

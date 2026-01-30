@@ -12,6 +12,7 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.logging.log4j.util.Strings;
 import org.hibernate.Hibernate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,7 +28,7 @@ public class UserCvDBService {
 
   @Transactional(readOnly = true)
   public Optional<UserCvEntity> getUserCv(String username) {
-    return userCvRepository.findByUserUsernameIgnoreCase(username);
+    return userCvRepository.findByUsernameIgnoreCase(username);
   }
 
   @Transactional
@@ -37,15 +38,25 @@ public class UserCvDBService {
       String filename,
       Map<EngineType, ResumeFileInfo> result
   ) {
+    String filenameSanitized = sanitizeFilename(filename);
     UserCvEntity entity = userCvRepository.findByUserId(user.getId())
-        .orElseGet(() -> new UserCvEntity(user, cvContent, filename));
+        .orElseGet(() -> new UserCvEntity(user, cvContent, filenameSanitized));
     entity.setByteArray(cvContent);
-    entity.setFilename(filename);
+    entity.setFilename(filenameSanitized);
     entity = userCvRepository.save(entity);
     for (Entry<EngineType, ResumeFileInfo> entry : result.entrySet()) {
       this.saveRemoteCvFile(user, entry.getKey(), entry.getValue());
     }
     return entity;
+  }
+
+  private String sanitizeFilename(String filename) {
+    if (Strings.isBlank(filename)) {
+      filename = "cv.pdf";
+    } else if (!filename.toLowerCase().endsWith(".pdf")) {
+      filename = filename + ".pdf";
+    }
+    return filename.replaceAll("[\\r\\n\"]", "_");
   }
 
   @Transactional
@@ -76,5 +87,13 @@ public class UserCvDBService {
   public void deleteUserCv(UserEntity user) {
     user.setCv(null);
     userCvRepository.deleteByUserId(user.getId());
+  }
+
+  @Transactional
+  public void deleteUserRemoteCvs(UserEntity user) {
+    userRemoteCvRepository.deleteByUserId(user.getId());
+    if (user.getRemoteCvs() != null) {
+      user.getRemoteCvs().clear();
+    }
   }
 }
