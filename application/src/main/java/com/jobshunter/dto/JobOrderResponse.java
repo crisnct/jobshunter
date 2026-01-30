@@ -13,6 +13,7 @@ public record JobOrderResponse(
     OrderStatus status,
     boolean notified,
     Instant modifiedAt,
+    long jobsFound,
     String errorMessage
 ) {
 

@@ -7,7 +7,6 @@ import {
   Loader2,
   LogOut,
   Plus,
-  ShieldCheck,
   User,
 } from 'lucide-react';
 import './index.css';
@@ -26,6 +25,14 @@ const App = () => {
   const [cvDeleting, setCvDeleting] = useState(false);
   const [deletingAccount, setDeletingAccount] = useState(false);
   const [roleInput, setRoleInput] = useState('');
+  const [orders, setOrders] = useState([]);
+  const [jobsFound, setJobsFound] = useState([]);
+  const [ordersLoading, setOrdersLoading] = useState(false);
+  const [jobsLoading, setJobsLoading] = useState(false);
+  const [selectedOrderId, setSelectedOrderId] = useState(null);
+  const [ordersSort, setOrdersSort] = useState({ key: 'modifiedAt', direction: 'desc' });
+  const [ordersPage, setOrdersPage] = useState(1);
+  const [jobsSort, setJobsSort] = useState({ key: 'createdAt', direction: 'desc' });
   const [countries, setCountries] = useState([]);
   const [countriesLoading, setCountriesLoading] = useState(false);
   const cvInputRef = useRef(null);
@@ -61,6 +68,134 @@ const App = () => {
     { id: 'EOR', label: 'EOR' },
     { id: 'INTERNSHIP', label: 'INTERNSHIP' },
   ];
+
+  const JobsHunterLogoSrc = '/images/JobsHunterLogo.jpg';
+
+  const orderColumns = [
+    { key: 'modifiedAt', label: 'Date', align: 'left' },
+    { key: 'provider', label: 'Engine', align: 'left' },
+    { key: 'model', label: 'Model', align: 'left' },
+    { key: 'searchCompanies', label: 'By company', align: 'center' },
+    { key: 'searchByPrompts', label: 'By prompts', align: 'center' },
+    { key: 'status', label: 'Status', align: 'right' },
+    { key: 'jobsFound', label: 'Jobs found', align: 'right' },
+    { key: 'errorMessage', label: 'Error', align: 'right' },
+  ];
+
+  const sortedOrders = useMemo(() => {
+    const sorted = [...orders];
+    const { key, direction } = ordersSort;
+    const multiplier = direction === 'asc' ? 1 : -1;
+    sorted.sort((a, b) => {
+      const getValue = (order) => {
+        switch (key) {
+          case 'modifiedAt':
+            return order.modifiedAt ? new Date(order.modifiedAt).getTime() : 0;
+          case 'provider':
+            return order.provider || '';
+          case 'model':
+            return order.model || '';
+          case 'searchCompanies':
+            return order.searchCompanies ? 1 : 0;
+          case 'searchByPrompts':
+            return order.searchByPrompts ? 1 : 0;
+          case 'status':
+            return order.status || '';
+          case 'jobsFound':
+            return order.jobsFound || 0;
+          case 'errorMessage':
+            return order.errorMessage || '';
+          default:
+            return '';
+        }
+      };
+      const aVal = getValue(a);
+      const bVal = getValue(b);
+      if (typeof aVal === 'number' && typeof bVal === 'number') {
+        return (aVal - bVal) * multiplier;
+      }
+      return String(aVal).localeCompare(String(bVal)) * multiplier;
+    });
+    return sorted;
+  }, [orders, ordersSort]);
+
+  const selectedOrder = useMemo(
+    () => orders.find((order) => order.id === selectedOrderId) || null,
+    [orders, selectedOrderId]
+  );
+
+  const ordersPerPage = 5;
+  const totalOrderPages = Math.max(1, Math.ceil(sortedOrders.length / ordersPerPage));
+  const pagedOrders = sortedOrders.slice((ordersPage - 1) * ordersPerPage, ordersPage * ordersPerPage);
+
+  const handleOrderSort = (key) => {
+    setOrdersSort((prev) => {
+      if (prev.key === key) {
+        return { key, direction: prev.direction === 'asc' ? 'desc' : 'asc' };
+      }
+      return { key, direction: 'asc' };
+    });
+  };
+
+  const sortArrow = (key) => {
+    if (ordersSort.key !== key) return '';
+    return ordersSort.direction === 'asc' ? '↑' : '↓';
+  };
+
+  const sortedJobs = useMemo(() => {
+    const sorted = [...jobsFound];
+    const { key, direction } = jobsSort;
+    const multiplier = direction === 'asc' ? 1 : -1;
+    sorted.sort((a, b) => {
+      const getValue = (job) => {
+        switch (key) {
+          case 'url':
+            return job.url || '';
+          case 'createdAt':
+            return job.createdAt ? new Date(job.createdAt).getTime() : 0;
+          case 'engine':
+            return selectedOrder?.provider || '';
+          case 'model':
+            return selectedOrder?.model || '';
+          default:
+            return '';
+        }
+      };
+      const aVal = getValue(a);
+      const bVal = getValue(b);
+      if (typeof aVal === 'number' && typeof bVal === 'number') {
+        return (aVal - bVal) * multiplier;
+      }
+      return String(aVal).localeCompare(String(bVal)) * multiplier;
+    });
+    return sorted;
+  }, [jobsFound, jobsSort, selectedOrder]);
+
+  const handleJobsSort = (key) => {
+    setJobsSort((prev) => {
+      if (prev.key === key) {
+        return { key, direction: prev.direction === 'asc' ? 'desc' : 'asc' };
+      }
+      return { key, direction: 'asc' };
+    });
+  };
+
+  const jobsSortArrow = (key) => {
+    if (jobsSort.key !== key) return '';
+    return jobsSort.direction === 'asc' ? '↑' : '↓';
+  };
+
+  const bannerMessage = useMemo(() => {
+    const hasNew = orders.some((order) => order.status === 'NEW');
+    const hasProcessing = orders.some((order) => order.status === 'PROCESSING');
+    if (!hasNew && !hasProcessing) {
+      return 'No searches are running right now. Start a new order whenever you’re ready.';
+    }
+    if (hasNew) {
+      return 'Your order is queued and will start automatically when resources become available.';
+    }
+    return 'Your searches are running in the background. Check back anytime for new results.';
+  }, [orders]);
 
   const logMessage = useCallback((message, type = 'info') => {
     setStatus({ type, message });
@@ -234,6 +369,65 @@ const App = () => {
   }, [token, api, logMessage, refreshAuthToken]);
 
   useEffect(() => {
+    if (!token || activeTab !== 'dash') {
+      return;
+    }
+    let active = true;
+    setOrdersLoading(true);
+    api
+      .call('/api/engine/orders')
+      .then((data) => {
+        const list = Array.isArray(data) ? data : [];
+        list.sort((a, b) => new Date(b.modifiedAt).getTime() - new Date(a.modifiedAt).getTime());
+        if (active) {
+          setOrders(list);
+        }
+      })
+      .catch((err) => {
+        if (active) {
+          logMessage(err.message, 'error');
+          setOrders([]);
+        }
+      })
+      .finally(() => {
+        if (active) {
+          setOrdersLoading(false);
+        }
+      });
+    return () => {
+      active = false;
+    };
+  }, [token, activeTab, api, logMessage]);
+
+  const loadJobs = useCallback(
+    async (orderId = null) => {
+      if (!token || !orderId) {
+        setJobsFound([]);
+        return;
+      }
+      setJobsLoading(true);
+      try {
+        const params = orderId ? `?orderId=${encodeURIComponent(orderId)}` : '';
+        const data = await api.call(`/api/user/jobs${params}`);
+        setJobsFound(Array.isArray(data) ? data : []);
+      } catch (err) {
+        logMessage(err.message, 'error');
+        setJobsFound([]);
+      } finally {
+        setJobsLoading(false);
+      }
+    },
+    [api, logMessage, token]
+  );
+
+  useEffect(() => {
+    if (activeTab !== 'dash') {
+      return;
+    }
+    loadJobs(selectedOrderId);
+  }, [activeTab, selectedOrderId, loadJobs]);
+
+  useEffect(() => {
     if (!token) {
       setCountries([]);
       return;
@@ -402,7 +596,7 @@ const App = () => {
     >
       {status.type === 'error' && <AlertCircle size={18} />}
       {status.type === 'success' && <CheckCircle2 size={18} />}
-      <span className="text-sm font-medium">{status.message}</span>
+      <span className="text-sm font-medium whitespace-pre-line">{status.message}</span>
     </div>
     );
   };
@@ -768,32 +962,251 @@ const App = () => {
               <p className="font-bold text-sm tracking-wide">Fetching secure data...</p>
             </div>
           ) : (
-            <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <div className="w-full max-w-none mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
               {activeTab === 'dash' && (
                 <>
-                  <section className="relative overflow-hidden bg-gradient-to-br from-indigo-900 to-indigo-800 rounded-[2.5rem] p-10 text-white shadow-2xl shadow-indigo-200">
-                    <div className="relative z-10 grid md:grid-cols-2 gap-8 items-center">
-                      <div>
-                        <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-indigo-100 text-[10px] font-black uppercase tracking-widest mb-4 border border-white/5 backdrop-blur-sm">
-                          <ShieldCheck size={12} /> Live Account
-                        </span>
-                        <h1 className="text-4xl font-extrabold mb-3 tracking-tight">Success is near, {user?.username}.</h1>
-                        <p className="text-indigo-100/80 text-lg font-medium leading-relaxed">You have 3 active interviews scheduled for this week. Good luck!</p>
+                  <section className="relative overflow-hidden bg-slate-200 rounded-[2.5rem] h-32 text-slate-700 shadow-2xl shadow-slate-200">
+                    <div className="relative z-10 flex items-center h-full px-10 gap-6">
+                      <img
+                        src={JobsHunterLogoSrc}
+                        alt="JobsHunter logo"
+                        className="h-32 w-32 object-cover rounded-2xl"
+                      />
+                      <p className="flex-1 text-base md:text-lg font-medium leading-relaxed">
+                        {bannerMessage}
+                      </p>
+                    </div>
+                  </section>
+
+                  <div className="space-y-8">
+                    <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 space-y-4">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-base font-bold text-slate-900">Orders</h3>
+                        <button
+                          onClick={() =>
+                            logMessage(
+                              'Due to cost constraints, this action is currently limited to the Product Owner.\nThank you for your understanding.',
+                              'error'
+                            )
+                          }
+                          className="px-4 py-2 rounded-full bg-indigo-700 text-white text-sm font-semibold hover:bg-indigo-800 transition-colors"
+                        >
+                          + New order
+                        </button>
                       </div>
-                      <div className="hidden md:flex justify-end">
-                        <div className="grid grid-cols-2 gap-4">
-                          {[{ label: 'Applications', val: '24' }, { label: 'Interviews', val: '3' }, { label: 'Offers', val: '1' }, { label: 'Views', val: '142' }].map((stat) => (
-                            <div key={stat.label} className="bg-white/5 backdrop-blur-md border border-white/10 p-5 rounded-3xl min-w-[120px]">
-                              <p className="text-indigo-200 text-[10px] font-bold uppercase tracking-widest mb-1">{stat.label}</p>
-                              <p className="text-2xl font-black">{stat.val}</p>
-                            </div>
-                          ))}
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-sm text-slate-700">
+                          <thead>
+                            <tr className="text-xs uppercase text-slate-400 border-b border-slate-100">
+                              {orderColumns.map((col) => (
+                                <th
+                                  key={col.key}
+                                  className={`relative py-2 font-semibold cursor-pointer ${
+                                    col.align === 'right'
+                                      ? 'text-right'
+                                      : col.align === 'center'
+                                        ? 'text-center'
+                                        : 'text-left'
+                                  }`}
+                                  onClick={() => handleOrderSort(col.key)}
+                                >
+                                  <span className="inline-flex items-center gap-2 select-none">
+                                    {col.label}
+                                    <span className="text-xs text-slate-700 font-bold">{sortArrow(col.key)}</span>
+                                  </span>
+                                </th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {ordersLoading && (
+                              <tr>
+                                <td colSpan={8} className="py-6 text-center text-slate-400">
+                                  Loading orders...
+                                </td>
+                              </tr>
+                            )}
+                            {!ordersLoading && pagedOrders.length === 0 && (
+                              <tr>
+                                <td colSpan={8} className="py-6 text-center text-slate-400">
+                                  No orders yet.
+                                </td>
+                              </tr>
+                            )}
+                            {!ordersLoading &&
+                              pagedOrders.map((order) => (
+                                <tr
+                                  key={order.id}
+                                  onClick={() => {
+                                    setSelectedOrderId(order.id);
+                                  }}
+                                  className={`border-b border-slate-100 last:border-b-0 cursor-pointer ${
+                                    selectedOrderId === order.id ? 'bg-indigo-100/70' : ''
+                                  }`}
+                                >
+                                  <td className="py-2 text-slate-500">
+                                    {order.modifiedAt ? new Date(order.modifiedAt).toLocaleString() : '-'}
+                                  </td>
+                                  <td className="py-2 font-medium text-slate-900">{order.provider}</td>
+                                  <td className="py-2">{order.model}</td>
+                                  <td className="py-2 text-center">
+                                    <input type="checkbox" checked={order.searchCompanies} readOnly />
+                                  </td>
+                                  <td className="py-2 text-center">
+                                    <input type="checkbox" checked={order.searchByPrompts} readOnly />
+                                  </td>
+                                  <td className="py-2 text-right">
+                                    <span
+                                      className={`px-3 py-1 rounded-full text-xs font-semibold inline-flex justify-center min-w-[110px] ${
+                                        order.status === 'COMPLETED'
+                                          ? 'bg-emerald-100 text-emerald-700'
+                                          : order.status === 'FAILED'
+                                            ? 'bg-red-100 text-red-700'
+                                            : 'bg-amber-100 text-amber-700'
+                                      }`}
+                                    >
+                                      {order.status}
+                                    </span>
+                                  </td>
+                                  <td className="py-2 text-right text-slate-600">{order.jobsFound ?? 0}</td>
+                                  <td
+                                    className="py-2 text-right text-slate-500 truncate max-w-[200px]"
+                                    title={order.errorMessage || ''}
+                                  >
+                                    {order.errorMessage || '-'}
+                                  </td>
+                                </tr>
+                              ))}
+                          </tbody>
+                        </table>
+                      </div>
+                      {totalOrderPages > 1 && (
+                        <div className="flex items-center justify-between text-sm text-slate-500">
+                          <span>
+                            Page {ordersPage} of {totalOrderPages}
+                          </span>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => setOrdersPage((prev) => Math.max(1, prev - 1))}
+                              disabled={ordersPage === 1}
+                              className="px-3 py-1 rounded-full border border-slate-200 disabled:opacity-50"
+                            >
+                              Prev
+                            </button>
+                            <button
+                              onClick={() => setOrdersPage((prev) => Math.min(totalOrderPages, prev + 1))}
+                              disabled={ordersPage === totalOrderPages}
+                              className="px-3 py-1 rounded-full border border-slate-200 disabled:opacity-50"
+                            >
+                              Next
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 space-y-4">
+                      <div className="sticky top-4 bg-white z-10 pb-3">
+                        <div className="flex flex-wrap items-center gap-4 text-sm text-slate-600">
+                          <span className="font-semibold text-slate-900">Selected order</span>
+                          <span>{selectedOrder?.provider || '-'}</span>
+                          <span>{selectedOrder?.model || '-'}</span>
+                          <span>{selectedOrder?.modifiedAt ? new Date(selectedOrder.modifiedAt).toLocaleString() : '-'}</span>
+                          <span>
+                            {selectedOrder
+                              ? [selectedOrder.searchCompanies ? 'By company' : null, selectedOrder.searchByPrompts ? 'By prompts' : null]
+                                  .filter(Boolean)
+                                  .join(' / ')
+                              : '-'}
+                          </span>
+                          <span className="flex items-center gap-2">
+                            {selectedOrder ? (
+                              <span
+                                className={`px-3 py-1 rounded-full text-xs font-semibold inline-flex justify-center min-w-[110px] ${
+                                  selectedOrder.status === 'COMPLETED'
+                                    ? 'bg-emerald-100 text-emerald-700'
+                                    : selectedOrder.status === 'FAILED'
+                                      ? 'bg-red-100 text-red-700'
+                                      : 'bg-amber-100 text-amber-700'
+                                }`}
+                              >
+                                {selectedOrder.status}
+                              </span>
+                            ) : (
+                              '-'
+                            )}
+                          </span>
+                          <span>{selectedOrder?.jobsFound ?? 0} jobs</span>
                         </div>
                       </div>
+                      <h3 className="text-base font-bold text-slate-900">Jobs found</h3>
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-sm text-slate-700">
+                          <thead>
+                            <tr className="text-xs uppercase text-slate-400 border-b border-slate-100">
+                              <th className="text-left py-2 font-semibold">#</th>
+                              <th
+                                className="text-left py-2 font-semibold cursor-pointer"
+                                onClick={() => handleJobsSort('url')}
+                              >
+                                URL <span className="text-xs text-slate-700 font-bold">{jobsSortArrow('url')}</span>
+                              </th>
+                              <th
+                                className="text-left py-2 font-semibold cursor-pointer"
+                                onClick={() => handleJobsSort('createdAt')}
+                              >
+                                Date <span className="text-xs text-slate-700 font-bold">{jobsSortArrow('createdAt')}</span>
+                              </th>
+                              <th
+                                className="text-left py-2 font-semibold cursor-pointer"
+                                onClick={() => handleJobsSort('engine')}
+                              >
+                                Engine <span className="text-xs text-slate-700 font-bold">{jobsSortArrow('engine')}</span>
+                              </th>
+                              <th
+                                className="text-left py-2 font-semibold cursor-pointer"
+                                onClick={() => handleJobsSort('model')}
+                              >
+                                Model <span className="text-xs text-slate-700 font-bold">{jobsSortArrow('model')}</span>
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {jobsLoading && (
+                              <tr>
+                                <td colSpan={5} className="py-6 text-center text-slate-400">
+                                  Loading jobs...
+                                </td>
+                              </tr>
+                            )}
+                            {!jobsLoading && jobsFound.length === 0 && (
+                              <tr>
+                                <td colSpan={5} className="py-6 text-center text-slate-400">
+                                  {selectedOrderId ? 'No jobs found yet.' : 'Select an order to see jobs.'}
+                                </td>
+                              </tr>
+                            )}
+                            {!jobsLoading &&
+                              sortedJobs.map((job, index) => (
+                                <tr key={`${job.url}-${index}`} className="border-b border-slate-100 last:border-b-0">
+                                  <td className="py-3 text-slate-500">{index + 1}</td>
+                                  <td className="py-3">
+                                    <a className="text-indigo-600 hover:underline" href={job.url} target="_blank" rel="noreferrer">
+                                      {job.url}
+                                    </a>
+                                  </td>
+                                  <td className="py-3 text-slate-500">
+                                    {job.createdAt ? new Date(job.createdAt).toLocaleString() : '-'}
+                                  </td>
+                                  <td className="py-3">{selectedOrder?.provider || '-'}</td>
+                                  <td className="py-3">{selectedOrder?.model || '-'}</td>
+                                </tr>
+                              ))}
+                          </tbody>
+                        </table>
+                      </div>
                     </div>
-                    <div className="absolute -right-16 -top-16 w-80 h-80 bg-white/5 rounded-full blur-3xl" />
-                    <div className="absolute -left-16 -bottom-16 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl" />
-                  </section>
+                  </div>
                 </>
               )}
 

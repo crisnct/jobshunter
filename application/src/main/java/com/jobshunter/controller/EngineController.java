@@ -7,6 +7,7 @@ import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.service.JobOrderDBService;
 import com.jobshunter.database.service.ModelsDBService;
 import com.jobshunter.database.service.UserDBService;
+import com.jobshunter.database.service.UserJobDBService;
 import com.jobshunter.dto.JobOrderRequest;
 import com.jobshunter.dto.JobOrderResponse;
 import com.jobshunter.model.AiModel;
@@ -42,6 +43,7 @@ public class EngineController {
   private final ModelsDBService modelsDBService;
   private final UserDBService userDBService;
   private final JobOrderDBService jobOrderDBService;
+  private final UserJobDBService userJobDBService;
 
   @GetMapping("/models")
   @Transactional(readOnly = true)
@@ -115,6 +117,7 @@ public class EngineController {
 
   private JobOrderResponse toJobOrderResponse(JobOrderEntity order) {
     AiModelEntity aiModel = order.getAiModel();
+    long jobsFound = userJobDBService.countJobsForOrder(order.getUser().getId(), order.getId());
 
     return new JobOrderResponse(
         order.getId(),
@@ -126,6 +129,7 @@ public class EngineController {
         order.getStatus(),
         order.isNotified(),
         order.getModifiedAt(),
+        jobsFound,
         order.getErrorMessage()
     );
   }

@@ -75,13 +75,13 @@ public class UserController {
   }
 
   @GetMapping("/jobs")
-  @PreAuthorize("hasRole('ADMIN')")
   public ResponseEntity<?> getUserJobs(
-      @RequestParam("username")
-      @NotBlank @Size(max = 255)
-      String username
+      Authentication authentication,
+      @RequestParam(value = "orderId", required = false)
+      Long orderId
   ) {
-    List<UserJobResponse> jobs = userJobDBService.getUserJobs(username).stream()
+    String username = authentication.getName();
+    List<UserJobResponse> jobs = userJobDBService.getUserJobs(username, orderId).stream()
         .map(this::toUserJobResponse)
         .toList();
     return ResponseEntity.ok(jobs);

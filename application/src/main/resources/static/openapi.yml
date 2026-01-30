@@ -590,11 +590,15 @@ components:
           type: string
           format: date-time
           description: Order last modification timestamp
+        jobsFound:
+          type: integer
+          format: int64
+          description: Number of jobs found for the order
         errorMessage:
           type: string
           nullable: true
           description: Error message if the order failed
-      required: [ id, engineConfigurationId, provider, model, searchCompanies, searchByPrompts, status, notified, modifiedAt ]
+      required: [ id, engineConfigurationId, provider, model, searchCompanies, searchByPrompts, status, notified, modifiedAt, jobsFound ]
 
     OrderStatus:
       type: string

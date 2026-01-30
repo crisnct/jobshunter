@@ -37,4 +37,20 @@ public interface UserJobRepository extends JpaRepository<UserJobEntity, Long> {
       String username
   );
 
+  @Query("""
+      SELECT uj FROM UserJobEntity uj
+      JOIN FETCH uj.user u
+      WHERE LOWER(u.username) = LOWER(:username)
+      AND (:orderId IS NULL OR uj.jobOrder.id = :orderId)
+      """)
+  List<UserJobEntity> findAllByUsernameWithUserAndOrderId(
+      @Param("username")
+      @SqlInjectionSafe
+      String username,
+      @Param("orderId")
+      Long orderId
+  );
+
+  long countByUserIdAndJobOrderId(Long userId, Long jobOrderId);
+
 }

@@ -37,6 +37,16 @@ public class UserJobDBService {
     return userJobRepository.findAllByUsernameWithUser(username);
   }
 
+  @Transactional(readOnly = true)
+  public List<UserJobEntity> getUserJobs(String username, Long orderId) {
+    return userJobRepository.findAllByUsernameWithUserAndOrderId(username, orderId);
+  }
+
+  @Transactional(readOnly = true)
+  public long countJobsForOrder(Long userId, Long orderId) {
+    return userJobRepository.countByUserIdAndJobOrderId(userId, orderId);
+  }
+
   @Transactional
   public UserJobEntity addJobUrl(UserEntity user, String url, AiModelEntity aiModel, JobOrderEntity jobOrder) {
     Optional<UserJobEntity> existing = userJobRepository.findByUserIdAndUrl(user.getId(), url);
