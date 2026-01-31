@@ -47,6 +47,14 @@ public class AiModelEntity {
   @Column(name = "tokens_per_char")
   private Float tokensPerChar;
 
+  /** Price per input token (e.g. USD per 1M tokens). */
+  @Column(name = "input_price")
+  private Double inputPrice;
+
+  /** Price per output token (e.g. USD per 1M tokens). */
+  @Column(name = "output_price")
+  private Double outputPrice;
+
   @Column(name = "enabled", nullable = false)
   private boolean enabled = true;
 

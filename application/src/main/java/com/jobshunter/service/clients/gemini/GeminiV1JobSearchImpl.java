@@ -9,6 +9,7 @@ import com.jobshunter.database.entities.UserJobRoleEntity;
 import com.jobshunter.dto.AIJobSearchRequest;
 import com.jobshunter.dto.CompanyDto;
 import com.jobshunter.dto.CompanyDtoList;
+import com.jobshunter.dto.TokensConsumed;
 import com.jobshunter.dto.exceptions.BusinessException;
 import com.jobshunter.dto.geminiRequest.FileData;
 import com.jobshunter.dto.geminiRequest.GeminiJobsPayload;
@@ -18,6 +19,7 @@ import com.jobshunter.dto.geminiRequest.Part;
 import com.jobshunter.dto.geminiRequest.ThinkingConfig;
 import com.jobshunter.dto.geminiResponse.GeminiGenerateContentResponse;
 import com.jobshunter.dto.geminiResponse.GeminiGenerateContentResponse.Candidate;
+import com.jobshunter.dto.geminiResponse.GeminiGenerateContentResponse.UsageMetadata;
 import com.jobshunter.model.AiClientResponse;
 import com.jobshunter.model.AiSchemaType;
 import com.jobshunter.model.Job;
@@ -25,10 +27,11 @@ import com.jobshunter.model.PromptType;
 import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.TemplateRenderer;
 import com.jobshunter.service.application.UrlExtractor;
+import com.jobshunter.service.application.cost.AiRequestCostEvent;
+import com.jobshunter.service.application.cost.TokenEstimationGuard;
 import com.jobshunter.service.clients.AiJobsClient;
 import com.jobshunter.service.clients.AiJobsCompaniesClient;
 import com.jobshunter.service.clients.DeleteConvAiClient;
-import com.jobshunter.service.clients.TokenEstimationGuard;
 import com.jobshunter.service.retry.RetryPolicies;
 import com.jobshunter.service.retry.RetryTemplate;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
@@ -43,6 +46,7 @@ import java.util.stream.Stream;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
@@ -77,6 +81,8 @@ public non-sealed class GeminiV1JobSearchImpl implements AiJobsClient, AiJobsCom
   private final JsonMapper mapper;
 
   private final TokenEstimationGuard tokenEstimationGuard;
+
+  private final ApplicationEventPublisher eventPublisher;
 
   @Override
   @CircuitBreaker(name = "geminiCircuitBreaker", fallbackMethod = "fallbackSearch")
@@ -123,6 +129,10 @@ public non-sealed class GeminiV1JobSearchImpl implements AiJobsClient, AiJobsCom
     result.addAll(jobs);
     //noinspection DataFlowIssue
     result.setId(response.responseId());
+    UsageMetadata usage = response.usageMetadata();
+    eventPublisher.publishEvent(
+        new AiRequestCostEvent(this, request.getOrder(), new TokensConsumed(usage.promptTokenCount(), usage.candidatesTokenCount()))
+    );
     return result;
   }
 
@@ -260,6 +270,10 @@ public non-sealed class GeminiV1JobSearchImpl implements AiJobsClient, AiJobsCom
     result.addAll(jobs);
     //noinspection DataFlowIssue
     result.setId(response.responseId());
+    UsageMetadata usage = response.usageMetadata();
+    eventPublisher.publishEvent(
+        new AiRequestCostEvent(this, request.getOrder(), new TokensConsumed(usage.promptTokenCount(), usage.candidatesTokenCount()))
+    );
     return result;
   }
 

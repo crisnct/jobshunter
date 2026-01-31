@@ -124,14 +124,11 @@ public class JobHuntScheduler {
       SearchJobOrder order = new SearchJobOrder(jobOrder, user, ignoredURLs);
       order.setIpInfo(ipInfoClient.getIpDetailInfo(session.getIpAddress()));
       jobHuntService.searchJobsForUser(order);
-      jobOrder.setStatus(OrderStatus.COMPLETED);
-      jobOrderDBService.saveJobOrder(jobOrder);
+      jobOrderDBService.changeStatus(jobOrder.getId(), OrderStatus.COMPLETED, null);
       log.info("Completed processing job order id={} for user {}", jobOrder.getId(), jobOrder.getUser().getUsername());
     } catch (Exception e) {
       log.error("Error processing job order id={} for user {}: {}", jobOrder.getId(), jobOrder.getUser().getUsername(), e.getMessage(), e);
-      jobOrder.setStatus(OrderStatus.FAILED);
-      jobOrder.setErrorMessage(e.getMessage());
-      jobOrderDBService.saveJobOrder(jobOrder);
+      jobOrderDBService.changeStatus(jobOrder.getId(), OrderStatus.FAILED, e.getMessage());
     }
   }
 

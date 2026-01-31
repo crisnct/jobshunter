@@ -7,6 +7,7 @@ import com.jobshunter.database.repository.AiModelRepository;
 import com.jobshunter.database.repository.JobOrderRepository;
 import com.jobshunter.dto.JobOrderRequest;
 import com.jobshunter.dto.exceptions.BusinessException;
+import com.jobshunter.model.OrderStatus;
 import jakarta.persistence.EntityManager;
 import java.util.List;
 import java.util.Optional;
@@ -32,11 +33,6 @@ public class JobOrderDBService {
         .orElseThrow(() -> new BusinessException(HttpStatus.BAD_REQUEST, "AI model " + request.model() + " not found"));
     JobOrderEntity jobOrder = new JobOrderEntity(user, aiModel, request.searchCompanies(), request.searchWithUserPrompts());
     return jobOrderRepository.save(jobOrder);
-  }
-
-  @Transactional
-  public void saveJobOrder(JobOrderEntity jobOrder) {
-    jobOrderRepository.save(jobOrder);
   }
 
   @Transactional(readOnly = true)
@@ -79,6 +75,31 @@ public class JobOrderDBService {
 
   public JobOrderEntity getJobOrder(Long jobId) {
     return jobOrderRepository.findById(jobId).orElseThrow();
+  }
+
+  /**
+   * Atomically adds cost to an order. Safe for concurrent calls.
+   */
+  @Transactional
+  public void addCostToOrder(Long orderId, double cost) {
+    if (cost <= 0) {
+      return;
+    }
+    int updated = jobOrderRepository.incrementCost(orderId, cost);
+    if (updated == 0) {
+      log.warn("Failed to add cost {} to order {}: order not found", cost, orderId);
+    }
+  }
+
+  @Transactional
+  public void changeStatus(Long orderId, OrderStatus orderStatus, String errorMessage) {
+    JobOrderEntity jobOrder = jobOrderRepository.findById(orderId)
+        .orElseThrow(() -> new BusinessException(HttpStatus.NOT_FOUND, "Order " + orderId + " not found"));
+    jobOrder.setStatus(orderStatus);
+    if (errorMessage != null) {
+      jobOrder.setErrorMessage(errorMessage);
+    }
+    jobOrderRepository.save(jobOrder);
   }
 
 }

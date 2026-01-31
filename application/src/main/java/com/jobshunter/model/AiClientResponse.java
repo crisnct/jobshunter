@@ -7,9 +7,9 @@ import lombok.Data;
 @Data
 public class AiClientResponse {
 
-  private final List<Job> jobs = new ArrayList<>();
-
   private String id;
+
+  private final List<Job> jobs = new ArrayList<>();
 
   public void add(Job job) {
     this.jobs.add(job);

@@ -16,7 +16,7 @@ import com.jobshunter.model.PromptType;
 import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.TemplateRenderer;
 import com.jobshunter.service.clients.JobScoreCalculatorClient;
-import com.jobshunter.service.clients.TokenEstimationGuard;
+import com.jobshunter.service.application.cost.TokenEstimationGuard;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;

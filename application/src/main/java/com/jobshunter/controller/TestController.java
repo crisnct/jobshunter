@@ -42,7 +42,7 @@ import com.jobshunter.service.application.processors.JobFetchProcessor;
 import com.jobshunter.service.application.processors.JobsStateMachine;
 import com.jobshunter.service.clients.AiJobsCompaniesClient;
 import com.jobshunter.service.clients.JobScoreCalculatorClient;
-import com.jobshunter.service.clients.TokenEstimationGuard;
+import com.jobshunter.service.application.cost.TokenEstimationGuard;
 import com.jobshunter.service.clients.gemini.GeminiV1JobSearchImpl;
 import com.jobshunter.service.clients.gpt.GptV1JobSearchImpl;
 import com.jobshunter.service.clients.grok.GrokV1JobSearchImpl;

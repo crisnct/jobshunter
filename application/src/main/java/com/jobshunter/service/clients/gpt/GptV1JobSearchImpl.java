@@ -9,6 +9,7 @@ import com.jobshunter.dto.AIJobSearchRequest;
 import com.jobshunter.dto.CompanyDto;
 import com.jobshunter.dto.CompanyDtoList;
 import com.jobshunter.dto.IpInfoDetailResponse;
+import com.jobshunter.dto.TokensConsumed;
 import com.jobshunter.dto.exceptions.BusinessException;
 import com.jobshunter.dto.gptRequest.GptJobsPayload;
 import com.jobshunter.dto.gptRequest.Reasoning;
@@ -17,6 +18,7 @@ import com.jobshunter.dto.gptRequest.tools.UserLocation;
 import com.jobshunter.dto.gptResponse.GptResponse;
 import com.jobshunter.dto.gptResponse.JobSearchResponse;
 import com.jobshunter.dto.gptResponse.OutputItem;
+import com.jobshunter.dto.gptResponse.Usage;
 import com.jobshunter.model.AiClientResponse;
 import com.jobshunter.model.AiSchemaType;
 import com.jobshunter.model.Job;
@@ -25,10 +27,11 @@ import com.jobshunter.model.SearchJobOrder;
 import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.TemplateRenderer;
 import com.jobshunter.service.application.UrlExtractor;
+import com.jobshunter.service.application.cost.AiRequestCostEvent;
+import com.jobshunter.service.application.cost.TokenEstimationGuard;
 import com.jobshunter.service.clients.AiJobsClient;
 import com.jobshunter.service.clients.AiJobsCompaniesClient;
 import com.jobshunter.service.clients.DeleteConvAiClient;
-import com.jobshunter.service.clients.TokenEstimationGuard;
 import com.jobshunter.service.retry.RetryPolicies;
 import com.jobshunter.service.retry.RetryTemplate;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
@@ -44,6 +47,7 @@ import java.util.Optional;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
@@ -72,6 +76,8 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient, AiJobsCompan
   private final TemplateRenderer templateRenderer;
 
   private final TokenEstimationGuard tokenEstimationGuard;
+
+  private final ApplicationEventPublisher eventPublisher;
 
   @Override
   @CircuitBreaker(name = "gptCircuitBreaker", fallbackMethod = "fallbackSearch")
@@ -121,6 +127,8 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient, AiJobsCompan
     AiClientResponse result = new AiClientResponse();
     result.setId(response.id());
     result.addAll(jobs);
+    Usage usage = response.usage();
+    eventPublisher.publishEvent(new AiRequestCostEvent(this, order, new TokensConsumed(usage.inputTokens(), usage.outputTokens())));
     return result;
   }
 
@@ -218,8 +226,10 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient, AiJobsCompan
     //noinspection DataFlowIssue
     List<Job> jobs = extractJobs(response);
     AiClientResponse result = new AiClientResponse();
+    result.setId(response.id());
     result.addAll(jobs);
-    result.setId(result.getId());
+    Usage usage = response.usage();
+    eventPublisher.publishEvent(new AiRequestCostEvent(this, request.getOrder(), new TokensConsumed(usage.inputTokens(), usage.outputTokens())));
     return result;
   }
 

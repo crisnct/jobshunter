@@ -1,18 +1,24 @@
-package com.jobshunter.service.clients;
+package com.jobshunter.service.application.cost;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jobshunter.database.entities.AiModelEntity;
 import com.jobshunter.dto.TokenEstimationRequest;
 import com.jobshunter.dto.TokenEstimationResult;
+import com.jobshunter.dto.TokensConsumed;
+import java.util.List;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
+@Slf4j
 @Component
-public class DefaultTokenEstimationService implements TokenEstimationService {
+public class DefaultCostService implements TokenEstimationService, RequestPriceService {
+
+  private static final int MILLION = 1_000_000;
 
   private final ObjectMapper objectMapper;
 
-  public DefaultTokenEstimationService(ObjectMapper objectMapper) {
+  public DefaultCostService(ObjectMapper objectMapper) {
     this.objectMapper = objectMapper;
   }
 
@@ -57,6 +63,14 @@ public class DefaultTokenEstimationService implements TokenEstimationService {
     });
   }
 
+  @Override
+  public double calculatePrice(TokensConsumed request, AiModelEntity model) {
+    double inputPrice = model.getInputPrice() != null ? model.getInputPrice() : 0.0;
+    double outputPrice = model.getOutputPrice() != null ? model.getOutputPrice() : 0.0;
+    return ((double) request.inputTokens() / MILLION) * inputPrice
+        + ((double) request.outputTokens() / MILLION) * outputPrice;
+  }
+
   private int estimateText(String text, float tokensPerChar) {
     if (StringUtils.isBlank(text)) {
       return 0;
@@ -74,7 +88,7 @@ public class DefaultTokenEstimationService implements TokenEstimationService {
     }
   }
 
-  private <T> java.util.List<T> safeList(java.util.List<T> list) {
-    return list == null ? java.util.List.of() : list;
+  private <T> List<T> safeList(List<T> list) {
+    return list == null ? List.of() : list;
   }
 }

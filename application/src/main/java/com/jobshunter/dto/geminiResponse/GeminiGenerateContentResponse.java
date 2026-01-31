@@ -2,6 +2,7 @@ package com.jobshunter.dto.geminiResponse;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.jobshunter.dto.geminiRequest.Content;
 import java.util.List;
 
@@ -9,7 +10,7 @@ import java.util.List;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record GeminiGenerateContentResponse(
     List<Candidate> candidates,
-    UsageMetadata usageMetadata,
+    @JsonProperty("usageMetadata") UsageMetadata usageMetadata,
     String modelVersion,
     String responseId
 ) {
@@ -27,10 +28,10 @@ public record GeminiGenerateContentResponse(
   @JsonInclude(JsonInclude.Include.NON_NULL)
   @JsonIgnoreProperties(ignoreUnknown = true)
   public record UsageMetadata(
-      Integer promptTokenCount,
-      Integer candidatesTokenCount,
-      Integer totalTokenCount,
-      List<PromptTokensDetail> promptTokensDetails
+      @JsonProperty("promptTokenCount") Integer promptTokenCount,
+      @JsonProperty("candidatesTokenCount") Integer candidatesTokenCount,
+      @JsonProperty("totalTokenCount") Integer totalTokenCount,
+      @JsonProperty("promptTokensDetails") List<PromptTokensDetail> promptTokensDetails
   ) {
 
   }
@@ -38,8 +39,8 @@ public record GeminiGenerateContentResponse(
   @JsonInclude(JsonInclude.Include.NON_NULL)
   @JsonIgnoreProperties(ignoreUnknown = true)
   public record PromptTokensDetail(
-      String modality,
-      Integer tokenCount
+      @JsonProperty("modality") String modality,
+      @JsonProperty("tokenCount") Integer tokenCount
   ) {
 
   }

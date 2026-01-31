@@ -2,6 +2,7 @@ package com.jobshunter.controller;
 
 import com.jobshunter.service.LimitedVirtualThreadExecutor;
 import com.jobshunter.service.UrlAffinityExecutor;
+import java.util.StringJoiner;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -34,6 +35,8 @@ public class MonitoringController {
   private final LimitedVirtualThreadExecutor urlFetchRestClientExecutor;
   private final LimitedVirtualThreadExecutor ordersExecutor;
   private final LimitedVirtualThreadExecutor notificationsExecutor;
+  private final LimitedVirtualThreadExecutor maintenanceExecutor;
+  private final LimitedVirtualThreadExecutor defaultAsyncExecutor;
 
   private final TaskScheduler scheduler;
   private final UrlAffinityExecutor urlAffinityExecutor;
@@ -48,6 +51,8 @@ public class MonitoringController {
       @Qualifier("jobProcessingExecutor") LimitedVirtualThreadExecutor jobProcessingExecutor,
       @Qualifier("ordersExecutor") LimitedVirtualThreadExecutor ordersExecutor,
       @Qualifier("notificationsExecutor") LimitedVirtualThreadExecutor notificationsExecutor,
+      @Qualifier("maintenanceExecutor") LimitedVirtualThreadExecutor maintenanceExecutor,
+      @Qualifier("defaultAsyncExecutor") LimitedVirtualThreadExecutor defaultAsyncExecutor,
 
       TaskScheduler scheduler,
       UrlAffinityExecutor urlAffinityExecutor
@@ -61,6 +66,8 @@ public class MonitoringController {
     this.ordersExecutor = ordersExecutor;
     this.notificationsExecutor = notificationsExecutor;
     this.urlFetchRestClientExecutor = urlFetchRestClientExecutor;
+    this.maintenanceExecutor = maintenanceExecutor;
+    this.defaultAsyncExecutor = defaultAsyncExecutor;
     this.scheduler = scheduler;
     this.urlAffinityExecutor = urlAffinityExecutor;
   }
@@ -69,24 +76,24 @@ public class MonitoringController {
   public ResponseEntity<String> getExecutorsStatus() {
     log.info("Fetching status of executors");
 
-    String table = TABLE_HEADER + formatExecutorRow("GPT", gptSearchExecutor) + '\n'
-        + formatExecutorRow("Grok", grokSearchExecutor) + '\n'
-        + formatExecutorRow("Gemini", geminiSearchExecutor) + '\n'
-        + formatExecutorRow("SERP", serpExecutor) + '\n'
-        + formatExecutorRow("Job Processing", jobProcessingExecutor) + '\n'
-        + formatExecutorRow("Orders", ordersExecutor) + '\n'
-        + formatExecutorRow("Notifications", notificationsExecutor) + '\n'
-        + formatExecutorRow("URL-Fetch-REST Client", urlFetchRestClientExecutor) + '\n'
-        + formatExecutorRow("URL-Fetch-Playwright", urlFetchPlaywrightExecutor) + '\n'
-        + formatSchedulerRow(
-        "Scheduler",
+    StringJoiner joiner = new StringJoiner("\n");
+    joiner.add(TABLE_HEADER + formatExecutorRow("GPT", gptSearchExecutor));
+    joiner.add(formatExecutorRow("Grok", grokSearchExecutor));
+    joiner.add(formatExecutorRow("Gemini", geminiSearchExecutor));
+    joiner.add(formatExecutorRow("SERP", serpExecutor));
+    joiner.add(formatExecutorRow("Job Processing", jobProcessingExecutor));
+    joiner.add(formatExecutorRow("Orders", ordersExecutor));
+    joiner.add(formatExecutorRow("Notifications", notificationsExecutor));
+    joiner.add(formatExecutorRow("URL-Fetch-REST Client", urlFetchRestClientExecutor));
+    joiner.add(formatExecutorRow("URL-Fetch-Playwright", urlFetchPlaywrightExecutor));
+    joiner.add(formatSchedulerRow(
         ((ThreadPoolTaskScheduler) scheduler).getScheduledThreadPoolExecutor()
-    )
-        + '\n'
-        + "\nURL Affinity executors: "
-        + urlAffinityExecutor.getAllExecutors().size();
+    ));
+    joiner.add(formatExecutorRow("Maintenance", maintenanceExecutor));
+    joiner.add(formatExecutorRow("Async", defaultAsyncExecutor));
+    joiner.add("\nURL Affinity executors: " + urlAffinityExecutor.getAllExecutors().size());
 
-    return ResponseEntity.ok(table);
+    return ResponseEntity.ok(joiner.toString());
   }
 
   private String formatExecutorRow(String name, LimitedVirtualThreadExecutor executor) {
@@ -101,10 +108,10 @@ public class MonitoringController {
     );
   }
 
-  private String formatSchedulerRow(String name, ScheduledThreadPoolExecutor executor) {
+  private String formatSchedulerRow(ScheduledThreadPoolExecutor executor) {
     return String.format(
         "%-" + NAME_COLUMN_SIZE + "s | %6s | %6d | %9d | %6s | %5s",
-        name,
+        "Scheduler",
         "-",
         executor.getActiveCount(),
         executor.getCompletedTaskCount(),

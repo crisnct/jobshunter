@@ -48,6 +48,7 @@ public class ApplicationProperties {
     private int orders;
     private int notifications;
     private int maintenance;
+    private int async;
 
   }
 

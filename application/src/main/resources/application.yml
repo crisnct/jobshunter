@@ -30,6 +30,7 @@ jobshunter:
     jobProcessing : 10
     orders: 3
     notifications: 1
+    async: 3
     maintenance: 1
   scheduler:
     processOrderFrequency: 5000

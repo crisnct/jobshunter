@@ -64,6 +64,10 @@ public class JobOrderEntity {
   @Column(name = "error_message", columnDefinition = "TEXT")
   private String errorMessage;
 
+  /** Accumulated cost (e.g. USD) of AI requests for this order. */
+  @Column(name = "cost")
+  private Double cost;
+
   public JobOrderEntity(UserEntity user, AiModelEntity aiModel, boolean searchCompanies, boolean searchByPrompts) {
     this.user = user;
     this.aiModel = aiModel;

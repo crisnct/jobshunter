@@ -1,4 +1,4 @@
-package com.jobshunter.service.clients;
+package com.jobshunter.service.application.cost;
 
 import com.jobshunter.dto.TokenEstimationRequest;
 import com.jobshunter.dto.geminiRequest.Content;

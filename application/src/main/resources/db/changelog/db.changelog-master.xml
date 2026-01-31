@@ -18,5 +18,7 @@
   <include file="db/changelog/2026-01-10-enable-reasoning-drop-capabilities.xml"/>
   <include file="db/changelog/2026-01-11-set-ai-model-context-window.xml"/>
   <include file="db/changelog/2026-01-12-add-user-cv-filename.xml"/>
+  <include file="db/changelog/2026-01-29-add-ai-model-price-columns.xml"/>
+  <include file="db/changelog/2026-01-29-add-job-order-cost-column.xml"/>
 
 </databaseChangeLog>
