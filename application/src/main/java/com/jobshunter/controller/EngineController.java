@@ -10,6 +10,7 @@ import com.jobshunter.database.service.UserDBService;
 import com.jobshunter.database.service.UserJobDBService;
 import com.jobshunter.dto.JobOrderRequest;
 import com.jobshunter.dto.JobOrderResponse;
+import com.jobshunter.dto.UserCostSummary;
 import com.jobshunter.model.AiModel;
 import com.jobshunter.model.ContractType;
 import com.jobshunter.model.JobType;
@@ -114,6 +115,15 @@ public class EngineController {
         .map(this::toJobOrderResponse)
         .toList();
     return ResponseEntity.ok(responses);
+  }
+
+  @GetMapping("/costs")
+  @PreAuthorize("hasRole('ADMIN')")
+  @Transactional(readOnly = true)
+  public ResponseEntity<List<UserCostSummary>> getCosts() {
+    log.info("Fetching total costs by user (ADMIN)");
+    List<UserCostSummary> costs = jobOrderDBService.getTotalCostByUser();
+    return ResponseEntity.ok(costs);
   }
 
   private JobOrderResponse toJobOrderResponse(JobOrderEntity order) {

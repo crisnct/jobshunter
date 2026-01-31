@@ -6,6 +6,7 @@ import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.repository.AiModelRepository;
 import com.jobshunter.database.repository.JobOrderRepository;
 import com.jobshunter.dto.JobOrderRequest;
+import com.jobshunter.dto.UserCostSummary;
 import com.jobshunter.dto.exceptions.BusinessException;
 import com.jobshunter.model.OrderStatus;
 import jakarta.persistence.EntityManager;
@@ -89,6 +90,17 @@ public class JobOrderDBService {
     if (updated == 0) {
       log.warn("Failed to add cost {} to order {}: order not found", cost, orderId);
     }
+  }
+
+  @Transactional(readOnly = true)
+  public List<UserCostSummary> getTotalCostByUser() {
+    return jobOrderRepository.findTotalCostByUser().stream()
+        .map(row -> new UserCostSummary(
+            ((Number) row[0]).longValue(),
+            (String) row[1],
+            ((Number) row[2]).doubleValue()
+        ))
+        .toList();
   }
 
   @Transactional

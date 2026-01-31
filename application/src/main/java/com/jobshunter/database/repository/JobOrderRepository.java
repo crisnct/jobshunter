@@ -24,4 +24,12 @@ public interface JobOrderRepository extends JpaRepository<JobOrderEntity, Long> 
   @Query(value = "UPDATE job_order SET cost = COALESCE(cost, 0) + :delta WHERE id = :orderId", nativeQuery = true)
   int incrementCost(@Param("orderId") Long orderId, @Param("delta") double delta);
 
+  @Query(value = """
+      SELECT jo.user_id, u.username, COALESCE(SUM(jo.cost), 0)
+      FROM job_order jo
+      JOIN users u ON jo.user_id = u.id
+      GROUP BY jo.user_id, u.username
+      """, nativeQuery = true)
+  List<Object[]> findTotalCostByUser();
+
 }
