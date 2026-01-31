@@ -77,9 +77,9 @@ const App = () => {
     { key: 'model', label: 'Model', align: 'left' },
     { key: 'searchCompanies', label: 'By company', align: 'center' },
     { key: 'searchByPrompts', label: 'By prompts', align: 'center' },
-    { key: 'status', label: 'Status', align: 'right' },
-    { key: 'jobsFound', label: 'Jobs found', align: 'right' },
-    { key: 'errorMessage', label: 'Error', align: 'right' },
+    { key: 'status', label: 'Status', align: 'left' },
+    { key: 'jobsFound', label: 'Jobs found', align: 'left' },
+    { key: 'errorMessage', label: 'Error', align: 'left' },
   ];
 
   const sortedOrders = useMemo(() => {
@@ -898,13 +898,6 @@ const App = () => {
   return (
     <div className="min-h-screen bg-slate-50 flex font-sans">
       <aside className="w-64 bg-white border-r border-slate-200 hidden lg:flex flex-col p-6 shrink-0">
-        <div className="flex items-center gap-3 mb-10 px-2">
-          <div className="w-9 h-9 rounded-xl overflow-hidden shadow-lg shadow-indigo-100">
-            <img src="/images/JobsHunterLogo.png" alt="JobsHunter logo" className="w-full h-full object-cover" />
-          </div>
-          <span className="font-black text-xl text-slate-900 tracking-tight">JobsHunter</span>
-        </div>
-
         <nav className="flex-1 space-y-1.5">
           <SidebarItem icon={User} label="Profile" id="profile" active={activeTab === 'profile'} />
           <SidebarItem icon={LayoutDashboard} label="Dashboard" id="dash" active={activeTab === 'dash'} />
@@ -917,15 +910,23 @@ const App = () => {
           </div>
           <button
             onClick={handleLogout}
-            className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-slate-500 hover:bg-red-50 hover:text-red-600 transition-all font-bold text-sm"
+            className="w-10 h-10 mx-auto flex items-center justify-center rounded-xl text-slate-500 hover:bg-red-50 hover:text-red-600 transition-all"
+            aria-label="Sign out"
           >
             <LogOut size={18} />
-            Sign Out
           </button>
         </div>
       </aside>
 
       <main className="flex-1 flex flex-col h-screen overflow-hidden">
+        <div className="bg-white border-b border-slate-200">
+          <div className="flex items-center gap-3 px-6 py-4">
+            <div className="w-9 h-9 rounded-xl overflow-hidden shadow-lg shadow-indigo-100">
+              <img src="/images/JobsHunterLogo.png" alt="JobsHunter logo" className="w-full h-full object-cover" />
+            </div>
+            <span className="font-black text-xl text-slate-900 tracking-tight">JobsHunter</span>
+          </div>
+        </div>
         <div className="lg:hidden bg-white border-b border-slate-200">
           <div className="flex items-center justify-between px-4 py-3">
             <button
@@ -946,9 +947,10 @@ const App = () => {
             </button>
             <button
               onClick={() => handleLogout()}
-              className="flex-1 ml-2 text-sm font-semibold py-2 px-3 rounded-full bg-slate-100 text-slate-600"
+              className="ml-2 h-10 w-10 flex items-center justify-center rounded-full bg-slate-100 text-slate-600"
+              aria-label="Sign out"
             >
-              Sign out
+              <LogOut size={18} />
             </button>
           </div>
         </div>
@@ -980,6 +982,17 @@ const App = () => {
 
                   <div className="space-y-8">
                     <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 space-y-4">
+                      <p className="text-sm text-slate-500">
+                        Hunt manually jobs using{' '}
+                        <a
+                          href="https://chatgpt.com/g/g-6965091020d08191be97e33b0c665349-jobshunter"
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-indigo-600 font-semibold hover:underline"
+                        >
+                          JobsHunter ChatGPT model
+                        </a>
+                      </p>
                       <div className="flex items-center justify-between">
                         <h3 className="text-base font-bold text-slate-900">Orders</h3>
                         <button
@@ -1055,7 +1068,7 @@ const App = () => {
                                   <td className="py-2 text-center">
                                     <input type="checkbox" checked={order.searchByPrompts} readOnly />
                                   </td>
-                                  <td className="py-2 text-right">
+                                  <td className="py-2 text-left">
                                     <span
                                       className={`px-3 py-1 rounded-full text-xs font-semibold inline-flex justify-center min-w-[110px] ${
                                         order.status === 'COMPLETED'
@@ -1068,9 +1081,9 @@ const App = () => {
                                       {order.status}
                                     </span>
                                   </td>
-                                  <td className="py-2 text-right text-slate-600">{order.jobsFound ?? 0}</td>
+                                  <td className="py-2 text-left text-slate-600">{order.jobsFound ?? 0}</td>
                                   <td
-                                    className="py-2 text-right text-slate-500 truncate max-w-[200px]"
+                                    className="py-2 text-left text-slate-500 truncate max-w-[200px]"
                                     title={order.errorMessage || ''}
                                   >
                                     {order.errorMessage || '-'}
