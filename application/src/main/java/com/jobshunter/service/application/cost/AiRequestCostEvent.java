@@ -1,7 +1,7 @@
 package com.jobshunter.service.application.cost;
 
+import com.jobshunter.database.entities.AiModelEntity;
 import com.jobshunter.dto.TokensConsumed;
-import com.jobshunter.model.SearchJobOrder;
 import lombok.Getter;
 import org.springframework.context.ApplicationEvent;
 
@@ -12,12 +12,16 @@ import org.springframework.context.ApplicationEvent;
 @Getter
 public class AiRequestCostEvent extends ApplicationEvent {
 
-  private final SearchJobOrder order;
   private final TokensConsumed tokensConsumed;
 
-  public AiRequestCostEvent(Object source, SearchJobOrder order, TokensConsumed tokensConsumed) {
+  private final Long jobOrderId;
+
+  private final AiModelEntity model;
+
+  public AiRequestCostEvent(Object source, Long jobOrderId, AiModelEntity model, TokensConsumed tokensConsumed) {
     super(source);
-    this.order = order;
+    this.jobOrderId = jobOrderId;
+    this.model = model;
     this.tokensConsumed = tokensConsumed;
   }
 

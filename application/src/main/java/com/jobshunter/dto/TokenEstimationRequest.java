@@ -10,6 +10,6 @@ public record TokenEstimationRequest(
     List<Object> tools,          // tool definitions
     Object responseSchema,        // JSON schema / response_format
     AiModelEntity aiModel,
-    int maxOutputTokens
+    Integer maxOutputTokens
 
 ) {}

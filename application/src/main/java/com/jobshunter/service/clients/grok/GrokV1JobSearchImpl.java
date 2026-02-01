@@ -8,7 +8,7 @@ import com.jobshunter.database.entities.UserJobRoleEntity;
 import com.jobshunter.dto.AIJobSearchRequest;
 import com.jobshunter.dto.CompanyDto;
 import com.jobshunter.dto.CompanyDtoList;
-import com.jobshunter.dto.TokensConsumed;
+import com.jobshunter.service.application.cost.TokensConsumedMapper;
 import com.jobshunter.dto.exceptions.BusinessException;
 import com.jobshunter.dto.grokRequest.GrokJobsPayload;
 import com.jobshunter.dto.grokRequest.GrokJobsPayload.GrokJobsPayloadBuilder;
@@ -87,7 +87,6 @@ public non-sealed class GrokV1JobSearchImpl implements AiJobsClient, AiJobsCompa
 
   private AiClientResponse searchJobsOnce(AIJobSearchRequest request) {
     GrokJobsPayloadBuilder payloadBuilder = GrokJobsPayload.builder(request.getOrder().getModel())
-        .maxOutputTokens(1200)
         .reasoning(new Reasoning(REASONING_JOB_SEARCH))
         .store(request.getStoreConversation())
         .previousResponseId(request.getPrevResponseId())
@@ -95,7 +94,8 @@ public non-sealed class GrokV1JobSearchImpl implements AiJobsClient, AiJobsCompa
         .addUserPrompt(request.getUserPrompt() + templateRenderer.getPrompt(PromptType.USER_PROMPT_JOB_BLACKLISTED,
             "blacklist",
             properties.getJobsHunter().getBlacklist()
-        ), request.getFileId());
+        ), request.getFileId())
+        .setResponseSchema(templateRenderer.getSchema(AiSchemaType.GROK_JSON_SCHEMA_RESPONSE));
 
     GrokJobsPayload payload = payloadBuilder.build();
     tokenEstimationGuard.assertFitsContext(payload);
@@ -113,7 +113,14 @@ public non-sealed class GrokV1JobSearchImpl implements AiJobsClient, AiJobsCompa
     result.setId(response.id());
     result.addAll(jobs);
     Usage usage = response.usage();
-    eventPublisher.publishEvent(new AiRequestCostEvent(this, request.getOrder(), new TokensConsumed(usage.inputTokens(), usage.outputTokens())));
+    if (usage != null) {
+      eventPublisher.publishEvent(new AiRequestCostEvent(
+          this,
+          request.getOrder().getJobOrder().getId(),
+          payload.aiModel(),
+          TokensConsumedMapper.fromGrok(usage))
+      );
+    }
     return result;
   }
 
@@ -129,7 +136,6 @@ public non-sealed class GrokV1JobSearchImpl implements AiJobsClient, AiJobsCompa
     UserEntity user = request.getOrder().getUser();
     GrokJobsPayload payload = GrokJobsPayload.builder(request.getCompaniesModel())
         .store(false)
-        .maxOutputTokens(2500)
         .addSystemPrompt(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_COMPANY_SEARCH,
             Map.of("city", user.getCity(),
                 "country", user.getCountry()
@@ -153,7 +159,15 @@ public non-sealed class GrokV1JobSearchImpl implements AiJobsClient, AiJobsCompa
         .retrieve()
         .body(GrokResponse.class);
 
-    //noinspection DataFlowIssue
+    Usage usage = response.usage();
+    if (usage != null) {
+      eventPublisher.publishEvent(new AiRequestCostEvent(
+          this,
+          request.getOrder().getJobOrder().getId(),
+          payload.aiModel(),
+          TokensConsumedMapper.fromGrok(usage))
+      );
+    }
     return extractCompanies(response);
   }
 
@@ -170,7 +184,6 @@ public non-sealed class GrokV1JobSearchImpl implements AiJobsClient, AiJobsCompa
     List<String> positions = user.getJobRoles().stream().map(UserJobRoleEntity::getJobRole).toList();
 
     GrokJobsPayload payload = GrokJobsPayload.builder(request.getDiscoveryModel())
-        .maxOutputTokens(800)
         .temperature(0.15)
         .store(request.getStoreConversation())
         .previousResponseId(request.getPrevResponseId())
@@ -195,13 +208,21 @@ public non-sealed class GrokV1JobSearchImpl implements AiJobsClient, AiJobsCompa
         .body(payload)
         .retrieve()
         .body(GrokResponse.class);
+
     //noinspection DataFlowIssue
     List<Job> jobs = extractJobs(response);
     AiClientResponse result = new AiClientResponse();
     result.setId(response.id());
     result.addAll(jobs);
     Usage usage = response.usage();
-    eventPublisher.publishEvent(new AiRequestCostEvent(this, request.getOrder(), new TokensConsumed(usage.inputTokens(), usage.outputTokens())));
+    if (usage != null) {
+      eventPublisher.publishEvent(new AiRequestCostEvent(
+          this,
+          request.getOrder().getJobOrder().getId(),
+          payload.aiModel(),
+          TokensConsumedMapper.fromGrok(usage))
+      );
+    }
     return result;
   }
 

@@ -2,7 +2,8 @@ package com.jobshunter.dto;
 
 public record TokensConsumed(
     int inputTokens,
-    int outputTokens
+    int outputTokens,
+    int toolCalls
 ) {
 
 }

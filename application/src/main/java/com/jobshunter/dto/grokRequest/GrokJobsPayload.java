@@ -24,7 +24,7 @@ public record GrokJobsPayload(
     String model,
     Double temperature,
     @JsonProperty("max_output_tokens")
-    int maxOutputTokens,
+    Integer maxOutputTokens,
     Reasoning reasoning,
     @JsonProperty("previous_response_id")
     String previousResponseId,

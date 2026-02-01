@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+  xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="
+        http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.23.xsd">
+
+  <changeSet id="2026-01-29-add-ai-model-tool-price-column" author="codex">
+    <preConditions onFail="MARK_RAN">
+      <tableExists tableName="ai_models"/>
+    </preConditions>
+    <comment>Add tool_price column to ai_models</comment>
+    <addColumn tableName="ai_models">
+      <column name="tool_price" type="INT"/>
+    </addColumn>
+  </changeSet>
+
+  <changeSet id="2026-01-29-set-ai-model-tool-price" author="codex">
+    <preConditions onFail="MARK_RAN">
+      <tableExists tableName="ai_models"/>
+      <columnExists tableName="ai_models" columnName="tool_price"/>
+    </preConditions>
+    <comment>Set tool_price to 5000 for GROK models, 0 for others</comment>
+    <sql>
+      UPDATE ai_models SET tool_price = 0;
+      UPDATE ai_models SET tool_price = 5000 WHERE provider = 'GROK';
+    </sql>
+  </changeSet>
+
+</databaseChangeLog>

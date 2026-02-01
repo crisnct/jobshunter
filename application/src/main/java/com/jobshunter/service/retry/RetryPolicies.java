@@ -9,7 +9,7 @@ public final class RetryPolicies {
   public static final RetryPolicy<AiClientResponse> JOB_SEARCH =
       new RetryPolicy<>(
           "JOB_SEARCH",
-          5,
+          3,
           2_000,
           r -> r != null && r.getJobs() != null && !r.getJobs().isEmpty(),
           ex -> ex instanceof RuntimeException,

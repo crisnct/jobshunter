@@ -38,7 +38,7 @@ public class DefaultCostService implements TokenEstimationService, RequestPriceS
         .sum();
 
     int schemaTokens = request.responseSchema() == null ? 0 : estimateJson(request.responseSchema(), tokensPerChar);
-    int outputTokens = request.maxOutputTokens();
+    int outputTokens = request.maxOutputTokens() == null ? 0: request.maxOutputTokens();
     int totalTokens = inputTokens + toolTokens + schemaTokens + outputTokens;
     int safeLimit = (int) (request.aiModel().getContextWindow() * getSafetyRatio(request.aiModel()));
 
@@ -67,8 +67,10 @@ public class DefaultCostService implements TokenEstimationService, RequestPriceS
   public double calculatePrice(TokensConsumed request, AiModelEntity model) {
     double inputPrice = model.getInputPrice() != null ? model.getInputPrice() : 0.0;
     double outputPrice = model.getOutputPrice() != null ? model.getOutputPrice() : 0.0;
+    double toolPrice = model.getToolPrice() != null ? model.getToolPrice() : 0.0;
     return ((double) request.inputTokens() / MILLION) * inputPrice
-        + ((double) request.outputTokens() / MILLION) * outputPrice;
+        + ((double) request.outputTokens() / MILLION) * outputPrice
+        + ((double) request.toolCalls() / MILLION) * toolPrice;
   }
 
   private int estimateText(String text, float tokensPerChar) {

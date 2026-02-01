@@ -9,7 +9,7 @@ import com.jobshunter.database.entities.UserJobRoleEntity;
 import com.jobshunter.dto.AIJobSearchRequest;
 import com.jobshunter.dto.CompanyDto;
 import com.jobshunter.dto.CompanyDtoList;
-import com.jobshunter.dto.TokensConsumed;
+import com.jobshunter.service.application.cost.TokensConsumedMapper;
 import com.jobshunter.dto.exceptions.BusinessException;
 import com.jobshunter.dto.geminiRequest.FileData;
 import com.jobshunter.dto.geminiRequest.GeminiJobsPayload;
@@ -97,7 +97,7 @@ public non-sealed class GeminiV1JobSearchImpl implements AiJobsClient, AiJobsCom
     AiModelEntity model = request.getOrder().getModel();
 
     GenerationConfig generationConfig = GenerationConfig.builder(model)
-        .maxOutputTokens(1200)
+        .responseJsonSchema(templateRenderer.getSchema(AiSchemaType.GEMINI_JSON_SCHEMA_RESPONSE))
         .thinkingConfig(new ThinkingConfig(512))//how reasoning it is
         .build();
 
@@ -130,9 +130,14 @@ public non-sealed class GeminiV1JobSearchImpl implements AiJobsClient, AiJobsCom
     //noinspection DataFlowIssue
     result.setId(response.responseId());
     UsageMetadata usage = response.usageMetadata();
-    eventPublisher.publishEvent(
-        new AiRequestCostEvent(this, request.getOrder(), new TokensConsumed(usage.promptTokenCount(), usage.candidatesTokenCount()))
-    );
+    if (usage != null) {
+      eventPublisher.publishEvent(new AiRequestCostEvent(
+          this,
+          request.getOrder().getJobOrder().getId(),
+          payload.aiModel(),
+          TokensConsumedMapper.fromGemini(usage))
+      );
+    }
     return result;
   }
 
@@ -155,7 +160,6 @@ public non-sealed class GeminiV1JobSearchImpl implements AiJobsClient, AiJobsCom
     UserEntity user = request.getOrder().getUser();
 
     GenerationConfig generationConfig = GenerationConfig.builder(model)
-        .maxOutputTokens(15000)
         .thinkingConfig(new ThinkingConfig(512))//how reasoning it is
         .responseJsonSchema(templateRenderer.getSchema(AiSchemaType.GEMINI_JSON_COMPANY_SCHEMA_RESPONSE))
         .build();
@@ -184,6 +188,16 @@ public non-sealed class GeminiV1JobSearchImpl implements AiJobsClient, AiJobsCom
         .body(payload)
         .retrieve()
         .body(GeminiGenerateContentResponse.class);
+
+    UsageMetadata usage = response.usageMetadata();
+    if (usage != null) {
+      eventPublisher.publishEvent(new AiRequestCostEvent(
+          this,
+          request.getOrder().getJobOrder().getId(),
+          payload.aiModel(),
+          TokensConsumedMapper.fromGemini(usage))
+      );
+    }
 
     return extractCompanies(response);
   }
@@ -238,8 +252,8 @@ public non-sealed class GeminiV1JobSearchImpl implements AiJobsClient, AiJobsCom
     List<String> positions = user.getJobRoles().stream().map(UserJobRoleEntity::getJobRole).toList();
 
     GenerationConfig generationConfig = GenerationConfig.builder(model)
-        .maxOutputTokens(1200)
-        .temperature(0.05)
+        .temperature(0.15)
+        .responseJsonSchema(templateRenderer.getSchema(AiSchemaType.GEMINI_JSON_SCHEMA_RESPONSE))
         .thinkingConfig(new ThinkingConfig(512))//how reasoning it is
         .build();
 
@@ -271,9 +285,14 @@ public non-sealed class GeminiV1JobSearchImpl implements AiJobsClient, AiJobsCom
     //noinspection DataFlowIssue
     result.setId(response.responseId());
     UsageMetadata usage = response.usageMetadata();
-    eventPublisher.publishEvent(
-        new AiRequestCostEvent(this, request.getOrder(), new TokensConsumed(usage.promptTokenCount(), usage.candidatesTokenCount()))
-    );
+    if (usage != null) {
+      eventPublisher.publishEvent(new AiRequestCostEvent(
+          this,
+          request.getOrder().getJobOrder().getId(),
+          payload.aiModel(),
+          TokensConsumedMapper.fromGemini(usage))
+      );
+    }
     return result;
   }
 

@@ -9,7 +9,6 @@ import com.jobshunter.dto.AIJobSearchRequest;
 import com.jobshunter.dto.CompanyDto;
 import com.jobshunter.dto.CompanyDtoList;
 import com.jobshunter.dto.IpInfoDetailResponse;
-import com.jobshunter.dto.TokensConsumed;
 import com.jobshunter.dto.exceptions.BusinessException;
 import com.jobshunter.dto.gptRequest.GptJobsPayload;
 import com.jobshunter.dto.gptRequest.Reasoning;
@@ -28,6 +27,7 @@ import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.TemplateRenderer;
 import com.jobshunter.service.application.UrlExtractor;
 import com.jobshunter.service.application.cost.AiRequestCostEvent;
+import com.jobshunter.service.application.cost.TokensConsumedMapper;
 import com.jobshunter.service.application.cost.TokenEstimationGuard;
 import com.jobshunter.service.clients.AiJobsClient;
 import com.jobshunter.service.clients.AiJobsCompaniesClient;
@@ -101,7 +101,6 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient, AiJobsCompan
         .reasoning(new Reasoning(REASONING_JOB_SEARCH))
         .store(request.getStoreConversation())
         .previousResponseId(request.getPrevResponseId())
-        .maxOutputTokens(1200)
         .addTools(Tools.builder().setWebSearch().userLocation(userLocation).build())
         .instructions(templateRenderer.getPrompt(PromptType.SYSTEM_INSTRUCTIONS))
         .addSystemPrompt(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_JOB_SEARCH,
@@ -128,7 +127,14 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient, AiJobsCompan
     result.setId(response.id());
     result.addAll(jobs);
     Usage usage = response.usage();
-    eventPublisher.publishEvent(new AiRequestCostEvent(this, order, new TokensConsumed(usage.inputTokens(), usage.outputTokens())));
+    if (usage != null) {
+      eventPublisher.publishEvent(new AiRequestCostEvent(
+          this,
+          request.getOrder().getJobOrder().getId(),
+          payload.aiModel(),
+          TokensConsumedMapper.fromGpt(usage))
+      );
+    }
     return result;
   }
 
@@ -154,7 +160,6 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient, AiJobsCompan
     userLocation.setCity(user.getCity() != null ? user.getCity() : ipInfo.city());
 
     GptJobsPayload payload = GptJobsPayload.builder(request.getCompaniesModel())
-        .maxOutputTokens(2500)
         .store(false)
         .addSystemPrompt(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_COMPANY_SEARCH,
             Map.of(
@@ -181,7 +186,16 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient, AiJobsCompan
         .retrieve()
         .body(GptResponse.class);
 
-    //noinspection DataFlowIssue
+    Usage usage = response.usage();
+    if (usage != null) {
+      eventPublisher.publishEvent(new AiRequestCostEvent(
+          this,
+          request.getOrder().getJobOrder().getId(),
+          payload.aiModel(),
+          TokensConsumedMapper.fromGpt(usage))
+      );
+    }
+
     return extractCompanies(response);
   }
 
@@ -198,7 +212,6 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient, AiJobsCompan
     List<String> positions = user.getJobRoles().stream().map(UserJobRoleEntity::getJobRole).toList();
 
     GptJobsPayload payload = GptJobsPayload.builder(request.getDiscoveryModel())
-        .maxOutputTokens(1200)
         .temperature(0.15)
         .store(request.getStoreConversation())
         .previousResponseId(request.getPrevResponseId())
@@ -229,7 +242,14 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient, AiJobsCompan
     result.setId(response.id());
     result.addAll(jobs);
     Usage usage = response.usage();
-    eventPublisher.publishEvent(new AiRequestCostEvent(this, request.getOrder(), new TokensConsumed(usage.inputTokens(), usage.outputTokens())));
+    if (usage != null) {
+      eventPublisher.publishEvent(new AiRequestCostEvent(
+          this,
+          request.getOrder().getJobOrder().getId(),
+          payload.aiModel(),
+          TokensConsumedMapper.fromGpt(usage))
+      );
+    }
     return result;
   }
 

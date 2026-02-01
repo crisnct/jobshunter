@@ -55,6 +55,10 @@ public class AiModelEntity {
   @Column(name = "output_price")
   private Double outputPrice;
 
+  /** Tool price per 1M of calls */
+  @Column(name = "tool_price")
+  private Integer toolPrice;
+
   @Column(name = "enabled", nullable = false)
   private boolean enabled = true;
 

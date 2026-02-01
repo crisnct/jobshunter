@@ -20,5 +20,6 @@
   <include file="db/changelog/2026-01-12-add-user-cv-filename.xml"/>
   <include file="db/changelog/2026-01-29-add-ai-model-price-columns.xml"/>
   <include file="db/changelog/2026-01-29-add-job-order-cost-column.xml"/>
+  <include file="db/changelog/2026-01-29-add-ai-model-tool-price.xml"/>
 
 </databaseChangeLog>

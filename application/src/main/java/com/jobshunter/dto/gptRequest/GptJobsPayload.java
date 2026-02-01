@@ -25,7 +25,7 @@ public record GptJobsPayload(
     Double temperature,
     Reasoning reasoning,
     @JsonProperty("max_output_tokens")
-    int maxOutputTokens,
+    Integer maxOutputTokens,
     List<Tools> tools,
     String instructions,
     Boolean store,

@@ -20,9 +20,15 @@ public class AiRequestCostEventListener {
   @EventListener
   public void onAiRequestCost(AiRequestCostEvent event) {
     double cost = 0;
-    Long orderId = event.getOrder().getJobOrder().getId();
+    Long orderId = event.getJobOrderId();
     try {
-      cost = priceService.calculatePrice(event.getTokensConsumed(), event.getOrder().getModel());
+      cost = priceService.calculatePrice(event.getTokensConsumed(), event.getModel());
+      log.info("Calculate request price for model {}, {} input  tokens, {} output tokens ... => cost={} ",
+          event.getModel().getModel(),
+          event.getTokensConsumed().inputTokens(),
+          event.getTokensConsumed().outputTokens(),
+          cost
+      );
       if (cost > 0) {
         jobOrderDBService.addCostToOrder(orderId, cost);
       }
