@@ -39,8 +39,8 @@ public final class GeminiJobHunting extends AiConversationJobHunting {
 
   @EventListener(ApplicationReadyEvent.class)
   private void init() {
-    this.discoveryModel = modelsDBService.getModel(new EngineSelection(EngineType.GEMINI, "gemini-2.5-flash-lite")).orElseThrow();
-    this.companiesModel = modelsDBService.getModel(new EngineSelection(EngineType.GEMINI, "gemini-2.5-flash-lite")).orElseThrow();
+    this.companiesModel = modelsDBService.getModel(new EngineSelection(EngineType.GEMINI, "gemini-2.5-flash")).orElseThrow();
+    this.discoveryModel = modelsDBService.getModel(new EngineSelection(EngineType.GEMINI, "gemini-2.5-flash")).orElseThrow();
   }
 
   @Override
