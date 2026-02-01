@@ -88,6 +88,7 @@ public non-sealed class GrokV1JobSearchImpl implements AiJobsClient, AiJobsCompa
   private AiClientResponse searchJobsOnce(AIJobSearchRequest request) {
     GrokJobsPayloadBuilder payloadBuilder = GrokJobsPayload.builder(request.getOrder().getModel())
         .reasoning(new Reasoning(REASONING_JOB_SEARCH))
+        .maxOutputTokens(15000)
         .store(request.getStoreConversation())
         .previousResponseId(request.getPrevResponseId())
         .addTools(Tools.builder().setWebSearch().build())
@@ -116,7 +117,7 @@ public non-sealed class GrokV1JobSearchImpl implements AiJobsClient, AiJobsCompa
     if (usage != null) {
       eventPublisher.publishEvent(new AiRequestCostEvent(
           this,
-          request.getOrder().getJobOrder().getId(),
+          request.getOrder() != null ? request.getOrder().getJobOrder().getId(): -1,
           payload.aiModel(),
           TokensConsumedMapper.fromGrok(usage))
       );
@@ -136,6 +137,7 @@ public non-sealed class GrokV1JobSearchImpl implements AiJobsClient, AiJobsCompa
     UserEntity user = request.getOrder().getUser();
     GrokJobsPayload payload = GrokJobsPayload.builder(request.getCompaniesModel())
         .store(false)
+        .maxOutputTokens(15000)
         .addSystemPrompt(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_COMPANY_SEARCH,
             Map.of("city", user.getCity(),
                 "country", user.getCountry()
@@ -185,6 +187,7 @@ public non-sealed class GrokV1JobSearchImpl implements AiJobsClient, AiJobsCompa
 
     GrokJobsPayload payload = GrokJobsPayload.builder(request.getDiscoveryModel())
         .temperature(0.15)
+        .maxOutputTokens(15000)
         .store(request.getStoreConversation())
         .previousResponseId(request.getPrevResponseId())
         .addTools(Tools.builder().setWebSearch().build())

@@ -44,7 +44,10 @@ public final class JobBasicCheckProcessor implements JobProcessor {
       context.setValidatedSuccessfully(false);
       context.failJob("host is blacklisted");
     } else {
-      if (isValidAddress(context, host)) {
+      if (context.getJob().getUrl().length() > 2048) {
+        //Exceeds the size of column from db
+        context.failJob("URL too long, unrealistic, length=" + context.getJob().getUrl().length());
+      } else if (isValidAddress(context, host)) {
         try (Socket socket = new Socket()) {
           socket.connect(new InetSocketAddress(host, 443), 1000);
           if (whitelistDomains.contains(host)) {

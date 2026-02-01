@@ -523,7 +523,7 @@ public class TestController {
     AiJobsCompaniesClient client = testService.getCompaniesClient(engineType);
     AiClientResponse body = client.searchJobsFromCompanies(aiRequest);
 
-    List<Job> jobs = jobsStateMachine.processAsync(CompletableFuture.completedFuture(body.getJobs()), testUser)
+    List<Job> jobs = jobsStateMachine.processAsync(CompletableFuture.completedFuture(body.getJobs()), testUser, null)
         .join()
         .stream()
         .filter(ctx -> !ctx.isFailed() && ctx.isValidatedSuccessfully())
@@ -588,7 +588,7 @@ public class TestController {
 
     // Fetch HTML from job URL using JobFetchProcessor
     Job job = new Job(request.jobUrl());
-    JobContext jobContext = new JobContext(job, user);
+    JobContext jobContext = new JobContext(job, user, null);
 
     try {
       jobContext = jobFetchProcessor.processAsync(jobContext);
@@ -625,7 +625,7 @@ public class TestController {
     JobScoreCalculatorClient calculator = testService.getScoreCalculator(engineType);
 
     // Create JobScoreRequest and compute score
-    JobScoreRequest scoreRequest = new JobScoreRequest(aiModel, jobDescription, user.getCv());
+    JobScoreRequest scoreRequest = new JobScoreRequest(aiModel, jobDescription, user.getCv(), null);
     int score = calculator.computeScore(scoreRequest);
 
     return ResponseEntity.ok(Map.of("score", score));

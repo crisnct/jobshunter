@@ -97,8 +97,9 @@ public non-sealed class GeminiV1JobSearchImpl implements AiJobsClient, AiJobsCom
     AiModelEntity model = request.getOrder().getModel();
 
     GenerationConfig generationConfig = GenerationConfig.builder(model)
-        .responseJsonSchema(templateRenderer.getSchema(AiSchemaType.GEMINI_JSON_SCHEMA_RESPONSE))
-        .thinkingConfig(new ThinkingConfig(512))//how reasoning it is
+        .temperature(0.05)
+        .maxOutputTokens(15000)
+        .thinkingConfig(new ThinkingConfig(256))//how reasoning it is
         .build();
 
     String systemPrompt = templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_JOB_SEARCH,
@@ -133,7 +134,7 @@ public non-sealed class GeminiV1JobSearchImpl implements AiJobsClient, AiJobsCom
     if (usage != null) {
       eventPublisher.publishEvent(new AiRequestCostEvent(
           this,
-          request.getOrder().getJobOrder().getId(),
+          request.getOrder() != null ? request.getOrder().getJobOrder().getId(): -1,
           payload.aiModel(),
           TokensConsumedMapper.fromGemini(usage))
       );
@@ -160,6 +161,7 @@ public non-sealed class GeminiV1JobSearchImpl implements AiJobsClient, AiJobsCom
     UserEntity user = request.getOrder().getUser();
 
     GenerationConfig generationConfig = GenerationConfig.builder(model)
+        .maxOutputTokens(10000)
         .thinkingConfig(new ThinkingConfig(512))//how reasoning it is
         .responseJsonSchema(templateRenderer.getSchema(AiSchemaType.GEMINI_JSON_COMPANY_SCHEMA_RESPONSE))
         .build();
@@ -253,8 +255,8 @@ public non-sealed class GeminiV1JobSearchImpl implements AiJobsClient, AiJobsCom
 
     GenerationConfig generationConfig = GenerationConfig.builder(model)
         .temperature(0.15)
-        .responseJsonSchema(templateRenderer.getSchema(AiSchemaType.GEMINI_JSON_SCHEMA_RESPONSE))
-        .thinkingConfig(new ThinkingConfig(512))//how reasoning it is
+        .maxOutputTokens(10000)
+        .thinkingConfig(new ThinkingConfig(256))//how reasoning it is
         .build();
 
     GeminiJobsPayload payload = GeminiJobsPayload.builder(model)

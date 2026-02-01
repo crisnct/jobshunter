@@ -38,7 +38,7 @@ public class JobHuntService {
   public JobHuntResponse searchJobsForUser(SearchJobOrder order) {
     UserEntity user = order.getUser();
     CompletableFuture<List<Job>> futureJobs = huntingOrchestrator.startHunting(order);
-    List<Job> result = jobsStateMachine.processAsync(futureJobs, user)
+    List<Job> result = jobsStateMachine.processAsync(futureJobs, user, order)
         .join()
         .stream()
         .filter(ctx -> !ctx.isFailed() && ctx.isValidatedSuccessfully())

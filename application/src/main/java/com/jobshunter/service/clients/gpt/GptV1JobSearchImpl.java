@@ -98,8 +98,9 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient, AiJobsCompan
     userLocation.setCity(order.getUser().getCity() != null ? order.getUser().getCity() : ipInfo.city());
 
     GptJobsPayload payload = GptJobsPayload.builder(order.getModel())
-        .reasoning(new Reasoning(REASONING_JOB_SEARCH))
         .store(request.getStoreConversation())
+        .maxOutputTokens(15000)
+        .reasoning(new Reasoning(REASONING_JOB_SEARCH))
         .previousResponseId(request.getPrevResponseId())
         .addTools(Tools.builder().setWebSearch().userLocation(userLocation).build())
         .instructions(templateRenderer.getPrompt(PromptType.SYSTEM_INSTRUCTIONS))
@@ -161,6 +162,7 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient, AiJobsCompan
 
     GptJobsPayload payload = GptJobsPayload.builder(request.getCompaniesModel())
         .store(false)
+        .maxOutputTokens(15000)
         .addSystemPrompt(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_COMPANY_SEARCH,
             Map.of(
                 "city", user.getCity(),
@@ -213,6 +215,7 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient, AiJobsCompan
 
     GptJobsPayload payload = GptJobsPayload.builder(request.getDiscoveryModel())
         .temperature(0.15)
+        .maxOutputTokens(15000)
         .store(request.getStoreConversation())
         .previousResponseId(request.getPrevResponseId())
         .addTools(Tools.builder().setWebSearch().build())

@@ -5,6 +5,7 @@ import com.jobshunter.model.Job;
 import com.jobshunter.model.JobContext;
 import com.jobshunter.model.JobMetadataType;
 import com.jobshunter.model.JobPhase;
+import com.jobshunter.model.SearchJobOrder;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
@@ -50,18 +51,18 @@ public class JobsStateMachine {
     );
   }
 
-  public CompletableFuture<List<JobContext>> processAsync(CompletableFuture<List<Job>> futureJobs, UserEntity user) {
+  public CompletableFuture<List<JobContext>> processAsync(CompletableFuture<List<Job>> futureJobs, UserEntity user, SearchJobOrder order) {
     CompletableFuture<List<JobContext>> allJobs = futureJobs
         .thenCompose(jobsList -> {
           List<CompletableFuture<JobContext>> pipelined = jobsList.stream()
               .map(job -> {
                     if (job.getMetadata(JobMetadataType.APPROVED_BY_CONVERSATION_STATE_MACHINE) != null) {
-                      JobContext jc = new JobContext(job, user);
+                      JobContext jc = new JobContext(job, user, order);
                       jc.setValidatedSuccessfully(true);
                       jc.finalizeJob("the job was already passed through JobsStateMachine in Conversation State Machine");
                       return CompletableFuture.completedFuture(jc);
                     } else {
-                      return applyJobPipeline(job, user);
+                      return applyJobPipeline(job, user, order);
                     }
                   }
               )
@@ -80,8 +81,8 @@ public class JobsStateMachine {
     });
   }
 
-  private CompletableFuture<JobContext> applyJobPipeline(Job job, UserEntity user) {
-    CompletableFuture<JobContext> pipeline = CompletableFuture.supplyAsync(() -> new JobContext(job, user), jobProcessingExecutor);
+  private CompletableFuture<JobContext> applyJobPipeline(Job job, UserEntity user, SearchJobOrder order) {
+    CompletableFuture<JobContext> pipeline = CompletableFuture.supplyAsync(() -> new JobContext(job, user, order), jobProcessingExecutor);
     for (PipelineStep step : pipelineSteps) {
       pipeline = pipeline.thenApplyAsync(ctx -> ctx.isOkToRun(step.phase()) ? step.processor().processAsync(ctx) : ctx, step.executor());
     }

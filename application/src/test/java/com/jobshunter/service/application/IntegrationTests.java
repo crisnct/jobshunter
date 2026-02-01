@@ -187,7 +187,7 @@ public class IntegrationTests {
   @Test
   @Disabled
   public void testDifferentHosts() {
-    doReturn(new JobContext(null, null)).when(jobScoring).processAsync(any());
+    doReturn(new JobContext(null, null, null)).when(jobScoring).processAsync(any());
 
     for (int i = 0; i < 1; i++) {
       long startTime = System.currentTimeMillis();
@@ -298,7 +298,7 @@ public class IntegrationTests {
   @Disabled
   public void testJobFakelUrFilter() {
     Job job = new Job("https://www.bestjobs.eu/en/job/accounts-receivable-accountant-with-german-cabs-continental-automotive-romania-srl-timisoara-5b5f5e5e-5b5f-5e5e-5b5f-5b5f5e5e5b5f");
-    JobContext jc = new JobContext(job, null);
+    JobContext jc = new JobContext(job, null, null);
     jc = jobBasicCheckProcessor.processAsync(jc);
     jc = jobFetchProcessor.processAsync(jc);
     jc = jobBodyExtractorProcessor.processAsync(jc);

@@ -16,7 +16,8 @@ public record GrokScorePayload(
     Boolean store,
     Double temperature,
     int max_output_tokens,
-    List<Input> input
+    List<Input> input,
+    AiModelEntity aiModel
 ) {
 
   public static GrokScorePayloadBuilder builder(AiModelEntity aiModel) {
@@ -85,7 +86,8 @@ public record GrokScorePayload(
           store,
           temperature,
           max_output_tokens,
-          input
+          input,
+          aiModel
       );
     }
 

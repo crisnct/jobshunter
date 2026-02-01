@@ -8,11 +8,14 @@ import com.jobshunter.dto.gptRequest.Reasoning;
 import com.jobshunter.dto.gptResponse.ContentItem;
 import com.jobshunter.dto.gptResponse.GptResponse;
 import com.jobshunter.dto.gptResponse.OutputItem;
+import com.jobshunter.dto.gptResponse.Usage;
 import com.jobshunter.model.EngineType;
 import com.jobshunter.model.JobScoreRequest;
 import com.jobshunter.model.PromptType;
 import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.TemplateRenderer;
+import com.jobshunter.service.application.cost.AiRequestCostEvent;
+import com.jobshunter.service.application.cost.TokensConsumedMapper;
 import com.jobshunter.service.clients.JobScoreCalculatorClient;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
@@ -23,6 +26,7 @@ import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
@@ -41,6 +45,8 @@ public non-sealed class GptJobScoreCalculatorClientImpl implements JobScoreCalcu
   private final RestClient restClient;
 
   private final TemplateRenderer templateRenderer;
+
+  private final ApplicationEventPublisher eventPublisher;
 
   @Override
   @RateLimiter(name = "gptLimiter")
@@ -69,7 +75,16 @@ public non-sealed class GptJobScoreCalculatorClientImpl implements JobScoreCalcu
           .retrieve()
           .body(GptResponse.class);
 
-      //noinspection DataFlowIssue
+      Usage usage = response.usage();
+      if (usage != null) {
+        eventPublisher.publishEvent(new AiRequestCostEvent(
+            this,
+            request.getOrder() != null ? request.getOrder().getJobOrder().getId(): -1,
+            payload.aiModel(),
+            TokensConsumedMapper.fromGpt(usage))
+        );
+      }
+
       return extractScore(response);
     } catch (Exception e) {
       log.error("❌ GPT job API call failed", e);

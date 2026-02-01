@@ -56,7 +56,8 @@ public final class TokenEstimationMapper {
           .forEach(prompts::add);
     }
 
-    int maxOutputTokens = payload.generationConfig() != null ? payload.generationConfig().getMaxOutputTokens() : 0;
+    int maxOutputTokens = payload.generationConfig() != null && payload.generationConfig().getMaxOutputTokens() != null
+        ? payload.generationConfig().getMaxOutputTokens() : 0;
     Object responseSchema = payload.generationConfig() != null ? payload.generationConfig().getResponseJsonSchema() : null;
 
     return new TokenEstimationRequest(

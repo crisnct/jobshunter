@@ -102,7 +102,7 @@ public class AiConversationStateMachine {
       return CompletableFuture.completedFuture(List.of());
     } else {
       // Process Phase: Pass jobs to state machine for processing
-      return jobsStateMachine.processAsync(CompletableFuture.completedFuture(jobsFound), request.getOrder().getUser());
+      return jobsStateMachine.processAsync(CompletableFuture.completedFuture(jobsFound), request.getOrder().getUser(), request.getOrder());
     }
   }
 

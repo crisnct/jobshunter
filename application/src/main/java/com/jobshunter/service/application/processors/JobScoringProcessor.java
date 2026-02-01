@@ -60,7 +60,7 @@ public final class JobScoringProcessor implements JobProcessor {
     if (context.isValidatedSuccessfully() && context.getDescription() != null) {
       log.info("Computing matching score between {} resume and description of job {}",
           context.getUser().getUsername(), job.getUrl());
-      JobScoreRequest request = new JobScoreRequest(aiModel, context.getDescription(), context.getUser().getCv());
+      JobScoreRequest request = new JobScoreRequest(aiModel, context.getDescription(), context.getUser().getCv(), context.getOrder());
       JobScoreCalculatorClient calculator = (switch (ENGINE_SELECTION.type()) {
         case GPT -> gptCalculator;
         case GEMINI -> geminiCalculator;

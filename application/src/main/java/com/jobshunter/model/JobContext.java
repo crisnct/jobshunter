@@ -12,6 +12,7 @@ import org.apache.logging.log4j.util.Strings;
 public class JobContext {
 
   private final Job job;
+
   private final UserEntity user;
   private String body;
   private HttpFetchResult fetchResult;
@@ -21,15 +22,17 @@ public class JobContext {
   private JobPhase phase;
   private boolean failed;
   private String finalizationMessage;
+  private SearchJobOrder order;
 
-  public JobContext(Job job, UserEntity user) {
+  public JobContext(Job job, UserEntity user, SearchJobOrder order) {
     this.job = job;
     this.user = user;
     this.phase = JobPhase.NEW;
+    this.order = order;
   }
 
   public static JobContext failed(Job job, UserEntity user, Throwable t) {
-    JobContext ctx = new JobContext(job, user);
+    JobContext ctx = new JobContext(job, user, null);
     ctx.validatedSuccessfully = false;
     ctx.failJob(t != null ? t.getMessage() : "Unknown pipeline failure");
     return ctx;

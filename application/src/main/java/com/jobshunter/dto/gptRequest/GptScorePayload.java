@@ -18,7 +18,8 @@ public record GptScorePayload(
     Boolean store,
     @JsonProperty("max_output_tokens")
     int maxOutputTokens,
-    List<Input> input
+    List<Input> input,
+    AiModelEntity aiModel
 ) {
 
 
@@ -88,7 +89,8 @@ public record GptScorePayload(
           temperature,
           store,
           maxOutputTokens,
-          input
+          input,
+          aiModel
       );
     }
 

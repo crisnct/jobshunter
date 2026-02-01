@@ -17,4 +17,6 @@ public class JobScoreRequest {
 
   private UserCvEntity userCV;
 
+  private SearchJobOrder order;
+
 }
