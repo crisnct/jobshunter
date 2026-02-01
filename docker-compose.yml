@@ -58,6 +58,7 @@ services:
       PROFILE: prod
       SPRING_PROFILES_ACTIVE: prod
       LIQUIBASE_ENABLED: "true"
+      ENABLE_SCHEDULER: "false"
     ports:
       - "9001:8443"
 

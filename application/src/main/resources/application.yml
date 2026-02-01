@@ -33,6 +33,7 @@ jobshunter:
     async: 3
     maintenance: 1
   scheduler:
+    enabled: ${ENABLE_SCHEDULER:true}
     processOrderFrequency: 5000
     notifyUsersFrequency: 60000
     cleanupFiles: 86400000

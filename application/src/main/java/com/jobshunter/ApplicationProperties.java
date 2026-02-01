@@ -108,6 +108,8 @@ public class ApplicationProperties {
 
     private String cleanupFiles;
 
+    private boolean enabled;
+
   }
 
   @Data
