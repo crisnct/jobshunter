@@ -973,12 +973,12 @@ const App = () => {
             <div className="w-full max-w-none mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
               {activeTab === 'dash' && (
                 <>
-                  <section className="relative overflow-hidden bg-slate-200 rounded-[2.5rem] h-32 text-slate-700 shadow-2xl shadow-slate-200">
+                  <section className="relative overflow-hidden bg-gradient-to-r from-white to-slate-200 rounded-[2.5rem] h-24 text-slate-700 shadow-2xl shadow-slate-200">
                     <div className="relative z-10 flex items-center h-full px-10 gap-6">
                       <img
                         src={JobsHunterLogoSrc}
                         alt="JobsHunter logo"
-                        className="h-32 w-32 object-cover rounded-2xl"
+                        className="h-24 w-24 object-cover rounded-2xl"
                       />
                       <p className="flex-1 text-base md:text-lg font-medium leading-relaxed">
                         {bannerMessage}
@@ -1500,7 +1500,7 @@ const App = () => {
                         <button
                           onClick={handleSaveProfile}
                           disabled={saving}
-                          className="w-64 px-6 py-3 rounded-xl bg-indigo-700 text-white font-semibold text-sm shadow-lg shadow-indigo-200 disabled:opacity-70 flex items-center justify-center gap-2"
+                          className="w-64 px-6 py-3 rounded-xl bg-cyan-500 hover:bg-cyan-600 text-white font-semibold text-sm shadow-lg shadow-cyan-200 disabled:opacity-70 flex items-center justify-center gap-2"
                         >
                           {saving ? (
                             'Saving...'
