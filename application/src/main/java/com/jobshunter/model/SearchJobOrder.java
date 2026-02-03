@@ -8,7 +8,6 @@ import lombok.Getter;
 import lombok.Setter;
 
 @Getter
-//TODO remove the class and use JobOrderEntity after following TODO is done
 public class SearchJobOrder {
 
   private final UserEntity user;

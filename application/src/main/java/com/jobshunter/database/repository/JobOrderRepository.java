@@ -15,6 +15,7 @@ public interface JobOrderRepository extends JpaRepository<JobOrderEntity, Long> 
 
   @Query("""
       SELECT jo FROM JobOrderEntity jo 
+      JOIN FETCH jo.aiModel
       WHERE jo.user.id = :userId 
       ORDER BY jo.modifiedAt DESC, jo.status ASC
       """)

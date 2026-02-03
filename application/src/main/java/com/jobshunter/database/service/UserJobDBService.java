@@ -13,7 +13,9 @@ import com.jobshunter.database.repository.UserPromptRepository;
 import com.jobshunter.model.Job;
 import com.jobshunter.model.SearchJobOrder;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -43,6 +45,19 @@ public class UserJobDBService {
   @Transactional(readOnly = true)
   public long countJobsForOrder(Long userId, Long orderId) {
     return userJobRepository.countByUserIdAndJobOrderId(userId, orderId);
+  }
+
+  @Transactional(readOnly = true)
+  public Map<Long, Long> countJobsForOrders(Long userId, List<Long> orderIds) {
+    if (orderIds == null || orderIds.isEmpty()) {
+      return Map.of();
+    }
+    List<Object[]> results = userJobRepository.countJobsByOrderIds(userId, orderIds);
+    return results.stream()
+        .collect(Collectors.toMap(
+            row -> ((Number) row[0]).longValue(),
+            row -> ((Number) row[1]).longValue()
+        ));
   }
 
   @Transactional

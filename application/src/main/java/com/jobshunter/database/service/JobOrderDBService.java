@@ -38,9 +38,8 @@ public class JobOrderDBService {
 
   @Transactional(readOnly = true)
   public List<JobOrderEntity> getUserOrders(Long userId) {
-    List<JobOrderEntity> orders = jobOrderRepository.findByUserIdOrderByModifiedAtDescAndStatus(userId);
-    orders.forEach(order -> Hibernate.initialize(order.getAiModel()));
-    return orders;
+    // JOIN FETCH elimină nevoia de Hibernate.initialize() - aiModel este deja încărcat
+    return jobOrderRepository.findByUserIdOrderByModifiedAtDescAndStatus(userId);
   }
 
   @Transactional

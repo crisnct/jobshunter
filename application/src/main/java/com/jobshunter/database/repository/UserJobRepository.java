@@ -53,4 +53,13 @@ public interface UserJobRepository extends JpaRepository<UserJobEntity, Long> {
 
   long countByUserIdAndJobOrderId(Long userId, Long jobOrderId);
 
+  @Query(value = """
+      SELECT uj.job_order_id, COUNT(uj.id) 
+      FROM user_jobs uj 
+      WHERE uj.user_id = :userId 
+      AND uj.job_order_id IN :orderIds
+      GROUP BY uj.job_order_id
+      """, nativeQuery = true)
+  List<Object[]> countJobsByOrderIds(@Param("userId") Long userId, @Param("orderIds") List<Long> orderIds);
+
 }

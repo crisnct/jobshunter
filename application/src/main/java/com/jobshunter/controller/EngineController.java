@@ -103,7 +103,6 @@ public class EngineController {
     return ResponseEntity.status(HttpStatus.CREATED).body("Job orders created successfully");
   }
 
-  //TODO improve performance
   @GetMapping("/orders")
   @Transactional(readOnly = true)
   public ResponseEntity<List<JobOrderResponse>> getOrders(Authentication authentication) {
@@ -111,8 +110,13 @@ public class EngineController {
     @SuppressWarnings("OptionalGetWithoutIsPresent")
     UserEntity user = userDBService.getUser(authentication.getName()).get();
     List<JobOrderEntity> orders = jobOrderDBService.getUserOrders(user.getId());
+    
+    // Batch count - un singur query în loc de N queries (elimină N+1 problem)
+    List<Long> orderIds = orders.stream().map(JobOrderEntity::getId).toList();
+    Map<Long, Long> jobsCountMap = userJobDBService.countJobsForOrders(user.getId(), orderIds);
+    
     List<JobOrderResponse> responses = orders.stream()
-        .map(this::toJobOrderResponse)
+        .map(order -> toJobOrderResponse(order, jobsCountMap.getOrDefault(order.getId(), 0L)))
         .toList();
     return ResponseEntity.ok(responses);
   }
@@ -126,10 +130,8 @@ public class EngineController {
     return ResponseEntity.ok(costs);
   }
 
-  private JobOrderResponse toJobOrderResponse(JobOrderEntity order) {
+  private JobOrderResponse toJobOrderResponse(JobOrderEntity order, long jobsFound) {
     AiModelEntity aiModel = order.getAiModel();
-    long jobsFound = userJobDBService.countJobsForOrder(order.getUser().getId(), order.getId());
-
     return new JobOrderResponse(
         order.getId(),
         aiModel.getId(),
