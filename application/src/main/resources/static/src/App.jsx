@@ -69,6 +69,12 @@ const App = () => {
     { id: 'INTERNSHIP', label: 'INTERNSHIP' },
   ];
 
+  const relocationOptions = [
+    { value: 'NO', label: 'No' },
+    { value: 'YES_BUT_WITHIN_COUNTRY', label: 'Yes, but only within country' },
+    { value: 'YES', label: 'Yes' }
+  ];
+
   const JobsHunterLogoSrc = '/images/JobsHunterLogo.jpg';
 
   const orderColumns = [
@@ -1408,6 +1414,22 @@ const App = () => {
                                   );
                                 })}
                               </div>
+                            </div>
+
+                            <div>
+                              <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Open to Relocation</p>
+                              <select
+                                value={profileForm.relocation || ''}
+                                onChange={(e) => handleProfileChange('relocation', e.target.value || null)}
+                                className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                              >
+                                <option value="">Select relocation preference</option>
+                                {relocationOptions.map((opt) => (
+                                  <option key={opt.value} value={opt.value}>
+                                    {opt.label}
+                                  </option>
+                                ))}
+                              </select>
                             </div>
                           </div>
                         </div>

@@ -9,8 +9,6 @@ import com.jobshunter.database.entities.UserJobRoleEntity;
 import com.jobshunter.dto.AIJobSearchRequest;
 import com.jobshunter.dto.CompanyDto;
 import com.jobshunter.dto.CompanyDtoList;
-import com.jobshunter.service.application.cost.TokensConsumedMapper;
-import com.jobshunter.dto.exceptions.BusinessException;
 import com.jobshunter.dto.geminiRequest.FileData;
 import com.jobshunter.dto.geminiRequest.GeminiJobsPayload;
 import com.jobshunter.dto.geminiRequest.GenerationConfig;
@@ -29,6 +27,7 @@ import com.jobshunter.service.TemplateRenderer;
 import com.jobshunter.service.application.UrlExtractor;
 import com.jobshunter.service.application.cost.AiRequestCostEvent;
 import com.jobshunter.service.application.cost.TokenEstimationGuard;
+import com.jobshunter.service.application.cost.TokensConsumedMapper;
 import com.jobshunter.service.clients.AiJobsClient;
 import com.jobshunter.service.clients.AiJobsCompaniesClient;
 import com.jobshunter.service.clients.DeleteConvAiClient;
@@ -47,8 +46,6 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
@@ -63,10 +60,6 @@ public non-sealed class GeminiV1JobSearchImpl implements AiJobsClient, AiJobsCom
   public static final String GEMINI_URI = "https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent?key=%s";
 
   private static final String FILES_URI = "https://generativelanguage.googleapis.com/%s";
-
-  private static final String DELETE_FILE_URI = "https://generativelanguage.googleapis.com/v1beta/%s?key=%s";
-
-  private static final String DELETE_FILE_URI2 = "https://generativelanguage.googleapis.com/v1beta/projects/{project}/locations/{location}/conversations/%s";
 
   private final ApplicationProperties properties;
 
@@ -134,7 +127,7 @@ public non-sealed class GeminiV1JobSearchImpl implements AiJobsClient, AiJobsCom
     if (usage != null) {
       eventPublisher.publishEvent(new AiRequestCostEvent(
           this,
-          request.getOrder() != null ? request.getOrder().getJobOrder().getId(): -1,
+          request.getOrder() != null ? request.getOrder().getJobOrder().getId() : -1,
           payload.aiModel(),
           TokensConsumedMapper.fromGemini(usage))
       );
@@ -299,25 +292,8 @@ public non-sealed class GeminiV1JobSearchImpl implements AiJobsClient, AiJobsCom
   }
 
   @Override
-  @CircuitBreaker(name = "geminiCircuitBreaker", fallbackMethod = "fallbackDeleteConversation")
-  @RateLimiter(name = "geminiLimiter")
-  @Bulkhead(name = "geminiBulkhead")
   public void deleteConversation(String id) {
-    restClient.delete()
-        .uri(String.format(DELETE_FILE_URI, id, properties.getGemini().getApiKey()))
-        .headers((h) -> h.setBearerAuth(properties.getGemini().getApiKey()))
-        .retrieve()
-        .onStatus(
-            HttpStatusCode::isError,
-            (request, response) -> {
-              throw new BusinessException(HttpStatus.NOT_FOUND, "Delete failed: " + response.getStatusCode() + " for id " + id);
-            }
-        )
-        .toBodilessEntity();
-  }
-
-  public void fallbackDeleteConversation(String id, Throwable t) {
-    log.error("{} call short-circuited/bulkheaded, fallbackDeleteConversation: {}", getClass().getSimpleName(), t.getMessage());
+    //nothing to delete for gemini
   }
 
   public List<CompanyDto> fallbackSearchCompanies(AIJobSearchRequest request, Throwable t) {
