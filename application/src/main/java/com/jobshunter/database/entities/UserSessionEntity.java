@@ -59,6 +59,24 @@ public class UserSessionEntity {
   @Column(name = "ip_address", length = 45)
   private String ipAddress;
 
+  @Column(name = "city", columnDefinition = "TEXT")
+  private String city;
+
+  @Column(name = "region", columnDefinition = "TEXT")
+  private String region;
+
+  @Column(name = "country", columnDefinition = "TEXT")
+  private String country;
+
+  @Column(name = "loc", columnDefinition = "TEXT")
+  private String loc;
+
+  @Column(name = "org", columnDefinition = "TEXT")
+  private String org;
+
+  @Column(name = "timezone", columnDefinition = "TEXT")
+  private String timezone;
+
   @PrePersist
   void prePersist() {
     if (createdAt == null) {

@@ -4,20 +4,18 @@ import com.jobshunter.ApplicationProperties;
 import com.jobshunter.database.entities.JobOrderEntity;
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.entities.UserJobEntity;
-import com.jobshunter.database.entities.UserSessionEntity;
 import com.jobshunter.database.service.JobOrderDBService;
 import com.jobshunter.database.service.UserDBService;
 import com.jobshunter.database.service.UserJobDBService;
-import com.jobshunter.database.service.UserSessionDBService;
 import com.jobshunter.model.EngineType;
 import com.jobshunter.model.Job;
 import com.jobshunter.model.OrderStatus;
 import com.jobshunter.model.SearchJobOrder;
 import com.jobshunter.service.application.JobHuntService;
 import com.jobshunter.service.application.UserCvService;
+import com.jobshunter.service.application.hunting.CountryIsoCode;
 import com.jobshunter.service.application.notifiers.EmailNotifierService;
 import com.jobshunter.service.application.notifiers.WhatsappNotifierService;
-import com.jobshunter.service.clients.IpInfo;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
@@ -58,13 +56,11 @@ public class JobHuntScheduler {
 
   private final Executor maintenanceExecutor;
 
-  private final IpInfo ipInfoClient;
-
   private final WhatsappNotifierService whatsappNotifierService;
 
   private final EmailNotifierService emailNotifierService;
 
-  private final UserSessionDBService userSessionDBService;
+  private final CountryIsoCode countryIsoCode;
 
   public JobHuntScheduler(
       JobHuntService jobHuntService,
@@ -73,8 +69,7 @@ public class JobHuntScheduler {
       UserCvService userCvService,
       ApplicationProperties properties,
       UserJobDBService userJobDBService,
-      UserSessionDBService userSessionDBService,
-      IpInfo ipInfoClient,
+      CountryIsoCode countryIsoCode,
       WhatsappNotifierService whatsappNotifierService,
       EmailNotifierService emailNotifierService,
       @Qualifier("ordersExecutor") Executor ordersExecutor,
@@ -84,12 +79,11 @@ public class JobHuntScheduler {
     this.jobHuntService = jobHuntService;
     this.whatsappNotifierService = whatsappNotifierService;
     this.emailNotifierService = emailNotifierService;
-    this.ipInfoClient = ipInfoClient;
     this.userDBService = userDBService;
-    this.userSessionDBService = userSessionDBService;
     this.jobOrderDBService = jobOrderDBService;
     this.userCvService = userCvService;
     this.userJobDBService = userJobDBService;
+    this.countryIsoCode = countryIsoCode;
     this.ordersExecutor = ordersExecutor;
     this.notificationsExecutor = notificationsExecutor;
     this.maintenanceExecutor = maintenanceExecutor;
@@ -127,7 +121,6 @@ public class JobHuntScheduler {
       }
 
       UserEntity user = userDBService.getUserCompleteInfo(username).orElseThrow();
-      UserSessionEntity session = userSessionDBService.findByUser(user);
 
       boolean isEnableOneRealEngine = (properties.getGemini().isEnabled() || properties.getGpt().isEnabled() || properties.getSerp().isEnabled());
       final List<String> ignoredURLs;
@@ -137,7 +130,8 @@ public class JobHuntScheduler {
         ignoredURLs = List.of();
       }
       SearchJobOrder order = new SearchJobOrder(jobOrder, user, ignoredURLs);
-      order.setIpInfo(ipInfoClient.getIpDetailInfo(session.getIpAddress()));
+      order.setCountryISOcode(countryIsoCode.getCode(user.getCountry()));
+
       jobHuntService.searchJobsForUser(order);
       jobOrderDBService.changeStatus(jobOrder.getId(), OrderStatus.COMPLETED, null);
       log.info("Completed processing job order id={} for user {}", jobOrder.getId(), jobOrder.getUser().getUsername());

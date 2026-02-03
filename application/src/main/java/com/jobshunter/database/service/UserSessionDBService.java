@@ -3,6 +3,7 @@ package com.jobshunter.database.service;
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.entities.UserSessionEntity;
 import com.jobshunter.database.repository.UserSessionRepository;
+import com.jobshunter.dto.IpInfoDetailResponse;
 import java.time.Instant;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -135,6 +136,24 @@ public class UserSessionDBService {
    */
   @Transactional
   public UserSessionEntity save(UserSessionEntity session) {
+    return userSessionRepository.save(session);
+  }
+
+  /**
+   * Updates a session entity with IP location information from IpInfoDetailResponse.
+   *
+   * @param session      The session entity to update
+   * @param ipInfoDetail The IP information detail response
+   * @return The updated and saved session entity
+   */
+  @Transactional
+  public UserSessionEntity updateSessionWithIpInfo(UserSessionEntity session, IpInfoDetailResponse ipInfoDetail) {
+    session.setCity(ipInfoDetail.city());
+    session.setRegion(ipInfoDetail.region());
+    session.setCountry(ipInfoDetail.country());
+    session.setLoc(ipInfoDetail.loc());
+    session.setOrg(ipInfoDetail.org());
+    session.setTimezone(ipInfoDetail.timezone());
     return userSessionRepository.save(session);
   }
 }

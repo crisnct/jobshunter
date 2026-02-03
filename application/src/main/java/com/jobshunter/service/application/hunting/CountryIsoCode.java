@@ -46,7 +46,11 @@ public class CountryIsoCode {
   }
 
   public String getCode(String country) {
-    return countryIsoCodes.get(country.toUpperCase());
+    if (country == null){
+      return null;
+    } else {
+      return countryIsoCodes.get(country.toUpperCase());
+    }
   }
 
   public List<String> getAllCountries() {

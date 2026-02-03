@@ -8,7 +8,6 @@ import com.jobshunter.database.entities.UserJobRoleEntity;
 import com.jobshunter.dto.AIJobSearchRequest;
 import com.jobshunter.dto.CompanyDto;
 import com.jobshunter.dto.CompanyDtoList;
-import com.jobshunter.dto.IpInfoDetailResponse;
 import com.jobshunter.dto.exceptions.BusinessException;
 import com.jobshunter.dto.gptRequest.GptJobsPayload;
 import com.jobshunter.dto.gptRequest.Reasoning;
@@ -32,6 +31,7 @@ import com.jobshunter.service.application.cost.TokenEstimationGuard;
 import com.jobshunter.service.clients.AiJobsClient;
 import com.jobshunter.service.clients.AiJobsCompaniesClient;
 import com.jobshunter.service.clients.DeleteConvAiClient;
+import com.jobshunter.StringUtils;
 import com.jobshunter.service.retry.RetryPolicies;
 import com.jobshunter.service.retry.RetryTemplate;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
@@ -89,13 +89,12 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient, AiJobsCompan
 
   private AiClientResponse searchJobsOnce(AIJobSearchRequest request) {
     SearchJobOrder order = request.getOrder();
-    IpInfoDetailResponse ipInfo = order.getIpInfo();
 
     UserLocation userLocation = new UserLocation();
     userLocation.setType("approximate");
     //This is country iso code, like RO
-    userLocation.setCountry(ipInfo.country() != null ? ipInfo.country() : "RO");
-    userLocation.setCity(order.getUser().getCity() != null ? order.getUser().getCity() : ipInfo.city());
+    userLocation.setCountry(request.getCountryIsoCode());
+    userLocation.setCity(StringUtils.removeDiacritics(order.getUser().getCity()));
 
     GptJobsPayload payload = GptJobsPayload.builder(order.getModel())
         .store(request.getStoreConversation())
@@ -152,13 +151,11 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient, AiJobsCompan
    */
   private List<CompanyDto> searchCompaniesOnce(AIJobSearchRequest request) {
     UserEntity user = request.getOrder().getUser();
-    IpInfoDetailResponse ipInfo = request.getOrder().getIpInfo();
-
     UserLocation userLocation = new UserLocation();
     userLocation.setType("approximate");
     //This is country iso code, like RO
-    userLocation.setCountry(ipInfo.country() != null ? ipInfo.country() : "RO");
-    userLocation.setCity(user.getCity() != null ? user.getCity() : ipInfo.city());
+    userLocation.setCountry(request.getCountryIsoCode());
+    userLocation.setCity(StringUtils.removeDiacritics(user.getCity()));
 
     GptJobsPayload payload = GptJobsPayload.builder(request.getCompaniesModel())
         .store(false)

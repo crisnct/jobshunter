@@ -3,6 +3,7 @@ package com.jobshunter.dto.gptRequest.tools;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.jobshunter.StringUtils;
 import lombok.Builder;
 
 @Builder
@@ -46,7 +47,7 @@ public record Tools(
 
     public ToolsBuilder setCity(String city) {
       userLocationCheck();
-      userLocation.setCity(city);
+      userLocation.setCity(StringUtils.removeDiacritics(city));
       return this;
     }
 

@@ -30,4 +30,19 @@
     </addColumn>
   </changeSet>
 
+  <changeSet id="2026-02-03-add-location-columns-to-user-sessions" author="assistant">
+    <preConditions onFail="MARK_RAN">
+      <tableExists tableName="user_sessions"/>
+    </preConditions>
+    <comment>Add location-related columns to user_sessions table</comment>
+    <addColumn tableName="user_sessions">
+      <column name="city" type="TEXT"/>
+      <column name="region" type="TEXT"/>
+      <column name="country" type="TEXT"/>
+      <column name="loc" type="TEXT"/>
+      <column name="org" type="TEXT"/>
+      <column name="timezone" type="TEXT"/>
+    </addColumn>
+  </changeSet>
+
 </databaseChangeLog>

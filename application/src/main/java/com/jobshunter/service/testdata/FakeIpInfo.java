@@ -27,7 +27,7 @@ public non-sealed class FakeIpInfo implements IpInfo {
   @RateLimiter(name = "ipInfoLimiter")
   @CircuitBreaker(name = "ipinfo", fallbackMethod = "fallbackIpInfoDetail")
   public IpInfoDetailResponse getIpDetailInfo(String ip) {
-    return new IpInfoDetailResponse("Dolj County", "RO", "AS8951 Orange Romania S.A", "Craiova", "Europe/Bucharest", false);
+    return new IpInfoDetailResponse("Dolj County", "RO", "AS8951 Orange Romania S.A", "Craiova", "44.3333,23.8167", "Europe/Bucharest", false);
   }
 
   @SuppressWarnings("unused")

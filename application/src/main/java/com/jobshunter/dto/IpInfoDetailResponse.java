@@ -8,6 +8,7 @@ public record IpInfoDetailResponse(
     String country,
     String org,
     String city,
+    String loc,
     String timezone,
     Boolean bogon
 ) {

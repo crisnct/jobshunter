@@ -10,7 +10,6 @@ import com.jobshunter.database.service.UserDBService;
 import com.jobshunter.dto.AIJobSearchRequest;
 import com.jobshunter.dto.CompanyDto;
 import com.jobshunter.dto.EmailRequest;
-import com.jobshunter.dto.IpInfoDetailResponse;
 import com.jobshunter.dto.JobHuntResponse;
 import com.jobshunter.dto.JobScoreRequestDto;
 import com.jobshunter.dto.SearchCompaniesRequest;
@@ -36,13 +35,13 @@ import com.jobshunter.model.PromptType;
 import com.jobshunter.model.SearchJobOrder;
 import com.jobshunter.service.TemplateRenderer;
 import com.jobshunter.service.application.TestService;
+import com.jobshunter.service.application.cost.TokenEstimationGuard;
 import com.jobshunter.service.application.notifiers.EmailNotifierService;
 import com.jobshunter.service.application.processors.JobBodyExtractorProcessor;
 import com.jobshunter.service.application.processors.JobFetchProcessor;
 import com.jobshunter.service.application.processors.JobsStateMachine;
 import com.jobshunter.service.clients.AiJobsCompaniesClient;
 import com.jobshunter.service.clients.JobScoreCalculatorClient;
-import com.jobshunter.service.application.cost.TokenEstimationGuard;
 import com.jobshunter.service.clients.gemini.GeminiV1JobSearchImpl;
 import com.jobshunter.service.clients.gpt.GptV1JobSearchImpl;
 import com.jobshunter.service.clients.grok.GrokV1JobSearchImpl;
@@ -471,7 +470,6 @@ public class TestController {
 
     // Create SearchJobOrder
     SearchJobOrder searchJobOrder = new SearchJobOrder(jobOrder, testUser, List.of());
-    searchJobOrder.setIpInfo(new IpInfoDetailResponse("Europe", "RO", "RO", "Timisoara", "Europe/Bucharest", false));
 
     // Create AIJobSearchRequest
     AIJobSearchRequest aiRequest = new AIJobSearchRequest(searchJobOrder);
@@ -511,7 +509,6 @@ public class TestController {
 
     // Create SearchJobOrder
     SearchJobOrder searchJobOrder = new SearchJobOrder(jobOrder, testUser, List.of());
-    searchJobOrder.setIpInfo(new IpInfoDetailResponse("Europe", "RO", "RO", "Timisoara", "Europe/Bucharest", false));
 
     // Create AIJobSearchRequest
     AIJobSearchRequest aiRequest = new AIJobSearchRequest(searchJobOrder);

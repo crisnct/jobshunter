@@ -7,6 +7,7 @@ import com.jobshunter.database.entities.UserSessionEntity;
 import com.jobshunter.database.repository.RoleRepository;
 import com.jobshunter.database.repository.UserRepository;
 import com.jobshunter.dto.ChangePasswordRequest;
+import com.jobshunter.dto.IpInfoDetailResponse;
 import com.jobshunter.dto.LoginRequest;
 import com.jobshunter.dto.LoginResult;
 import com.jobshunter.dto.RegisterRequest;
@@ -15,6 +16,7 @@ import com.jobshunter.dto.exceptions.ValidationException;
 import com.jobshunter.service.application.JwtService;
 import com.jobshunter.service.application.RefreshTokenService;
 import com.jobshunter.service.application.notifiers.EmailNotifierService;
+import com.jobshunter.service.clients.IpInfo;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
@@ -51,6 +53,8 @@ public class AuthDBService {
   private final AuthenticationManager authenticationManager;
 
   private final EmailNotifierService emailService;
+
+  private final IpInfo ipInfo;
 
   @Transactional
   public UserEntity register(RegisterRequest request) {
@@ -108,6 +112,16 @@ public class AuthDBService {
 
     // Create or update session (unique constraint on user_id ensures one device per user)
     UserSessionEntity session = userSessionDBService.createOrUpdateSession(user, deviceId, refreshTokenHash, expiresAt, userAgent, ipAddress);
+
+    // Update session with IP location information
+    try {
+      IpInfoDetailResponse ipInfoDetail = ipInfo.getIpDetailInfo(ipAddress);
+      if (ipInfoDetail != null) {
+        userSessionDBService.updateSessionWithIpInfo(session, ipInfoDetail);
+      }
+    } catch (Exception e) {
+      log.warn("Failed to fetch IP location information for IP {}: {}", ipAddress, e.getMessage(), e);
+    }
 
     // Generate access token with session ID
     String jwtToken = jwtService.generateToken(user, session.getId());

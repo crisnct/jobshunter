@@ -46,7 +46,7 @@ public class UserJobDBService {
   }
 
   @Transactional
-  public UserJobEntity addJobUrl(UserEntity user, Job job, AiModelEntity aiModel, JobOrderEntity jobOrder) {
+  public UserJobEntity addJobUrl(UserEntity user, Job job, AiModelEntity aiModel, JobOrderEntity jobOrder, UserPromptEntity userPrompt) {
     Optional<UserJobEntity> existing = userJobRepository.findByUserIdAndUrl(user.getId(), job.getUrl());
     if (existing.isPresent()) {
       log.debug("Job URL already exists for user {}: {} (id: {})", user.getId(), job.getUrl(), existing.get().getId());
@@ -54,6 +54,7 @@ public class UserJobDBService {
     }
     UserJobEntity newJob = new UserJobEntity(user, job.getUrl(), aiModel, jobOrder);
     newJob.setScore(job.getScore());
+    newJob.setPrompt(userPrompt);
     return userJobRepository.saveAndFlush(newJob);
   }
 
@@ -70,7 +71,7 @@ public class UserJobDBService {
           userPrompt = promptOptional.get();
         }
       }
-      UserJobEntity userJobEntity = addJobUrl(user, job, aiModel, order.getJobOrder());
+      UserJobEntity userJobEntity = addJobUrl(user, job, aiModel, order.getJobOrder(), userPrompt);
       if (userPrompt != null) {
         PromptsJobsEntity promptJob = new PromptsJobsEntity();
         promptJob.setUserJob(userJobEntity);
