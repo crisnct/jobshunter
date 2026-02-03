@@ -92,7 +92,7 @@ public class BrowserSimulator {
             return CompletableFuture.completedFuture(response);
           }
           log.warn("HTTP fetch failed for {}, trying Playwright", url);
-          return CompletableFuture.supplyAsync(() -> openPageSyncPlaywright(url), playwrightExecutor)
+          return CompletableFuture.supplyAsync(() -> openPageSyncPlaywright(url, WaitUntilState.DOMCONTENTLOADED), playwrightExecutor)
               .orTimeout(TIMEOUT, TimeUnit.SECONDS);
         }).thenCompose(Function.identity());
   }
@@ -134,15 +134,15 @@ public class BrowserSimulator {
     }
   }
 
-  public ResponseEntity<String> openPageSyncPlaywright(String url) {
+  public ResponseEntity<String> openPageSyncPlaywright(String url, WaitUntilState state) {
     try (BrowserContext context = playwrightManager.newContext();
         Page page = context.newPage()) {
       try {
-        navigate(url, page);
+        navigate(url, page, state);
       } catch (PlaywrightException e) {
         if (e.getMessage().contains("ERR_HTTP2_PROTOCOL_ERROR")) {
           log.warn("Retrying navigation without HTTP/2");
-          navigate(url, page);
+          navigate(url, page, state);
         } else {
           throw e;
         }
@@ -151,11 +151,11 @@ public class BrowserSimulator {
     }
   }
 
-  private void navigate(String url, Page page) {
+  private void navigate(String url, Page page, WaitUntilState state) {
     page.navigate(
         url,
         new Page.NavigateOptions()
-            .setWaitUntil(WaitUntilState.DOMCONTENTLOADED)
+            .setWaitUntil(state)
             .setTimeout(TimeUnit.SECONDS.toMillis(TIMEOUT))
     );
     log.info("▶️ PLAYWRIGHT successfully got the body of page {}", url);

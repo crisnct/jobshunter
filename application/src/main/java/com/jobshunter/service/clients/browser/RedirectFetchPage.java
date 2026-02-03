@@ -1,5 +1,6 @@
 package com.jobshunter.service.clients.browser;
 
+import com.microsoft.playwright.options.WaitUntilState;
 import java.net.URI;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -56,7 +57,7 @@ public class RedirectFetchPage implements HttpFetcher {
         throw new IllegalStateException("Not valid url");
       }
 
-      Thread.sleep(500);
+      Thread.sleep(200);
 
       // Pass httpContext directly to ensure it's available in executor thread
       ResponseEntity<String> response = browserSimulator.openPageAsyncRedirect(url, httpcontext)
@@ -74,7 +75,12 @@ public class RedirectFetchPage implements HttpFetcher {
         log.info("Redirected(code {}) from {} to {}", response.getStatusCode().value(), url, redirectedURL);
       }
 
-      return new HttpFetchResult(url, redirectedURL, response.getStatusCode().value(), response.getBody(), redirects, httpcontext);
+      String body = response.getBody();
+      if (HtmlUtils.needsPlaywrightRendering(body)) {
+        log.info("Body appears JS-rendered or incomplete for {}, using Playwright", url);
+        body = browserSimulator.openPageSyncPlaywright(redirectedURL, WaitUntilState.LOAD).getBody();
+      }
+      return new HttpFetchResult(url, redirectedURL, response.getStatusCode().value(), body, redirects, httpcontext);
     } catch (Throwable e) {
       log.error("Redirection error {} for url {}", e.getMessage(), url);
       return new HttpFetchResult(url, null, HttpStatus.NOT_FOUND.value(), null, List.of(), httpcontext);

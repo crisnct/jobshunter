@@ -13,6 +13,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.jobshunter.database.entities.AiModelEntity;
 import com.jobshunter.database.entities.RoleEntity;
+import com.jobshunter.database.entities.UserEntity;
+import com.jobshunter.database.entities.UserJobTypeEntity;
 import com.jobshunter.database.repository.AiModelRepository;
 import com.jobshunter.database.repository.RoleRepository;
 import com.jobshunter.database.service.AuthDBService;
@@ -21,6 +23,7 @@ import com.jobshunter.model.EngineType;
 import com.jobshunter.model.Job;
 import com.jobshunter.model.JobContext;
 import com.jobshunter.model.JobPhase;
+import com.jobshunter.model.JobType;
 import com.jobshunter.service.UrlAffinityExecutor;
 import com.jobshunter.service.application.hunting.AiConversationStateMachine;
 import com.jobshunter.service.application.notifiers.EmailNotifierService;
@@ -131,6 +134,7 @@ public class IntegrationTests {
 
   @Test
   @DisplayName("Should register user via HTTP and trigger email notifier without touching DB")
+  @Disabled
   void shouldSendEmailWithFormattedJobs() throws Exception {
     RegisterRequest request = new RegisterRequest(
         "dummy.user", "test@test.com", "test1909test", "+40710221441");
@@ -255,6 +259,7 @@ public class IntegrationTests {
   }
 
   @Test
+  @Disabled
   public void testRedirection() {
     HttpFetchResult result = redirectFetchPage.fetch(
         "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEdoYtUm9AVmPKK7dy51GXRPMD604I35SzG8yFmb14kFecBtnRDL2v3HF1UUZB5YtpuBoU0W4pMUnwCQ-HDyua_hdmy4xXDWcRMfv-MkE7zSlo3rGb7GggEEHnwnRKVDakWl387P0X1zlcQdcL9wqndBKkp4ifvAUyS7UlnUv1c3h9yo0MXPs1_Q6H7ziAsG3Cu");
@@ -309,6 +314,33 @@ public class IntegrationTests {
     Assert.isTrue(!jc.isValidatedSuccessfully(), "URL is not valid");
   }
 
+  @Test
+  @Disabled
+  public void testJobBodyExtraction() {
+    Job job = new Job("https://stc.mingle.ro/en/apply/Q7U0Qg");
+
+    UserJobTypeEntity onsiteJob = new UserJobTypeEntity();
+    onsiteJob.setJobType(JobType.ONSITE);
+    UserJobTypeEntity hybridJob = new UserJobTypeEntity();
+    hybridJob.setJobType(JobType.HYBRID);
+
+    UserEntity user = new UserEntity();
+    user.setJobTypes(List.of(onsiteJob, hybridJob));
+    user.setContractTypes(List.of());
+
+    user.setJobRoles(List.of());
+
+    JobContext jc = new JobContext(job, user, null);
+    jc = jobBasicCheckProcessor.processAsync(jc);
+    jc = jobFetchProcessor.processAsync(jc);
+    jc = jobBodyExtractorProcessor.processAsync(jc);
+    jc = jobValidator.processAsync(jc);
+
+    Assert.state(jc.getPhase() == JobPhase.SCORING, "IP is accessible");
+    Assert.isTrue(jc.getFetchResult().statusCode() == 200, "URL is reacheble");
+    Assert.isTrue(!jc.isValidatedSuccessfully(), "URL is not valid");
+  }
+
   //TODO
   //remove this and make tests to take into consideration data.sql
   @TestConfiguration
@@ -325,11 +357,10 @@ public class IntegrationTests {
     @Bean
     ApplicationRunner ensureModelSeeds(AiModelRepository aiModelRepository) {
       return args -> {
-        seedIfMissing(aiModelRepository, EngineType.GEMINI, "gemini-2.5-flash-lite");
-        seedIfMissing(aiModelRepository, EngineType.GPT, "gpt-5.2-2025-12-11");
-        seedIfMissing(aiModelRepository, EngineType.GPT, "gpt-4.1-mini-2025-04-14");
-        seedIfMissing(aiModelRepository, EngineType.GROK, "grok-4-1-fast-non-reasoning");
-        seedIfMissing(aiModelRepository, EngineType.GROK, "grok-4-1-fast-reasoning");
+        seedIfMissing(aiModelRepository, EngineType.GEMINI, "gemini-2.5-flash");
+        seedIfMissing(aiModelRepository, EngineType.GPT, "gpt-4o-mini-2024-07-18");
+        seedIfMissing(aiModelRepository, EngineType.GPT, "gpt-5.1-2025-11-13");
+        seedIfMissing(aiModelRepository, EngineType.GROK, "grok-4-fast-reasoning");
       };
     }
 

@@ -1,7 +1,11 @@
 package com.jobshunter.model;
 
+import com.jobshunter.database.entities.UserContractTypeEntity;
 import com.jobshunter.database.entities.UserEntity;
+import com.jobshunter.database.entities.UserJobRoleEntity;
+import com.jobshunter.database.entities.UserJobTypeEntity;
 import com.jobshunter.service.clients.browser.HttpFetchResult;
+import java.util.List;
 import java.util.Objects;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -23,12 +27,19 @@ public class JobContext {
   private boolean failed;
   private String finalizationMessage;
   private SearchJobOrder order;
+  private final List<JobType> userJobTypes;
+  private final List<ContractType> userContractTypes;
+  private final List<String> userRoles;
 
   public JobContext(Job job, UserEntity user, SearchJobOrder order) {
     this.job = job;
+    //TODO do we really needs to store user object
     this.user = user;
     this.phase = JobPhase.NEW;
     this.order = order;
+    this.userJobTypes = user.getJobTypes().stream().map(UserJobTypeEntity::getJobType).toList();
+    this.userContractTypes = user.getContractTypes().stream().map(UserContractTypeEntity::getContractType).toList();
+    this.userRoles = user.getJobRoles().stream().map(UserJobRoleEntity::getJobRole).toList();
   }
 
   public static JobContext failed(Job job, UserEntity user, Throwable t) {
