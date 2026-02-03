@@ -10,11 +10,16 @@ import com.jobshunter.database.service.UserDBService;
 import com.jobshunter.database.service.UserJobDBService;
 import com.jobshunter.database.service.UserSessionDBService;
 import com.jobshunter.model.EngineType;
+import com.jobshunter.model.Job;
 import com.jobshunter.model.OrderStatus;
 import com.jobshunter.model.SearchJobOrder;
 import com.jobshunter.service.application.JobHuntService;
 import com.jobshunter.service.application.UserCvService;
+import com.jobshunter.service.application.notifiers.EmailNotifierService;
+import com.jobshunter.service.application.notifiers.WhatsappNotifierService;
 import com.jobshunter.service.clients.IpInfo;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -55,6 +60,10 @@ public class JobHuntScheduler {
 
   private final IpInfo ipInfoClient;
 
+  private final WhatsappNotifierService whatsappNotifierService;
+
+  private final EmailNotifierService emailNotifierService;
+
   private final UserSessionDBService userSessionDBService;
 
   public JobHuntScheduler(
@@ -66,11 +75,15 @@ public class JobHuntScheduler {
       UserJobDBService userJobDBService,
       UserSessionDBService userSessionDBService,
       IpInfo ipInfoClient,
+      WhatsappNotifierService whatsappNotifierService,
+      EmailNotifierService emailNotifierService,
       @Qualifier("ordersExecutor") Executor ordersExecutor,
       @Qualifier("notificationsExecutor") Executor notificationsExecutor,
       @Qualifier("maintenanceExecutor") Executor maintenanceExecutor
   ) {
     this.jobHuntService = jobHuntService;
+    this.whatsappNotifierService = whatsappNotifierService;
+    this.emailNotifierService = emailNotifierService;
     this.ipInfoClient = ipInfoClient;
     this.userDBService = userDBService;
     this.userSessionDBService = userSessionDBService;
@@ -135,18 +148,44 @@ public class JobHuntScheduler {
   }
 
   public void notifyUsersSync() {
-//    final List<UserEntity> usersToNotify = new ArrayList<>();
-//    for (var user : userDBService.getAllUsers()) {
-//      if (user.isNotifyWhatsapp() || user.isNotifyEmail()) {
-//        if (user.getLastJobs() != null && user.getLastJobs().plus(Duration.ofDays(1)).isBefore(Instant.now())) {
-//          usersToNotify.add(user);
-//        }
-//      }
-//    }
-//    if (!usersToNotify.isEmpty()) {
-//      //log.info("Notifying user {} about new jobs found", user.getUsername());
-//      // TODO: implement notification logic if needed
-//    }
+    for (var user : userDBService.getAllUsers()) {
+      if (user.isNotifyWhatsapp() || user.isNotifyEmail()) {
+        if (user.getLastJobs() != null && user.getLastJobs().plus(Duration.ofDays(1)).isBefore(Instant.now())) {
+          List<JobOrderEntity> orders = jobOrderDBService.getCompletedOrdersNotNotified(user.getId());
+          if (!orders.isEmpty()) {
+            notifyUser(user, orders);
+          }
+        }
+      }
+    }
+  }
+
+  private void notifyUser(UserEntity user, List<JobOrderEntity> orders) {
+    log.info("Notifying user {} about new jobs found...", user.getUsername());
+    List<Job> jobs = orders.stream()
+        .flatMap(order -> userJobDBService.getUserJobs(user.getUsername(), order.getId()).stream())
+        .map(userJob -> {
+          Job job = new Job(userJob.getUrl());
+          job.setSource(userJob.getAiModel().getModel());
+          if (userJob.getScore() != null) {
+            job.setScore(userJob.getScore());
+          }
+          return job;
+        })
+        .sorted((o1, o2) -> -Integer.compare(o1.getScore(), o2.getScore()))
+        .toList();
+    if (!jobs.isEmpty()) {
+      if (user.isNotifyWhatsapp()) {
+        whatsappNotifierService.send(jobs, user);
+      }
+      if (user.isNotifyEmail()) {
+        emailNotifierService.sendUsingTemplate(jobs, user);
+      }
+      user.setLastJobs(Instant.now());
+      userDBService.updateUser(user);
+      log.info("Notified user {} about {} jobs found", user.getUsername(), jobs.size());
+    }
+    jobOrderDBService.setNotified(orders);
   }
 
   private void cleanupFilesSync() {

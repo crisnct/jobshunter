@@ -316,13 +316,17 @@ public non-sealed class GeminiV1JobSearchImpl implements AiJobsClient, AiJobsCom
         .toBodilessEntity();
   }
 
+  public void fallbackDeleteConversation(String id, Throwable t) {
+    log.error("{} call short-circuited/bulkheaded, fallbackDeleteConversation: {}", getClass().getSimpleName(), t.getMessage());
+  }
+
   public List<CompanyDto> fallbackSearchCompanies(AIJobSearchRequest request, Throwable t) {
-    log.error("{} call short-circuited/bulkheaded: {}", getClass().getSimpleName(), t.getMessage());
+    log.error("{} call short-circuited/bulkheaded, fallbackSearchCompanies: {}", getClass().getSimpleName(), t.getMessage());
     return List.of();
   }
 
   public AiClientResponse fallbackSearchJobsFromCompanies(AIJobSearchRequest request, Throwable t) {
-    log.error("{} call short-circuited/bulkheaded: {}", getClass().getSimpleName(), t.getMessage());
+    log.error("{} call short-circuited/bulkheaded, fallbackSearchJobsFromCompanies: {}", getClass().getSimpleName(), t.getMessage());
     return new AiClientResponse();
   }
 

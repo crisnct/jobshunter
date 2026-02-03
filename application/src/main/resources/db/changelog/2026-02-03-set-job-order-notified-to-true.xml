@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+  xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="
+        http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.23.xsd">
+
+  <changeSet id="2026-02-03-set-job-order-notified-to-true" author="assistant">
+    <preConditions onFail="MARK_RAN">
+      <tableExists tableName="job_order"/>
+      <columnExists tableName="job_order" columnName="notified"/>
+    </preConditions>
+    <comment>Set notified column to 1 (true) for all entries in job_order table</comment>
+    <sql>
+      UPDATE job_order SET notified = 1;
+    </sql>
+  </changeSet>
+
+  <changeSet id="2026-02-03-add-score-column-to-user-jobs" author="assistant">
+    <preConditions onFail="MARK_RAN">
+      <tableExists tableName="user_jobs"/>
+      <not>
+        <columnExists tableName="user_jobs" columnName="score"/>
+      </not>
+    </preConditions>
+    <comment>Add score column to user_jobs table</comment>
+    <addColumn tableName="user_jobs">
+      <column name="score" type="INT"/>
+    </addColumn>
+  </changeSet>
+
+</databaseChangeLog>

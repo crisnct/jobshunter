@@ -54,12 +54,6 @@ public class JobHuntService {
       if ((properties.getGemini().isEnabled() || properties.getGpt().isEnabled() || properties.getSerp().isEnabled())) {
         this.userJobDBService.updateUserWithJobs(user, order, jobs);
       }
-      if (user.isNotifyWhatsapp()) {
-        whatsappNotifierService.send(jobs, user);
-      }
-      if (user.isNotifyEmail()) {
-        emailNotifierService.sendUsingTemplate(jobs, user);
-      }
     }
     return jobHuntResponse;
   }

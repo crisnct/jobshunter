@@ -32,4 +32,12 @@ public interface JobOrderRepository extends JpaRepository<JobOrderEntity, Long> 
       """, nativeQuery = true)
   List<Object[]> findTotalCostByUser();
 
+  @Query("""
+      SELECT jo FROM JobOrderEntity jo 
+      WHERE jo.user.id = :userId 
+      AND jo.status = 'COMPLETED'
+      AND jo.notified = false
+      """)
+  List<JobOrderEntity> findCompletedAndNotNotifiedByUserId(@Param("userId") Long userId);
+
 }

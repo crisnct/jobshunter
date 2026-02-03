@@ -28,27 +28,30 @@ public class UserJobEntity {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  @ManyToOne(fetch = FetchType.LAZY)
+  @ManyToOne(fetch = FetchType.EAGER)
   @JoinColumn(name = "user_id", nullable = false)
   private UserEntity user;
 
   @Column(name = "url", nullable = false, length = 2048)
   private String url;
 
-  @ManyToOne(fetch = FetchType.LAZY)
+  @ManyToOne(fetch = FetchType.EAGER)
   @JoinColumn(name = "model_id")
   private AiModelEntity aiModel;
 
-  @ManyToOne(fetch = FetchType.LAZY)
+  @ManyToOne(fetch = FetchType.EAGER)
   @JoinColumn(name = "job_order_id")
   private JobOrderEntity jobOrder;
 
-  @ManyToOne(fetch = FetchType.LAZY)
+  @ManyToOne(fetch = FetchType.EAGER)
   @JoinColumn(name = "prompt_id")
   private UserPromptEntity prompt;
 
   @Column(name = "created_at", updatable = false)
   private Instant createdAt;
+
+  @Column(name = "score")
+  private Integer score;
 
   public UserJobEntity(UserEntity user, String url, AiModelEntity aiModel, JobOrderEntity jobOrder) {
     this.user = user;

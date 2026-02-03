@@ -12,14 +12,12 @@ import com.jobshunter.database.repository.UserJobRepository;
 import com.jobshunter.database.repository.UserPromptRepository;
 import com.jobshunter.model.Job;
 import com.jobshunter.model.SearchJobOrder;
-import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
 
 @Slf4j
 @Service
@@ -48,13 +46,14 @@ public class UserJobDBService {
   }
 
   @Transactional
-  public UserJobEntity addJobUrl(UserEntity user, String url, AiModelEntity aiModel, JobOrderEntity jobOrder) {
-    Optional<UserJobEntity> existing = userJobRepository.findByUserIdAndUrl(user.getId(), url);
+  public UserJobEntity addJobUrl(UserEntity user, Job job, AiModelEntity aiModel, JobOrderEntity jobOrder) {
+    Optional<UserJobEntity> existing = userJobRepository.findByUserIdAndUrl(user.getId(), job.getUrl());
     if (existing.isPresent()) {
-      log.debug("Job URL already exists for user {}: {} (id: {})", user.getId(), url, existing.get().getId());
+      log.debug("Job URL already exists for user {}: {} (id: {})", user.getId(), job.getUrl(), existing.get().getId());
       return existing.get();
     }
-    UserJobEntity newJob = new UserJobEntity(user, url, aiModel, jobOrder);
+    UserJobEntity newJob = new UserJobEntity(user, job.getUrl(), aiModel, jobOrder);
+    newJob.setScore(job.getScore());
     return userJobRepository.saveAndFlush(newJob);
   }
 
@@ -63,8 +62,6 @@ public class UserJobDBService {
     @SuppressWarnings("OptionalGetWithoutIsPresent")
     AiModelEntity aiModel
         = aiModelRepository.findByProviderAndModel(order.getModel().getProvider(), order.getModel().getModel()).get();
-
-    user.setLastJobs(Instant.now());
     jobs.forEach(job -> {
       UserPromptEntity userPrompt = null;
       if (job.getPromptId() != null) {
@@ -73,7 +70,7 @@ public class UserJobDBService {
           userPrompt = promptOptional.get();
         }
       }
-      UserJobEntity userJobEntity = addJobUrl(user, job.getUrl(), aiModel, order.getJobOrder());
+      UserJobEntity userJobEntity = addJobUrl(user, job, aiModel, order.getJobOrder());
       if (userPrompt != null) {
         PromptsJobsEntity promptJob = new PromptsJobsEntity();
         promptJob.setUserJob(userJobEntity);
@@ -85,12 +82,4 @@ public class UserJobDBService {
     userDBService.updateUser(user);
   }
 
-  @Transactional(readOnly = true)
-  public List<String> getExistingJobUrlsForUser(String username) {
-    return userJobRepository.findJobUrlsByUsernameIgnoreCase(username).stream()
-        .filter(StringUtils::hasText)
-        .map(String::trim)
-        .distinct()
-        .toList();
-  }
 }

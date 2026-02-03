@@ -114,4 +114,18 @@ public class JobOrderDBService {
     jobOrderRepository.save(jobOrder);
   }
 
+  @Transactional(readOnly = true)
+  public List<JobOrderEntity> getCompletedOrdersNotNotified(Long userId) {
+    return jobOrderRepository.findCompletedAndNotNotifiedByUserId(userId);
+  }
+
+  @Transactional
+  public void setNotified(List<JobOrderEntity> orders) {
+    if (orders == null || orders.isEmpty()) {
+      return;
+    }
+    orders.forEach(order -> order.setNotified(true));
+    jobOrderRepository.saveAll(orders);
+  }
+
 }
