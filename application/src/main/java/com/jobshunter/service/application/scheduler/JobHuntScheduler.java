@@ -144,7 +144,7 @@ public class JobHuntScheduler {
   public void notifyUsersSync() {
     for (var user : userDBService.getAllUsers()) {
       if (user.isNotifyWhatsapp() || user.isNotifyEmail()) {
-        if (user.getLastJobs() != null && user.getLastJobs().plus(Duration.ofDays(1)).isBefore(Instant.now())) {
+        if (user.getNotifiedAt() != null && user.getNotifiedAt().plus(Duration.ofHours(12)).isBefore(Instant.now())) {
           List<JobOrderEntity> orders = jobOrderDBService.getCompletedOrdersNotNotified(user.getId());
           if (!orders.isEmpty()) {
             notifyUser(user, orders);
@@ -175,7 +175,7 @@ public class JobHuntScheduler {
       if (user.isNotifyEmail()) {
         emailNotifierService.sendUsingTemplate(jobs, user);
       }
-      user.setLastJobs(Instant.now());
+      user.setNotifiedAt(Instant.now());
       userDBService.updateUser(user);
       log.info("Notified user {} about {} jobs found", user.getUsername(), jobs.size());
     }

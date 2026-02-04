@@ -1,13 +1,11 @@
-package com.jobshunter.service.application.processors;
+package com.jobshunter.service.application.processors.validation;
 
 import com.jobshunter.ApplicationProperties;
 import com.jobshunter.ApplicationProperties.JobsHunter;
 import com.jobshunter.model.JobContext;
 import com.jobshunter.model.JobMetadataType;
 import com.jobshunter.model.JobPhase;
-import com.jobshunter.service.application.processors.validation.PatternCache;
-import com.jobshunter.service.application.processors.validation.ValidationContext;
-import com.jobshunter.service.application.processors.validation.ValidationRule;
+import com.jobshunter.service.application.processors.JobProcessor;
 import com.jobshunter.service.application.processors.validation.rules.B2BEorLocalRule;
 import com.jobshunter.service.application.processors.validation.rules.B2BRemoteRule;
 import com.jobshunter.service.application.processors.validation.rules.EmploymentLocalRule;

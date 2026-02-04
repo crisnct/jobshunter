@@ -7,6 +7,7 @@ import {
   Loader2,
   LogOut,
   Plus,
+  Trash2,
   User,
 } from 'lucide-react';
 import './index.css';
@@ -1500,7 +1501,7 @@ const App = () => {
                         <button
                           onClick={handleSaveProfile}
                           disabled={saving}
-                          className="w-64 px-6 py-3 rounded-xl bg-cyan-500 hover:bg-cyan-600 text-white font-semibold text-sm shadow-lg shadow-cyan-200 disabled:opacity-70 flex items-center justify-center gap-2"
+                          className="w-64 px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm shadow-lg shadow-indigo-200 transition-all duration-200 disabled:opacity-70 flex items-center justify-center gap-2"
                         >
                           {saving ? (
                             'Saving...'
@@ -1514,8 +1515,9 @@ const App = () => {
                         <button
                           onClick={handleDeleteAccount}
                           disabled={deletingAccount}
-                          className="text-red-600 text-sm font-semibold underline disabled:opacity-70"
+                          className="px-4 py-2.5 rounded-xl border-2 border-red-200 bg-red-50 hover:bg-red-100 hover:border-red-300 text-red-600 text-sm font-semibold transition-all duration-200 disabled:opacity-70 flex items-center gap-2"
                         >
+                          <Trash2 size={16} />
                           {deletingAccount ? 'Deleting...' : 'Delete account'}
                         </button>
                       </div>

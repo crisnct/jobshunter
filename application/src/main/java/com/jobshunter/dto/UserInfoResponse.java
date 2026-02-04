@@ -14,7 +14,7 @@ public record UserInfoResponse(
     boolean emailVerified,
     String verificationToken,
     String cvFilename,
-    String lastJobs,
+    String notifiedAt,
     List<String> prompts,
     String createdAt,
     List<String> roles,

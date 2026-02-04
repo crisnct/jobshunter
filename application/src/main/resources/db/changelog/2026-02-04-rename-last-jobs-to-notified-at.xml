@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+  xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="
+        http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.23.xsd">
+
+  <changeSet id="2026-02-04-rename-last-jobs-to-notified-at" author="codex">
+    <renameColumn tableName="users"
+                  oldColumnName="last_jobs"
+                  newColumnName="notified_at"
+                  columnDataType="DATETIME(3)"/>
+  </changeSet>
+
+</databaseChangeLog>

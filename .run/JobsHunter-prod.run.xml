@@ -3,7 +3,7 @@
     <option name="FRAME_DEACTIVATION_UPDATE_POLICY" value="UnknownPolicyInFreeMode" />
     <module name="jobshunter" />
     <option name="SPRING_BOOT_MAIN_CLASS" value="com.jobshunter.JobshunterApplication" />
-    <option name="VM_PARAMETERS" value="-Dspring.profiles.active=prod" />
+    <option name="VM_PARAMETERS" value="-Dspring.profiles.active=prod -Duser.timezone=UTC" />
     <extension name="coverage">
       <pattern>
         <option name="PATTERN" value="com.jobshunter.*" />

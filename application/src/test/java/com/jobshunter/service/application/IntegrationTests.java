@@ -31,7 +31,7 @@ import com.jobshunter.service.application.processors.JobBasicCheckProcessor;
 import com.jobshunter.service.application.processors.JobBodyExtractorProcessor;
 import com.jobshunter.service.application.processors.JobFetchProcessor;
 import com.jobshunter.service.application.processors.JobScoringProcessor;
-import com.jobshunter.service.application.processors.JobValidatorProcessor;
+import com.jobshunter.service.application.processors.validation.JobValidatorProcessor;
 import com.jobshunter.service.clients.SmtpMailtrapClient;
 import com.jobshunter.service.clients.browser.BrowserSimulator;
 import com.jobshunter.service.clients.browser.HttpFetchResult;

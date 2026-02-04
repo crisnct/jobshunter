@@ -7,7 +7,8 @@ import com.jobshunter.service.TemplateRenderer;
 import com.jobshunter.service.clients.RestMailtrapClient;
 import com.jobshunter.service.clients.SmtpMailtrapClient;
 import com.jobshunter.service.clients.tinyurl.TinyUrlClient;
-import java.time.LocalDateTime;
+import java.time.Instant;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
@@ -31,7 +32,7 @@ public final class EmailNotifierService implements ServiceNotifier {
 
   @Override
   public void send(List<Job> jobs, UserEntity user) {
-    String timestamp = LocalDateTime.now().format(JOB_TIMESTAMP_FORMAT);
+    String timestamp = Instant.now().atZone(ZoneId.of("UTC")).format(JOB_TIMESTAMP_FORMAT);
     String body = templateRenderer.getUserMessage(UserMessageType.JOBS_NOTIFY, Map.of("1", timestamp, "2", ServiceNotifier.formatJobs(jobs)));
     emailClient.sendEmail(user.getEmail(), "JobsHunter - new jobs for you", body);
   }

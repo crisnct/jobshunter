@@ -22,5 +22,7 @@
   <include file="db/changelog/2026-01-29-add-job-order-cost-column.xml"/>
   <include file="db/changelog/2026-01-29-add-ai-model-tool-price.xml"/>
   <include file="db/changelog/2026-02-03-set-job-order-notified-to-true.xml"/>
+  <include file="db/changelog/2026-02-04-rename-last-jobs-to-notified-at.xml"/>
+  <include file="db/changelog/2026-02-04-change-datetime-to-milliseconds.xml"/>
 
 </databaseChangeLog>

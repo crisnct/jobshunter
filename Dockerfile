@@ -82,6 +82,7 @@ COPY --from=build /app/application/target/jobshunter-1.0.0.jar /app/app.jar
 # Environment variables
 ENV SPRING_PROFILES_ACTIVE=prod
 ENV JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=75"
+ENV TZ=UTC
 
 EXPOSE 8443
 

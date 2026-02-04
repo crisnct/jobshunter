@@ -8,7 +8,8 @@ import com.jobshunter.service.TemplateRenderer;
 import com.jobshunter.service.clients.TwilioClient;
 import com.jobshunter.service.clients.tinyurl.TinyUrlClient;
 import com.jobshunter.service.clients.twilio.TwilioClientImpl;
-import java.time.LocalDateTime;
+import java.time.Instant;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
@@ -52,7 +53,7 @@ public final class WhatsappNotifierService implements ServiceNotifier {
       formattedJobs = ServiceNotifier.formatJobs(jobsURLs);
     }
 
-    String timestamp = LocalDateTime.now().format(JOB_TIMESTAMP_FORMAT);
+    String timestamp = Instant.now().atZone(ZoneId.of("UTC")).format(JOB_TIMESTAMP_FORMAT);
     String body = templateRenderer.getUserMessage(UserMessageType.JOBS_NOTIFY, Map.of("1", timestamp, "2", formattedJobs));
 
     if (!twilioClient.trySend(user.getPhoneNumber(), properties.getTwilio().getFromNumber(), body)) {

@@ -6,6 +6,7 @@ import com.jobshunter.model.JobContext;
 import com.jobshunter.model.JobMetadataType;
 import com.jobshunter.model.JobPhase;
 import com.jobshunter.model.SearchJobOrder;
+import com.jobshunter.service.application.processors.validation.JobValidatorProcessor;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;

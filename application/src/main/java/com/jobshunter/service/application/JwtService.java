@@ -8,6 +8,7 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
+import java.time.Instant;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -43,15 +44,14 @@ public class JwtService {
       claimsMap.put("sid", sessionId);
     }
 
-    Date now = new Date();
-
-    Date expiry = new Date(now.getTime() + 1000 * properties.getSecurity().getJwt().getExpirationSec());
+    Instant now = Instant.now();
+    Instant expiry = now.plusSeconds(properties.getSecurity().getJwt().getExpirationSec());
 
     return Jwts.builder()
         .setClaims(claimsMap)
         .setSubject(userDetails.getUsername())
-        .setIssuedAt(now)
-        .setExpiration(expiry)
+        .setIssuedAt(Date.from(now))
+        .setExpiration(Date.from(expiry))
         .signWith(getSigningKey(), SignatureAlgorithm.HS256)
         .compact();
   }
@@ -79,7 +79,7 @@ public class JwtService {
 
   public boolean isTokenExpired(String token) {
     try {
-      return extractAllClaims(token).getExpiration().before(new Date());
+      return extractAllClaims(token).getExpiration().toInstant().isBefore(Instant.now());
     } catch (Exception ex) {
       return true;
     }

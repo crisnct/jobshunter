@@ -72,8 +72,8 @@ public class UserEntity implements UserDetails {
   @Column(name = "verification_token")
   private String verificationToken;
 
-  @Column(name = "last_jobs")
-  private Instant lastJobs;
+  @Column(name = "notified_at")
+  private Instant notifiedAt;
 
   @Column(name = "created_at", nullable = false, updatable = false)
   private Instant createdAt;

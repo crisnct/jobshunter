@@ -96,6 +96,10 @@ spring:
     defer-datasource-initialization: true
     properties:
       hibernate.validator.message_interpolator: org.hibernate.validator.messageinterpolation.ParameterMessageInterpolator
+      hibernate.jdbc.time_zone: UTC
+      hibernate.jdbc.batch_size: 50
+      hibernate.order_inserts: true
+      hibernate.order_updates: true
   liquibase:
     enabled: ${LIQUIBASE_ENABLED:true}
     change-log: classpath:db/changelog/db.changelog-master.xml

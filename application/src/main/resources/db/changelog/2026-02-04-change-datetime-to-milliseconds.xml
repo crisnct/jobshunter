@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+  xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="
+        http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.23.xsd">
+
+  <changeSet id="2026-02-04-change-datetime-to-milliseconds" author="codex">
+    <comment>Convert timestamp columns to DATETIME(3) for millisecond precision</comment>
+
+    <!-- Modify data types to DATETIME(3) -->
+    <modifyDataType tableName="job_order" columnName="modified_at" newDataType="DATETIME(3)"/>
+    <modifyDataType tableName="user_jobs" columnName="created_at" newDataType="DATETIME(3)"/>
+    <modifyDataType tableName="user_prompts" columnName="modified_at" newDataType="DATETIME(3)"/>
+    <modifyDataType tableName="user_remote_cv" columnName="expire_time" newDataType="DATETIME(3)"/>
+    <modifyDataType tableName="user_sessions" columnName="refresh_expires_at" newDataType="DATETIME(3)"/>
+    <modifyDataType tableName="user_sessions" columnName="revoked_at" newDataType="DATETIME(3)"/>
+    <modifyDataType tableName="user_sessions" columnName="created_at" newDataType="DATETIME(3)"/>
+    <modifyDataType tableName="user_sessions" columnName="last_used_at" newDataType="DATETIME(3)"/>
+    <modifyDataType tableName="users" columnName="created_at" newDataType="DATETIME(3)"/>
+
+    <!-- Update default values to CURRENT_TIMESTAMP(3) -->
+    <addDefaultValue tableName="job_order" columnName="modified_at" defaultValueComputed="CURRENT_TIMESTAMP(3)"/>
+    <addDefaultValue tableName="user_jobs" columnName="created_at" defaultValueComputed="CURRENT_TIMESTAMP(3)"/>
+    <addDefaultValue tableName="user_sessions" columnName="created_at" defaultValueComputed="CURRENT_TIMESTAMP(3)"/>
+    <addDefaultValue tableName="users" columnName="created_at" defaultValueComputed="CURRENT_TIMESTAMP(3)"/>
+  </changeSet>
+
+</databaseChangeLog>

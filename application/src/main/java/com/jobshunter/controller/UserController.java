@@ -126,7 +126,7 @@ public class UserController {
         user.isEmailVerified(),
         user.getVerificationToken(),
         user.getCv() != null ? user.getCv().getFilename() : "",
-        formatDateTime(user.getLastJobs()),
+        formatDateTime(user.getNotifiedAt()),
         prompts.stream()
             .map(UserPromptEntity::getPrompt)
             .toList(),
