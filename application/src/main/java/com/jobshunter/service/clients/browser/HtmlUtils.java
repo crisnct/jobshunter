@@ -1,6 +1,6 @@
 package com.jobshunter.service.clients.browser;
 
-import com.jobshunter.StringUtils;
+import com.jobshunter.config.StringUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 

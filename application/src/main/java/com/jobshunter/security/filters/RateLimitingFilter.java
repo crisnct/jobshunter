@@ -1,6 +1,6 @@
 package com.jobshunter.security.filters;
 
-import com.jobshunter.ApplicationProperties;
+import com.jobshunter.config.ApplicationProperties;
 import com.jobshunter.security.ClientIpResolver;
 import com.jobshunter.security.JHHeaders;
 import com.jobshunter.security.rateLimitBucket4J.BlockRegistry;

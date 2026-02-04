@@ -1,7 +1,7 @@
 package com.jobshunter.service.application.processors.validation;
 
-import com.jobshunter.ApplicationProperties;
-import com.jobshunter.ApplicationProperties.JobsHunter;
+import com.jobshunter.config.ApplicationProperties;
+import com.jobshunter.config.ApplicationProperties.JobsHunter;
 import com.jobshunter.model.JobContext;
 import com.jobshunter.model.JobPhase;
 import com.jobshunter.service.application.processors.JobProcessor;

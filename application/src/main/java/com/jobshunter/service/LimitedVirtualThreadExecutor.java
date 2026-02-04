@@ -1,11 +1,13 @@
 package com.jobshunter.service;
 
 import jakarta.annotation.Nonnull;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.slf4j.MDC;
 
 /**
  * Executor implementation based on virtual threads with explicit concurrency limiting.
@@ -37,16 +39,23 @@ public final class LimitedVirtualThreadExecutor implements Executor {
   @Override
   public void execute(@Nonnull Runnable command) {
     queueTasks.incrementAndGet();
+    // Capture MDC context for propagation to worker thread
+    Map<String, String> mdcContext = MDC.getCopyOfContextMap();
     delegate.execute(() -> {
       semaphore.acquireUninterruptibly();
       queueTasks.decrementAndGet();
       runningTasks.incrementAndGet();
+      // Restore MDC context for the entire duration of task execution
+      if (mdcContext != null) {
+        MDC.setContextMap(mdcContext);
+      }
       try {
         command.run();
       } catch (Throwable e) {
         errorsTasks.incrementAndGet();
         throw e;
       } finally {
+        MDC.clear();
         completedTasks.incrementAndGet();
         runningTasks.decrementAndGet();
         semaphore.release();

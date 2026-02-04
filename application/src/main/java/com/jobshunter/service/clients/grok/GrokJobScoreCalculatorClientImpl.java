@@ -1,6 +1,6 @@
 package com.jobshunter.service.clients.grok;
 
-import com.jobshunter.ApplicationProperties;
+import com.jobshunter.config.ApplicationProperties;
 import com.jobshunter.database.entities.UserRemoteCvEntity;
 import com.jobshunter.dto.exceptions.ValidationException;
 import com.jobshunter.dto.grokRequest.GrokScorePayload;

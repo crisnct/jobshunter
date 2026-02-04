@@ -3,7 +3,7 @@ package com.jobshunter.dto.gptRequest.tools;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.jobshunter.StringUtils;
+import com.jobshunter.config.StringUtils;
 import lombok.Builder;
 
 @Builder

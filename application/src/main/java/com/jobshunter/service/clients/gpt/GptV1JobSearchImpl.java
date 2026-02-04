@@ -2,7 +2,7 @@ package com.jobshunter.service.clients.gpt;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.json.JsonMapper;
-import com.jobshunter.ApplicationProperties;
+import com.jobshunter.config.ApplicationProperties;
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.entities.UserJobRoleEntity;
 import com.jobshunter.dto.AIJobSearchRequest;
@@ -31,7 +31,7 @@ import com.jobshunter.service.application.cost.TokenEstimationGuard;
 import com.jobshunter.service.clients.AiJobsClient;
 import com.jobshunter.service.clients.AiJobsCompaniesClient;
 import com.jobshunter.service.clients.DeleteConvAiClient;
-import com.jobshunter.StringUtils;
+import com.jobshunter.config.StringUtils;
 import com.jobshunter.service.retry.RetryPolicies;
 import com.jobshunter.service.retry.RetryTemplate;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;

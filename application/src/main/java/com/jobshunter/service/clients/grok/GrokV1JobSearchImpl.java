@@ -2,7 +2,7 @@ package com.jobshunter.service.clients.grok;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.json.JsonMapper;
-import com.jobshunter.ApplicationProperties;
+import com.jobshunter.config.ApplicationProperties;
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.entities.UserJobRoleEntity;
 import com.jobshunter.dto.AIJobSearchRequest;

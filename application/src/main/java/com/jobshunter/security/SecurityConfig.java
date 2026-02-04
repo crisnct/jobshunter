@@ -1,8 +1,9 @@
 package com.jobshunter.security;
 
-import com.jobshunter.ApplicationProperties;
+import com.jobshunter.config.ApplicationProperties;
 import com.jobshunter.database.service.UserDBService;
 import com.jobshunter.security.filters.AdditionalHeadersFilter;
+import com.jobshunter.security.filters.CorrelationIdFilter;
 import com.jobshunter.security.filters.DeviceIdFilter;
 import com.jobshunter.security.filters.JwtAuthenticationFilter;
 import com.jobshunter.security.filters.RateLimitingFilter;
@@ -72,6 +73,7 @@ public class SecurityConfig {
       AdditionalHeadersFilter additionalHeadersFilter,
       DeviceIdFilter deviceIdFilter,
       RateLimitingFilter rateLimitingFilter,
+      CorrelationIdFilter correlationIdFilter,
       RestAuthenticationEntryPoint restAuthenticationEntryPoint,
       CookieCsrfTokenRepository csrfTokenRepository,
       UserDetailsService userDetailsService,
@@ -100,6 +102,7 @@ public class SecurityConfig {
             h.httpStrictTransportSecurity(hsts -> hsts.includeSubDomains(true).maxAgeInSeconds(MAX_AGE_HSTS))
         )
         .authenticationProvider(daoAuthenticationProvider(userDetailsService, passwordEncoder))
+        .addFilterBefore(correlationIdFilter, UsernamePasswordAuthenticationFilter.class)
         .addFilterBefore(rateLimitingFilter, UsernamePasswordAuthenticationFilter.class)
         .addFilterBefore(securityHeadersFilter, UsernamePasswordAuthenticationFilter.class)
         .addFilterBefore(additionalHeadersFilter, UsernamePasswordAuthenticationFilter.class)
@@ -157,6 +160,11 @@ public class SecurityConfig {
   @Bean
   public AdditionalHeadersFilter createAdditionalHeadersFilter() {
     return new AdditionalHeadersFilter();
+  }
+
+  @Bean
+  public CorrelationIdFilter correlationIdFilter() {
+    return new CorrelationIdFilter();
   }
 
   private AuthenticationProvider daoAuthenticationProvider(UserDetailsService userDetailsService, PasswordEncoder passwordEncoder) {

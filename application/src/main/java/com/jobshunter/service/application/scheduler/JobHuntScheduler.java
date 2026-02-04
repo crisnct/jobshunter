@@ -1,6 +1,6 @@
 package com.jobshunter.service.application.scheduler;
 
-import com.jobshunter.ApplicationProperties;
+import com.jobshunter.config.ApplicationProperties;
 import com.jobshunter.database.entities.JobOrderEntity;
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.entities.UserJobEntity;
@@ -11,6 +11,7 @@ import com.jobshunter.model.EngineType;
 import com.jobshunter.model.Job;
 import com.jobshunter.model.OrderStatus;
 import com.jobshunter.model.SearchJobOrder;
+import com.jobshunter.security.filters.CorrelationIdFilter;
 import com.jobshunter.service.application.JobHuntService;
 import com.jobshunter.service.application.UserCvService;
 import com.jobshunter.service.application.hunting.CountryIsoCode;
@@ -21,11 +22,13 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -190,13 +193,20 @@ public class JobHuntScheduler {
     if (!isRunning(actionName)) {
       return;
     }
-    CompletableFuture.runAsync(() -> {
-      try {
-        runnable.run();
-      } finally {
-        running.get(actionName).set(false);
-      }
-    }, executor);
+    // Generate correlation ID for scheduled task so it propagates to all child threads
+    String correlationId = UUID.randomUUID().toString();
+    MDC.put(CorrelationIdFilter.CORRELATION_ID_MDC_KEY, correlationId);
+    try {
+      CompletableFuture.runAsync(() -> {
+        try {
+          runnable.run();
+        } finally {
+          running.get(actionName).set(false);
+        }
+      }, executor);
+    } finally {
+      MDC.clear(); // Clear on scheduler thread after submission
+    }
   }
 
   private boolean isRunning(String taskName) {

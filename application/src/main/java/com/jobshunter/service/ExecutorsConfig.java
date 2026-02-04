@@ -1,6 +1,6 @@
 package com.jobshunter.service;
 
-import com.jobshunter.ApplicationProperties;
+import com.jobshunter.config.ApplicationProperties;
 import java.util.concurrent.Executor;
 import lombok.AllArgsConstructor;
 import org.springframework.context.annotation.Bean;

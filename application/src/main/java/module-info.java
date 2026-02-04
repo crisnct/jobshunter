@@ -70,6 +70,7 @@ open module com.jobshunter.application {
   requires kotlin.stdlib;
   requires com.github.benmanes.caffeine;
   requires playwright;
+  requires context.propagation;
 
 }
 

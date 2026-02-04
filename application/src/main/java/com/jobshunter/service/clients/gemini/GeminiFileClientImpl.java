@@ -1,7 +1,7 @@
 package com.jobshunter.service.clients.gemini;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.jobshunter.ApplicationProperties;
+import com.jobshunter.config.ApplicationProperties;
 import com.jobshunter.dto.geminiResponse.FileInfo;
 import com.jobshunter.dto.geminiResponse.FileListResponse;
 import com.jobshunter.model.ResumeFileInfo;

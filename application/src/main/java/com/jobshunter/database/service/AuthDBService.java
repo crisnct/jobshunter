@@ -1,6 +1,6 @@
 package com.jobshunter.database.service;
 
-import com.jobshunter.ApplicationProperties;
+import com.jobshunter.config.ApplicationProperties;
 import com.jobshunter.database.entities.RoleEntity;
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.entities.UserSessionEntity;

@@ -1,6 +1,6 @@
 package com.jobshunter.controller;
 
-import com.jobshunter.ApplicationProperties;
+import com.jobshunter.config.ApplicationProperties;
 import com.jobshunter.database.entities.AiModelEntity;
 import com.jobshunter.database.entities.JobOrderEntity;
 import com.jobshunter.database.entities.UserEntity;

@@ -1,6 +1,6 @@
 package com.jobshunter.service.clients.gpt;
 
-import com.jobshunter.ApplicationProperties;
+import com.jobshunter.config.ApplicationProperties;
 import com.jobshunter.dto.exceptions.BusinessException;
 import com.jobshunter.dto.gptResponse.FileInfo;
 import com.jobshunter.dto.gptResponse.FileListResponse;

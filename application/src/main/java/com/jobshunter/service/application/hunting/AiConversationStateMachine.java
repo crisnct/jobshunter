@@ -1,6 +1,6 @@
 package com.jobshunter.service.application.hunting;
 
-import com.jobshunter.ApplicationProperties;
+import com.jobshunter.config.ApplicationProperties;
 import com.jobshunter.database.entities.AiModelEntity;
 import com.jobshunter.dto.AIJobSearchRequest;
 import com.jobshunter.model.AiClientResponse;

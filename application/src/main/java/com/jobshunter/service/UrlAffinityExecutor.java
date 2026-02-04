@@ -6,6 +6,8 @@ import com.github.benmanes.caffeine.cache.RemovalCause;
 import io.github.resilience4j.ratelimiter.RateLimiter;
 import io.github.resilience4j.ratelimiter.RateLimiterConfig;
 import java.net.URI;
+import java.util.Map;
+import org.slf4j.MDC;
 import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -32,7 +34,7 @@ public final class UrlAffinityExecutor {
     this.cache =
         Caffeine.newBuilder()
             .expireAfterAccess(LIFETIME_IN_CACHE, TimeUnit.MINUTES)
-            .removalListener((String _, HostExecutionContext ctx, RemovalCause _) -> {
+            .removalListener((String key, HostExecutionContext ctx, RemovalCause cause) -> {
               ctx.executor.shutdown(); // graceful shutdown
             })
             .build();
@@ -47,14 +49,21 @@ public final class UrlAffinityExecutor {
     String host = this.extractHost(url);
     HostExecutionContext context = cache.get(host, this::createContext);
     CompletableFuture<T> future = new CompletableFuture<>();
+    // Capture MDC context for propagation to worker thread
+    Map<String, String> mdcContext = MDC.getCopyOfContextMap();
     Supplier<T> rateLimitedTask = RateLimiter.decorateSupplier(context.rateLimiter, task);
     context.executor.submit(() -> {
+      // Restore MDC context
+      if (mdcContext != null) {
+        MDC.setContextMap(mdcContext);
+      }
       try {
         T result = rateLimitedTask.get();
         future.complete(result);
       } catch (Throwable ex) {
         future.completeExceptionally(ex);
       } finally {
+        MDC.clear();
         globalSemaphore.release(); // Free the slot
       }
     });

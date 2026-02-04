@@ -1,4 +1,4 @@
-package com.jobshunter;
+package com.jobshunter.config;
 
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import java.nio.charset.StandardCharsets;

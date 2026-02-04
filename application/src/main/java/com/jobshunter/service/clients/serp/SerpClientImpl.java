@@ -1,6 +1,6 @@
 package com.jobshunter.service.clients.serp;
 
-import com.jobshunter.ApplicationProperties;
+import com.jobshunter.config.ApplicationProperties;
 import com.jobshunter.dto.AIJobSearchRequest;
 import com.jobshunter.dto.serpResponse.SerpJobHit;
 import com.jobshunter.dto.serpResponse.SerpJobsResult;

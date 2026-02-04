@@ -1,4 +1,4 @@
-package com.jobshunter;
+package com.jobshunter.config;
 
 import java.text.Normalizer;
 import java.util.regex.Pattern;

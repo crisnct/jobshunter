@@ -1,6 +1,6 @@
 package com.jobshunter.service.clients.ipinfo;
 
-import com.jobshunter.ApplicationProperties;
+import com.jobshunter.config.ApplicationProperties;
 import com.jobshunter.dto.IpInfoDetailResponse;
 import com.jobshunter.dto.IpInfoResponse;
 import com.jobshunter.processor.PackageExpected;

@@ -1,6 +1,6 @@
 package com.jobshunter.service.clients.twilio;
 
-import com.jobshunter.ApplicationProperties;
+import com.jobshunter.config.ApplicationProperties;
 import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.clients.TwilioClient;
 import com.twilio.Twilio;

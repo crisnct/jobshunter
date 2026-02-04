@@ -1,6 +1,6 @@
 package com.jobshunter.service.application.processors;
 
-import com.jobshunter.ApplicationProperties;
+import com.jobshunter.config.ApplicationProperties;
 import com.jobshunter.model.JobContext;
 import com.jobshunter.model.JobPhase;
 import jakarta.annotation.Nonnull;

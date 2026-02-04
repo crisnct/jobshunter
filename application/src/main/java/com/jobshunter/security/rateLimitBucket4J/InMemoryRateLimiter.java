@@ -1,7 +1,7 @@
 package com.jobshunter.security.rateLimitBucket4J;
 
-import com.jobshunter.ApplicationProperties;
-import com.jobshunter.ApplicationProperties.RateLimitPolicy;
+import com.jobshunter.config.ApplicationProperties;
+import com.jobshunter.config.ApplicationProperties.RateLimitPolicy;
 import io.github.bucket4j.Bucket;
 import java.time.Duration;
 import java.util.concurrent.ConcurrentHashMap;

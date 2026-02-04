@@ -93,25 +93,25 @@
 
   <!-- Separate file for errors only -->
   <property name="ERROR_PATTERN"
-    value="%d{ISO8601} ❌ ERROR [%thread] %logger{36}.%M:%line - %msg%n"/>
+    value="%d{ISO8601} ❌ ERROR [%thread][%X{correlationId}] %logger{36}.%M:%line - %msg%n"/>
 
   <!-- Async appender for better performance -->
   <property name="WARN_PATTERN"
-    value="%d{ISO8601} ⚠️  WARN [%thread] %logger{36}.%M:%line - %msg%n"/>
+    value="%d{ISO8601} ⚠️  WARN [%thread][%X{correlationId}] %logger{36}.%M:%line - %msg%n"/>
 
   <!-- Root logger configuration -->
   <property name="INFO_PATTERN"
-    value="%d{ISO8601} ✅ INFO  [%thread] %logger{36}.%M:%line - %msg%n"/>
+    value="%d{ISO8601} ✅ INFO  [%thread][%X{correlationId}] %logger{36}.%M:%line - %msg%n"/>
 
   <!-- Spring Framework logging (reduce noise) -->
   <property name="DEBUG_PATTERN"
-    value="%d{ISO8601} 🔧 DEBUG [%thread] %logger{36}.%M:%line - %msg%n"/>
+    value="%d{ISO8601} 🔧 DEBUG [%thread][%X{correlationId}] %logger{36}.%M:%line - %msg%n"/>
   <property name="TRACE_PATTERN"
-    value="%d{ISO8601} 🔍 TRACE [%thread] %logger{36}.%M:%line - %msg%n"/>
+    value="%d{ISO8601} 🔍 TRACE [%thread][%X{correlationId}] %logger{36}.%M:%line - %msg%n"/>
 
   <!-- Resilience4j logging -->
   <property name="FILE_PATTERN"
-    value="%d{ISO8601} %-5level [%thread] %logger{36}.%M:%line - %msg%n"/>
+    value="%d{ISO8601} %-5level [%thread][%X{correlationId}] %logger{36}.%M:%line - %msg%n"/>
 
   <!-- Your application logging -->
   <root level="INFO">

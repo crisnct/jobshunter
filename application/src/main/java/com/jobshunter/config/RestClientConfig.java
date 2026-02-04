@@ -1,4 +1,4 @@
-package com.jobshunter;
+package com.jobshunter.config;
 
 import com.jobshunter.security.JHHeaders;
 import com.jobshunter.service.clients.browser.BrowserSimulator;

@@ -1,7 +1,7 @@
 package com.jobshunter.service.clients.grok;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.jobshunter.ApplicationProperties;
+import com.jobshunter.config.ApplicationProperties;
 import com.jobshunter.dto.grokResponse.FileInfo;
 import com.jobshunter.dto.grokResponse.FileListResponse;
 import com.jobshunter.model.ResumeFileInfo;

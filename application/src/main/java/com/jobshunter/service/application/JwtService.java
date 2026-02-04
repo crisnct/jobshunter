@@ -1,7 +1,7 @@
 package com.jobshunter.service.application;
 
-import com.jobshunter.ApplicationProperties;
-import com.jobshunter.ApplicationProperties.JwtProperties;
+import com.jobshunter.config.ApplicationProperties;
+import com.jobshunter.config.ApplicationProperties.JwtProperties;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
