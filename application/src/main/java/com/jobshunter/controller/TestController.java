@@ -622,7 +622,7 @@ public class TestController {
     JobScoreCalculatorClient calculator = testService.getScoreCalculator(engineType);
 
     // Create JobScoreRequest and compute score
-    JobScoreRequest scoreRequest = new JobScoreRequest(aiModel, jobDescription, user.getCv(), null);
+    JobScoreRequest scoreRequest = new JobScoreRequest(aiModel, jobDescription, null);
     int score = calculator.computeScore(scoreRequest);
 
     return ResponseEntity.ok(Map.of("score", score));

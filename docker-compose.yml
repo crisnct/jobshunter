@@ -36,7 +36,7 @@ services:
     environment:
 #      MYSQL_URL: mysql://mysql:3306/jobshunter_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&createDatabaseIfNotExist=true
       #Connection to database from local machine
-      MYSQL_URL: mysql://host.docker.internal:3306/jobshunter?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&createDatabaseIfNotExist=true
+      MYSQL_URL: mysql://host.docker.internal:3306/jobshunter?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&rewriteBatchedStatements=true&cachePrepStmts=true&useServerPrepStmts=true&createDatabaseIfNotExist=true
       MYSQL_USER: ${MYSQL_USER}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
       TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID}

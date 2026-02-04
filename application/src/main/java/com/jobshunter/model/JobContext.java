@@ -16,27 +16,29 @@ import org.apache.logging.log4j.util.Strings;
 public class JobContext {
 
   private final Job job;
+  private SearchJobOrder order;
 
-  private final UserEntity user;
+  private final String username;
+  private final String city;
+  private final String country;
   private String body;
   private HttpFetchResult fetchResult;
   private String host;
-  private String description;
   private boolean validatedSuccessfully;
   private JobPhase phase;
   private boolean failed;
   private String finalizationMessage;
-  private SearchJobOrder order;
   private final List<JobType> userJobTypes;
   private final List<ContractType> userContractTypes;
   private final List<String> userRoles;
 
   public JobContext(Job job, UserEntity user, SearchJobOrder order) {
     this.job = job;
-    //TODO do we really needs to store user object
-    this.user = user;
     this.phase = JobPhase.NEW;
     this.order = order;
+    this.username = user.getUsername();
+    this.city = user.getCity();
+    this.country = user.getCountry();
     this.userJobTypes = user.getJobTypes().stream().map(UserJobTypeEntity::getJobType).toList();
     this.userContractTypes = user.getContractTypes().stream().map(UserContractTypeEntity::getContractType).toList();
     this.userRoles = user.getJobRoles().stream().map(UserJobRoleEntity::getJobRole).toList();

@@ -14,7 +14,7 @@ server:
     session:
       cookie:
         secure: true
-        http-only: false
+        http-only: true
   http2:
     enabled: true
 
@@ -85,7 +85,7 @@ spring:
     virtual:
       enabled: true
   datasource:
-    url: jdbc:${MYSQL_URL:mysql://localhost:3306/jobshunter?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&createDatabaseIfNotExist=true}
+    url: jdbc:${MYSQL_URL:mysql://localhost:3306/jobshunter?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&rewriteBatchedStatements=true&cachePrepStmts=true&useServerPrepStmts=true&createDatabaseIfNotExist=true}
     username: ${MYSQL_USER:notset}
     password: ${MYSQL_PASSWORD:notset}
     driver-class-name: com.mysql.cj.jdbc.Driver

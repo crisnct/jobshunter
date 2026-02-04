@@ -54,9 +54,9 @@ public non-sealed class GrokJobScoreCalculatorClientImpl implements JobScoreCalc
   @Bulkhead(name = "grokBulkhead")
   public int computeScore(JobScoreRequest request) {
     try {
-      UserRemoteCvEntity remoteCV = request.getUserCV().getUser().getRemoteCvs().stream()
+      UserRemoteCvEntity remoteCV = request.getOrder().getUser().getRemoteCvs().stream()
           .filter(p -> p.getProvider() == EngineType.GROK).findAny()
-          .orElseThrow(() -> new ValidationException("No GROK CV found for user" + request.getUserCV().getUser().getUsername()));
+          .orElseThrow(() -> new ValidationException("No GROK CV found for user" + request.getOrder().getUser().getUsername()));
 
       String userPrompt = templateRenderer.getPrompt(PromptType.USER_PROMPT_MATCH_SCORE, "description", request.getJobDescription());
       GrokScorePayload payload = GrokScorePayload.builder(request.getModel())

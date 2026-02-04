@@ -68,9 +68,9 @@ public non-sealed class GeminiJobScoreCalculatorClientImpl implements JobScoreCa
           .thinkingConfig(new ThinkingConfig(1024))//how reasoning it is
           .build();
 
-      UserRemoteCvEntity remoteCV = request.getUserCV().getUser().getRemoteCvs().stream()
+      UserRemoteCvEntity remoteCV = request.getOrder().getUser().getRemoteCvs().stream()
           .filter(p -> p.getProvider() == EngineType.GEMINI).findAny()
-          .orElseThrow(() -> new ValidationException("No GEMINI CV found for user " + request.getUserCV().getUser().getUsername()));
+          .orElseThrow(() -> new ValidationException("No GEMINI CV found for user " + request.getOrder().getUser().getUsername()));
 
       FileData resume = new FileData(String.format(FILES_URI, remoteCV.getFileId()), MediaType.APPLICATION_PDF_VALUE);
       GeminiJobsPayload payload = GeminiJobsPayload.builder(request.getModel())

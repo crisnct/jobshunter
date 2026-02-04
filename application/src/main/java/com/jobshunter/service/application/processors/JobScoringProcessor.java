@@ -6,6 +6,7 @@ import com.jobshunter.model.EngineSelection;
 import com.jobshunter.model.EngineType;
 import com.jobshunter.model.Job;
 import com.jobshunter.model.JobContext;
+import com.jobshunter.model.JobMetadataType;
 import com.jobshunter.model.JobPhase;
 import com.jobshunter.model.JobScoreRequest;
 import com.jobshunter.service.clients.JobScoreCalculatorClient;
@@ -57,10 +58,17 @@ public final class JobScoringProcessor implements JobProcessor {
   public JobContext processAsync(JobContext context) {
     Job job = context.getJob();
     int score;
-    if (context.isValidatedSuccessfully() && context.getDescription() != null) {
+    if (context.isValidatedSuccessfully()) {
       log.info("Computing matching score between {} resume and description of job {}",
-          context.getUser().getUsername(), job.getUrl());
-      JobScoreRequest request = new JobScoreRequest(aiModel, context.getDescription(), context.getUser().getCv(), context.getOrder());
+          context.getUsername(), job.getUrl());
+
+      String serpJobDesc = context.getJob().getMetadata(JobMetadataType.SERP_DESCRIPTION);
+      String jobDescription = "";
+      if (serpJobDesc != null) {
+        jobDescription += serpJobDesc + "\n";
+      }
+      jobDescription +=  context.getBody();
+      JobScoreRequest request = new JobScoreRequest(aiModel, jobDescription, context.getOrder());
       JobScoreCalculatorClient calculator = (switch (ENGINE_SELECTION.type()) {
         case GPT -> gptCalculator;
         case GEMINI -> geminiCalculator;

@@ -3,7 +3,6 @@ package com.jobshunter.service.application.processors.validation;
 import com.jobshunter.ApplicationProperties;
 import com.jobshunter.ApplicationProperties.JobsHunter;
 import com.jobshunter.model.JobContext;
-import com.jobshunter.model.JobMetadataType;
 import com.jobshunter.model.JobPhase;
 import com.jobshunter.service.application.processors.JobProcessor;
 import com.jobshunter.service.application.processors.validation.rules.B2BEorLocalRule;
@@ -56,20 +55,12 @@ public final class JobValidatorProcessor implements JobProcessor {
   @Override
   public JobContext processAsync(JobContext context) {
     if (this.isValidJobSync(context)) {
-      String desc = context.getDescription() != null ? context.getDescription() : "";
-      String serpJobDesc = context.getJob().getMetadata(JobMetadataType.SERP_DESCRIPTION);
-      if (serpJobDesc != null) {
-        desc += "\n" + serpJobDesc;
-      }
-      desc += "\n" + context.getBody();
-      context.setDescription(desc);
       context.setValidatedSuccessfully(true);
       context.setPhase(JobPhase.VALIDATION);
     } else {
       context.setValidatedSuccessfully(false);
       context.failJob("Job is not validated successfully");
     }
-
     return context;
   }
 
@@ -108,8 +99,8 @@ public final class JobValidatorProcessor implements JobProcessor {
 
   private ValidationContext buildValidationContext(JobContext jobContext) {
     String html = jobContext.getBody().toLowerCase();
-    boolean cityMatch = patternCache.matchesWord(jobContext.getUser().getCity(), html);
-    boolean countryMatch = patternCache.matchesWord(jobContext.getUser().getCountry(), html);
+    boolean cityMatch = patternCache.matchesWord(jobContext.getCity(), html);
+    boolean countryMatch = patternCache.matchesWord(jobContext.getCountry(), html);
     boolean freelancerRole = freelancerPattern.stream().anyMatch(p -> p.matcher(html).find());
     boolean remoteRole = remotePattern.stream().anyMatch(p -> p.matcher(html).find());
 

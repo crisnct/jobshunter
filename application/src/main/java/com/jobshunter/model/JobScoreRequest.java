@@ -1,7 +1,6 @@
 package com.jobshunter.model;
 
 import com.jobshunter.database.entities.AiModelEntity;
-import com.jobshunter.database.entities.UserCvEntity;
 import com.jobshunter.processor.PackageExpected;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -15,8 +14,5 @@ public class JobScoreRequest {
 
   private String jobDescription;
 
-  private UserCvEntity userCV;
-
   private SearchJobOrder order;
-
 }
