@@ -14,6 +14,7 @@ import com.jobshunter.service.application.UserCvService;
 import com.jobshunter.service.clients.AiJobsClient;
 import com.jobshunter.service.clients.AiJobsCompaniesClient;
 import io.github.resilience4j.ratelimiter.RequestNotPermitted;
+import jakarta.annotation.Nonnull;
 import jakarta.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -102,10 +103,9 @@ public abstract non-sealed class GenericJobHunting implements JobHunting {
   public CompletableFuture<List<Job>> searchJobsByCompaniesAsync(SearchJobOrder order) {
     UserEntity user = order.getUser();
     AIJobSearchRequest request = createRequest(order);
-    //TODO optimize and create an async for each of the job search for a group of companies.
-    // Do it similar like in searchJobsAsync so it will run all jobs search in parallel
+
     if (jobsClient instanceof AiJobsCompaniesClient jobsClientComp) {
-      return CompletableFuture.supplyAsync(() -> searchCompaniesSync(request, order.getModel(), jobsClientComp), executor)
+      return searchCompaniesAndJobsAsync(request, order.getModel(), jobsClientComp)
           .exceptionally(throwable -> {
             if (throwable.getCause() != null && throwable.getCause() instanceof RequestNotPermitted) {
               log.error("❌ Rate limit exceeded for user {} model {}", user.getUsername(), order.getModel());
@@ -153,25 +153,62 @@ public abstract non-sealed class GenericJobHunting implements JobHunting {
     return response;
   }
 
-  private List<Job> searchCompaniesSync(AIJobSearchRequest request, AiModelEntity model, AiJobsCompaniesClient aiJobCompany) {
-    UserEntity user = request.getOrder().getUser();
-    log.info("Searching companies for user {} with model {}", user.getUsername(), model.getModel());
-    List<CompanyDto> companies = aiJobCompany.searchCompanies(request);
-    log.info("Found {} companies for user {} with model {}, searching jobs now...", companies.size(), user.getUsername(),
-        model.getModel());
+  private CompletableFuture<List<Job>> searchCompaniesAndJobsAsync(
+      AIJobSearchRequest request,
+      AiModelEntity model,
+      AiJobsCompaniesClient client
+  ) {
+    // Step 1: Search for companies asynchronously
+    CompletableFuture<List<CompanyDto>> companiesFuture = CompletableFuture.supplyAsync(() -> {
+      log.info("Searching companies for user {} with model {}", request.getOrder().getUser().getUsername(), model.getModel());
+      List<CompanyDto> companyDtos = client.searchCompanies(request);
+      log.info("Found {} companies for user {} with model {}, searching jobs in parallel...",
+          companyDtos.size(), request.getOrder().getUser().getUsername(), model.getModel());
+      return companyDtos;
+    }, executor);
 
-    int counter = 0;
-    List<Job> jobsFound = new ArrayList<>();
-    for (CompanyDto company : companies) {
-      log.info("{}/{} Searching jobs for user {} from company: {} with model {}",
-          ++counter, companies.size(), user.getUsername(), company.companyName(), request.getDiscoveryModel().getModel());
-      request.setCompany(company);
-      List<Job> jobs = aiJobCompany.searchJobsFromCompanies(request).getJobs();
-      jobsFound.addAll(jobs);
-      log.info("Found {} jobs for user {} from company {}", jobs.size(), user.getUsername(), company.companyName());
-    }
-    jobsFound.forEach(job -> job.setSource("COMP-" + model.getModel()));
-    return jobsFound;
+    // Step 2: For each company, search jobs in parallel
+    return companiesFuture.thenCompose(companies -> {
+      if (companies.isEmpty()) {
+        return CompletableFuture.completedFuture(List.of());
+      } else {
+        return searchJobsFromCompanyAsync(request, model, client, companies);
+      }
+    });
+  }
+
+  @Nonnull
+  private CompletableFuture<List<Job>> searchJobsFromCompanyAsync(
+      AIJobSearchRequest request,
+      AiModelEntity model,
+      AiJobsCompaniesClient client,
+      List<CompanyDto> companies
+  ) {
+    // Create a future for each company's job search
+    List<CompletableFuture<List<Job>>> jobFutures = companies.stream()
+        .map(company -> {
+          // Create a copy of the request for thread safety
+          AIJobSearchRequest companyRequest = request.copy();
+          companyRequest.setCompany(company);
+          String username = request.getOrder().getUser().getUsername();
+
+          return CompletableFuture.supplyAsync(() -> {
+            log.info("Searching jobs for user {} from company: {} with model {}", username, company.companyName(), model.getModel());
+            List<Job> jobs = client.searchJobsFromCompanies(companyRequest).getJobs();
+            log.info("Found {} jobs for user {} from company {}", jobs.size(), username, company.companyName());
+            return jobs;
+          }, executor);
+        })
+        .toList();
+
+    // Combine all futures and merge results
+    return CompletableFuture.allOf(jobFutures.toArray(CompletableFuture[]::new))
+        .thenApply(v -> jobFutures.stream()
+            .map(CompletableFuture::join)
+            .flatMap(List::stream)
+            .peek(job -> job.setSource("COMP-" + model.getModel()))
+            .toList()
+        );
   }
 
 }
