@@ -222,6 +222,13 @@ A huge shoutout to the amazing team behind JobsHunter!
       <h3 style="margin: 6px 0 6px 0;">Ionel Vochin</h3>
       <b style="font-size: 1em; display: block; margin: 0 0 8px 0;">🛠️ Senior Backend Developer</b>
     </td>
+    <td width="33%" valign="top" align="center">
+      <a href="https://github.com/Paulresiga92">
+        <img src="https://github.com/Paulresiga92.png" alt="" style="width: 100px; border-radius: 50%; display: block; margin: 0 auto;"/>
+      </a>
+      <h3 style="margin: 6px 0 6px 0;">Paul Resiga</h3>
+      <b style="font-size: 1em; display: block; margin: 0 0 8px 0;">🛠️ Applied AI Engineer</b>
+    </td>
   </tr>
   <tr>
     <td valign="top" align="left">
@@ -256,6 +263,7 @@ A huge shoutout to the amazing team behind JobsHunter!
       </ul>
     </td>
   </tr>
+
 </table>
 
 ---

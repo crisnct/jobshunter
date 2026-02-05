@@ -8,7 +8,6 @@ import com.jobshunter.database.entities.UserJobRoleEntity;
 import com.jobshunter.dto.AIJobSearchRequest;
 import com.jobshunter.dto.CompanyDto;
 import com.jobshunter.dto.CompanyDtoList;
-import com.jobshunter.service.application.cost.TokensConsumedMapper;
 import com.jobshunter.dto.exceptions.BusinessException;
 import com.jobshunter.dto.grokRequest.GrokJobsPayload;
 import com.jobshunter.dto.grokRequest.GrokJobsPayload.GrokJobsPayloadBuilder;
@@ -25,7 +24,7 @@ import com.jobshunter.model.PromptType;
 import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.TemplateRenderer;
 import com.jobshunter.service.application.UrlExtractor;
-import com.jobshunter.service.application.cost.AiRequestCostEvent;
+import com.jobshunter.service.application.cost.AiCostPublisher;
 import com.jobshunter.service.application.cost.TokenEstimationGuard;
 import com.jobshunter.service.clients.AiJobsClient;
 import com.jobshunter.service.clients.AiJobsCompaniesClient;
@@ -45,7 +44,6 @@ import java.util.Optional;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
@@ -75,7 +73,7 @@ public non-sealed class GrokV1JobSearchImpl implements AiJobsClient, AiJobsCompa
 
   private final TokenEstimationGuard tokenEstimationGuard;
 
-  private final ApplicationEventPublisher eventPublisher;
+  private final AiCostPublisher costPublisher;
 
   @Override
   @CircuitBreaker(name = "grokCircuitBreaker", fallbackMethod = "fallbackSearch")
@@ -113,15 +111,10 @@ public non-sealed class GrokV1JobSearchImpl implements AiJobsClient, AiJobsCompa
     AiClientResponse result = new AiClientResponse();
     result.setId(response.id());
     result.addAll(jobs);
-    Usage usage = response.usage();
-    if (usage != null) {
-      eventPublisher.publishEvent(new AiRequestCostEvent(
-          this,
-          request.getOrder() != null ? request.getOrder().getJobOrder().getId(): -1,
-          payload.aiModel(),
-          TokensConsumedMapper.fromGrok(usage))
-      );
-    }
+    costPublisher.publishGrok(
+        request.getOrder() != null ? request.getOrder().getJobOrder().getId() : -1,
+        payload.aiModel(),
+        response.usage());
     return result;
   }
 
@@ -161,15 +154,7 @@ public non-sealed class GrokV1JobSearchImpl implements AiJobsClient, AiJobsCompa
         .retrieve()
         .body(GrokResponse.class);
 
-    Usage usage = response.usage();
-    if (usage != null) {
-      eventPublisher.publishEvent(new AiRequestCostEvent(
-          this,
-          request.getOrder().getJobOrder().getId(),
-          payload.aiModel(),
-          TokensConsumedMapper.fromGrok(usage))
-      );
-    }
+    costPublisher.publishGrok(request.getOrder().getJobOrder().getId(), payload.aiModel(), response.usage());
     return extractCompanies(response);
   }
 
@@ -217,15 +202,7 @@ public non-sealed class GrokV1JobSearchImpl implements AiJobsClient, AiJobsCompa
     AiClientResponse result = new AiClientResponse();
     result.setId(response.id());
     result.addAll(jobs);
-    Usage usage = response.usage();
-    if (usage != null) {
-      eventPublisher.publishEvent(new AiRequestCostEvent(
-          this,
-          request.getOrder().getJobOrder().getId(),
-          payload.aiModel(),
-          TokensConsumedMapper.fromGrok(usage))
-      );
-    }
+    costPublisher.publishGrok(request.getOrder().getJobOrder().getId(), payload.aiModel(), response.usage());
     return result;
   }
 

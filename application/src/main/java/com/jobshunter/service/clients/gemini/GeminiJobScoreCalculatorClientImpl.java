@@ -10,15 +10,13 @@ import com.jobshunter.dto.geminiRequest.Part;
 import com.jobshunter.dto.geminiRequest.ThinkingConfig;
 import com.jobshunter.dto.geminiResponse.GeminiGenerateContentResponse;
 import com.jobshunter.dto.geminiResponse.GeminiGenerateContentResponse.Candidate;
-import com.jobshunter.dto.geminiResponse.GeminiGenerateContentResponse.UsageMetadata;
 import com.jobshunter.model.EngineType;
 import com.jobshunter.model.JobScoreRequest;
 import com.jobshunter.model.PromptType;
 import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.TemplateRenderer;
-import com.jobshunter.service.application.cost.AiRequestCostEvent;
+import com.jobshunter.service.application.cost.AiCostPublisher;
 import com.jobshunter.service.application.cost.TokenEstimationGuard;
-import com.jobshunter.service.application.cost.TokensConsumedMapper;
 import com.jobshunter.service.clients.JobScoreCalculatorClient;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
@@ -32,7 +30,6 @@ import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
@@ -56,7 +53,7 @@ public non-sealed class GeminiJobScoreCalculatorClientImpl implements JobScoreCa
 
   private final TokenEstimationGuard tokenEstimationGuard;
 
-  private final ApplicationEventPublisher eventPublisher;
+  private final AiCostPublisher costPublisher;
 
   @Override
   @Timed(value = "ai.api.score", extraTags = {"provider", "gemini"})
@@ -92,15 +89,10 @@ public non-sealed class GeminiJobScoreCalculatorClientImpl implements JobScoreCa
           .body(GeminiGenerateContentResponse.class);
 
       //noinspection DataFlowIssue
-      UsageMetadata usage = response.usageMetadata();
-      if (usage != null) {
-        eventPublisher.publishEvent(new AiRequestCostEvent(
-            this,
-            request.getOrder() != null ? request.getOrder().getJobOrder().getId(): -1,
-            payload.aiModel(),
-            TokensConsumedMapper.fromGemini(usage))
-        );
-      }
+      costPublisher.publishGemini(
+          request.getOrder() != null ? request.getOrder().getJobOrder().getId() : -1,
+          payload.aiModel(),
+          response.usageMetadata());
 
       return extractScore(response);
     } catch (Exception e) {

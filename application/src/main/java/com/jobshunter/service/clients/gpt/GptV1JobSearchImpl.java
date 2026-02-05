@@ -25,8 +25,7 @@ import com.jobshunter.model.SearchJobOrder;
 import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.TemplateRenderer;
 import com.jobshunter.service.application.UrlExtractor;
-import com.jobshunter.service.application.cost.AiRequestCostEvent;
-import com.jobshunter.service.application.cost.TokensConsumedMapper;
+import com.jobshunter.service.application.cost.AiCostPublisher;
 import com.jobshunter.service.application.cost.TokenEstimationGuard;
 import com.jobshunter.service.clients.AiJobsClient;
 import com.jobshunter.service.clients.AiJobsCompaniesClient;
@@ -48,7 +47,6 @@ import java.util.Optional;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
@@ -78,7 +76,7 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient, AiJobsCompan
 
   private final TokenEstimationGuard tokenEstimationGuard;
 
-  private final ApplicationEventPublisher eventPublisher;
+  private final AiCostPublisher costPublisher;
 
   @Override
   @Timed(value = "ai.api.search", extraTags = {"provider", "gpt", "operation", "search"})
@@ -128,15 +126,7 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient, AiJobsCompan
     AiClientResponse result = new AiClientResponse();
     result.setId(response.id());
     result.addAll(jobs);
-    Usage usage = response.usage();
-    if (usage != null) {
-      eventPublisher.publishEvent(new AiRequestCostEvent(
-          this,
-          request.getOrder().getJobOrder().getId(),
-          payload.aiModel(),
-          TokensConsumedMapper.fromGpt(usage))
-      );
-    }
+    costPublisher.publishGpt(request.getOrder().getJobOrder().getId(), payload.aiModel(), response.usage());
     return result;
   }
 
@@ -188,15 +178,7 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient, AiJobsCompan
         .retrieve()
         .body(GptResponse.class);
 
-    Usage usage = response.usage();
-    if (usage != null) {
-      eventPublisher.publishEvent(new AiRequestCostEvent(
-          this,
-          request.getOrder().getJobOrder().getId(),
-          payload.aiModel(),
-          TokensConsumedMapper.fromGpt(usage))
-      );
-    }
+    costPublisher.publishGpt(request.getOrder().getJobOrder().getId(), payload.aiModel(), response.usage());
 
     return extractCompanies(response);
   }
@@ -245,15 +227,7 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient, AiJobsCompan
     AiClientResponse result = new AiClientResponse();
     result.setId(response.id());
     result.addAll(jobs);
-    Usage usage = response.usage();
-    if (usage != null) {
-      eventPublisher.publishEvent(new AiRequestCostEvent(
-          this,
-          request.getOrder().getJobOrder().getId(),
-          payload.aiModel(),
-          TokensConsumedMapper.fromGpt(usage))
-      );
-    }
+    costPublisher.publishGpt(request.getOrder().getJobOrder().getId(), payload.aiModel(), response.usage());
     return result;
   }
 

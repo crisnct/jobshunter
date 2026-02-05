@@ -8,14 +8,12 @@ import com.jobshunter.dto.grokRequest.Reasoning;
 import com.jobshunter.dto.grokResponse.ContentItem;
 import com.jobshunter.dto.grokResponse.GrokResponse;
 import com.jobshunter.dto.grokResponse.OutputItem;
-import com.jobshunter.dto.grokResponse.Usage;
 import com.jobshunter.model.EngineType;
 import com.jobshunter.model.JobScoreRequest;
 import com.jobshunter.model.PromptType;
 import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.TemplateRenderer;
-import com.jobshunter.service.application.cost.AiRequestCostEvent;
-import com.jobshunter.service.application.cost.TokensConsumedMapper;
+import com.jobshunter.service.application.cost.AiCostPublisher;
 import com.jobshunter.service.clients.JobScoreCalculatorClient;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
@@ -27,7 +25,6 @@ import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
@@ -47,7 +44,7 @@ public non-sealed class GrokJobScoreCalculatorClientImpl implements JobScoreCalc
 
   private final TemplateRenderer templateRenderer;
 
-  private final ApplicationEventPublisher eventPublisher;
+  private final AiCostPublisher costPublisher;
 
   @Override
   @Timed(value = "ai.api.score", extraTags = {"provider", "grok"})
@@ -77,15 +74,10 @@ public non-sealed class GrokJobScoreCalculatorClientImpl implements JobScoreCalc
           .retrieve()
           .body(GrokResponse.class);
 
-      Usage usage = response.usage();
-      if (usage != null) {
-        eventPublisher.publishEvent(new AiRequestCostEvent(
-            this,
-            request.getOrder() != null ? request.getOrder().getJobOrder().getId(): -1,
-            payload.aiModel(),
-            TokensConsumedMapper.fromGrok(usage))
-        );
-      }
+      costPublisher.publishGrok(
+          request.getOrder() != null ? request.getOrder().getJobOrder().getId() : -1,
+          payload.aiModel(),
+          response.usage());
 
       //noinspection DataFlowIssue
       return extractScore(response);
