@@ -133,6 +133,9 @@ security:
   cookie:
     device-id:
       expiration-sec: 2592000 # 30 days
+  cors:
+    allowed-origins:
+      - "https://ronin-archesporial-lonnie.ngrok-free.dev"
   httpsOnly:
     enabled: true
 

@@ -46,6 +46,12 @@ security:
   cookie:
     device-id:
       expiration-sec: 2592000 # 30 days
+  cors:
+    allowed-origins:
+      - "https://localhost:5173"   # Local Vite dev server
+      - "https://localhost:8443"   # Local backend
+      # For production, override via environment variable:
+      # allowed-origins: ${CORS_ALLOWED_ORIGINS:https://yourdomain.com}
   httpsOnly:
     enabled: false
 

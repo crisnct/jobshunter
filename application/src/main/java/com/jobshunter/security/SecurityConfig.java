@@ -15,6 +15,7 @@ import com.jobshunter.service.application.JwtService;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -37,18 +38,19 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+@Slf4j
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-  public static final long MAX_AGE_CORS = (int) TimeUnit.HOURS.toSeconds(1);
   private static final int MAX_AGE_HSTS = (int) TimeUnit.DAYS.toSeconds(30);
 
   private final UserDBService userDBService;
   private final CookieService cookieService;
   private final JwtService jwtService;
+  private final ApplicationProperties properties;
 
   @Bean
   public CookieCsrfTokenRepository cookieCsrfTokenRepository() {
@@ -113,12 +115,18 @@ public class SecurityConfig {
   }
 
   private CorsConfigurationSource corsConfigurationSource() {
+    var corsProps = properties.getSecurity().getCors();
     CorsConfiguration config = new CorsConfiguration();
-    config.setAllowedOriginPatterns(List.of("*"));
-    config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-    config.setAllowedHeaders(List.of("*"));
-    config.setAllowCredentials(true);
-    config.setMaxAge(MAX_AGE_CORS);
+
+    List<String> origins = corsProps.getAllowedOrigins();
+    if (origins.isEmpty()) {
+      log.warn("No CORS origins configured - CORS will be restrictive");
+    }
+    config.setAllowedOriginPatterns(origins);
+    config.setAllowedMethods(corsProps.getAllowedMethods());
+    config.setAllowedHeaders(corsProps.getAllowedHeaders());
+    config.setAllowCredentials(corsProps.isAllowCredentials());
+    config.setMaxAge(corsProps.getMaxAgeSec());
 
     UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
     source.registerCorsConfiguration("/**", config);
