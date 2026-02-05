@@ -3,6 +3,7 @@ package com.jobshunter.service.application.hunting;
 import com.jobshunter.database.entities.AiModelEntity;
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.entities.UserPromptEntity;
+import com.jobshunter.database.entities.UserRemoteCvEntity;
 import com.jobshunter.dto.AIJobSearchRequest;
 import com.jobshunter.dto.CompanyDto;
 import com.jobshunter.model.AiClientResponse;
@@ -46,23 +47,30 @@ public abstract non-sealed class GenericJobHunting implements JobHunting {
   public abstract EngineType getEngineType();
 
   public AIJobSearchRequest createRequest(SearchJobOrder order) {
-    AIJobSearchRequest request = new AIJobSearchRequest(order);
-    order.getUser().getRemoteCvs().stream()
-        .filter(p -> p.getProvider() == getEngineType()).findAny()
-        .ifPresent(userRemoteCvEntity -> request.setFileId(userRemoteCvEntity.getFileId()));
-    request.setBase64CV(Base64.getEncoder().encodeToString(order.getUser().getCv().getByteArray()));
-    request.setStoreConversation(true);
-    if (countryIsoCode != null) {
-      request.setCountryIsoCode(countryIsoCode.getCode(order.getUser().getCountry()));
-    }
-    return request;
+    String fileId = order.getUser().getRemoteCvs().stream()
+        .filter(p -> p.getProvider() == getEngineType())
+        .findAny()
+        .map(UserRemoteCvEntity::getFileId)
+        .orElse(null);
+
+    String countryCode = countryIsoCode != null
+        ? countryIsoCode.getCode(order.getUser().getCountry())
+        : null;
+
+    return AIJobSearchRequest.builder(order)
+        .fileId(fileId)
+        .base64CV(Base64.getEncoder().encodeToString(order.getUser().getCv().getByteArray()))
+        .storeConversation(true)
+        .countryIsoCode(countryCode)
+        .build();
   }
 
   public AIJobSearchRequest createRequest(SearchJobOrder order, String prompt, Long promptId) {
-    AIJobSearchRequest request = this.createRequest(order);
-    request.setUserPrompt(prompt);
-    request.setPromptId(promptId);
-    return request;
+    AIJobSearchRequest base = this.createRequest(order);
+    return base.toBuilder()
+        .userPrompt(prompt)
+        .promptId(promptId)
+        .build();
   }
 
   public AIJobSearchRequest createRequest(@NotNull SearchJobOrder order, @NotNull UserPromptEntity prompt) {
@@ -196,9 +204,10 @@ public abstract non-sealed class GenericJobHunting implements JobHunting {
     // Create a future for each company's job search
     List<CompletableFuture<List<Job>>> jobFutures = companies.stream()
         .map(company -> {
-          // Create a copy of the request for thread safety
-          AIJobSearchRequest companyRequest = request.copy();
-          companyRequest.setCompany(company);
+          // Create a copy of the request with the company set (thread-safe via toBuilder)
+          AIJobSearchRequest companyRequest = request.toBuilder()
+              .company(company)
+              .build();
           String username = request.getOrder().getUser().getUsername();
 
           return CompletableFuture.supplyAsync(() -> {

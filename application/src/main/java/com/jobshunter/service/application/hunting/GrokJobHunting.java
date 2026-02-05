@@ -45,10 +45,10 @@ public final class GrokJobHunting extends AiConversationJobHunting {
 
   @Override
   public AIJobSearchRequest createRequest(SearchJobOrder order) {
-    AIJobSearchRequest request = super.createRequest(order);
-    request.setDiscoveryModel(discoveryModel);
-    request.setCompaniesModel(companiesModel);
-    return request;
+    return super.createRequest(order).toBuilder()
+        .discoveryModel(discoveryModel)
+        .companiesModel(companiesModel)
+        .build();
   }
 
   @Override

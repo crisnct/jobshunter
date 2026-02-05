@@ -472,9 +472,10 @@ public class TestController {
     SearchJobOrder searchJobOrder = new SearchJobOrder(jobOrder, testUser, List.of());
 
     // Create AIJobSearchRequest
-    AIJobSearchRequest aiRequest = new AIJobSearchRequest(searchJobOrder);
-    aiRequest.setCompaniesModel(aiModel);
-    aiRequest.setStoreConversation(false);
+    AIJobSearchRequest aiRequest = AIJobSearchRequest.builder(searchJobOrder)
+        .companiesModel(aiModel)
+        .storeConversation(false)
+        .build();
 
     // Get the appropriate client and search
     AiJobsCompaniesClient client = testService.getCompaniesClient(engineType);
@@ -511,10 +512,11 @@ public class TestController {
     SearchJobOrder searchJobOrder = new SearchJobOrder(jobOrder, testUser, List.of());
 
     // Create AIJobSearchRequest
-    AIJobSearchRequest aiRequest = new AIJobSearchRequest(searchJobOrder);
-    aiRequest.setStoreConversation(false);
-    aiRequest.setCompany(new CompanyDto(request.company(), request.company_url()));
-    aiRequest.setDiscoveryModel(aiModel);
+    AIJobSearchRequest aiRequest = AIJobSearchRequest.builder(searchJobOrder)
+        .storeConversation(false)
+        .company(new CompanyDto(request.company(), request.company_url()))
+        .discoveryModel(aiModel)
+        .build();
 
     // Get the appropriate client and search
     AiJobsCompaniesClient client = testService.getCompaniesClient(engineType);

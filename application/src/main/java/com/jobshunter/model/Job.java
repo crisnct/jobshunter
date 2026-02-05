@@ -44,6 +44,14 @@ public class Job {
     this.metadata.put(type, value);
   }
 
+  /**
+   * Returns an immutable copy of the metadata map.
+   * Overrides Lombok-generated getter to prevent external mutation.
+   */
+  public Map<JobMetadataType, Object> getMetadata() {
+    return Map.copyOf(metadata);
+  }
+
   public <T> T getMetadata(JobMetadataType type) {
     //noinspection unchecked
     return (T) metadata.get(type);

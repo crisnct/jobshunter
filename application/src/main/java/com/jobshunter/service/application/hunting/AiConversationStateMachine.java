@@ -93,7 +93,7 @@ public class AiConversationStateMachine {
       AiClientResponse response
   ) {
     log.info("Conversation response id: {}", response.getId());
-    request.setPrevResponseId(response.getId());
+    // Note: prevResponseId is set via toBuilder() in createRetryRequest, not here
     List<Job> jobsFound = response.getJobs()
         .stream()
         .filter(p -> !accumulatedResponse.getJobs().contains(p))
