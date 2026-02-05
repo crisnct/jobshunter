@@ -37,6 +37,7 @@ import com.jobshunter.service.retry.RetryTemplate;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
+import io.micrometer.core.annotation.Timed;
 import io.jsonwebtoken.lang.Collections;
 import java.net.URI;
 import java.util.ArrayList;
@@ -80,6 +81,7 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient, AiJobsCompan
   private final ApplicationEventPublisher eventPublisher;
 
   @Override
+  @Timed(value = "ai.api.search", extraTags = {"provider", "gpt", "operation", "search"})
   @CircuitBreaker(name = "gptCircuitBreaker", fallbackMethod = "fallbackSearch")
   @RateLimiter(name = "gptLimiter")
   @Bulkhead(name = "gptBulkhead")
@@ -139,6 +141,7 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient, AiJobsCompan
   }
 
   @Override
+  @Timed(value = "ai.api.search", extraTags = {"provider", "gpt", "operation", "companies"})
   @CircuitBreaker(name = "gptCircuitBreaker", fallbackMethod = "fallbackSearchCompanies")
   @RateLimiter(name = "gptLimiter")
   @Bulkhead(name = "gptBulkhead")
@@ -199,6 +202,7 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient, AiJobsCompan
   }
 
   @Override
+  @Timed(value = "ai.api.search", extraTags = {"provider", "gpt", "operation", "jobs-from-companies"})
   @CircuitBreaker(name = "gptCircuitBreaker", fallbackMethod = "fallbackSearchJobsFromCompanies")
   @RateLimiter(name = "gptLimiter")
   @Bulkhead(name = "gptBulkhead")

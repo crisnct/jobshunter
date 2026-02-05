@@ -12,6 +12,7 @@ import com.jobshunter.service.clients.browser.BrowserSimulator;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
+import io.micrometer.core.annotation.Timed;
 import jakarta.validation.constraints.NotNull;
 import java.io.IOException;
 import java.net.URI;
@@ -46,6 +47,7 @@ public non-sealed class SerpClientImpl implements AiJobsClient {
   }
 
   @Override
+  @Timed(value = "ai.api.search", extraTags = {"provider", "serp", "operation", "search"})
   @RateLimiter(name = "serpLimiter")
   @CircuitBreaker(name = "serp", fallbackMethod = "fallbackSearch")
   @Bulkhead(name = "serpBulkhead")

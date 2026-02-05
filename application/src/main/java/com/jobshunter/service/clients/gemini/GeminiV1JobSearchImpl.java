@@ -36,6 +36,7 @@ import com.jobshunter.service.retry.RetryTemplate;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
+import io.micrometer.core.annotation.Timed;
 import jakarta.annotation.Nonnull;
 import java.net.URI;
 import java.util.List;
@@ -78,6 +79,7 @@ public non-sealed class GeminiV1JobSearchImpl implements AiJobsClient, AiJobsCom
   private final ApplicationEventPublisher eventPublisher;
 
   @Override
+  @Timed(value = "ai.api.search", extraTags = {"provider", "gemini", "operation", "search"})
   @CircuitBreaker(name = "geminiCircuitBreaker", fallbackMethod = "fallbackSearch")
   @Bulkhead(name = "geminiBulkhead")
   @RateLimiter(name = "geminiLimiter")
@@ -142,6 +144,7 @@ public non-sealed class GeminiV1JobSearchImpl implements AiJobsClient, AiJobsCom
   }
 
   @Override
+  @Timed(value = "ai.api.search", extraTags = {"provider", "gemini", "operation", "companies"})
   @CircuitBreaker(name = "geminiCircuitBreaker", fallbackMethod = "fallbackSearchCompanies")
   @Bulkhead(name = "geminiBulkhead")
   @RateLimiter(name = "geminiLimiter")
@@ -234,6 +237,7 @@ public non-sealed class GeminiV1JobSearchImpl implements AiJobsClient, AiJobsCom
   }
 
   @Override
+  @Timed(value = "ai.api.search", extraTags = {"provider", "gemini", "operation", "jobs-from-companies"})
   @CircuitBreaker(name = "geminiCircuitBreaker", fallbackMethod = "fallbackSearchJobsFromCompanies")
   @RateLimiter(name = "geminiLimiter")
   @Bulkhead(name = "geminiBulkhead")

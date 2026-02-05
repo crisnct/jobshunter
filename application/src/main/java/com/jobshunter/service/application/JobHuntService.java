@@ -11,6 +11,7 @@ import com.jobshunter.service.application.hunting.HuntingOrchestrator;
 import com.jobshunter.service.application.notifiers.EmailNotifierService;
 import com.jobshunter.service.application.notifiers.WhatsappNotifierService;
 import com.jobshunter.service.application.processors.JobsStateMachine;
+import io.micrometer.core.annotation.Timed;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -35,6 +36,7 @@ public class JobHuntService {
 
   private final ApplicationProperties properties;
 
+  @Timed(value = "job.hunt.search", description = "Time spent searching jobs for user")
   public JobHuntResponse searchJobsForUser(SearchJobOrder order) {
     UserEntity user = order.getUser();
     CompletableFuture<List<Job>> futureJobs = huntingOrchestrator.startHunting(order);

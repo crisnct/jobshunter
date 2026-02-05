@@ -164,6 +164,26 @@ springdoc:
     url: /openapi.yml
     disable-swagger-default-url: true
 
+# ACTUATOR & METRICS ---------------------------------------------------------------------------
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: when_authorized
+  metrics:
+    tags:
+      application: jobshunter
+    distribution:
+      percentiles-histogram:
+        ai.api: true
+        job.hunt: true
+      percentiles:
+        ai.api: 0.5, 0.95, 0.99
+        job.hunt: 0.5, 0.95, 0.99
+
 # RATE LIMITER  ---------------------------------------------------------------------------
 # Throttle API requests to 2 per minute, preventing quota violations and automatic request queueing
 # with transparent permit management.

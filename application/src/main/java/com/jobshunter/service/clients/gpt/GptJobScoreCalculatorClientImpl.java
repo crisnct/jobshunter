@@ -20,6 +20,7 @@ import com.jobshunter.service.clients.JobScoreCalculatorClient;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
+import io.micrometer.core.annotation.Timed;
 import java.net.URI;
 import java.util.Objects;
 import java.util.Optional;
@@ -49,6 +50,7 @@ public non-sealed class GptJobScoreCalculatorClientImpl implements JobScoreCalcu
   private final ApplicationEventPublisher eventPublisher;
 
   @Override
+  @Timed(value = "ai.api.score", extraTags = {"provider", "gpt"})
   @RateLimiter(name = "gptLimiter")
   @CircuitBreaker(name = "gptCircuitBreaker", fallbackMethod = "fallbackComputeScore")
   @Bulkhead(name = "gptBulkhead")

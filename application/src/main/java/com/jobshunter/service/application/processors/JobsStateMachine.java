@@ -6,6 +6,7 @@ import com.jobshunter.model.JobContext;
 import com.jobshunter.model.JobMetadataType;
 import com.jobshunter.model.JobPhase;
 import com.jobshunter.model.SearchJobOrder;
+import com.jobshunter.service.application.metrics.JobMetricsService;
 import com.jobshunter.service.application.processors.validation.JobValidatorProcessor;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -22,12 +23,15 @@ public class JobsStateMachine {
 
   private final List<PipelineStep> pipelineSteps;
 
+  private final JobMetricsService metricsService;
+
   public JobsStateMachine(
       JobValidatorProcessor validatorProcessor,
       JobFetchProcessor fetchPageProcessor,
       JobBasicCheckProcessor fakeUrlFilterProcessor,
       JobBodyExtractorProcessor bodyExtractorProcessor,
       JobScoringProcessor scoringProcessor,
+      JobMetricsService metricsService,
       @Qualifier("urlFetchRestClientExecutor") Executor urlFetchRestClientExecutor,
       @Qualifier("geminiSearchExecutor") Executor geminiExecutor,
       @Qualifier("grokSearchExecutor") Executor grokExecutor,
@@ -35,6 +39,7 @@ public class JobsStateMachine {
       @Qualifier("jobProcessingExecutor") Executor jobProcessingExecutor
   ) {
     this.jobProcessingExecutor = jobProcessingExecutor;
+    this.metricsService = metricsService;
 
     Executor scoringExecutor = (switch (JobScoringProcessor.ENGINE_SELECTION.type()) {
       case GEMINI -> geminiExecutor;
@@ -102,13 +107,23 @@ public class JobsStateMachine {
   }
 
   private void logResults(List<JobContext> result, String username) {
-    long acceptedUrls = result.stream().filter(JobContext::isValidatedSuccessfully).count();
-    long rejected = result.size() - acceptedUrls;
+    List<JobContext> validated = result.stream().filter(JobContext::isValidatedSuccessfully).toList();
+
+    long rejected = result.size() - validated.size();
     long errors = result.stream().filter(JobContext::isFailed).count();
 
+    // Record metrics
+    metricsService.recordJobsFound(result.size());
+    metricsService.recordBatchResults(validated.size(), (int) rejected, (int) errors);
+
+    // Record individual scores for validated jobs
+    result.stream()
+        .filter(JobContext::isValidatedSuccessfully)
+        .forEach(jc -> metricsService.recordScore(jc.getJob().getScore()));
+
     StringBuilder validLinksBuilder = new StringBuilder();
-    if (acceptedUrls > 0) {
-      result.stream().filter(JobContext::isValidatedSuccessfully).forEach(jc -> {
+    if (!validated.isEmpty()) {
+      validated.forEach(jc -> {
         if (!validLinksBuilder.isEmpty()) {
           validLinksBuilder.append("\n");
         }
@@ -159,7 +174,7 @@ public class JobsStateMachine {
         
         Errors:
         {}---
-        """, username, result.size(), acceptedUrls, rejected, errors, validLinksBuilder, rejectedLinksBuilder, errorBuilder
+        """, username, result.size(), validated.size(), rejected, errors, validLinksBuilder, rejectedLinksBuilder, errorBuilder
     );
   }
 

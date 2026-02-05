@@ -71,6 +71,7 @@ open module com.jobshunter.application {
   requires com.github.benmanes.caffeine;
   requires playwright;
   requires context.propagation;
+  requires micrometer.core;
 
 }
 
