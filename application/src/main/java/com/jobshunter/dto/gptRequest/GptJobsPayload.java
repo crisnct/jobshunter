@@ -9,6 +9,7 @@ import com.jobshunter.database.entities.AiModelEntity;
 import com.jobshunter.dto.exceptions.BusinessException;
 import com.jobshunter.dto.gptRequest.tools.Tools;
 import com.jobshunter.model.AiCapabilityType;
+import com.jobshunter.service.AiCapabilityChecker;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -67,7 +68,7 @@ public record GptJobsPayload(
     }
 
     public GptJobsPayloadBuilder temperature(Double temperature) {
-      if (isEnabledCapability(AiCapabilityType.TEMPERATURE)) {
+      if (AiCapabilityChecker.isEnabled(aiModel, AiCapabilityType.TEMPERATURE)) {
         this.temperature = temperature;
       }
       return this;
@@ -79,23 +80,14 @@ public record GptJobsPayload(
     }
 
     public GptJobsPayloadBuilder reasoning(Reasoning reasoning) {
-      if (isEnabledCapability(AiCapabilityType.REASONING)) {
+      if (AiCapabilityChecker.isEnabled(aiModel, AiCapabilityType.REASONING)) {
         this.reasoning = reasoning;
       }
       return this;
     }
 
-    //TODO consolidate duplicate similar methods in a new bean and use caffeine cache
-    private boolean isEnabledCapability(AiCapabilityType type) {
-      boolean enabledCapability = aiModel.isEnabledCapability(type);
-      if (!enabledCapability) {
-        log.debug(type + " capability is not supported by model " + aiModel.getModel());
-      }
-      return enabledCapability;
-    }
-
     public GptJobsPayloadBuilder addSystemPrompt(String systemPrompt) {
-      if (isEnabledCapability(AiCapabilityType.SYSTEM_PROMPT)) {
+      if (AiCapabilityChecker.isEnabled(aiModel, AiCapabilityType.SYSTEM_PROMPT)) {
         input.add(new Input("system", List.of(new InputMessage("input_text", systemPrompt))));
       }
       return this;
@@ -104,7 +96,7 @@ public record GptJobsPayload(
     public GptJobsPayloadBuilder addUserPrompt(String userPrompt, String fileId) {
       List<InputObj> inputs = new ArrayList<>();
       inputs.add(new InputMessage("input_text", userPrompt));
-      if (Strings.isNotBlank(fileId) && isEnabledCapability(AiCapabilityType.FILE_UPLOAD)) {
+      if (Strings.isNotBlank(fileId) && AiCapabilityChecker.isEnabled(aiModel, AiCapabilityType.FILE_UPLOAD)) {
         inputs.add(new InputFile(fileId));
       }
       input.add(new Input("user", inputs));
@@ -131,7 +123,7 @@ public record GptJobsPayload(
     }
 
     public GptJobsPayloadBuilder setResponseSchema(String schema) {
-      if (isEnabledCapability(AiCapabilityType.RESPONSE_SCHEMA)) {
+      if (AiCapabilityChecker.isEnabled(aiModel, AiCapabilityType.RESPONSE_SCHEMA)) {
         try {
           this.text = new Text(
               new TextFormat(
@@ -148,7 +140,7 @@ public record GptJobsPayload(
     }
 
     public GptJobsPayloadBuilder addTools(Tools tool) {
-      if (isEnabledCapability(AiCapabilityType.WEB_SEARCH)) {
+      if (AiCapabilityChecker.isEnabled(aiModel, AiCapabilityType.WEB_SEARCH)) {
         this.tools.add(tool);
       }
       return this;

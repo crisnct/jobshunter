@@ -9,6 +9,7 @@ import com.jobshunter.database.entities.AiModelEntity;
 import com.jobshunter.dto.exceptions.BusinessException;
 import com.jobshunter.dto.grokRequest.tools.Tools;
 import com.jobshunter.model.AiCapabilityType;
+import com.jobshunter.service.AiCapabilityChecker;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -67,21 +68,21 @@ public record GrokJobsPayload(
     }
 
     public GrokJobsPayloadBuilder temperature(Double temperature) {
-      if (isEnabledCapability(AiCapabilityType.TEMPERATURE)) {
+      if (AiCapabilityChecker.isEnabled(aiModel, AiCapabilityType.TEMPERATURE)) {
         this.temperature = temperature;
       }
       return this;
     }
 
     public GrokJobsPayloadBuilder instructions(String instructions) {
-      if (isEnabledCapability(AiCapabilityType.SYSTEM_PROMPT)) {
+      if (AiCapabilityChecker.isEnabled(aiModel, AiCapabilityType.SYSTEM_PROMPT)) {
         this.instructions = instructions;
       }
       return this;
     }
 
     public GrokJobsPayloadBuilder reasoning(Reasoning reasoning) {
-      if (isEnabledCapability(AiCapabilityType.REASONING)) {
+      if (AiCapabilityChecker.isEnabled(aiModel, AiCapabilityType.REASONING)) {
         this.reasoning = reasoning;
       }
       return this;
@@ -98,24 +99,16 @@ public record GrokJobsPayload(
     }
 
     public GrokJobsPayloadBuilder addSystemPrompt(String systemPrompt) {
-      if (isEnabledCapability(AiCapabilityType.SYSTEM_PROMPT)) {
+      if (AiCapabilityChecker.isEnabled(aiModel, AiCapabilityType.SYSTEM_PROMPT)) {
         input.add(new Input("system", List.of(new InputMessage("input_text", systemPrompt))));
       }
       return this;
     }
 
-    private boolean isEnabledCapability(AiCapabilityType type) {
-      boolean enabledCapability = aiModel.isEnabledCapability(type);
-      if (!enabledCapability) {
-        log.debug(type + " capability is not supported by model " + aiModel.getModel());
-      }
-      return enabledCapability;
-    }
-
     public GrokJobsPayloadBuilder addUserPrompt(String userPrompt, String fileId) {
       List<InputObj> inputs = new ArrayList<>();
       inputs.add(new InputMessage("input_text", userPrompt));
-      if (Strings.isNotBlank(fileId) && isEnabledCapability(AiCapabilityType.FILE_UPLOAD)) {
+      if (Strings.isNotBlank(fileId) && AiCapabilityChecker.isEnabled(aiModel, AiCapabilityType.FILE_UPLOAD)) {
         inputs.add(new InputFile(fileId));
       }
       input.add(new Input("user", inputs));
@@ -135,7 +128,7 @@ public record GrokJobsPayload(
     }
 
     public GrokJobsPayloadBuilder setResponseSchema(String schema) {
-      if (isEnabledCapability(AiCapabilityType.RESPONSE_SCHEMA)) {
+      if (AiCapabilityChecker.isEnabled(aiModel, AiCapabilityType.RESPONSE_SCHEMA)) {
         try {
           this.text = new Text(
               new TextFormat(
@@ -152,7 +145,7 @@ public record GrokJobsPayload(
     }
 
     public GrokJobsPayloadBuilder addTools(Tools tool) {
-      if (isEnabledCapability(AiCapabilityType.WEB_SEARCH)) {
+      if (AiCapabilityChecker.isEnabled(aiModel, AiCapabilityType.WEB_SEARCH)) {
         this.tools.add(tool);
       }
       return this;

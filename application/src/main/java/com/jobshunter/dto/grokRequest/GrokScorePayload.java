@@ -3,6 +3,7 @@ package com.jobshunter.dto.grokRequest;
 import com.jobshunter.database.entities.AiModelEntity;
 import com.jobshunter.dto.exceptions.BusinessException;
 import com.jobshunter.model.AiCapabilityType;
+import com.jobshunter.service.AiCapabilityChecker;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.Builder;
@@ -38,21 +39,21 @@ public record GrokScorePayload(
     }
 
     public GrokScorePayloadBuilder addSystemPrompt(String systemPrompt) {
-      if (isEnabledCapability(AiCapabilityType.SYSTEM_PROMPT)) {
+      if (AiCapabilityChecker.isEnabled(aiModel, AiCapabilityType.SYSTEM_PROMPT)) {
         input.add(new Input("system", List.of(new InputMessage("input_text", systemPrompt))));
       }
       return this;
     }
 
     public GrokScorePayloadBuilder reasoning(Reasoning reasoning) {
-      if (isEnabledCapability(AiCapabilityType.REASONING)) {
+      if (AiCapabilityChecker.isEnabled(aiModel, AiCapabilityType.REASONING)) {
         this.reasoning = reasoning;
       }
       return this;
     }
 
     public GrokScorePayloadBuilder temperature(Double temperature) {
-      if (isEnabledCapability(AiCapabilityType.TEMPERATURE)) {
+      if (AiCapabilityChecker.isEnabled(aiModel, AiCapabilityType.TEMPERATURE)) {
         this.temperature = temperature;
       }
       return this;
@@ -61,19 +62,11 @@ public record GrokScorePayload(
     public GrokScorePayloadBuilder addUserPrompt(String userPrompt, String fileId) {
       final List<InputObj> dataList = new ArrayList<>();
       dataList.add(new InputMessage("input_text", userPrompt));
-      if (isEnabledCapability(AiCapabilityType.FILE_UPLOAD)) {
+      if (AiCapabilityChecker.isEnabled(aiModel, AiCapabilityType.FILE_UPLOAD)) {
         dataList.add(new InputFile(fileId));
       }
       input.add(new Input("user", dataList));
       return this;
-    }
-
-    private boolean isEnabledCapability(AiCapabilityType type) {
-      boolean enabledCapability = aiModel.isEnabledCapability(type);
-      if (!enabledCapability) {
-        log.debug(type + " capability is not supported by model " + aiModel.getModel());
-      }
-      return enabledCapability;
     }
 
     public GrokScorePayload build() {

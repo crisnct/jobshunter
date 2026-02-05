@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.jobshunter.database.entities.AiModelEntity;
 import com.jobshunter.model.AiCapabilityType;
+import com.jobshunter.service.AiCapabilityChecker;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.Builder;
@@ -52,16 +53,8 @@ public record GeminiJobsPayload(
       this.aiModel = model;
     }
 
-    private boolean isEnabledCapability(AiCapabilityType type) {
-      boolean enabledCapability = aiModel.isEnabledCapability(type);
-      if (!enabledCapability) {
-        log.debug(type + " capability is not supported by model " + aiModel.getModel());
-      }
-      return enabledCapability;
-    }
-
     public GeminiJobsPayloadBuilder tools(List<Tool> tools) {
-      if (isEnabledCapability(AiCapabilityType.WEB_SEARCH)) {
+      if (AiCapabilityChecker.isEnabled(aiModel, AiCapabilityType.WEB_SEARCH)) {
         this.tools = tools;
       }
       return this;
@@ -83,7 +76,7 @@ public record GeminiJobsPayload(
     }
 
     public GeminiJobsPayloadBuilder addSystemInstruction(String text) {
-      if (isEnabledCapability(AiCapabilityType.SYSTEM_PROMPT)) {
+      if (AiCapabilityChecker.isEnabled(aiModel, AiCapabilityType.SYSTEM_PROMPT)) {
         this.systemInstruction = new Content(null, List.of(Part.text(text)));
       }
       return this;
@@ -108,7 +101,7 @@ public record GeminiJobsPayload(
       if (text != null && !text.isBlank()) {
         parts.add(Part.text(text));
       }
-      if (isEnabledCapability(AiCapabilityType.FILE_UPLOAD)) {
+      if (AiCapabilityChecker.isEnabled(aiModel, AiCapabilityType.FILE_UPLOAD)) {
         for (FileData fileData : files) {
           parts.add(Part.file(fileData.fileUri(), fileData.mimeType()));
         }

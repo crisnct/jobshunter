@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.jobshunter.database.entities.AiModelEntity;
 import com.jobshunter.model.AiCapabilityType;
+import com.jobshunter.service.AiCapabilityChecker;
 import java.util.List;
 import java.util.Map;
 import lombok.Builder;
@@ -52,21 +53,21 @@ public class GenerationConfig {
     }
 
     public GenerationConfigBuilder thinkingConfig(ThinkingConfig config) {
-      if (isEnabledCapability(AiCapabilityType.REASONING)) {
+      if (AiCapabilityChecker.isEnabled(aiModel, AiCapabilityType.REASONING)) {
         thinkingConfig = config;
       }
       return this;
     }
 
     public GenerationConfigBuilder temperature(Double temperature) {
-      if (isEnabledCapability(AiCapabilityType.TEMPERATURE)) {
+      if (AiCapabilityChecker.isEnabled(aiModel, AiCapabilityType.TEMPERATURE)) {
         this.temperature = temperature;
       }
       return this;
     }
 
     public GenerationConfigBuilder responseJsonSchema(String schema) {
-      if (isEnabledCapability(AiCapabilityType.RESPONSE_SCHEMA)) {
+      if (AiCapabilityChecker.isEnabled(aiModel, AiCapabilityType.RESPONSE_SCHEMA)) {
         try {
           responseJsonSchema = JSON_MAPPER.readValue(schema, Map.class);
           responseMimeType = "application/json";
@@ -75,14 +76,6 @@ public class GenerationConfig {
         }
       }
       return this;
-    }
-
-    private boolean isEnabledCapability(AiCapabilityType type) {
-      boolean enabledCapability = aiModel.isEnabledCapability(type);
-      if (!enabledCapability) {
-        log.debug(type + " capability is not supported by model " + aiModel.getModel());
-      }
-      return enabledCapability;
     }
 
   }
