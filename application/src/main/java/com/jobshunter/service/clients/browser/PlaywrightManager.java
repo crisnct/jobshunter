@@ -38,9 +38,9 @@ public final class PlaywrightManager {
   }
 
   /**
-   * Creates a new isolated browser context. Must be called in a controlled (serialized) manner.
+   * Creates a new isolated browser context. Thread-safe as Playwright Browser supports concurrent access.
    */
-  public synchronized BrowserContext newContext() {
+  public BrowserContext newContext() {
     return browser.newContext(
         new Browser.NewContextOptions()
             .setUserAgent(RandomBrowserUserAgent.pick())

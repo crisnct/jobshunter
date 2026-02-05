@@ -46,8 +46,7 @@ public class RedirectFetchPage implements HttpFetcher {
   public HttpFetchResult fetch(String url) {
     log.info("Checking redirection for job URL: {}", url);
     HttpClientContext httpcontext = HttpClientContext.create();
-    // Set ThreadLocal before async call so it's available in executor thread
-    THREAD_LOCAL_CONTEXT.set(httpcontext);
+    // Note: ThreadLocal is set by BrowserSimulator in the executor thread where it's needed
     try {
       ResponseEntity<String> responseFirst = browserSimulator.openPageAsync(url)
           .toCompletableFuture()
