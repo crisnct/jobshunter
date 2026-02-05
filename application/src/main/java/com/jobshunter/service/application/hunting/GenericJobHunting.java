@@ -2,7 +2,6 @@ package com.jobshunter.service.application.hunting;
 
 import com.jobshunter.database.entities.AiModelEntity;
 import com.jobshunter.database.entities.UserEntity;
-import com.jobshunter.database.entities.UserJobRoleEntity;
 import com.jobshunter.database.entities.UserPromptEntity;
 import com.jobshunter.dto.AIJobSearchRequest;
 import com.jobshunter.dto.CompanyDto;
@@ -16,11 +15,12 @@ import com.jobshunter.service.clients.AiJobsCompaniesClient;
 import io.github.resilience4j.ratelimiter.RequestNotPermitted;
 import jakarta.annotation.Nonnull;
 import jakarta.validation.constraints.NotNull;
-import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -71,33 +71,34 @@ public abstract non-sealed class GenericJobHunting implements JobHunting {
 
   @Override
   public CompletableFuture<List<Job>> searchJobsAsync(SearchJobOrder order) {
-    //Search companies and then for each company search jobs
-    CompletableFuture<List<Job>> futures = CompletableFuture.completedFuture(List.of());
+    final List<CompletableFuture<List<Job>>> futures;
 
     if (order.getModel().getProvider() == EngineType.SERP) {
-      for (UserJobRoleEntity role : order.getUser().getJobRoles()) {
-        AIJobSearchRequest request = createRequest(order, role.getJobRole(), null);
-        CompletableFuture<AiClientResponse> jobsFound = this.searchAsync(request, executor);
-        futures = futures.thenCombine(jobsFound, (previousJobs, newJobs) -> {
-          List<Job> merged = new ArrayList<>(previousJobs);
-          merged.addAll(newJobs.getJobs());
-          return merged;
-        });
-      }
+      // Search jobs for each role in parallel
+      futures = order.getUser().getJobRoles().stream()
+          .map(role -> createRequest(order, role.getJobRole(), null))
+          .map(request -> searchAsync(request, executor)
+              .thenApply(AiClientResponse::getJobs))
+          .toList();
     } else {
-      //Search jobs based on user requests
-      for (UserPromptEntity prompt : order.getUser().getPrompts()) {
-        AIJobSearchRequest request = createRequest(order, prompt);
-        CompletableFuture<AiClientResponse> jobsFound = this.searchAsync(request, executor);
-        futures = futures.thenCombine(jobsFound, (previousJobs, newJobs) -> {
-          List<Job> merged = new ArrayList<>(previousJobs);
-          merged.addAll(newJobs.getJobs());
-          return merged;
-        });
-      }
+      // Search jobs based on user prompts in parallel
+      futures = order.getUser().getPrompts().stream()
+          .map(prompt -> createRequest(order, prompt))
+          .map(request -> searchAsync(request, executor)
+              .thenApply(AiClientResponse::getJobs))
+          .toList();
     }
 
-    return futures;
+    if (futures.isEmpty()) {
+      return CompletableFuture.completedFuture(List.of());
+    }
+
+    // Wait for all searches to complete and merge results
+    return CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new))
+        .thenApply(v -> futures.stream()
+            .map(CompletableFuture::join)
+            .flatMap(List::stream)
+            .toList());
   }
 
   public CompletableFuture<List<Job>> searchJobsByCompaniesAsync(SearchJobOrder order) {
@@ -127,10 +128,18 @@ public abstract non-sealed class GenericJobHunting implements JobHunting {
 
   protected CompletableFuture<AiClientResponse> searchAsync(AIJobSearchRequest request, Executor executor) {
     return CompletableFuture.supplyAsync(() -> searchSync(request), executor)
+        .orTimeout(30, TimeUnit.MINUTES)
         .exceptionally(throwable -> {
           AiModelEntity aiModel = request.getOrder().getModel();
-          if (throwable.getCause() != null && throwable.getCause() instanceof RequestNotPermitted) {
-            log.error("❌ Rate limit exceeded for user {}, engine: {}, eodel: {}",
+          Throwable cause = throwable.getCause() != null ? throwable.getCause() : throwable;
+
+          if (cause instanceof TimeoutException) {
+            log.warn("⏱️ Timeout exceeded for user {}, engine: {}, model: {}, prompt: {}",
+                request.getOrder().getUser().getUsername(),
+                aiModel.getProvider(), aiModel.getModel(),
+                request.getUserPrompt());
+          } else if (cause instanceof RequestNotPermitted) {
+            log.error("❌ Rate limit exceeded for user {}, engine: {}, model: {}",
                 request.getOrder().getUser().getUsername(), aiModel.getProvider(), aiModel.getModel());
           } else {
             log.error("Unexpected error at gathering jobs from model {}: {} for prompt {}", aiModel.getModel(),

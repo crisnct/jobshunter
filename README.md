@@ -199,40 +199,17 @@ Once the application is running, explore the full REST API documentation via **S
 
 A huge shoutout to the amazing team behind JobsHunter!
 
-<table style="width: 100%; border-collapse: collapse; table-layout: fixed;">
+<table>
   <tr>
-    <td width="33%" valign="top" align="center">
+    <td width="150" align="center" valign="top">
       <a href="https://github.com/crisnct">
-        <img src="https://github.com/crisnct.png" alt="" style="width: 100px; border-radius: 50%; display: block; margin: 0 auto;"/>
-      </a>
-      <h3 style="margin: 6px 0 6px 0;">Cristian Țone</h3>
-      <b style="font-size: 1.0em; display: block; margin: 0 0 8px 0;">🚀 Product Owner & Team Lead</b>
+        <img src="https://github.com/crisnct.png" width="80" style="border-radius: 50%;"/>
+      </a><br/>
+      <b>Cristian Țone</b><br/>
+      <sub>🚀 Product Owner & Team Lead</sub>
     </td>
-    <td width="33%" valign="top" align="center">
-      <a href="https://github.com/AyanoCode13">
-        <img src="https://github.com/AyanoCode13.png" alt="" style="width: 100px; border-radius: 50%; display: block; margin: 0 auto;"/>
-      </a>
-      <h3 style="margin: 6px 0 6px 0;">Andrei Lazăr</h3>
-      <b style="font-size: 1em; display: block; margin: 0 0 8px 0;">💻 Junior Backend Developer</b>
-    </td>
-    <td width="33%" valign="top" align="center">
-      <a href="https://github.com/ionel-vochin">
-        <img src="https://github.com/ionel-vochin.png" alt="" style="width: 100px; border-radius: 50%; display: block; margin: 0 auto;"/>
-      </a>
-      <h3 style="margin: 6px 0 6px 0;">Ionel Vochin</h3>
-      <b style="font-size: 1em; display: block; margin: 0 0 8px 0;">🛠️ Senior Backend Developer</b>
-    </td>
-    <td width="33%" valign="top" align="center">
-      <a href="https://github.com/Paulresiga92">
-        <img src="https://github.com/Paulresiga92.png" alt="" style="width: 100px; border-radius: 50%; display: block; margin: 0 auto;"/>
-      </a>
-      <h3 style="margin: 6px 0 6px 0;">Paul Resiga</h3>
-      <b style="font-size: 1em; display: block; margin: 0 0 8px 0;">🛠️ Applied AI Engineer</b>
-    </td>
-  </tr>
-  <tr>
-    <td valign="top" align="left">
-      <ul style="text-align: left; margin: 0; padding-left: 12px; list-style-position: inside;">
+    <td valign="top">
+      <ul>
         <li>Strategy to search jobs by company</li>
         <li>Strategy to search jobs by user prompts</li>
         <li>Functionality to blame AI for the invalid URLs provided</li>
@@ -248,22 +225,53 @@ A huge shoutout to the amazing team behind JobsHunter!
         <li>Started the project</li>
       </ul>
     </td>
-    <td valign="top" align="left">
-      <ul style="text-align: left; margin: 0; padding-left: 12px; list-style-position: inside;">
+  </tr>
+  <tr>
+    <td width="150" align="center" valign="top">
+      <a href="https://github.com/AyanoCode13">
+        <img src="https://github.com/AyanoCode13.png" width="80" style="border-radius: 50%;"/>
+      </a><br/>
+      <b>Andrei Lazăr</b><br/>
+      <sub>💻 Junior Backend Developer</sub>
+    </td>
+    <td valign="top">
+      <ul>
         <li>Scrapper for bestjobs.eu</li>
         <li>Email Notification Service</li>
         <li>Mailtrap Integration</li>
       </ul>
     </td>
-    <td valign="top" align="left">
-      <ul style="text-align: left; margin: 0; padding-left: 12px; list-style-position: inside;">
+  </tr>
+  <tr>
+    <td width="150" align="center" valign="top">
+      <a href="https://github.com/ionel-vochin">
+        <img src="https://github.com/ionel-vochin.png" width="80" style="border-radius: 50%;"/>
+      </a><br/>
+      <b>Ionel Vochin</b><br/>
+      <sub>🛠️ Senior Backend Developer</sub>
+    </td>
+    <td valign="top">
+      <ul>
         <li>Refactoring & Optimization about email templates</li>
         <li>Liquibase Scripts Fixes</li>
         <li>RestClient Migration</li>
       </ul>
     </td>
   </tr>
-
+  <tr>
+    <td width="150" align="center" valign="top">
+      <a href="https://github.com/Paulresiga92">
+        <img src="https://github.com/Paulresiga92.png" width="80" style="border-radius: 50%;"/>
+      </a><br/>
+      <b>Paul Resiga</b><br/>
+      <sub>🛠️ Applied AI Engineer</sub>
+    </td>
+    <td valign="top">
+      <ul>
+        <li>...</li>
+      </ul>
+    </td>
+  </tr>
 </table>
 
 ---
