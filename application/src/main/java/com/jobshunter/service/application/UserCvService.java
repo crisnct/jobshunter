@@ -3,6 +3,7 @@ package com.jobshunter.service.application;
 import com.jobshunter.database.entities.UserCvEntity;
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.entities.UserRemoteCvEntity;
+import com.jobshunter.database.service.DistributedLockService;
 import com.jobshunter.database.service.UserCvDBService;
 import com.jobshunter.database.service.UserDBService;
 import com.jobshunter.dto.exceptions.ValidationException;
@@ -49,17 +50,21 @@ public class UserCvService {
 
   private final UserCvDBService userCvDBService;
 
+  private final DistributedLockService distributedLockService;
+
   private final Map<EngineType, FileClient> clients;
 
   public UserCvService(
       UserDBService userDBService,
       UserCvDBService userCvDBService,
+      DistributedLockService distributedLockService,
       @Qualifier("Gpt") FileClient gptFileClient,
       @Qualifier("Gemini") FileClient geminiFileClient,
       @Qualifier("Grok") FileClient grokFileClient
   ) {
     this.userDBService = userDBService;
     this.userCvDBService = userCvDBService;
+    this.distributedLockService = distributedLockService;
     this.clients = Map.of(
         EngineType.GPT, gptFileClient,
         EngineType.GEMINI, geminiFileClient,
@@ -227,32 +232,56 @@ public class UserCvService {
   }
 
   public void refreshUserCvIfNeeded(UserEntity user, @NotNull EngineType type) {
+    // Quick check before acquiring lock (optimization)
     UserRemoteCvEntity remoteCV = user.getRemoteCvs().stream().filter(p -> p.getProvider() == type)
         .findFirst().orElse(null);
-    if (user.getCv() != null
-        && user.getCv().getByteArray() != null
-        && (remoteCV == null || (remoteCV.getExpireTime() != null) && remoteCV.getExpireTime().isBefore(Instant.now()))
+    if (user.getCv() == null
+        || user.getCv().getByteArray() == null
+        || (remoteCV != null && (remoteCV.getExpireTime() == null || !remoteCV.getExpireTime().isBefore(Instant.now())))
     ) {
-      log.info("Refreshing CV for user {} before searching jobs with engine {}", user.getUsername(), type.name());
+      return; // No refresh needed
+    }
+
+    // Acquire distributed lock for this user+engine combination
+    String lockName = "cv_refresh_user_" + user.getId() + "_" + type.name();
+
+    distributedLockService.executeWithLock(lockName, () -> {
+      // Re-fetch user to get fresh state after acquiring lock (double-checked locking)
+      UserEntity freshUser = userDBService.getUser(user.getUsername()).orElseThrow();
+
+      UserRemoteCvEntity freshRemoteCV = freshUser.getRemoteCvs().stream()
+          .filter(p -> p.getProvider() == type)
+          .findFirst().orElse(null);
+
+      // Re-check condition with fresh data
+      if (freshUser.getCv() == null
+          || freshUser.getCv().getByteArray() == null
+          || (freshRemoteCV != null && (freshRemoteCV.getExpireTime() == null || !freshRemoteCV.getExpireTime().isBefore(Instant.now())))
+      ) {
+        log.debug("CV refresh not needed after lock acquisition for user {}, engine {}", freshUser.getUsername(), type.name());
+        return;
+      }
+
+      log.info("Refreshing CV for user {} before searching jobs with engine {}", freshUser.getUsername(), type.name());
       Path tempFile = null;
       try {
         FileClient client = clients.get(type);
-        if (remoteCV != null) {
+        if (freshRemoteCV != null) {
           try {
-            client.deleteFile(remoteCV.getFileId());
+            client.deleteFile(freshRemoteCV.getFileId());
           } catch (Exception e) {
-            log.warn("Can not delete file for user {} on {} client: {}", user.getUsername(), type.name(), e.getMessage());
+            log.warn("Can not delete file for user {} on {} client: {}", freshUser.getUsername(), type.name(), e.getMessage());
           }
         }
-        tempFile = Files.createTempFile("cv-" + user.getUsername() + "-", ".pdf");
-        Files.write(tempFile, user.getCv().getByteArray(),
+        tempFile = Files.createTempFile("cv-" + freshUser.getUsername() + "-", ".pdf");
+        Files.write(tempFile, freshUser.getCv().getByteArray(),
             StandardOpenOption.CREATE,
             StandardOpenOption.TRUNCATE_EXISTING,
             StandardOpenOption.WRITE
         );
         ResumeFileInfo newFileInfo = client.uploadFile(tempFile);
-        userCvDBService.saveRemoteCvFile(user, type, newFileInfo);
-        log.info("Upload CV complete for user {}, engine {}", user.getUsername(), type.name());
+        userCvDBService.saveRemoteCvFile(freshUser, type, newFileInfo);
+        log.info("Upload CV complete for user {}, engine {}", freshUser.getUsername(), type.name());
       } catch (IOException e) {
         throw new RuntimeException(e);
       } finally {
@@ -265,7 +294,7 @@ public class UserCvService {
           }
         }
       }
-    }
+    });
   }
 
   // ---------------------------------------------------------------------------

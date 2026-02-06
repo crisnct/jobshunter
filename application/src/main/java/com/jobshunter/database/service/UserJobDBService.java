@@ -18,6 +18,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -67,10 +68,17 @@ public class UserJobDBService {
       log.debug("Job URL already exists for user {}: {} (id: {})", user.getId(), job.getUrl(), existing.get().getId());
       return existing.get();
     }
-    UserJobEntity newJob = new UserJobEntity(user, job.getUrl(), aiModel, jobOrder);
-    newJob.setScore(job.getScore());
-    newJob.setPrompt(userPrompt);
-    return userJobRepository.saveAndFlush(newJob);
+    try {
+      UserJobEntity newJob = new UserJobEntity(user, job.getUrl(), aiModel, jobOrder);
+      newJob.setScore(job.getScore());
+      newJob.setPrompt(userPrompt);
+      return userJobRepository.saveAndFlush(newJob);
+    } catch (DataIntegrityViolationException e) {
+      // Race condition: another thread/instance inserted the same URL concurrently
+      log.debug("Concurrent insert for user {} URL {}, fetching existing record", user.getId(), job.getUrl());
+      return userJobRepository.findByUserIdAndUrl(user.getId(), job.getUrl())
+          .orElseThrow(() -> e); // Re-throw if still not found (different constraint violation)
+    }
   }
 
   @Transactional

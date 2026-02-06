@@ -93,9 +93,13 @@ public class JobHuntScheduler {
     this.properties = properties;
   }
 
+  /**
+   * Processes orders concurrently. Each invocation submits a task to the ordersExecutor, allowing multiple orders to be processed in parallel (up to
+   * the executor's thread pool size). The FOR UPDATE SKIP LOCKED in acquireJobId() ensures each order is processed only once.
+   */
   @Scheduled(fixedDelayString = "${jobshunter.scheduler.processOrderFrequency:5000}")
   public void processOrderAsync() {
-    this.performActionAsync("processOrderAsync", this::processOrderSync, ordersExecutor);
+    CompletableFuture.runAsync(this::processOrderSync, ordersExecutor);
   }
 
   @Scheduled(fixedDelayString = "${jobshunter.scheduler.notifyUsersFrequency:60000}")
@@ -113,34 +117,41 @@ public class JobHuntScheduler {
     if (jobIdOp.isEmpty()) {
       return;
     }
-    JobOrderEntity jobOrder = jobOrderDBService.getJobOrder(jobIdOp.get());
-    String username = jobOrder.getUser().getUsername();
-    log.info("Start processing job order id={} for user {}", jobOrder.getId(), jobOrder.getUser().getUsername());
+    // Generate correlation ID for scheduled task
+    String correlationId = UUID.randomUUID().toString();
+    MDC.put(CorrelationIdFilter.CORRELATION_ID_MDC_KEY, correlationId);
     try {
-      for (EngineType type : EngineType.values()) {
-        if (type.isAiProvider()) {
-          userCvService.refreshUserCvIfNeeded(jobOrder.getUser(), type);
+      JobOrderEntity jobOrder = jobOrderDBService.getJobOrder(jobIdOp.get());
+      String username = jobOrder.getUser().getUsername();
+      log.info("Start processing job order id={} for user {}", jobOrder.getId(), jobOrder.getUser().getUsername());
+      try {
+        for (EngineType type : EngineType.values()) {
+          if (type.isAiProvider()) {
+            userCvService.refreshUserCvIfNeeded(jobOrder.getUser(), type);
+          }
         }
+
+        UserEntity user = userDBService.getUserCompleteInfo(username).orElseThrow();
+
+        boolean isEnableOneRealEngine = (properties.getGemini().isEnabled() || properties.getGpt().isEnabled() || properties.getSerp().isEnabled());
+        final List<String> ignoredURLs;
+        if (isEnableOneRealEngine) {
+          ignoredURLs = userJobDBService.getUserJobs(username).stream().map(UserJobEntity::getUrl).toList();
+        } else {
+          ignoredURLs = List.of();
+        }
+        SearchJobOrder order = new SearchJobOrder(jobOrder, user, ignoredURLs);
+        order.setCountryISOcode(countryIsoCode.getCode(user.getCountry()));
+
+        jobHuntService.searchJobsForUser(order);
+        jobOrderDBService.changeStatus(jobOrder.getId(), OrderStatus.COMPLETED, null);
+        log.info("Completed processing job order id={} for user {}", jobOrder.getId(), jobOrder.getUser().getUsername());
+      } catch (Exception e) {
+        log.error("Error processing job order id={} for user {}: {}", jobOrder.getId(), jobOrder.getUser().getUsername(), e.getMessage(), e);
+        jobOrderDBService.changeStatus(jobOrder.getId(), OrderStatus.FAILED, e.getMessage());
       }
-
-      UserEntity user = userDBService.getUserCompleteInfo(username).orElseThrow();
-
-      boolean isEnableOneRealEngine = (properties.getGemini().isEnabled() || properties.getGpt().isEnabled() || properties.getSerp().isEnabled());
-      final List<String> ignoredURLs;
-      if (isEnableOneRealEngine) {
-        ignoredURLs = userJobDBService.getUserJobs(username).stream().map(UserJobEntity::getUrl).toList();
-      } else {
-        ignoredURLs = List.of();
-      }
-      SearchJobOrder order = new SearchJobOrder(jobOrder, user, ignoredURLs);
-      order.setCountryISOcode(countryIsoCode.getCode(user.getCountry()));
-
-      jobHuntService.searchJobsForUser(order);
-      jobOrderDBService.changeStatus(jobOrder.getId(), OrderStatus.COMPLETED, null);
-      log.info("Completed processing job order id={} for user {}", jobOrder.getId(), jobOrder.getUser().getUsername());
-    } catch (Exception e) {
-      log.error("Error processing job order id={} for user {}: {}", jobOrder.getId(), jobOrder.getUser().getUsername(), e.getMessage(), e);
-      jobOrderDBService.changeStatus(jobOrder.getId(), OrderStatus.FAILED, e.getMessage());
+    } finally {
+      MDC.clear();
     }
   }
 
