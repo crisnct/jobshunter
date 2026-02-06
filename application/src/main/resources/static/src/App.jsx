@@ -610,6 +610,7 @@ const App = () => {
   const SidebarItem = ({ icon: Icon, label, id, active }) => (
     <button
       onClick={() => navigateToTab(id)}
+      aria-current={active ? 'page' : undefined}
       className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group ${
         active 
           ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-100' 
@@ -649,6 +650,16 @@ const App = () => {
     );
   };
 
+  const SkeletonRow = ({ cols }) => (
+    <tr>
+      {Array.from({ length: cols }).map((_, i) => (
+        <td key={i} className="py-3">
+          <div className="h-4 bg-slate-200 rounded animate-pulse" />
+        </td>
+      ))}
+    </tr>
+  );
+
   const ToggleSwitch = ({ label, checked, onChange }) => (
     <button
       type="button"
@@ -677,19 +688,20 @@ const App = () => {
       return null;
     }
     return (
-    <div
-      className={`fixed bottom-6 right-6 flex items-center gap-3 px-5 py-3 rounded-2xl shadow-2xl border transition-all duration-300 transform z-50 ${
-        status.type === 'error'
-          ? 'bg-red-50 border-red-100 text-red-700'
-          : status.type === 'success'
-            ? 'bg-emerald-50 border-emerald-100 text-emerald-700'
-            : 'bg-white border-slate-100 text-slate-600'
-      }`}
-    >
-      {status.type === 'error' && <AlertCircle size={18} />}
-      {status.type === 'success' && <CheckCircle2 size={18} />}
-      <span className="text-sm font-medium whitespace-pre-line">{status.message}</span>
-    </div>
+      <div
+        className={`fixed top-6 right-6 flex items-center gap-3 px-5 py-3 rounded-2xl shadow-2xl border z-50
+          animate-in slide-in-from-right-full fade-in duration-300 ${
+          status.type === 'error'
+            ? 'bg-red-50 border-red-100 text-red-700'
+            : status.type === 'success'
+              ? 'bg-emerald-50 border-emerald-100 text-emerald-700'
+              : 'bg-white border-slate-100 text-slate-600'
+        }`}
+      >
+        {status.type === 'error' && <AlertCircle size={18} />}
+        {status.type === 'success' && <CheckCircle2 size={18} />}
+        <span className="text-sm font-medium whitespace-pre-line">{status.message}</span>
+      </div>
     );
   };
 
@@ -1090,14 +1102,14 @@ const App = () => {
             <div className="w-full max-w-none mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
               {activeTab === 'dash' && (
                 <>
-                  <section className="relative overflow-hidden bg-gradient-to-r from-white to-slate-200 rounded-[2.5rem] h-24 text-slate-700 shadow-2xl shadow-slate-200">
-                    <div className="relative z-10 flex items-center h-full px-10 gap-6">
+                  <section className="relative overflow-hidden bg-gradient-to-r from-white to-slate-200 rounded-[2rem] h-16 text-slate-700 shadow-xl shadow-slate-200">
+                    <div className="relative z-10 flex items-center h-full px-6 gap-4">
                       <img
                         src={JobsHunterLogoSrc}
                         alt="JobsHunter logo"
-                        className="h-24 w-24 object-cover rounded-2xl"
+                        className="h-12 w-12 object-cover rounded-xl"
                       />
-                      <p className="flex-1 text-base md:text-lg font-medium leading-relaxed">
+                      <p className="flex-1 text-sm md:text-base font-medium leading-relaxed">
                         {bannerMessage}
                       </p>
                     </div>
@@ -1156,16 +1168,22 @@ const App = () => {
                           </thead>
                           <tbody>
                             {ordersLoading && (
-                              <tr>
-                                <td colSpan={8} className="py-6 text-center text-slate-400">
-                                  Loading orders...
-                                </td>
-                              </tr>
+                              <>
+                                <SkeletonRow cols={8} />
+                                <SkeletonRow cols={8} />
+                                <SkeletonRow cols={8} />
+                              </>
                             )}
                             {!ordersLoading && pagedOrders.length === 0 && (
                               <tr>
-                                <td colSpan={8} className="py-6 text-center text-slate-400">
-                                  No orders yet.
+                                <td colSpan={8} className="py-12 text-center">
+                                  <div className="flex flex-col items-center gap-3">
+                                    <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center">
+                                      <Globe className="w-8 h-8 text-slate-400" />
+                                    </div>
+                                    <p className="text-slate-500 font-medium">No orders yet</p>
+                                    <p className="text-sm text-slate-400">Start a new order to begin hunting for jobs</p>
+                                  </div>
                                 </td>
                               </tr>
                             )}
@@ -1176,7 +1194,7 @@ const App = () => {
                                   onClick={() => {
                                     setSelectedOrderId(order.id);
                                   }}
-                                  className={`border-b border-slate-100 last:border-b-0 cursor-pointer ${
+                                  className={`border-b border-slate-100 last:border-b-0 cursor-pointer hover:bg-slate-50 ${
                                     selectedOrderId === order.id ? 'bg-indigo-100/70' : ''
                                   }`}
                                 >
@@ -1228,14 +1246,14 @@ const App = () => {
                             <button
                               onClick={() => setOrdersPage((prev) => Math.max(1, prev - 1))}
                               disabled={ordersPage === 1}
-                              className="px-3 py-1 rounded-full border border-slate-200 disabled:opacity-50"
+                              className="px-4 py-2 min-h-[44px] min-w-[44px] rounded-full border border-slate-200 disabled:opacity-50 flex items-center justify-center"
                             >
                               Prev
                             </button>
                             <button
                               onClick={() => setOrdersPage((prev) => Math.min(totalOrderPages, prev + 1))}
                               disabled={ordersPage === totalOrderPages}
-                              className="px-3 py-1 rounded-full border border-slate-200 disabled:opacity-50"
+                              className="px-4 py-2 min-h-[44px] min-w-[44px] rounded-full border border-slate-200 disabled:opacity-50 flex items-center justify-center"
                             >
                               Next
                             </button>
@@ -1312,22 +1330,32 @@ const App = () => {
                           </thead>
                           <tbody>
                             {jobsLoading && (
-                              <tr>
-                                <td colSpan={5} className="py-6 text-center text-slate-400">
-                                  Loading jobs...
-                                </td>
-                              </tr>
+                              <>
+                                <SkeletonRow cols={5} />
+                                <SkeletonRow cols={5} />
+                                <SkeletonRow cols={5} />
+                              </>
                             )}
                             {!jobsLoading && jobsFound.length === 0 && (
                               <tr>
-                                <td colSpan={5} className="py-6 text-center text-slate-400">
-                                  {selectedOrderId ? 'No jobs found yet.' : 'Select an order to see jobs.'}
+                                <td colSpan={5} className="py-12 text-center">
+                                  <div className="flex flex-col items-center gap-3">
+                                    <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center">
+                                      <AlertCircle className="w-8 h-8 text-slate-400" />
+                                    </div>
+                                    <p className="text-slate-500 font-medium">
+                                      {selectedOrderId ? 'No jobs found' : 'No order selected'}
+                                    </p>
+                                    <p className="text-sm text-slate-400">
+                                      {selectedOrderId ? 'This order has not found any matching jobs yet' : 'Select an order above to view its jobs'}
+                                    </p>
+                                  </div>
                                 </td>
                               </tr>
                             )}
                             {!jobsLoading &&
                               sortedJobs.map((job, index) => (
-                                <tr key={`${job.url}-${index}`} className="border-b border-slate-100 last:border-b-0">
+                                <tr key={`${job.url}-${index}`} className="border-b border-slate-100 last:border-b-0 hover:bg-slate-50">
                                   <td className="py-3 text-slate-500">{index + 1}</td>
                                   <td className="py-3">
                                     <a className="text-indigo-600 hover:underline" href={job.url} target="_blank" rel="noreferrer">
@@ -1358,99 +1386,99 @@ const App = () => {
                     </div>
 
                     <div className="space-y-6">
-                      <div className="grid lg:grid-cols-[1fr_auto_1fr] gap-6 items-start">
-                        <div className="space-y-3">
-                          <h3 className="text-lg font-semibold text-slate-900">Identity</h3>
-                          <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-2 text-sm text-slate-700">
-                            <p>
-                              <span className="font-semibold text-slate-800">Username:</span> {user?.username || '-'}
-                            </p>
-                            <p>
-                              <span className="font-semibold text-slate-800">Email:</span> {user?.email || '-'}
-                            </p>
-                            <p>
-                              <span className="font-semibold text-slate-800">Phone:</span> {user?.phoneNumber || '-'}
-                            </p>
+                          <div className="grid lg:grid-cols-[1fr_auto_1fr] gap-6 items-start">
+                            <div className="space-y-3">
+                              <h3 className="text-lg font-semibold text-slate-900">Identity</h3>
+                              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-2 text-sm text-slate-700">
+                                <p>
+                                  <span className="font-semibold text-slate-800">Username:</span> {user?.username || '-'}
+                                </p>
+                                <p>
+                                  <span className="font-semibold text-slate-800">Email:</span> {user?.email || '-'}
+                                </p>
+                                <p>
+                                  <span className="font-semibold text-slate-800">Phone:</span> {user?.phoneNumber || '-'}
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="hidden lg:block w-1 bg-slate-400 h-full rounded-full" />
+
+                            <div className="space-y-3">
+                              <h3 className="text-lg font-semibold text-slate-900">CV/Resume</h3>
+                              <div className="space-y-3">
+                                <div className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-600">
+                                  {profileForm.cvFileName || 'No CV uploaded'}
+                                </div>
+                                <div className="flex flex-wrap gap-2">
+                                  <input
+                                    ref={cvInputRef}
+                                    type="file"
+                                    accept=".pdf,.doc,.docx,.txt"
+                                    className="hidden"
+                                    onChange={(e) => handleUploadCv(e.target.files?.[0])}
+                                  />
+                                  <button
+                                    onClick={() => cvInputRef.current?.click()}
+                                    disabled={cvUploading}
+                                    className="px-4 py-2 rounded-lg bg-indigo-700 text-white text-sm font-semibold disabled:opacity-70"
+                                  >
+                                    {cvUploading ? 'Uploading...' : 'Upload'}
+                                  </button>
+                                  <button
+                                    onClick={handleDownloadCv}
+                                    className="px-4 py-2 rounded-lg border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                                  >
+                                    Download
+                                  </button>
+                                  <button
+                                    onClick={() => setConfirmDeleteCv(true)}
+                                    disabled={cvDeleting}
+                                    className="px-4 py-2 rounded-lg bg-red-100 text-red-700 text-sm font-semibold disabled:opacity-70"
+                                  >
+                                    {cvDeleting ? 'Deleting...' : 'Delete'}
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
                           </div>
-                        </div>
 
-                        <div className="hidden lg:block w-1 bg-slate-400 h-full rounded-full" />
+                          <div className="h-1 bg-slate-400 rounded-full my-4" />
 
-                        <div className="space-y-3">
-                          <h3 className="text-lg font-semibold text-slate-900">CV/Resume</h3>
                           <div className="space-y-3">
-                            <div className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-600">
-                              {profileForm.cvFileName || 'No CV uploaded'}
-                            </div>
-                            <div className="flex flex-wrap gap-2">
-                              <input
-                                ref={cvInputRef}
-                                type="file"
-                                accept=".pdf,.doc,.docx,.txt"
-                                className="hidden"
-                                onChange={(e) => handleUploadCv(e.target.files?.[0])}
-                              />
-                              <button
-                                onClick={() => cvInputRef.current?.click()}
-                                disabled={cvUploading}
-                                className="px-4 py-2 rounded-lg bg-indigo-700 text-white text-sm font-semibold disabled:opacity-70"
-                              >
-                                {cvUploading ? 'Uploading...' : 'Upload'}
-                              </button>
-                              <button
-                                onClick={handleDownloadCv}
-                                className="px-4 py-2 rounded-lg border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-                              >
-                                Download
-                              </button>
-                              <button
-                                onClick={() => setConfirmDeleteCv(true)}
-                                disabled={cvDeleting}
-                                className="px-4 py-2 rounded-lg bg-red-100 text-red-700 text-sm font-semibold disabled:opacity-70"
-                              >
-                                {cvDeleting ? 'Deleting...' : 'Delete'}
-                              </button>
+                            <h3 className="text-lg font-semibold text-slate-900">Location</h3>
+                            <div className="grid sm:grid-cols-2 gap-4">
+                              <div>
+                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">Country</p>
+                                <select
+                                  value={profileForm.country || ''}
+                                  onChange={(e) => handleProfileChange('country', e.target.value)}
+                                  className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                                  disabled={countriesLoading}
+                                >
+                                  <option value="" disabled>
+                                    {countriesLoading ? 'Loading countries...' : 'Select country'}
+                                  </option>
+                                  {countries.map((country) => (
+                                    <option key={country} value={country}>
+                                      {country}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+                              <div>
+                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">City</p>
+                                <input
+                                  value={profileForm.city}
+                                  onChange={(e) => handleProfileChange('city', e.target.value)}
+                                  className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                                  placeholder="Select city"
+                                />
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      </div>
 
-                      <div className="border-t border-slate-200" />
-
-                      <div className="space-y-3">
-                        <h3 className="text-lg font-semibold text-slate-900">Location</h3>
-                        <div className="grid sm:grid-cols-2 gap-4">
-                          <div>
-                            <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">Country</p>
-                            <select
-                              value={profileForm.country || ''}
-                              onChange={(e) => handleProfileChange('country', e.target.value)}
-                              className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                              disabled={countriesLoading}
-                            >
-                              <option value="" disabled>
-                                {countriesLoading ? 'Loading countries...' : 'Select country'}
-                              </option>
-                              {countries.map((country) => (
-                                <option key={country} value={country}>
-                                  {country}
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-                          <div>
-                            <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">City</p>
-                            <input
-                              value={profileForm.city}
-                              onChange={(e) => handleProfileChange('city', e.target.value)}
-                              className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
-                              placeholder="Select city"
-                            />
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="border-t border-slate-200" />
+                      <div className="h-1 bg-slate-400 rounded-full my-4" />
 
                       <div className="space-y-3">
                         <h3 className="text-lg font-semibold text-slate-900">Job Preferences</h3>
@@ -1555,7 +1583,7 @@ const App = () => {
                         </div>
                       </div>
 
-                      <div className="border-t border-slate-200" />
+                      <div className="h-1 bg-slate-400 rounded-full my-4" />
 
                       <div className="space-y-3">
                         <h3 className="text-lg font-semibold text-slate-900">Prompts</h3>
@@ -1596,7 +1624,7 @@ const App = () => {
                         </div>
                       </div>
 
-                      <div className="border-t border-slate-200" />
+                      <div className="h-1 bg-slate-400 rounded-full my-4" />
 
                       <div className="space-y-3">
                         <h3 className="text-lg font-semibold text-slate-900">Notifications</h3>
@@ -1614,7 +1642,7 @@ const App = () => {
                         </div>
                       </div>
 
-                      <div className="border-t border-slate-200" />
+                      <div className="h-1 bg-slate-400 rounded-full my-4" />
 
                       <div className="flex flex-wrap items-center justify-between gap-4 pt-2">
                         <button
