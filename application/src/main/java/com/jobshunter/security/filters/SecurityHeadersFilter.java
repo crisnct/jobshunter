@@ -11,13 +11,13 @@ import org.springframework.web.filter.OncePerRequestFilter;
 /**
  * Security headers filter to protect against common web vulnerabilities. Implements comprehensive security headers to prevent:
  * {@snippet :
- * - Clickjacking attacks(X-Frame-Options)
+ * - Clickjacking attacks (X-Frame-Options)
  * - XSS attacks (X-XSS-Protection, Content-Security-Policy)
  * - MIME type sniffing (X-Content-Type-Options)
- * - Protocol downgrade attacks (Strict-Transport-Security)
  * - Information disclosure (X-Permitted-Cross-Domain-Policies)
  * - Referrer information leakage (Referrer-Policy)
  *}
+ * Note: HSTS (Strict-Transport-Security) is configured via Spring Security in SecurityConfig.
  *
  * @author Security Team
  */
@@ -55,32 +55,27 @@ public class SecurityHeadersFilter extends OncePerRequestFilter {
     // 3. X-XSS-Protection: Enable XSS filtering (legacy browsers)
     response.setHeader(JHHeaders.X_XSS_PROTECTION, "1; mode=block");
 
-    // 4. Strict-Transport-Security: Force HTTPS (only for HTTPS requests)
-    if (request.isSecure() || "https".equalsIgnoreCase(request.getHeader(JHHeaders.X_FORWARDED_PROTO))) {
-      response.setHeader(JHHeaders.STRICT_TRANSPORT_SECURITY, "max-age=31536000; includeSubDomains; preload");
-    }
-
-    // 5. Content-Security-Policy: Comprehensive XSS protection
+    // 4. Content-Security-Policy: Comprehensive XSS protection
     String csp = buildContentSecurityPolicy(request);
     response.setHeader(JHHeaders.CONTENT_SECURITY_POLICY, csp);
 
-    // 6. Referrer-Policy: Control referrer information
+    // 5. Referrer-Policy: Control referrer information
     response.setHeader(JHHeaders.REFERRER_POLICY, "strict-origin-when-cross-origin");
 
-    // 7. X-Permitted-Cross-Domain-Policies: Restrict cross-domain policies
+    // 6. X-Permitted-Cross-Domain-Policies: Restrict cross-domain policies
     response.setHeader(JHHeaders.X_PERMITTED_CROSS_DOMAIN_POLICIES, "none");
 
-    // 8. Permissions-Policy: Control browser features
+    // 7. Permissions-Policy: Control browser features
     response.setHeader(JHHeaders.PERMISSIONS_POLICY,
         "geolocation=(), microphone=(), camera=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()");
 
-    // 9. Cross-Origin-Embedder-Policy: Prevent cross-origin embedding
+    // 8. Cross-Origin-Embedder-Policy: Prevent cross-origin embedding
     response.setHeader(JHHeaders.CROSS_ORIGIN_EMBEDDER_POLICY, "require-corp");
 
-    // 10. Cross-Origin-Opener-Policy: Isolate browsing context
+    // 9. Cross-Origin-Opener-Policy: Isolate browsing context
     response.setHeader(JHHeaders.CROSS_ORIGIN_OPENER_POLICY, "same-origin");
 
-    // 11. Cross-Origin-Resource-Policy: Control cross-origin resource access
+    // 10. Cross-Origin-Resource-Policy: Control cross-origin resource access
     response.setHeader(JHHeaders.CROSS_ORIGIN_RESOURCE_POLICY, "same-origin");
   }
 

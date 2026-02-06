@@ -45,7 +45,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-  private static final int MAX_AGE_HSTS = (int) TimeUnit.DAYS.toSeconds(30);
+  private static final int MAX_AGE_HSTS = (int) TimeUnit.DAYS.toSeconds(365);
 
   private final UserDBService userDBService;
   private final CookieService cookieService;
@@ -100,7 +100,10 @@ public class SecurityConfig {
             .anyRequest().authenticated()
         )
         .headers(h ->
-            h.httpStrictTransportSecurity(hsts -> hsts.includeSubDomains(true).maxAgeInSeconds(MAX_AGE_HSTS))
+            h.httpStrictTransportSecurity(hsts -> hsts
+                .includeSubDomains(true)
+                .maxAgeInSeconds(MAX_AGE_HSTS)
+                .preload(true))
         )
         .authenticationProvider(daoAuthenticationProvider(userDetailsService, passwordEncoder))
         .addFilterBefore(correlationIdFilter, UsernamePasswordAuthenticationFilter.class)

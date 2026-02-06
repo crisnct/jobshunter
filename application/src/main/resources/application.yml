@@ -1,5 +1,6 @@
 server:
   port: ${SSL_PORT:8443}
+  forward-headers-strategy: FRAMEWORK
   ssl:
     enabled: true
     key-store: ${SSL_KEY_STORE:classpath:jobshunter.p12}
