@@ -90,7 +90,7 @@ public non-sealed class GeminiV1JobSearchImpl implements AiJobsClient, AiJobsCom
     AiModelEntity model = request.getOrder().getModel();
 
     GenerationConfig generationConfig = GenerationConfig.builder(model)
-        .temperature(0.05)
+        .temperature(0.2)
         .maxOutputTokens(15000)
         .thinkingConfig(new ThinkingConfig(256))//how reasoning it is
         .build();
@@ -124,7 +124,7 @@ public non-sealed class GeminiV1JobSearchImpl implements AiJobsClient, AiJobsCom
     //noinspection DataFlowIssue
     result.setId(response.responseId());
     costPublisher.publishGemini(
-        request.getOrder() != null ? request.getOrder().getJobOrder().getId() : -1,
+        request.getOrder().getJobOrder().getId(),
         payload.aiModel(),
         response.usageMetadata());
     return result;
@@ -236,7 +236,7 @@ public non-sealed class GeminiV1JobSearchImpl implements AiJobsClient, AiJobsCom
     List<String> positions = user.getJobRoles().stream().map(UserJobRoleEntity::getJobRole).toList();
 
     GenerationConfig generationConfig = GenerationConfig.builder(model)
-        .temperature(0.15)
+        .temperature(0.2)
         .maxOutputTokens(10000)
         .thinkingConfig(new ThinkingConfig(256))//how reasoning it is
         .build();
