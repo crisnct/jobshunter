@@ -34,6 +34,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
+import org.springframework.security.web.util.matcher.AnyRequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -103,7 +104,8 @@ public class SecurityConfig {
             h.httpStrictTransportSecurity(hsts -> hsts
                 .includeSubDomains(true)
                 .maxAgeInSeconds(MAX_AGE_HSTS)
-                .preload(true))
+                .preload(true)
+                .requestMatcher(AnyRequestMatcher.INSTANCE))
         )
         .authenticationProvider(daoAuthenticationProvider(userDetailsService, passwordEncoder))
         .addFilterBefore(correlationIdFilter, UsernamePasswordAuthenticationFilter.class)
