@@ -25,6 +25,8 @@ const App = () => {
   const [cvUploading, setCvUploading] = useState(false);
   const [cvDeleting, setCvDeleting] = useState(false);
   const [deletingAccount, setDeletingAccount] = useState(false);
+  const [confirmDeleteCv, setConfirmDeleteCv] = useState(false);
+  const [confirmDeleteAccount, setConfirmDeleteAccount] = useState(false);
   const [roleInput, setRoleInput] = useState('');
   const [orders, setOrders] = useState([]);
   const [jobsFound, setJobsFound] = useState([]);
@@ -582,17 +584,70 @@ const App = () => {
     return () => window.removeEventListener('popstate', applyPath);
   }, []);
 
+  // Keyboard shortcuts for navigation (P for Profile, D for Dashboard)
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Don't trigger if user is typing in an input/textarea
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+        return;
+      }
+      // Don't trigger if user is not logged in
+      if (!user) {
+        return;
+      }
+      
+      if (e.key === 'p' || e.key === 'P') {
+        navigateToTab('profile');
+      } else if (e.key === 'd' || e.key === 'D') {
+        navigateToTab('dash');
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [user, navigateToTab]);
+
   const SidebarItem = ({ icon: Icon, label, id, active }) => (
     <button
       onClick={() => navigateToTab(id)}
       className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group ${
-        active ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-100' : 'text-slate-500 hover:bg-slate-50 hover:text-indigo-600'
+        active 
+          ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-100' 
+          : 'text-slate-500 hover:bg-indigo-50 hover:text-indigo-600 hover:scale-[1.02] hover:shadow-sm'
       }`}
     >
-      <Icon size={18} className={active ? 'text-white' : 'text-slate-400 group-hover:text-indigo-500'} />
+      <Icon size={18} className={`transition-transform duration-200 ${active ? 'text-white' : 'text-slate-400 group-hover:text-indigo-500 group-hover:scale-110'}`} />
       <span className="font-semibold text-sm">{label}</span>
+      <span className="ml-auto text-xs text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity">
+        {id === 'profile' ? 'P' : 'D'}
+      </span>
     </button>
   );
+
+  const ConfirmDialog = ({ open, title, message, confirmLabel, onConfirm, onCancel, destructive }) => {
+    if (!open) return null;
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+        <div className="bg-white rounded-2xl shadow-xl p-6 max-w-sm w-full mx-4 space-y-4">
+          <h3 className="text-lg font-bold text-slate-900">{title}</h3>
+          <p className="text-sm text-slate-600">{message}</p>
+          <div className="flex justify-end gap-3">
+            <button onClick={onCancel} className="px-4 py-2 rounded-lg border border-slate-200 text-sm font-semibold">
+              Cancel
+            </button>
+            <button
+              onClick={onConfirm}
+              className={`px-4 py-2 rounded-lg text-sm font-semibold text-white ${
+                destructive ? 'bg-red-600 hover:bg-red-700' : 'bg-indigo-600 hover:bg-indigo-700'
+              }`}
+            >
+              {confirmLabel}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   const ToggleSwitch = ({ label, checked, onChange }) => (
     <button
@@ -862,8 +917,6 @@ const App = () => {
   };
 
   const handleDeleteAccount = async () => {
-    const confirmed = window.confirm('Delete your account? This cannot be undone.');
-    if (!confirmed) return;
     setDeletingAccount(true);
     try {
       await api.call('/api/user/delete', { method: 'DELETE' });
@@ -890,7 +943,7 @@ const App = () => {
             </div>
             <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">JobsHunter</h1>
             <p className="text-slate-500 mt-2 font-medium">Your gateway to the next career leap</p>
-            <h2 className="text-1xl font-extrabold text-slate-700 tracking-tight">Put AI to hunt jobs for you</h2>
+            <h2 className="text-xl font-extrabold text-slate-700 tracking-tight">Put AI to hunt jobs for you</h2>
           </div>
 
           <div className="bg-white rounded-3xl shadow-2xl shadow-slate-200/60 p-8 border border-slate-100">
@@ -987,6 +1040,14 @@ const App = () => {
               <img src="/images/JobsHunterLogo.png" alt="JobsHunter logo" className="w-full h-full object-cover" />
             </div>
             <span className="font-black text-xl text-slate-900 tracking-tight">JobsHunter</span>
+            
+            {/* Breadcrumb indicator */}
+            <div className="hidden lg:flex items-center gap-2 ml-4 text-slate-400">
+              <span>/</span>
+              <span className="text-sm font-medium text-indigo-600">
+                {activeTab === 'profile' ? 'Profile' : 'Dashboard'}
+              </span>
+            </div>
           </div>
         </div>
         <div className="lg:hidden bg-white border-b border-slate-200">
@@ -1132,7 +1193,7 @@ const App = () => {
                                   </td>
                                   <td className="py-2 text-left">
                                     <span
-                                      className={`px-3 py-1 rounded-full text-xs font-semibold inline-flex justify-center min-w-[110px] ${
+                                      className={`px-3 py-1 rounded-full text-xs font-semibold inline-flex items-center justify-center gap-1.5 min-w-[110px] ${
                                         order.status === 'COMPLETED'
                                           ? 'bg-emerald-100 text-emerald-700'
                                           : order.status === 'FAILED'
@@ -1140,6 +1201,9 @@ const App = () => {
                                             : 'bg-amber-100 text-amber-700'
                                       }`}
                                     >
+                                      {order.status === 'COMPLETED' && <span>✓</span>}
+                                      {order.status === 'FAILED' && <span>✕</span>}
+                                      {(order.status === 'PROCESSING' || order.status === 'NEW') && <span>⏳</span>}
                                       {order.status}
                                     </span>
                                   </td>
@@ -1340,7 +1404,7 @@ const App = () => {
                                 Download
                               </button>
                               <button
-                                onClick={handleDeleteCv}
+                                onClick={() => setConfirmDeleteCv(true)}
                                 disabled={cvDeleting}
                                 className="px-4 py-2 rounded-lg bg-red-100 text-red-700 text-sm font-semibold disabled:opacity-70"
                               >
@@ -1351,7 +1415,7 @@ const App = () => {
                         </div>
                       </div>
 
-                      <div className="border-t-4 border-slate-400" />
+                      <div className="border-t border-slate-200" />
 
                       <div className="space-y-3">
                         <h3 className="text-lg font-semibold text-slate-900">Location</h3>
@@ -1386,7 +1450,7 @@ const App = () => {
                         </div>
                       </div>
 
-                      <div className="border-t-4 border-slate-400" />
+                      <div className="border-t border-slate-200" />
 
                       <div className="space-y-3">
                         <h3 className="text-lg font-semibold text-slate-900">Job Preferences</h3>
@@ -1491,7 +1555,7 @@ const App = () => {
                         </div>
                       </div>
 
-                      <div className="border-t-4 border-slate-400" />
+                      <div className="border-t border-slate-200" />
 
                       <div className="space-y-3">
                         <h3 className="text-lg font-semibold text-slate-900">Prompts</h3>
@@ -1532,7 +1596,7 @@ const App = () => {
                         </div>
                       </div>
 
-                      <div className="border-t-4 border-slate-400" />
+                      <div className="border-t border-slate-200" />
 
                       <div className="space-y-3">
                         <h3 className="text-lg font-semibold text-slate-900">Notifications</h3>
@@ -1550,7 +1614,7 @@ const App = () => {
                         </div>
                       </div>
 
-                      <div className="border-t-4 border-slate-400" />
+                      <div className="border-t border-slate-200" />
 
                       <div className="flex flex-wrap items-center justify-between gap-4 pt-2">
                         <button
@@ -1568,7 +1632,7 @@ const App = () => {
                           )}
                         </button>
                         <button
-                          onClick={handleDeleteAccount}
+                          onClick={() => setConfirmDeleteAccount(true)}
                           disabled={deletingAccount}
                           className="px-4 py-2.5 rounded-xl border-2 border-red-200 bg-red-50 hover:bg-red-100 hover:border-red-300 text-red-600 text-sm font-semibold transition-all duration-200 disabled:opacity-70 flex items-center gap-2"
                         >
@@ -1584,6 +1648,26 @@ const App = () => {
           )}
         </div>
       </main>
+
+      <ConfirmDialog
+        open={confirmDeleteCv}
+        title="Delete CV"
+        message="Are you sure you want to delete your CV? This action cannot be undone."
+        confirmLabel="Delete"
+        destructive
+        onCancel={() => setConfirmDeleteCv(false)}
+        onConfirm={() => { setConfirmDeleteCv(false); handleDeleteCv(); }}
+      />
+
+      <ConfirmDialog
+        open={confirmDeleteAccount}
+        title="Delete Account"
+        message="This will permanently delete your account and all associated data. This cannot be undone."
+        confirmLabel="Delete Account"
+        destructive
+        onCancel={() => setConfirmDeleteAccount(false)}
+        onConfirm={() => { setConfirmDeleteAccount(false); handleDeleteAccount(); }}
+      />
 
       <StatusToast />
     </div>
