@@ -140,22 +140,20 @@ spring:
             token-uri: https://oauth2.googleapis.com/token
             user-info-uri: https://www.googleapis.com/oauth2/v3/userinfo
             user-name-attribute: sub
-
-security:
-  jwt:
-    secret: ${JWT_SECRET:change-me-dev-secret-please-keep-long}
-    expiration-sec: 3600 # 1h
-  refresh-token:
-    pepper: ${REFRESH_TOKEN_PEPPER:change-me-dev-secret-please-keep-long} # generate using openssl rand -base64 48
-    expiration-sec: 2592000 # 30 days
-  cookie:
-    device-id:
+    jwt:
+      secret: ${JWT_SECRET:change-me-dev-secret-please-keep-long}
+      expiration-sec: 3600 # 1h
+    refresh-token:
+      pepper: ${REFRESH_TOKEN_PEPPER:change-me-dev-secret-please-keep-long} # generate using openssl rand -base64 48
       expiration-sec: 2592000 # 30 days
-  cors:
-    allowed-origins:
-      - "https://ronin-archesporial-lonnie.ngrok-free.dev"
-  httpsOnly:
-    enabled: true
+    cookie:
+      device-id:
+        expiration-sec: 2592000 # 30 days
+    cors:
+      allowed-origins:
+        - "https://ronin-archesporial-lonnie.ngrok-free.dev"
+    httpsOnly:
+      enabled: true
 
 logging:
   level:

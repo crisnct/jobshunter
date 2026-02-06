@@ -10,6 +10,24 @@ spring:
       on-profile: local
   mail:
     enabled: false
+  security:
+    jwt:
+      secret: ${JWT_SECRET:change-me-dev-secret-please-keep-long}
+      expiration-sec: 86400 # 24h
+    refresh-token:
+      pepper: ${REFRESH_TOKEN_PEPPER:VXjjT1rcofkUX9JpdHrdlA==} # generate using openssl rand -base64 48
+      expiration-sec: 2592000 # 30 days
+    cookie:
+      device-id:
+        expiration-sec: 2592000 # 30 days
+    cors:
+      allowed-origins:
+        - "https://localhost:5173"   # Local Vite dev server
+        - "https://localhost:8443"   # Local backend
+        # For production, override via environment variable:
+        # allowed-origins: ${CORS_ALLOWED_ORIGINS:https://yourdomain.com}
+    httpsOnly:
+      enabled: false
 
 jobshunter:
   scheduler:
@@ -35,25 +53,6 @@ grok:
 serp:
   enabled: false
   maxPageSearch: 1
-
-security:
-  jwt:
-    secret: ${JWT_SECRET:change-me-dev-secret-please-keep-long}
-    expiration-sec: 86400 # 24h
-  refresh-token:
-    pepper: ${REFRESH_TOKEN_PEPPER:VXjjT1rcofkUX9JpdHrdlA==} # generate using openssl rand -base64 48
-    expiration-sec: 2592000 # 30 days
-  cookie:
-    device-id:
-      expiration-sec: 2592000 # 30 days
-  cors:
-    allowed-origins:
-      - "https://localhost:5173"   # Local Vite dev server
-      - "https://localhost:8443"   # Local backend
-      # For production, override via environment variable:
-      # allowed-origins: ${CORS_ALLOWED_ORIGINS:https://yourdomain.com}
-  httpsOnly:
-    enabled: false
 
 # RATE LIMITER  ---------------------------------------------------------------------------
 # Throttle API requests to 2 per minute, preventing quota violations and automatic request queueing

@@ -16,8 +16,16 @@ public class ApplicationProperties {
   private Grok grok = new Grok();
   private Gemini gemini = new Gemini();
   private Serp serp = new Serp();
-  private Security security = new Security();
+  private Spring spring = new Spring();
   private IpInfo ipInfo = new IpInfo();
+
+  /**
+   * Convenience method for backward compatibility.
+   * Returns spring.security properties.
+   */
+  public Security getSecurity() {
+    return spring.getSecurity();
+  }
 
   @Data
   @ConfigurationProperties(prefix = "jobshunter")
@@ -57,7 +65,14 @@ public class ApplicationProperties {
   }
 
   @Data
-  @ConfigurationProperties(prefix = "security")
+  @ConfigurationProperties(prefix = "spring")
+  public static class Spring {
+
+    private Security security = new Security();
+
+  }
+
+  @Data
   public static class Security {
 
     @JsonProperty("jwt")
@@ -71,6 +86,16 @@ public class ApplicationProperties {
 
     @JsonProperty("cors")
     private CorsProperties cors = new CorsProperties();
+
+    @JsonProperty("httpsOnly")
+    private HttpsOnlyProperties httpsOnly = new HttpsOnlyProperties();
+
+  }
+
+  @Data
+  public static class HttpsOnlyProperties {
+
+    private boolean enabled = true;
 
   }
 

@@ -1017,7 +1017,7 @@ const App = () => {
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto bg-slate-50/50 p-8">
+        <div className="flex-1 overflow-y-auto bg-slate-50/50 p-8 content-text-lg">
           {loading ? (
             <div className="h-full flex flex-col items-center justify-center text-slate-400 gap-4">
               <div className="relative">
