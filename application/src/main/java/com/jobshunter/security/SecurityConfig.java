@@ -11,6 +11,7 @@ import com.jobshunter.security.filters.SecurityHeadersFilter;
 import com.jobshunter.security.rateLimitBucket4J.BlockRegistry;
 import com.jobshunter.security.rateLimitBucket4J.InMemoryRateLimiter;
 import com.jobshunter.security.rateLimitBucket4J.ViolationRegistry;
+import com.jobshunter.database.service.OAuth2UserDBService;
 import com.jobshunter.service.application.JwtService;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -52,6 +53,9 @@ public class SecurityConfig {
   private final CookieService cookieService;
   private final JwtService jwtService;
   private final ApplicationProperties properties;
+  private final OAuth2UserDBService oAuth2UserDBService;
+  private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
+  private final OAuth2AuthenticationFailureHandler oAuth2AuthenticationFailureHandler;
 
   @Bean
   public CookieCsrfTokenRepository cookieCsrfTokenRepository() {
@@ -90,6 +94,7 @@ public class SecurityConfig {
             .csrfTokenRequestHandler(requestHandler)
             .csrfTokenRepository(csrfTokenRepository)
             .ignoringRequestMatchers("/api/auth/**")
+            .ignoringRequestMatchers("/oauth2/**", "/login/oauth2/**")
             .ignoringRequestMatchers("/", "/index.html", "/css/**", "/js/**", "/images/**")
         )
         .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -98,7 +103,15 @@ public class SecurityConfig {
             .requestMatchers("/assets/**", "/src/**", "/favicon.jpg", "/manifest.webmanifest", "/robots.txt").permitAll()
             .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**", "/openapi.yml").permitAll()
             .requestMatchers("/api/auth/**").permitAll()
+            .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
             .anyRequest().authenticated()
+        )
+        .oauth2Login(oauth2 -> oauth2
+            .authorizationEndpoint(auth -> auth.baseUri("/oauth2/authorization"))
+            .redirectionEndpoint(redir -> redir.baseUri("/login/oauth2/code/*"))
+            .userInfoEndpoint(userInfo -> userInfo.userService(oAuth2UserDBService))
+            .successHandler(oAuth2AuthenticationSuccessHandler)
+            .failureHandler(oAuth2AuthenticationFailureHandler)
         )
         .headers(h ->
             h.httpStrictTransportSecurity(hsts -> hsts

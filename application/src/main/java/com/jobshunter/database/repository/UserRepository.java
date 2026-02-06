@@ -16,6 +16,8 @@ public interface UserRepository extends JpaRepository<UserEntity, Long> {
 
   Optional<UserEntity> findByUsername(@SqlInjectionSafe String username);
 
+  Optional<UserEntity> findByEmail(@SqlInjectionSafe String email);
+
   Optional<UserEntity> findByVerificationToken(@SqlInjectionSafe String verificationToken);
 
   boolean existsByUsernameIgnoreCase(@SqlInjectionSafe String username);

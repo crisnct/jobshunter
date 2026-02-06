@@ -123,6 +123,23 @@ spring:
       mail.smtp.writetimeout: 5000
       mail.smtp.timeout: 5000
       mail.smtp.from: ${MAIL_FROM:no-reply@mailtrap.io}
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID:notset}
+            client-secret: ${GOOGLE_CLIENT_SECRET:notset}
+            scope:
+              - email
+              - profile
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+        provider:
+          google:
+            authorization-uri: https://accounts.google.com/o/oauth2/v2/auth
+            token-uri: https://oauth2.googleapis.com/token
+            user-info-uri: https://www.googleapis.com/oauth2/v3/userinfo
+            user-name-attribute: sub
 
 security:
   jwt:

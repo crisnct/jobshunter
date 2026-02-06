@@ -72,6 +72,8 @@ open module com.jobshunter.application {
   requires playwright;
   requires context.propagation;
   requires micrometer.core;
+  requires spring.security.oauth2.client;
+  requires spring.security.oauth2.core;
 
 }
 

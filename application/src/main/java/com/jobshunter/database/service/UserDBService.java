@@ -41,6 +41,11 @@ public class UserDBService {
   }
 
   @Transactional(readOnly = true)
+  public Optional<UserEntity> getUserByEmail(String email) {
+    return userRepository.findByEmail(email);
+  }
+
+  @Transactional(readOnly = true)
   public List<UserEntity> getAllUsers() {
     List<UserEntity> all = userRepository.findAll();
     for (UserEntity user : all) {
