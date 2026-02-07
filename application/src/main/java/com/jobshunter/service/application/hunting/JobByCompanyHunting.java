@@ -5,7 +5,8 @@ import com.jobshunter.model.SearchJobOrder;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-public sealed interface JobByCompanyHunting permits GeminiJobHunting, GptJobHunting, GrokJobHunting {
+public sealed interface JobByCompanyHunting extends JobHunting
+    permits GeminiJobHunting, GptJobHunting, GrokJobHunting {
 
   CompletableFuture<List<Job>> searchJobsByCompaniesAsync(SearchJobOrder order);
 

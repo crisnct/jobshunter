@@ -11,7 +11,7 @@ import java.util.function.Function;
  * Strategy interface for executing a single job search request.
  * <p>
  * Implementations define <em>how</em> a search is executed (simple one-shot vs.
- * conversation-based with retries), while the concrete {@link JobByPromptHunting}
+ * conversation-based with retries), while the concrete {@link JobHunting}
  * implementations define <em>what</em> to search (prompts, roles, etc.) and
  * provide engine-specific configuration.
  *

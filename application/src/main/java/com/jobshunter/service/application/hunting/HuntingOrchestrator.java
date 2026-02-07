@@ -18,17 +18,16 @@ import org.springframework.stereotype.Service;
 @Service
 public class HuntingOrchestrator {
 
-  private final Map<EngineType, JobByPromptHunting> huntingRegistry;
+  private final Map<EngineType, JobHunting> huntingRegistry;
 
-  public HuntingOrchestrator(List<JobByPromptHunting> huntingStrategies) {
+  public HuntingOrchestrator(List<JobHunting> huntingStrategies) {
     this.huntingRegistry = huntingStrategies.stream()
-        .collect(Collectors.toUnmodifiableMap(
-            JobByPromptHunting::getEngineType, Function.identity()));
+        .collect(Collectors.toUnmodifiableMap(JobHunting::getEngineType, Function.identity()));
   }
 
   public CompletableFuture<List<Job>> startHunting(SearchJobOrder order) {
     EngineType provider = order.getModel().getProvider();
-    JobByPromptHunting hunting = huntingRegistry.get(provider);
+    JobHunting hunting = huntingRegistry.get(provider);
 
     if (hunting == null) {
       log.error("No job hunting implementation registered for provider: {}", provider);
@@ -37,8 +36,8 @@ public class HuntingOrchestrator {
 
     List<CompletableFuture<List<Job>>> allFutureJobs = new ArrayList<>();
 
-    if (order.isSearchByUserPrompt()) {
-      allFutureJobs.add(hunting.searchJobsAsync(order));
+    if (order.isSearchByUserPrompt() && hunting instanceof JobByPromptHunting promptHunting) {
+      allFutureJobs.add(promptHunting.searchJobsAsync(order));
     }
     if (order.isSearchCompanies() && hunting instanceof JobByCompanyHunting companyHunting) {
       allFutureJobs.add(companyHunting.searchJobsByCompaniesAsync(order));
