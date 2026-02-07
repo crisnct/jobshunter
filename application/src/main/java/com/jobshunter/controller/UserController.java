@@ -221,7 +221,7 @@ public class UserController {
 
     if (request.aiPrompts() != null) {
       request.aiPrompts().forEach(aiPrompt -> {
-        UserPromptEntity prompt = userDBService.updatePrompt(user, EngineCategory.AI, aiPrompt.id(), aiPrompt.prompt());
+        UserPromptEntity prompt = userDBService.updatePrompt(user, EngineCategory.AI, aiPrompt.prompt());
         promptsToDelete.remove(prompt.getId());
       });
     }

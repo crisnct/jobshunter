@@ -8,8 +8,6 @@ import com.jobshunter.model.Job;
 import com.jobshunter.model.JobContext;
 import com.jobshunter.model.SearchJobOrder;
 import com.jobshunter.service.application.hunting.HuntingOrchestrator;
-import com.jobshunter.service.application.notifiers.EmailNotifierService;
-import com.jobshunter.service.application.notifiers.WhatsappNotifierService;
 import com.jobshunter.service.application.processors.JobsStateMachine;
 import io.micrometer.core.annotation.Timed;
 import java.util.Comparator;
@@ -23,10 +21,6 @@ import org.springframework.stereotype.Service;
 @Service
 @AllArgsConstructor
 public class JobHuntService {
-
-  private final WhatsappNotifierService whatsappNotifierService;
-
-  private final EmailNotifierService emailNotifierService;
 
   private final UserJobDBService userJobDBService;
 

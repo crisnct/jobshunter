@@ -28,6 +28,8 @@ public record GptJobsPayload(
     @JsonProperty("max_output_tokens")
     Integer maxOutputTokens,
     List<Tools> tools,
+    @JsonProperty("tool_choice")
+    String toolChoice,
     String instructions,
     Boolean store,
     @JsonProperty("previous_response_id")
@@ -142,6 +144,7 @@ public record GptJobsPayload(
     public GptJobsPayloadBuilder addTools(Tools tool) {
       if (AiCapabilityChecker.isEnabled(aiModel, AiCapabilityType.WEB_SEARCH)) {
         this.tools.add(tool);
+        this.toolChoice = "auto";
       }
       return this;
     }
@@ -156,6 +159,7 @@ public record GptJobsPayload(
           reasoning,
           maxOutputTokens,
           tools.isEmpty() ? null : tools,
+          toolChoice,
           instructions,
           store,
           previousResponseId,

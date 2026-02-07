@@ -376,7 +376,6 @@ const App = () => {
           jobDomain: data.jobDomain || '',
           jobRoles: data.jobRoles || [],
           aiPrompts: (data.prompts || []).map((prompt) => ({
-            id: null,
             prompt,
           })),
           jobTypes: data.jobTypes || [],
@@ -751,7 +750,7 @@ const App = () => {
   const handleAddPrompt = () => {
     setProfileForm((prev) => ({
       ...prev,
-      aiPrompts: [...prev.aiPrompts, { id: null, prompt: '' }],
+      aiPrompts: [...prev.aiPrompts, { prompt: '' }],
     }));
   };
 
@@ -792,7 +791,6 @@ const App = () => {
           relocation: profileForm.relocation,
           contractTypes: profileForm.contractTypes,
           aiPrompts: profileForm.aiPrompts.map((entry) => ({
-            id: null,
             prompt: entry.prompt,
           })),
         },

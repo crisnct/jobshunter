@@ -35,11 +35,6 @@ class UserPrompts {
   engine_category
 }
 
-class PromptsJobs {
-  +prompt_id: bigint
-  +user_jobs_id: bigint
-}
-
 class JobOrder {
   +id: bigint
   user_id
@@ -125,8 +120,5 @@ ModelCapabilities "many" -- "1" AiModels
 
 UserJobs "many" -- "1" JobOrder
 UserJobs "many" -- "1" UserPrompts
-
-PromptsJobs "many" -- "1" UserPrompts
-PromptsJobs "many" -- "1" UserJobs
 
 @enduml

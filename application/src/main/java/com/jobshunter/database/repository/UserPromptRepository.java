@@ -10,7 +10,7 @@ import org.springframework.stereotype.Repository;
 @PackageExpected("com.jobshunter.database.service")
 public interface UserPromptRepository extends JpaRepository<UserPromptEntity, Long> {
 
-  Optional<UserPromptEntity> findByIdAndUserId(Long id, Long userId);
+  Optional<UserPromptEntity> findByPromptAndUserId(String prompt, Long userId);
 
 }
 

@@ -82,8 +82,7 @@ public final class JobValidatorProcessor implements JobProcessor {
       }
 
       // Check job type rules - any match means valid
-      boolean isValid = jobTypeRules.stream()
-          .anyMatch(rule -> rule.validate(ctx).isValid());
+      boolean isValid = jobTypeRules.stream().anyMatch(rule -> rule.validate(ctx).isValid());
 
       if (isValid) {
         log.info("URL is valid {}", url);

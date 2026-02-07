@@ -8,7 +8,6 @@ import com.jobshunter.model.Relocation;
 import com.jobshunter.processor.SqlInjectionSafe;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import java.util.List;
 
@@ -33,10 +32,6 @@ public record UserUpdateRequest(
   @JsonInclude(JsonInclude.Include.NON_NULL)
   @JsonIgnoreProperties(ignoreUnknown = true)
   public record AiPromptUpdate(
-      @Nullable
-      @Positive
-      Long id,
-
       @SqlInjectionSafe
       @NotBlank
       @Size(max = 3000)

@@ -2,12 +2,10 @@ package com.jobshunter.database.service;
 
 import com.jobshunter.database.entities.AiModelEntity;
 import com.jobshunter.database.entities.JobOrderEntity;
-import com.jobshunter.database.entities.PromptsJobsEntity;
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.entities.UserJobEntity;
 import com.jobshunter.database.entities.UserPromptEntity;
 import com.jobshunter.database.repository.AiModelRepository;
-import com.jobshunter.database.repository.PromptsJobsRepository;
 import com.jobshunter.database.repository.UserJobRepository;
 import com.jobshunter.database.repository.UserPromptRepository;
 import com.jobshunter.model.Job;
@@ -29,7 +27,6 @@ public class UserJobDBService {
 
   private final UserJobRepository userJobRepository;
   private final UserPromptRepository userPromptRepository;
-  private final PromptsJobsRepository promptsJobsRepository;
   private final AiModelRepository aiModelRepository;
   private final UserDBService userDBService;
 
@@ -94,14 +91,7 @@ public class UserJobDBService {
           userPrompt = promptOptional.get();
         }
       }
-      UserJobEntity userJobEntity = addJobUrl(user, job, aiModel, order.getJobOrder(), userPrompt);
-      if (userPrompt != null) {
-        PromptsJobsEntity promptJob = new PromptsJobsEntity();
-        promptJob.setUserJob(userJobEntity);
-        promptJob.setPrompt(userPrompt);
-        promptsJobsRepository.save(promptJob);
-        userPromptRepository.save(userPrompt);
-      }
+      addJobUrl(user, job, aiModel, order.getJobOrder(), userPrompt);
     });
     userDBService.updateUser(user);
   }

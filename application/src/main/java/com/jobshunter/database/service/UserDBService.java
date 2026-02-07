@@ -125,17 +125,16 @@ public class UserDBService {
   }
 
   @Transactional
-  public UserPromptEntity updatePrompt(UserEntity user, EngineCategory category, Long promptId, String prompt) {
-    UserPromptEntity entity = userPromptRepository
-        .findByIdAndUserId(promptId == null ? -1 : promptId, user.getId())
+  public UserPromptEntity updatePrompt(UserEntity user, EngineCategory category, String prompt) {
+    return userPromptRepository
+        .findByPromptAndUserId(prompt, user.getId())
         .orElseGet(() -> {
           UserPromptEntity newEntity = new UserPromptEntity();
           newEntity.setUser(user);
           newEntity.setEngineCategory(category);
-          return newEntity;
+          newEntity.setPrompt(prompt);
+          return userPromptRepository.save(newEntity);
         });
-    entity.setPrompt(prompt);
-    return userPromptRepository.save(entity);
   }
 
   @Transactional

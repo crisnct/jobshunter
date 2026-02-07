@@ -30,6 +30,8 @@ public record GrokJobsPayload(
     @JsonProperty("previous_response_id")
     String previousResponseId,
     List<Tools> tools,
+    @JsonProperty("tool_choice")
+    String toolChoice,
     String instructions,
     Text text,
     Boolean store,
@@ -147,6 +149,7 @@ public record GrokJobsPayload(
     public GrokJobsPayloadBuilder addTools(Tools tool) {
       if (AiCapabilityChecker.isEnabled(aiModel, AiCapabilityType.WEB_SEARCH)) {
         this.tools.add(tool);
+        this.toolChoice = "auto";
       }
       return this;
     }
@@ -162,6 +165,7 @@ public record GrokJobsPayload(
           reasoning,
           previousResponseId,
           tools.isEmpty() ? null : tools,
+          toolChoice,
           instructions,
           text,
           store,

@@ -10,15 +10,11 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -48,15 +44,6 @@ public class UserPromptEntity {
 
   @Column(name = "modified_at", nullable = false)
   private Instant modifiedAt;
-
-  @JsonIgnore
-  @OneToMany(fetch = FetchType.LAZY)
-  @JoinTable(
-      name = "prompts_jobs",
-      joinColumns = @JoinColumn(name = "prompt_id"),
-      inverseJoinColumns = @JoinColumn(name = "user_jobs_id")
-  )
-  private List<UserJobEntity> jobs = new ArrayList<>();
 
   @PrePersist
   @PreUpdate

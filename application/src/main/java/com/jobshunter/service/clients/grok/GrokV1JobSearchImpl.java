@@ -112,7 +112,7 @@ public non-sealed class GrokV1JobSearchImpl implements AiJobsClient, AiJobsCompa
     result.setId(response.id());
     result.addAll(jobs);
     costPublisher.publishGrok(
-        request.getOrder() != null ? request.getOrder().getJobOrder().getId() : -1,
+        request.getOrder().getJobOrder().getId(),
         payload.aiModel(),
         response.usage());
     return result;

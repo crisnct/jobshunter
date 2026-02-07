@@ -372,11 +372,6 @@ components:
     AiPromptUpdate:
       type: object
       properties:
-        id:
-          type: integer
-          format: int64
-          nullable: true
-          description: Prompt ID for updates (null for new prompts)
         prompt:
           type: string
           maxLength: 3000
