@@ -7,7 +7,10 @@ import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.entities.UserJobRoleEntity;
 import com.jobshunter.database.service.ModelsDBService;
 import com.jobshunter.database.service.UserDBService;
-import com.jobshunter.dto.AIJobSearchRequest;
+import com.jobshunter.dto.GeminiSearchRequest;
+import com.jobshunter.dto.GptSearchRequest;
+import com.jobshunter.dto.GrokSearchRequest;
+import com.jobshunter.dto.JobSearchRequest;
 import com.jobshunter.dto.CompanyDto;
 import com.jobshunter.dto.EmailRequest;
 import com.jobshunter.dto.JobHuntResponse;
@@ -471,14 +474,21 @@ public class TestController {
     // Create SearchJobOrder
     SearchJobOrder searchJobOrder = new SearchJobOrder(jobOrder, testUser, List.of());
 
-    // Create AIJobSearchRequest
-    AIJobSearchRequest aiRequest = AIJobSearchRequest.builder(searchJobOrder)
-        .companiesModel(aiModel)
-        .storeConversation(false)
-        .build();
+    // Create provider-specific search request
+    JobSearchRequest aiRequest = switch (engineType) {
+      case GPT -> GptSearchRequest.builder(searchJobOrder)
+          .companiesModel(aiModel).storeConversation(false).build();
+      case GEMINI -> GeminiSearchRequest.builder(searchJobOrder)
+          .companiesModel(aiModel).build();
+      case GROK -> GrokSearchRequest.builder(searchJobOrder)
+          .companiesModel(aiModel).storeConversation(false).build();
+      default -> throw new ValidationException("Unsupported engine type: " + engineType);
+    };
 
     // Get the appropriate client and search
-    AiJobsCompaniesClient client = testService.getCompaniesClient(engineType);
+    @SuppressWarnings("unchecked")
+    AiJobsCompaniesClient<JobSearchRequest> client =
+        (AiJobsCompaniesClient<JobSearchRequest>) testService.getCompaniesClient(engineType);
     return ResponseEntity.ok(client.searchCompanies(aiRequest));
   }
 
@@ -511,15 +521,26 @@ public class TestController {
     // Create SearchJobOrder
     SearchJobOrder searchJobOrder = new SearchJobOrder(jobOrder, testUser, List.of());
 
-    // Create AIJobSearchRequest
-    AIJobSearchRequest aiRequest = AIJobSearchRequest.builder(searchJobOrder)
-        .storeConversation(false)
-        .company(new CompanyDto(request.company(), request.company_url()))
-        .discoveryModel(aiModel)
-        .build();
+    // Create provider-specific search request
+    JobSearchRequest aiRequest = switch (engineType) {
+      case GPT -> GptSearchRequest.builder(searchJobOrder)
+          .storeConversation(false)
+          .company(new CompanyDto(request.company(), request.company_url()))
+          .discoveryModel(aiModel).build();
+      case GEMINI -> GeminiSearchRequest.builder(searchJobOrder)
+          .company(new CompanyDto(request.company(), request.company_url()))
+          .discoveryModel(aiModel).build();
+      case GROK -> GrokSearchRequest.builder(searchJobOrder)
+          .storeConversation(false)
+          .company(new CompanyDto(request.company(), request.company_url()))
+          .discoveryModel(aiModel).build();
+      default -> throw new ValidationException("Unsupported engine type: " + engineType);
+    };
 
     // Get the appropriate client and search
-    AiJobsCompaniesClient client = testService.getCompaniesClient(engineType);
+    @SuppressWarnings("unchecked")
+    AiJobsCompaniesClient<JobSearchRequest> client =
+        (AiJobsCompaniesClient<JobSearchRequest>) testService.getCompaniesClient(engineType);
     AiClientResponse body = client.searchJobsFromCompanies(aiRequest);
 
     List<Job> jobs = jobsStateMachine.processAsync(CompletableFuture.completedFuture(body.getJobs()), testUser, null)

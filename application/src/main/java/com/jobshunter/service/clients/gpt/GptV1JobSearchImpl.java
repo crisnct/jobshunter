@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.jobshunter.config.ApplicationProperties;
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.entities.UserJobRoleEntity;
-import com.jobshunter.dto.AIJobSearchRequest;
+import com.jobshunter.dto.GptSearchRequest;
 import com.jobshunter.dto.CompanyDto;
 import com.jobshunter.dto.CompanyDtoList;
 import com.jobshunter.dto.exceptions.BusinessException;
@@ -58,7 +58,7 @@ import org.springframework.web.client.RestClient;
 @PackageExpected("com.jobshunter.service.clients.gpt")
 @ConditionalOnProperty(name = "gpt.enabled", havingValue = "true")
 @AllArgsConstructor
-public non-sealed class GptV1JobSearchImpl implements AiJobsClient, AiJobsCompaniesClient, DeleteConvAiClient {
+public non-sealed class GptV1JobSearchImpl implements AiJobsClient<GptSearchRequest>, AiJobsCompaniesClient<GptSearchRequest>, DeleteConvAiClient {
 
   public static final URI DEFAULT_URI = URI.create("https://api.openai.com/v1/responses");
 
@@ -83,11 +83,11 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient, AiJobsCompan
   @CircuitBreaker(name = "gptCircuitBreaker", fallbackMethod = "fallbackSearch")
   @RateLimiter(name = "gptLimiter")
   @Bulkhead(name = "gptBulkhead")
-  public AiClientResponse searchJobs(AIJobSearchRequest request) {
+  public AiClientResponse searchJobs(GptSearchRequest request) {
     return retryTemplate.execute(RetryPolicies.JOB_SEARCH, "GPT", () -> searchJobsOnce(request));
   }
 
-  private AiClientResponse searchJobsOnce(AIJobSearchRequest request) {
+  private AiClientResponse searchJobsOnce(GptSearchRequest request) {
     SearchJobOrder order = request.getOrder();
 
     UserLocation userLocation = new UserLocation();
@@ -135,14 +135,14 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient, AiJobsCompan
   @CircuitBreaker(name = "gptCircuitBreaker", fallbackMethod = "fallbackSearchCompanies")
   @RateLimiter(name = "gptLimiter")
   @Bulkhead(name = "gptBulkhead")
-  public List<CompanyDto> searchCompanies(AIJobSearchRequest request) {
+  public List<CompanyDto> searchCompanies(GptSearchRequest request) {
     return retryTemplate.execute(RetryPolicies.COMPANY_SEARCH, "GPT", () -> searchCompaniesOnce(request));
   }
 
   /**
    * @Retry - is only for retrying when exception occurs. For the situations when result is empty it will be considered  retryTemplate
    */
-  private List<CompanyDto> searchCompaniesOnce(AIJobSearchRequest request) {
+  private List<CompanyDto> searchCompaniesOnce(GptSearchRequest request) {
     UserEntity user = request.getOrder().getUser();
     UserLocation userLocation = new UserLocation();
     userLocation.setType("approximate");
@@ -188,11 +188,11 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient, AiJobsCompan
   @CircuitBreaker(name = "gptCircuitBreaker", fallbackMethod = "fallbackSearchJobsFromCompanies")
   @RateLimiter(name = "gptLimiter")
   @Bulkhead(name = "gptBulkhead")
-  public AiClientResponse searchJobsFromCompanies(AIJobSearchRequest request) {
+  public AiClientResponse searchJobsFromCompanies(GptSearchRequest request) {
     return retryTemplate.execute(RetryPolicies.JOB_SEARCH_BY_COMPANY, "GPT", () -> searchJobsFromCompanyOnce(request));
   }
 
-  private AiClientResponse searchJobsFromCompanyOnce(AIJobSearchRequest request) {
+  private AiClientResponse searchJobsFromCompanyOnce(GptSearchRequest request) {
     UserEntity user = request.getOrder().getUser();
     List<String> positions = user.getJobRoles().stream().map(UserJobRoleEntity::getJobRole).toList();
 
@@ -250,19 +250,19 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient, AiJobsCompan
   }
 
   @SuppressWarnings("unused")
-  private AiClientResponse fallbackSearchJobsFromCompanies(AIJobSearchRequest request, Throwable t) {
+  private AiClientResponse fallbackSearchJobsFromCompanies(GptSearchRequest request, Throwable t) {
     log.error("{} call short-circuited/bulkheaded: {}", getClass().getSimpleName(), t.getMessage());
     return new AiClientResponse();
   }
 
   @SuppressWarnings("unused")
-  private AiClientResponse fallbackSearch(AIJobSearchRequest request, Throwable t) {
+  private AiClientResponse fallbackSearch(GptSearchRequest request, Throwable t) {
     log.error("{} call short-circuited/bulkheaded: {}", getClass().getSimpleName(), t.getMessage());
     return new AiClientResponse();
   }
 
   @SuppressWarnings("unused")
-  private List<CompanyDto> fallbackSearchCompanies(AIJobSearchRequest request, Throwable t) {
+  private List<CompanyDto> fallbackSearchCompanies(GptSearchRequest request, Throwable t) {
     log.error("{} call short-circuited/bulkheaded: {}", getClass().getSimpleName(), t.getMessage());
     return List.of();
   }

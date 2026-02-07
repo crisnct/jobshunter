@@ -1,7 +1,7 @@
 package com.jobshunter.service.testdata;
 
-import com.jobshunter.dto.AIJobSearchRequest;
 import com.jobshunter.dto.CompanyDto;
+import com.jobshunter.dto.GrokSearchRequest;
 import com.jobshunter.model.AiClientResponse;
 import com.jobshunter.model.Job;
 import com.jobshunter.processor.PackageExpected;
@@ -19,13 +19,13 @@ import org.springframework.stereotype.Component;
 @Component("JobsClientGROK")
 @PackageExpected("com.jobshunter.service.clients.grok")
 @ConditionalOnProperty(name = "grok.enabled", havingValue = "false")
-public non-sealed class FakeGrokClient implements AiJobsClient, AiJobsCompaniesClient {
+public non-sealed class FakeGrokClient implements AiJobsClient<GrokSearchRequest>, AiJobsCompaniesClient<GrokSearchRequest> {
 
   @Override
   @CircuitBreaker(name = "grokCircuitBreaker", fallbackMethod = "fallbackSearch")
   @RateLimiter(name = "grokLimiter")
   @Bulkhead(name = "grokBulkhead")
-  public AiClientResponse searchJobs(AIJobSearchRequest request) {
+  public AiClientResponse searchJobs(GrokSearchRequest request) {
     AiClientResponse result = new AiClientResponse();
     for (int i = 0; i < 100; i++) {
       result.add(new Job(
@@ -109,18 +109,18 @@ public non-sealed class FakeGrokClient implements AiJobsClient, AiJobsCompaniesC
   }
 
   @SuppressWarnings("unused")
-  private AiClientResponse fallbackSearch(AIJobSearchRequest request, Throwable t) {
+  private AiClientResponse fallbackSearch(GrokSearchRequest request, Throwable t) {
     log.error("{} call short-circuited/bulkheaded: {}", getClass().getSimpleName(), t.getMessage());
     return new AiClientResponse();
   }
 
   @Override
-  public List<CompanyDto> searchCompanies(AIJobSearchRequest request) {
+  public List<CompanyDto> searchCompanies(GrokSearchRequest request) {
     return List.of();
   }
 
   @Override
-  public AiClientResponse searchJobsFromCompanies(AIJobSearchRequest request) {
+  public AiClientResponse searchJobsFromCompanies(GrokSearchRequest request) {
     return null;
   }
 }

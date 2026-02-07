@@ -169,7 +169,6 @@ public class JobHuntScheduler {
   }
 
   private void notifyUser(UserEntity user, List<JobOrderEntity> orders) {
-    log.info("Notifying user {} about new jobs found...", user.getUsername());
     List<Job> jobs = orders.stream()
         .flatMap(order -> userJobDBService.getUserJobs(user.getUsername(), order.getId()).stream())
         .map(userJob -> {
@@ -183,6 +182,7 @@ public class JobHuntScheduler {
         .sorted((o1, o2) -> -Integer.compare(o1.getScore(), o2.getScore()))
         .toList();
     if (!jobs.isEmpty()) {
+      log.info("Notifying user {} about new jobs found...", user.getUsername());
       if (user.isNotifyWhatsapp()) {
         whatsappNotifierService.send(jobs, user);
       }

@@ -1,48 +1,47 @@
 package com.jobshunter.service.application.hunting;
 
+import com.jobshunter.model.EngineType;
 import com.jobshunter.model.Job;
 import com.jobshunter.model.SearchJobOrder;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 import java.util.stream.Collectors;
-import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
-@AllArgsConstructor
 public class HuntingOrchestrator {
 
-  private final SerpJobHunting serpJobHunting;
+  private final Map<EngineType, JobByPromptHunting> huntingRegistry;
 
-  private final GptJobHunting gptJobHunting;
-
-  private final GrokJobHunting grokJobHunting;
-
-  private final GeminiJobHunting geminiJobHunting;
+  public HuntingOrchestrator(List<JobByPromptHunting> huntingStrategies) {
+    this.huntingRegistry = huntingStrategies.stream()
+        .collect(Collectors.toUnmodifiableMap(
+            JobByPromptHunting::getEngineType, Function.identity()));
+  }
 
   public CompletableFuture<List<Job>> startHunting(SearchJobOrder order) {
+    EngineType provider = order.getModel().getProvider();
+    JobByPromptHunting hunting = huntingRegistry.get(provider);
+
+    if (hunting == null) {
+      log.error("No job hunting implementation registered for provider: {}", provider);
+      return CompletableFuture.completedFuture(List.of());
+    }
+
     List<CompletableFuture<List<Job>>> allFutureJobs = new ArrayList<>();
 
     if (order.isSearchByUserPrompt()) {
-      allFutureJobs.add(switch (order.getModel().getProvider()) {
-        case GPT -> gptJobHunting.searchJobsAsync(order);
-        case GROK -> grokJobHunting.searchJobsAsync(order);
-        case GEMINI -> geminiJobHunting.searchJobsAsync(order);
-        case SERP -> serpJobHunting.searchJobsAsync(order);
-      });
+      allFutureJobs.add(hunting.searchJobsAsync(order));
     }
-    if (order.isSearchCompanies()) {
-      allFutureJobs.add(switch (order.getModel().getProvider()) {
-        case GPT -> gptJobHunting.searchJobsByCompaniesAsync(order);
-        case GROK -> grokJobHunting.searchJobsByCompaniesAsync(order);
-        case GEMINI -> geminiJobHunting.searchJobsByCompaniesAsync(order);
-        case SERP -> serpJobHunting.searchJobsByCompaniesAsync(order);
-      });
+    if (order.isSearchCompanies() && hunting instanceof JobByCompanyHunting companyHunting) {
+      allFutureJobs.add(companyHunting.searchJobsByCompaniesAsync(order));
     }
 
     return CompletableFuture.allOf(allFutureJobs.toArray(CompletableFuture[]::new))

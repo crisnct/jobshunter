@@ -1,114 +1,78 @@
 package com.jobshunter.dto;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.jobshunter.database.entities.AiModelEntity;
 import com.jobshunter.model.SearchJobOrder;
-import java.util.ArrayList;
-import java.util.List;
 import lombok.Getter;
 
 /**
- * Immutable request object for AI job search operations.
- * Use {@link #builder(SearchJobOrder)} to create new instances.
- * Use {@link #toBuilder()} to create modified copies.
+ * Immutable request for the Grok provider.
+ * <p>
+ * Includes conversation fields ({@code storeConversation}, {@code prevResponseId})
+ * and company-search fields.
  */
 @Getter
-@JsonIgnoreProperties(ignoreUnknown = true)
-@JsonInclude(JsonInclude.Include.NON_NULL)
-public final class AIJobSearchRequest {
+public final class GrokSearchRequest implements JobSearchRequest {
 
   private final SearchJobOrder order;
   private final String userPrompt;
   private final Long promptId;
-  private final String countryIsoCode;
   private final String fileId;
-  private final String base64CV;
   private final Boolean storeConversation;
   private final String prevResponseId;
-  private final List<String> previousURL;
   private final CompanyDto company;
   private final AiModelEntity discoveryModel;
   private final AiModelEntity companiesModel;
 
-  private AIJobSearchRequest(Builder builder) {
+  private GrokSearchRequest(Builder builder) {
     this.order = builder.order;
     this.userPrompt = builder.userPrompt;
     this.promptId = builder.promptId;
-    this.countryIsoCode = builder.countryIsoCode;
     this.fileId = builder.fileId;
-    this.base64CV = builder.base64CV;
     this.storeConversation = builder.storeConversation;
     this.prevResponseId = builder.prevResponseId;
-    this.previousURL = builder.previousURL != null ? List.copyOf(builder.previousURL) : null;
     this.company = builder.company;
     this.discoveryModel = builder.discoveryModel;
     this.companiesModel = builder.companiesModel;
   }
 
-  /**
-   * Creates a new builder with the required order parameter.
-   */
   public static Builder builder(SearchJobOrder order) {
     return new Builder(order);
   }
 
-  /**
-   * Creates a builder pre-populated with this instance's values.
-   * Use this to create modified copies of the request.
-   */
+  @Override
   public Builder toBuilder() {
     return new Builder(this);
   }
 
-  /**
-   * Builder for creating AIJobSearchRequest instances.
-   */
-  public static final class Builder {
+  public static final class Builder implements JobSearchRequest.ConversationBuilder {
 
     private SearchJobOrder order;
     private String userPrompt;
     private Long promptId;
-    private String countryIsoCode;
     private String fileId;
-    private String base64CV;
     private Boolean storeConversation;
     private String prevResponseId;
-    private List<String> previousURL;
     private CompanyDto company;
     private AiModelEntity discoveryModel;
     private AiModelEntity companiesModel;
 
-    /**
-     * Creates a new builder with the required order.
-     */
     public Builder(SearchJobOrder order) {
       this.order = order;
     }
 
-    /**
-     * Copy constructor - creates a builder from an existing request.
-     */
-    private Builder(AIJobSearchRequest source) {
+    private Builder(GrokSearchRequest source) {
       this.order = source.order;
       this.userPrompt = source.userPrompt;
       this.promptId = source.promptId;
-      this.countryIsoCode = source.countryIsoCode;
       this.fileId = source.fileId;
-      this.base64CV = source.base64CV;
       this.storeConversation = source.storeConversation;
       this.prevResponseId = source.prevResponseId;
-      this.previousURL = source.previousURL != null ? new ArrayList<>(source.previousURL) : null;
       this.company = source.company;
       this.discoveryModel = source.discoveryModel;
       this.companiesModel = source.companiesModel;
     }
 
-    public Builder order(SearchJobOrder order) {
-      this.order = order;
-      return this;
-    }
-
+    @Override
     public Builder userPrompt(String userPrompt) {
       this.userPrompt = userPrompt;
       return this;
@@ -119,18 +83,9 @@ public final class AIJobSearchRequest {
       return this;
     }
 
-    public Builder countryIsoCode(String countryIsoCode) {
-      this.countryIsoCode = countryIsoCode;
-      return this;
-    }
-
+    @Override
     public Builder fileId(String fileId) {
       this.fileId = fileId;
-      return this;
-    }
-
-    public Builder base64CV(String base64CV) {
-      this.base64CV = base64CV;
       return this;
     }
 
@@ -139,13 +94,9 @@ public final class AIJobSearchRequest {
       return this;
     }
 
+    @Override
     public Builder prevResponseId(String prevResponseId) {
       this.prevResponseId = prevResponseId;
-      return this;
-    }
-
-    public Builder previousURL(List<String> previousURL) {
-      this.previousURL = previousURL;
       return this;
     }
 
@@ -164,11 +115,9 @@ public final class AIJobSearchRequest {
       return this;
     }
 
-    /**
-     * Builds the immutable AIJobSearchRequest instance.
-     */
-    public AIJobSearchRequest build() {
-      return new AIJobSearchRequest(this);
+    @Override
+    public GrokSearchRequest build() {
+      return new GrokSearchRequest(this);
     }
   }
 }

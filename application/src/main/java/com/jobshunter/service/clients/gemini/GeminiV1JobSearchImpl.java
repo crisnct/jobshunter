@@ -6,7 +6,7 @@ import com.jobshunter.config.ApplicationProperties;
 import com.jobshunter.database.entities.AiModelEntity;
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.entities.UserJobRoleEntity;
-import com.jobshunter.dto.AIJobSearchRequest;
+import com.jobshunter.dto.GeminiSearchRequest;
 import com.jobshunter.dto.CompanyDto;
 import com.jobshunter.dto.CompanyDtoList;
 import com.jobshunter.dto.geminiRequest.FileData;
@@ -54,7 +54,7 @@ import org.springframework.web.client.RestClient;
 @PackageExpected("com.jobshunter.service.clients.gemini")
 @ConditionalOnProperty(name = "gemini.enabled", havingValue = "true")
 @AllArgsConstructor
-public non-sealed class GeminiV1JobSearchImpl implements AiJobsClient, AiJobsCompaniesClient, DeleteConvAiClient {
+public non-sealed class GeminiV1JobSearchImpl implements AiJobsClient<GeminiSearchRequest>, AiJobsCompaniesClient<GeminiSearchRequest>, DeleteConvAiClient {
 
   public static final String GEMINI_URI = "https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent?key=%s";
 
@@ -81,12 +81,12 @@ public non-sealed class GeminiV1JobSearchImpl implements AiJobsClient, AiJobsCom
   @CircuitBreaker(name = "geminiCircuitBreaker", fallbackMethod = "fallbackSearch")
   @Bulkhead(name = "geminiBulkhead")
   @RateLimiter(name = "geminiLimiter")
-  public AiClientResponse searchJobs(AIJobSearchRequest request) {
+  public AiClientResponse searchJobs(GeminiSearchRequest request) {
     return retryTemplate.execute(RetryPolicies.JOB_SEARCH, "GEMINI", () -> searchJobsOnce(request));
   }
 
   @Nonnull
-  private AiClientResponse searchJobsOnce(AIJobSearchRequest request) {
+  private AiClientResponse searchJobsOnce(GeminiSearchRequest request) {
     AiModelEntity model = request.getOrder().getModel();
 
     GenerationConfig generationConfig = GenerationConfig.builder(model)
@@ -131,7 +131,7 @@ public non-sealed class GeminiV1JobSearchImpl implements AiJobsClient, AiJobsCom
   }
 
   @SuppressWarnings("unused")
-  private AiClientResponse fallbackSearch(AIJobSearchRequest request, Throwable t) {
+  private AiClientResponse fallbackSearch(GeminiSearchRequest request, Throwable t) {
     log.error("{} call short-circuited/bulkheaded: {}", getClass().getSimpleName(), t.getMessage());
     return new AiClientResponse();
   }
@@ -141,11 +141,11 @@ public non-sealed class GeminiV1JobSearchImpl implements AiJobsClient, AiJobsCom
   @CircuitBreaker(name = "geminiCircuitBreaker", fallbackMethod = "fallbackSearchCompanies")
   @Bulkhead(name = "geminiBulkhead")
   @RateLimiter(name = "geminiLimiter")
-  public List<CompanyDto> searchCompanies(AIJobSearchRequest request) {
+  public List<CompanyDto> searchCompanies(GeminiSearchRequest request) {
     return retryTemplate.execute(RetryPolicies.COMPANY_SEARCH, "GEMINI", () -> searchCompaniesOnce(request));
   }
 
-  private List<CompanyDto> searchCompaniesOnce(AIJobSearchRequest request) {
+  private List<CompanyDto> searchCompaniesOnce(GeminiSearchRequest request) {
     AiModelEntity model = request.getOrder().getModel();
     UserEntity user = request.getOrder().getUser();
 
@@ -226,11 +226,11 @@ public non-sealed class GeminiV1JobSearchImpl implements AiJobsClient, AiJobsCom
   @CircuitBreaker(name = "geminiCircuitBreaker", fallbackMethod = "fallbackSearchJobsFromCompanies")
   @RateLimiter(name = "geminiLimiter")
   @Bulkhead(name = "geminiBulkhead")
-  public AiClientResponse searchJobsFromCompanies(AIJobSearchRequest request) {
+  public AiClientResponse searchJobsFromCompanies(GeminiSearchRequest request) {
     return retryTemplate.execute(RetryPolicies.JOB_SEARCH_BY_COMPANY, "GEMINI", () -> searchJobsFromCompanyOnce(request));
   }
 
-  private AiClientResponse searchJobsFromCompanyOnce(AIJobSearchRequest request) {
+  private AiClientResponse searchJobsFromCompanyOnce(GeminiSearchRequest request) {
     UserEntity user = request.getOrder().getUser();
     AiModelEntity model = request.getOrder().getModel();
     List<String> positions = user.getJobRoles().stream().map(UserJobRoleEntity::getJobRole).toList();
@@ -277,12 +277,12 @@ public non-sealed class GeminiV1JobSearchImpl implements AiJobsClient, AiJobsCom
     //nothing to delete for gemini
   }
 
-  public List<CompanyDto> fallbackSearchCompanies(AIJobSearchRequest request, Throwable t) {
+  public List<CompanyDto> fallbackSearchCompanies(GeminiSearchRequest request, Throwable t) {
     log.error("{} call short-circuited/bulkheaded, fallbackSearchCompanies: {}", getClass().getSimpleName(), t.getMessage());
     return List.of();
   }
 
-  public AiClientResponse fallbackSearchJobsFromCompanies(AIJobSearchRequest request, Throwable t) {
+  public AiClientResponse fallbackSearchJobsFromCompanies(GeminiSearchRequest request, Throwable t) {
     log.error("{} call short-circuited/bulkheaded, fallbackSearchJobsFromCompanies: {}", getClass().getSimpleName(), t.getMessage());
     return new AiClientResponse();
   }

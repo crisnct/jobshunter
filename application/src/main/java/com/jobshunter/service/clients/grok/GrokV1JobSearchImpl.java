@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.jobshunter.config.ApplicationProperties;
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.entities.UserJobRoleEntity;
-import com.jobshunter.dto.AIJobSearchRequest;
+import com.jobshunter.dto.GrokSearchRequest;
 import com.jobshunter.dto.CompanyDto;
 import com.jobshunter.dto.CompanyDtoList;
 import com.jobshunter.dto.exceptions.BusinessException;
@@ -55,7 +55,7 @@ import org.springframework.web.client.RestClient;
 @PackageExpected("com.jobshunter.service.clients.grok")
 @ConditionalOnProperty(name = "grok.enabled", havingValue = "true")
 @AllArgsConstructor
-public non-sealed class GrokV1JobSearchImpl implements AiJobsClient, AiJobsCompaniesClient, DeleteConvAiClient {
+public non-sealed class GrokV1JobSearchImpl implements AiJobsClient<GrokSearchRequest>, AiJobsCompaniesClient<GrokSearchRequest>, DeleteConvAiClient {
 
   public static final URI DEFAULT_URI = URI.create("https://api.x.ai/v1/responses");
 
@@ -79,11 +79,11 @@ public non-sealed class GrokV1JobSearchImpl implements AiJobsClient, AiJobsCompa
   @CircuitBreaker(name = "grokCircuitBreaker", fallbackMethod = "fallbackSearch")
   @RateLimiter(name = "grokLimiter")
   @Bulkhead(name = "grokBulkhead")
-  public AiClientResponse searchJobs(AIJobSearchRequest request) {
+  public AiClientResponse searchJobs(GrokSearchRequest request) {
     return retryTemplate.execute(RetryPolicies.JOB_SEARCH, "GROK", () -> searchJobsOnce(request));
   }
 
-  private AiClientResponse searchJobsOnce(AIJobSearchRequest request) {
+  private AiClientResponse searchJobsOnce(GrokSearchRequest request) {
     GrokJobsPayloadBuilder payloadBuilder = GrokJobsPayload.builder(request.getOrder().getModel())
         .reasoning(new Reasoning(REASONING_JOB_SEARCH))
         .maxOutputTokens(15000)
@@ -122,11 +122,11 @@ public non-sealed class GrokV1JobSearchImpl implements AiJobsClient, AiJobsCompa
   @CircuitBreaker(name = "grokCircuitBreaker", fallbackMethod = "fallbackSearchCompanies")
   @RateLimiter(name = "grokLimiter")
   @Bulkhead(name = "grokBulkhead")
-  public List<CompanyDto> searchCompanies(AIJobSearchRequest request) {
+  public List<CompanyDto> searchCompanies(GrokSearchRequest request) {
     return retryTemplate.execute(RetryPolicies.COMPANY_SEARCH, "GROK", () -> searchCompaniesOnce(request));
   }
 
-  private List<CompanyDto> searchCompaniesOnce(AIJobSearchRequest request) {
+  private List<CompanyDto> searchCompaniesOnce(GrokSearchRequest request) {
     UserEntity user = request.getOrder().getUser();
     GrokJobsPayload payload = GrokJobsPayload.builder(request.getCompaniesModel())
         .store(false)
@@ -162,11 +162,11 @@ public non-sealed class GrokV1JobSearchImpl implements AiJobsClient, AiJobsCompa
   @CircuitBreaker(name = "grokCircuitBreaker", fallbackMethod = "fallbackSearchJobsFromCompanies")
   @RateLimiter(name = "grokLimiter")
   @Bulkhead(name = "grokBulkhead")
-  public AiClientResponse searchJobsFromCompanies(AIJobSearchRequest request) {
+  public AiClientResponse searchJobsFromCompanies(GrokSearchRequest request) {
     return retryTemplate.execute(RetryPolicies.JOB_SEARCH_BY_COMPANY, "GROK", () -> searchJobsByCompanyOnce(request));
   }
 
-  private AiClientResponse searchJobsByCompanyOnce(AIJobSearchRequest request) {
+  private AiClientResponse searchJobsByCompanyOnce(GrokSearchRequest request) {
     UserEntity user = request.getOrder().getUser();
     List<String> positions = user.getJobRoles().stream().map(UserJobRoleEntity::getJobRole).toList();
 
@@ -225,7 +225,7 @@ public non-sealed class GrokV1JobSearchImpl implements AiJobsClient, AiJobsCompa
   }
 
   @SuppressWarnings("unused")
-  private AiClientResponse fallbackCompanies(AIJobSearchRequest request, Throwable t) {
+  private AiClientResponse fallbackCompanies(GrokSearchRequest request, Throwable t) {
     log.error("{} call short-circuited/bulkheaded: {}", getClass().getSimpleName(), t.getMessage());
     return new AiClientResponse();
   }
@@ -236,19 +236,19 @@ public non-sealed class GrokV1JobSearchImpl implements AiJobsClient, AiJobsCompa
   }
 
   @SuppressWarnings("unused")
-  private AiClientResponse fallbackSearchJobsFromCompanies(AIJobSearchRequest request, Throwable t) {
+  private AiClientResponse fallbackSearchJobsFromCompanies(GrokSearchRequest request, Throwable t) {
     log.error("{} call short-circuited/bulkheaded: {}", getClass().getSimpleName(), t.getMessage());
     return new AiClientResponse();
   }
 
   @SuppressWarnings("unused")
-  private AiClientResponse fallbackSearch(AIJobSearchRequest request, Throwable t) {
+  private AiClientResponse fallbackSearch(GrokSearchRequest request, Throwable t) {
     log.error("{} call short-circuited/bulkheaded: {}", getClass().getSimpleName(), t.getMessage());
     return new AiClientResponse();
   }
 
   @SuppressWarnings("unused")
-  private List<CompanyDto> fallbackSearchCompanies(AIJobSearchRequest request, Throwable t) {
+  private List<CompanyDto> fallbackSearchCompanies(GrokSearchRequest request, Throwable t) {
     log.error("{} call short-circuited/bulkheaded: {}", getClass().getSimpleName(), t.getMessage());
     return List.of();
   }

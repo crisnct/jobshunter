@@ -1,7 +1,7 @@
 package com.jobshunter.service.clients;
 
-import com.jobshunter.dto.AIJobSearchRequest;
 import com.jobshunter.dto.CompanyDto;
+import com.jobshunter.dto.JobSearchRequest;
 import com.jobshunter.model.AiClientResponse;
 import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.clients.gemini.GeminiV1JobSearchImpl;
@@ -14,12 +14,13 @@ import jakarta.validation.constraints.NotNull;
 import java.util.List;
 
 @PackageExpected("com.jobshunter.service.application")
-public sealed interface AiJobsCompaniesClient permits GeminiV1JobSearchImpl, GptV1JobSearchImpl, GrokV1JobSearchImpl, FakeGeminiClient, FakeGptClient,
-    FakeGrokClient {
+public sealed interface AiJobsCompaniesClient<R extends JobSearchRequest>
+    permits GeminiV1JobSearchImpl, GptV1JobSearchImpl, GrokV1JobSearchImpl,
+    FakeGeminiClient, FakeGptClient, FakeGrokClient {
 
   @NotNull
-  List<CompanyDto> searchCompanies(AIJobSearchRequest request);
+  List<CompanyDto> searchCompanies(R request);
 
   @NotNull
-  AiClientResponse searchJobsFromCompanies(AIJobSearchRequest request);
+  AiClientResponse searchJobsFromCompanies(R request);
 }

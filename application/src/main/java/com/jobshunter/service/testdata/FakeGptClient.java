@@ -1,7 +1,7 @@
 package com.jobshunter.service.testdata;
 
-import com.jobshunter.dto.AIJobSearchRequest;
 import com.jobshunter.dto.CompanyDto;
+import com.jobshunter.dto.GptSearchRequest;
 import com.jobshunter.model.AiClientResponse;
 import com.jobshunter.model.Job;
 import com.jobshunter.processor.PackageExpected;
@@ -19,13 +19,13 @@ import org.springframework.stereotype.Component;
 @Component("JobsClientGPT")
 @PackageExpected("com.jobshunter.service.clients.gpt")
 @ConditionalOnProperty(name = "gpt.enabled", havingValue = "false")
-public non-sealed class FakeGptClient implements AiJobsClient, AiJobsCompaniesClient {
+public non-sealed class FakeGptClient implements AiJobsClient<GptSearchRequest>, AiJobsCompaniesClient<GptSearchRequest> {
 
   @Override
   @CircuitBreaker(name = "gptCircuitBreaker", fallbackMethod = "fallbackSearch")
   @RateLimiter(name = "gptLimiter")
   @Bulkhead(name = "gptBulkhead")
-  public AiClientResponse searchJobs(AIJobSearchRequest request) {
+  public AiClientResponse searchJobs(GptSearchRequest request) {
     AiClientResponse result = new AiClientResponse();
     result.addAll(List.of(
         new Job(
@@ -48,18 +48,18 @@ public non-sealed class FakeGptClient implements AiJobsClient, AiJobsCompaniesCl
   }
 
   @SuppressWarnings("unused")
-  private AiClientResponse fallbackSearch(AIJobSearchRequest request, Throwable t) {
+  private AiClientResponse fallbackSearch(GptSearchRequest request, Throwable t) {
     log.error("{} call short-circuited/bulkheaded: {}", getClass().getSimpleName(), t.getMessage());
     return new AiClientResponse();
   }
 
   @Override
-  public List<CompanyDto> searchCompanies(AIJobSearchRequest request) {
+  public List<CompanyDto> searchCompanies(GptSearchRequest request) {
     return List.of();
   }
 
   @Override
-  public AiClientResponse searchJobsFromCompanies(AIJobSearchRequest request) {
+  public AiClientResponse searchJobsFromCompanies(GptSearchRequest request) {
     return null;
   }
 }

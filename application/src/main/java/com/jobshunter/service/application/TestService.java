@@ -18,19 +18,19 @@ public class TestService {
 
   private final JobScoreCalculatorClient grokJobScoreCalculator;
 
-  private final AiJobsCompaniesClient gptCompaniesClient;
+  private final AiJobsCompaniesClient<?> gptCompaniesClient;
 
-  private final AiJobsCompaniesClient grokCompaniesClient;
+  private final AiJobsCompaniesClient<?> grokCompaniesClient;
 
-  private final AiJobsCompaniesClient geminiCompaniesClient;
+  private final AiJobsCompaniesClient<?> geminiCompaniesClient;
 
   public TestService(
       @Qualifier("GptJobScoreCalculator") JobScoreCalculatorClient gptJobScoreCalculator,
       @Qualifier("GeminiJobScoreCalculator") JobScoreCalculatorClient geminiJobScoreCalculator,
       @Qualifier("GrokJobScoreCalculator") JobScoreCalculatorClient grokJobScoreCalculator,
-      @Qualifier("JobsClientGPT") AiJobsCompaniesClient gptCompaniesClient,
-      @Qualifier("JobsClientGROK") AiJobsCompaniesClient grokCompaniesClient,
-      @Qualifier("JobsClientGemini") AiJobsCompaniesClient geminiCompaniesClient
+      @Qualifier("JobsClientGPT") AiJobsCompaniesClient<?> gptCompaniesClient,
+      @Qualifier("JobsClientGROK") AiJobsCompaniesClient<?> grokCompaniesClient,
+      @Qualifier("JobsClientGemini") AiJobsCompaniesClient<?> geminiCompaniesClient
   ) {
     this.gptJobScoreCalculator = gptJobScoreCalculator;
     this.geminiJobScoreCalculator = geminiJobScoreCalculator;
@@ -49,7 +49,7 @@ public class TestService {
     });
   }
 
-  public AiJobsCompaniesClient getCompaniesClient(EngineType type) {
+  public AiJobsCompaniesClient<?> getCompaniesClient(EngineType type) {
     return (switch (type) {
       case GPT -> gptCompaniesClient;
       case GROK -> grokCompaniesClient;

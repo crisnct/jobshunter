@@ -1,6 +1,6 @@
 package com.jobshunter.service.testdata;
 
-import com.jobshunter.dto.AIJobSearchRequest;
+import com.jobshunter.dto.SerpSearchRequest;
 import com.jobshunter.model.AiClientResponse;
 import com.jobshunter.model.Job;
 import com.jobshunter.processor.PackageExpected;
@@ -17,13 +17,13 @@ import org.springframework.stereotype.Component;
 @Component("JobsClientSerp")
 @ConditionalOnProperty(name = "serp.enabled", havingValue = "false")
 @PackageExpected("com.jobshunter.service.clients.serp")
-public non-sealed class FakeSerpClient implements AiJobsClient {
+public non-sealed class FakeSerpClient implements AiJobsClient<SerpSearchRequest> {
 
   @Override
   @RateLimiter(name = "serpLimiter")
   @CircuitBreaker(name = "serp", fallbackMethod = "fallbackSearch")
   @Bulkhead(name = "serpBulkhead")
-  public AiClientResponse searchJobs(AIJobSearchRequest request) {
+  public AiClientResponse searchJobs(SerpSearchRequest request) {
     AiClientResponse result = new AiClientResponse();
     result.addAll(List.of(
         new Job(
@@ -35,7 +35,7 @@ public non-sealed class FakeSerpClient implements AiJobsClient {
   }
 
   @SuppressWarnings("unused")
-  private AiClientResponse fallbackSearch(AIJobSearchRequest request, Throwable t) {
+  private AiClientResponse fallbackSearch(SerpSearchRequest request, Throwable t) {
     log.error("{} call short-circuited/bulkheaded: {}", getClass().getSimpleName(), t.getMessage());
     return new AiClientResponse();
   }

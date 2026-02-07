@@ -1,7 +1,7 @@
 package com.jobshunter.service.clients.serp;
 
 import com.jobshunter.config.ApplicationProperties;
-import com.jobshunter.dto.AIJobSearchRequest;
+import com.jobshunter.dto.SerpSearchRequest;
 import com.jobshunter.dto.serpResponse.SerpJobHit;
 import com.jobshunter.dto.serpResponse.SerpJobsResult;
 import com.jobshunter.model.AiClientResponse;
@@ -34,7 +34,7 @@ import org.springframework.stereotype.Component;
 @Component("JobsClientSerp")
 @ConditionalOnProperty(name = "serp.enabled", havingValue = "true")
 @RequiredArgsConstructor
-public non-sealed class SerpClientImpl implements AiJobsClient {
+public non-sealed class SerpClientImpl implements AiJobsClient<SerpSearchRequest> {
 
   private static final URI BASE = URI.create("https://serpapi.com/search");
 
@@ -51,7 +51,7 @@ public non-sealed class SerpClientImpl implements AiJobsClient {
   @RateLimiter(name = "serpLimiter")
   @CircuitBreaker(name = "serp", fallbackMethod = "fallbackSearch")
   @Bulkhead(name = "serpBulkhead")
-  public AiClientResponse searchJobs(@NotNull AIJobSearchRequest request) {
+  public AiClientResponse searchJobs(@NotNull SerpSearchRequest request) {
     SerpJobsResult results;
     try {
       results = searchJobsPagination(request, null);
@@ -82,7 +82,7 @@ public non-sealed class SerpClientImpl implements AiJobsClient {
   }
 
   @SuppressWarnings("unused")
-  private AiClientResponse fallbackSearch(@NotNull AIJobSearchRequest request, Throwable t) {
+  private AiClientResponse fallbackSearch(@NotNull SerpSearchRequest request, Throwable t) {
     log.error("Serp search short-circuited/bulkheaded: {}", t.getMessage());
     return new AiClientResponse();
   }
@@ -93,7 +93,7 @@ public non-sealed class SerpClientImpl implements AiJobsClient {
     return new SerpJobsResult(results1.id(), jobs, results2.nextPageToken());
   }
 
-  private SerpJobsResult searchJobsPagination(AIJobSearchRequest request, String nextPageToken) throws IOException {
+  private SerpJobsResult searchJobsPagination(SerpSearchRequest request, String nextPageToken) throws IOException {
     log.info("Searching jobs with Serp Api, query: {}", request.getUserPrompt());
     final URI uri = this.buildUri(request, nextPageToken);
     try {
@@ -111,7 +111,7 @@ public non-sealed class SerpClientImpl implements AiJobsClient {
     }
   }
 
-  private URI buildUri(AIJobSearchRequest request, String nextPageToken) {
+  private URI buildUri(SerpSearchRequest request, String nextPageToken) {
     List<String> parameters = new ArrayList<>();
     parameters.add("api_key");
     parameters.add(applicationProperties.getSerp().getApiKey());

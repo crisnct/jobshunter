@@ -1,7 +1,7 @@
 package com.jobshunter.service.testdata;
 
-import com.jobshunter.dto.AIJobSearchRequest;
 import com.jobshunter.dto.CompanyDto;
+import com.jobshunter.dto.GeminiSearchRequest;
 import com.jobshunter.model.AiClientResponse;
 import com.jobshunter.model.Job;
 import com.jobshunter.processor.PackageExpected;
@@ -19,13 +19,13 @@ import org.springframework.stereotype.Component;
 @Component("JobsClientGemini")
 @PackageExpected("com.jobshunter.service.clients.gemini")
 @ConditionalOnProperty(name = "gemini.enabled", havingValue = "false")
-public non-sealed class FakeGeminiClient implements AiJobsClient, AiJobsCompaniesClient {
+public non-sealed class FakeGeminiClient implements AiJobsClient<GeminiSearchRequest>, AiJobsCompaniesClient<GeminiSearchRequest> {
 
   @Override
   @CircuitBreaker(name = "geminiCircuitBreaker", fallbackMethod = "fallbackSearch")
   @RateLimiter(name = "geminiLimiter")
   @Bulkhead(name = "geminiBulkhead")
-  public AiClientResponse searchJobs(AIJobSearchRequest request) {
+  public AiClientResponse searchJobs(GeminiSearchRequest request) {
     AiClientResponse result = new AiClientResponse();
     result.addAll(List.of(
         new Job(
@@ -48,18 +48,18 @@ public non-sealed class FakeGeminiClient implements AiJobsClient, AiJobsCompanie
   }
 
   @SuppressWarnings("unused")
-  private AiClientResponse fallbackSearch(AIJobSearchRequest request, Throwable t) {
+  private AiClientResponse fallbackSearch(GeminiSearchRequest request, Throwable t) {
     log.error("{} call short-circuited/bulkheaded: {}", getClass().getSimpleName(), t.getMessage());
     return new AiClientResponse();
   }
 
   @Override
-  public List<CompanyDto> searchCompanies(AIJobSearchRequest request) {
+  public List<CompanyDto> searchCompanies(GeminiSearchRequest request) {
     return List.of();
   }
 
   @Override
-  public AiClientResponse searchJobsFromCompanies(AIJobSearchRequest request) {
+  public AiClientResponse searchJobsFromCompanies(GeminiSearchRequest request) {
     return new AiClientResponse();
   }
 }

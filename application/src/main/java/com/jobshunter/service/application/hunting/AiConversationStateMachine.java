@@ -2,7 +2,7 @@ package com.jobshunter.service.application.hunting;
 
 import com.jobshunter.config.ApplicationProperties;
 import com.jobshunter.database.entities.AiModelEntity;
-import com.jobshunter.dto.AIJobSearchRequest;
+import com.jobshunter.dto.JobSearchRequest;
 import com.jobshunter.model.AiClientResponse;
 import com.jobshunter.model.Job;
 import com.jobshunter.model.JobContext;
@@ -35,7 +35,7 @@ public class AiConversationStateMachine {
   }
 
   public CompletableFuture<AiClientResponse> processAsync(
-      AIJobSearchRequest request,
+      JobSearchRequest request,
       Executor executor,
       SearchExecutor searchExecutor,
       PromptGenerator promptGenerator,
@@ -47,7 +47,7 @@ public class AiConversationStateMachine {
   }
 
   private CompletableFuture<AiClientResponse> processAsyncWithRetry(
-      AIJobSearchRequest request,
+      JobSearchRequest request,
       Executor executor,
       int retryCount,
       AiClientResponse accumulatedResponse,
@@ -73,7 +73,7 @@ public class AiConversationStateMachine {
   }
 
   private CompletableFuture<AiClientResponse> removeDuplicatesAndIgnored(
-      AIJobSearchRequest request,
+      JobSearchRequest request,
       AiClientResponse response) {
     Set<String> seenUrls = new HashSet<>(request.getOrder().getIgnoredURLs());
     AiClientResponse aiClientResponse = new AiClientResponse();
@@ -88,7 +88,7 @@ public class AiConversationStateMachine {
   }
 
   private CompletableFuture<List<JobContext>> validateJobsUrl(
-      AIJobSearchRequest request,
+      JobSearchRequest request,
       AiClientResponse accumulatedResponse,
       AiClientResponse response
   ) {
@@ -108,7 +108,7 @@ public class AiConversationStateMachine {
 
   @Nonnull
   private CompletableFuture<AiClientResponse> askAIForRejectedURLs(
-      AIJobSearchRequest request,
+      JobSearchRequest request,
       Executor executor,
       int retryCount,
       AiClientResponse accumulatedResponse,
@@ -129,7 +129,7 @@ public class AiConversationStateMachine {
           rejectedJobs.size(), request.getOrder().getUser().getUsername(), retryCount + 1, maxRetries);
 
       String newPrompt = promptGenerator.generate(rejectedJobs);
-      AIJobSearchRequest retryRequest = retryRequestFactory.create(request, accumulatedResponse, newPrompt);
+      JobSearchRequest retryRequest = retryRequestFactory.create(request, accumulatedResponse, newPrompt);
       return processAsyncWithRetry(retryRequest, executor, retryCount + 1, accumulatedResponse,
           searchExecutor, promptGenerator, retryRequestFactory, conversationCleanup);
     } else {
@@ -157,7 +157,7 @@ public class AiConversationStateMachine {
   }
 
   private AiClientResponse handlePipelineError(
-      AIJobSearchRequest request,
+      JobSearchRequest request,
       AiClientResponse accumulatedResponse,
       Throwable ex
   ) {
@@ -185,7 +185,7 @@ public class AiConversationStateMachine {
   @FunctionalInterface
   public interface SearchExecutor {
 
-    AiClientResponse searchJobsSync(AIJobSearchRequest request);
+    AiClientResponse searchJobsSync(JobSearchRequest request);
   }
 
   @FunctionalInterface
@@ -197,13 +197,13 @@ public class AiConversationStateMachine {
   @FunctionalInterface
   public interface RetryRequestFactory {
 
-    AIJobSearchRequest create(AIJobSearchRequest originalRequest, AiClientResponse prevResponse, String newPrompt);
+    JobSearchRequest create(JobSearchRequest originalRequest, AiClientResponse prevResponse, String newPrompt);
   }
 
   @FunctionalInterface
   public interface ConversationCleanup {
 
-    void cleanup(AIJobSearchRequest request);
+    void cleanup(JobSearchRequest request);
   }
 
 }
