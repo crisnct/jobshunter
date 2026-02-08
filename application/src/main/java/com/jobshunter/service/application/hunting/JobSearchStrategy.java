@@ -2,6 +2,8 @@ package com.jobshunter.service.application.hunting;
 
 import com.jobshunter.dto.JobSearchRequest;
 import com.jobshunter.model.AiClientResponse;
+import com.jobshunter.service.application.hunting.strategies.AiConversationStrategy;
+import com.jobshunter.service.application.hunting.strategies.AiDefaultStrategy;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.function.Consumer;

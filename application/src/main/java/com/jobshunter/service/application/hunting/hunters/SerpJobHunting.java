@@ -1,4 +1,4 @@
-package com.jobshunter.service.application.hunting;
+package com.jobshunter.service.application.hunting.hunters;
 
 import com.jobshunter.database.entities.AiModelEntity;
 import com.jobshunter.database.entities.UserEntity;
@@ -8,6 +8,9 @@ import com.jobshunter.model.AiClientResponse;
 import com.jobshunter.model.EngineType;
 import com.jobshunter.model.Job;
 import com.jobshunter.model.SearchJobOrder;
+import com.jobshunter.service.application.hunting.JobByPromptHunting;
+import com.jobshunter.service.application.hunting.JobHunting;
+import com.jobshunter.service.application.hunting.strategies.AiDefaultStrategy;
 import com.jobshunter.service.clients.AiJobsClient;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -18,7 +21,7 @@ import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
-public final class SerpJobHunting implements JobByPromptHunting {
+public final class SerpJobHunting implements JobHunting, JobByPromptHunting {
 
   private final AiJobsClient<SerpSearchRequest> jobsClient;
   private final Executor executor;

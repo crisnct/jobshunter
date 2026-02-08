@@ -1,8 +1,9 @@
-package com.jobshunter.service.application.hunting;
+package com.jobshunter.service.application.hunting.strategies;
 
 import com.jobshunter.database.entities.AiModelEntity;
 import com.jobshunter.dto.JobSearchRequest;
 import com.jobshunter.model.AiClientResponse;
+import com.jobshunter.service.application.hunting.JobSearchStrategy;
 import io.github.resilience4j.ratelimiter.RequestNotPermitted;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;

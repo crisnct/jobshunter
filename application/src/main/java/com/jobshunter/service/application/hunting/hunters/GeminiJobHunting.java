@@ -1,4 +1,4 @@
-package com.jobshunter.service.application.hunting;
+package com.jobshunter.service.application.hunting.hunters;
 
 import com.jobshunter.database.entities.AiModelEntity;
 import com.jobshunter.database.entities.UserEntity;
@@ -13,6 +13,10 @@ import com.jobshunter.model.EngineSelection;
 import com.jobshunter.model.EngineType;
 import com.jobshunter.model.Job;
 import com.jobshunter.model.SearchJobOrder;
+import com.jobshunter.service.application.hunting.JobByCompanyHunting;
+import com.jobshunter.service.application.hunting.JobByPromptHunting;
+import com.jobshunter.service.application.hunting.JobHunting;
+import com.jobshunter.service.application.hunting.strategies.AiDefaultStrategy;
 import com.jobshunter.service.clients.AiJobsClient;
 import com.jobshunter.service.clients.AiJobsCompaniesClient;
 import io.github.resilience4j.ratelimiter.RequestNotPermitted;
@@ -28,7 +32,7 @@ import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
-public final class GeminiJobHunting implements JobByPromptHunting, JobByCompanyHunting {
+public final class GeminiJobHunting implements JobHunting, JobByPromptHunting, JobByCompanyHunting {
 
   private final AiJobsClient<GeminiSearchRequest> jobsClient;
   private final Executor executor;

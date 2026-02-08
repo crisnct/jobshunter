@@ -31,8 +31,8 @@ spring:
 
 jobshunter:
   scheduler:
-    processOrderFrequency: 2000
-    notifyUsersFrequency: 3000
+    processOrderFrequency: 5000
+    notifyUsersFrequency: 60000
     cleanupFiles: 86400000
 
 twilio:

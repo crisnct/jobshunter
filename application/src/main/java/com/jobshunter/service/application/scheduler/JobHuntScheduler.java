@@ -31,6 +31,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.core.env.Environment;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -65,11 +66,14 @@ public class JobHuntScheduler {
 
   private final CountryIsoCode countryIsoCode;
 
+  private final Environment environment;
+
   public JobHuntScheduler(
       JobHuntService jobHuntService,
       UserDBService userDBService,
       JobOrderDBService jobOrderDBService,
       UserCvService userCvService,
+      Environment env,
       ApplicationProperties properties,
       UserJobDBService userJobDBService,
       CountryIsoCode countryIsoCode,
@@ -91,6 +95,7 @@ public class JobHuntScheduler {
     this.notificationsExecutor = notificationsExecutor;
     this.maintenanceExecutor = maintenanceExecutor;
     this.properties = properties;
+    this.environment = env;
   }
 
   /**
@@ -189,11 +194,15 @@ public class JobHuntScheduler {
       if (user.isNotifyEmail()) {
         emailNotifierService.sendUsingTemplate(jobs, user);
       }
-      user.setNotifiedAt(Instant.now());
-      userDBService.updateUser(user);
+      if (environment.matchesProfiles("prod")) {
+        user.setNotifiedAt(Instant.now());
+        userDBService.updateUser(user);
+      }
       log.info("Notified user {} about {} jobs found", user.getUsername(), jobs.size());
     }
-    jobOrderDBService.setNotified(orders);
+    if (environment.matchesProfiles("prod")) {
+      jobOrderDBService.setNotified(orders);
+    }
   }
 
   private void cleanupFilesSync() {

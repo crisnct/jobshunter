@@ -1,4 +1,4 @@
-package com.jobshunter.service.application.hunting;
+package com.jobshunter.service.application.hunting.strategies;
 
 import com.jobshunter.dto.JobSearchRequest;
 import com.jobshunter.dto.JobSearchRequest.ConversationBuilder;
@@ -6,6 +6,8 @@ import com.jobshunter.model.AiClientResponse;
 import com.jobshunter.model.Job;
 import com.jobshunter.model.PromptType;
 import com.jobshunter.service.TemplateRenderer;
+import com.jobshunter.service.application.hunting.AiConversationStateMachine;
+import com.jobshunter.service.application.hunting.JobSearchStrategy;
 import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
