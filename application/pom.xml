@@ -65,6 +65,16 @@
       <version>${spring.boot.version}</version>
     </dependency>
     <dependency>
+      <groupId>org.hibernate.orm</groupId>
+      <artifactId>hibernate-jcache</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.ehcache</groupId>
+      <artifactId>ehcache</artifactId>
+      <classifier>jakarta</classifier>
+    </dependency>
+
+    <dependency>
       <artifactId>spring-boot-starter-validation</artifactId>
       <exclusions>
         <exclusion>
