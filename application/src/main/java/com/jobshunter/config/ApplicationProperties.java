@@ -37,7 +37,6 @@ public class ApplicationProperties {
     private RateLimitPolicy rateLimit = new RateLimitPolicy();
     private String blacklist;
     private String blacklistJobsCompanySearch;
-    private String whitelistSkipValidation;
     private String localJobExpressions;
     private String freelancerExpressions;
     private String remoteExpressions;

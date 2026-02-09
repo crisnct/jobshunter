@@ -20,14 +20,9 @@ import org.springframework.stereotype.Service;
 @Service
 public final class JobBasicCheckProcessor implements JobProcessor {
 
-  private final Set<String> whitelistDomains;
   private final Set<String> blacklistDomains;
 
   public JobBasicCheckProcessor(ApplicationProperties properties) {
-    this.whitelistDomains = Arrays.stream(properties.getJobsHunter().getWhitelistSkipValidation().split(","))
-        .map(String::trim)
-        .map(String::toLowerCase)
-        .collect(Collectors.toUnmodifiableSet());
     this.blacklistDomains = Arrays.stream(properties.getJobsHunter().getBlacklist().split(","))
         .map(String::trim)
         .map(String::toLowerCase)
@@ -50,14 +45,7 @@ public final class JobBasicCheckProcessor implements JobProcessor {
       } else if (isValidAddress(context, host)) {
         try (Socket socket = new Socket()) {
           socket.connect(new InetSocketAddress(host, 443), 1000);
-          if (whitelistDomains.contains(host)) {
-            log.info("Host {} is in whitelist so we don't do any checks", host);
-            context.setValidatedSuccessfully(true);
-            context.getJob().setScore(50);
-            context.finalizeJob("Host is whitelisted");
-          } else {
-            context.setPhase(JobPhase.BASIC_CHECK);
-          }
+          context.setPhase(JobPhase.BASIC_CHECK);
         } catch (IOException e) {
           log.warn("Not reachable url {}", context.getJob().getUrl());
           context.failJob("Not reachable url");

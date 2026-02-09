@@ -82,14 +82,18 @@ public final class JobValidatorProcessor implements JobProcessor {
       }
 
       // Check job type rules - any match means valid
-      boolean isValid = jobTypeRules.stream().anyMatch(rule -> rule.validate(ctx).isValid());
+      ValidationResult validRule = jobTypeRules.stream()
+          .map(rule -> rule.validate(ctx))
+          .filter(ValidationResult::isValid)
+          .findFirst()
+          .orElse(null);
 
-      if (isValid) {
-        log.info("URL is valid {}", url);
+      if (validRule != null) {
+        log.info("URL is valid because [{}],  {}", validRule.reason(), url);
       } else {
         log.info("URL is valid but does not match user preferences {}", url);
       }
-      return isValid;
+      return validRule != null;
     } catch (Throwable e) {
       log.error("Invalid URL. Unexpected exception: " + e.getMessage());
       return false;
