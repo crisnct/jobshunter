@@ -199,6 +199,7 @@ public class JobHuntScheduler {
         userDBService.updateUser(user);
       }
       log.info("Notified user {} about {} jobs found", user.getUsername(), jobs.size());
+      jobs.forEach(p -> log.info(p.getUrl()));
     }
     if (environment.matchesProfiles("prod")) {
       jobOrderDBService.setNotified(orders);
