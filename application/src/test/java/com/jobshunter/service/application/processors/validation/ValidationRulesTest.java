@@ -9,11 +9,9 @@ import com.jobshunter.model.ContractType;
 import com.jobshunter.model.Job;
 import com.jobshunter.model.JobContext;
 import com.jobshunter.model.JobType;
-import com.jobshunter.service.application.processors.validation.rules.B2BEorLocalRule;
-import com.jobshunter.service.application.processors.validation.rules.B2BRemoteRule;
-import com.jobshunter.service.application.processors.validation.rules.EmploymentLocalRule;
+import com.jobshunter.service.application.processors.validation.rules.B2BJobsRule;
+import com.jobshunter.service.application.processors.validation.rules.LocalJobsRule;
 import com.jobshunter.service.application.processors.validation.rules.NotExpiredRule;
-import com.jobshunter.service.application.processors.validation.rules.OnsiteHybridRule;
 import java.util.List;
 import java.util.regex.Pattern;
 import org.junit.jupiter.api.BeforeEach;
@@ -112,9 +110,9 @@ class ValidationRulesTest {
 
   @Nested
   @DisplayName("OnsiteHybridRule Tests")
-  class OnsiteHybridRuleTests {
+  class LocalJobsRuleTests {
 
-    private final OnsiteHybridRule rule = new OnsiteHybridRule();
+    private final LocalJobsRule rule = new LocalJobsRule();
 
     @Test
     @DisplayName("Should return valid for ONSITE job with city match")
@@ -169,78 +167,15 @@ class ValidationRulesTest {
 
       ValidationResult result = rule.validate(ctx);
 
-      assertFalse(result.isValid());
-    }
-  }
-
-  @Nested
-  @DisplayName("B2BEorLocalRule Tests")
-  class B2BEorLocalRuleTests {
-
-    private final B2BEorLocalRule rule = new B2BEorLocalRule();
-
-    @Test
-    @DisplayName("Should return valid for B2B with freelancer role and city match")
-    void shouldReturnValidForB2BWithFreelancerAndCityMatch() {
-      ValidationContext ctx = createContext(
-          List.of(),
-          List.of(ContractType.B2B),
-          true, false, true, false
-      );
-
-      ValidationResult result = rule.validate(ctx);
-
       assertTrue(result.isValid());
-    }
-
-    @Test
-    @DisplayName("Should return valid for EOR with freelancer role and country match")
-    void shouldReturnValidForEorWithFreelancerAndCountryMatch() {
-      ValidationContext ctx = createContext(
-          List.of(),
-          List.of(ContractType.EOR),
-          false, true, true, false
-      );
-
-      ValidationResult result = rule.validate(ctx);
-
-      assertTrue(result.isValid());
-    }
-
-    @Test
-    @DisplayName("Should return invalid for B2B without freelancer role")
-    void shouldReturnInvalidForB2BWithoutFreelancerRole() {
-      ValidationContext ctx = createContext(
-          List.of(),
-          List.of(ContractType.B2B),
-          true, true, false, false
-      );
-
-      ValidationResult result = rule.validate(ctx);
-
-      assertFalse(result.isValid());
-    }
-
-    @Test
-    @DisplayName("Should return invalid for B2B without location match")
-    void shouldReturnInvalidForB2BWithoutLocationMatch() {
-      ValidationContext ctx = createContext(
-          List.of(),
-          List.of(ContractType.B2B),
-          false, false, true, false
-      );
-
-      ValidationResult result = rule.validate(ctx);
-
-      assertFalse(result.isValid());
     }
   }
 
   @Nested
   @DisplayName("B2BRemoteRule Tests")
-  class B2BRemoteRuleTests {
+  class B2BJobsRuleTests {
 
-    private final B2BRemoteRule rule = new B2BRemoteRule();
+    private final B2BJobsRule rule = new B2BJobsRule();
 
     @Test
     @DisplayName("Should return valid for B2B with freelancer and remote role")
@@ -267,7 +202,7 @@ class ValidationRulesTest {
 
       ValidationResult result = rule.validate(ctx);
 
-      assertFalse(result.isValid());
+      assertTrue(result.isValid());
     }
 
     @Test
@@ -277,83 +212,6 @@ class ValidationRulesTest {
           List.of(),
           List.of(ContractType.EOR),
           false, false, true, true
-      );
-
-      ValidationResult result = rule.validate(ctx);
-
-      assertFalse(result.isValid());
-    }
-  }
-
-  @Nested
-  @DisplayName("EmploymentLocalRule Tests")
-  class EmploymentLocalRuleTests {
-
-    private final EmploymentLocalRule rule = new EmploymentLocalRule();
-
-    @Test
-    @DisplayName("Should return valid for EMPLOYMENT with city match")
-    void shouldReturnValidForEmploymentWithCityMatch() {
-      ValidationContext ctx = createContext(
-          List.of(),
-          List.of(ContractType.EMPLOYMENT),
-          true, false, false, false
-      );
-
-      ValidationResult result = rule.validate(ctx);
-
-      assertTrue(result.isValid());
-    }
-
-    @Test
-    @DisplayName("Should return valid for INTERNSHIP with city match")
-    void shouldReturnValidForInternshipWithCityMatch() {
-      ValidationContext ctx = createContext(
-          List.of(),
-          List.of(ContractType.INTERNSHIP),
-          true, false, false, false
-      );
-
-      ValidationResult result = rule.validate(ctx);
-
-      assertTrue(result.isValid());
-    }
-
-    @Test
-    @DisplayName("Should return valid for EOR with city match")
-    void shouldReturnValidForEorWithCityMatch() {
-      ValidationContext ctx = createContext(
-          List.of(),
-          List.of(ContractType.EOR),
-          true, false, false, false
-      );
-
-      ValidationResult result = rule.validate(ctx);
-
-      assertTrue(result.isValid());
-    }
-
-    @Test
-    @DisplayName("Should return invalid for EMPLOYMENT without city match")
-    void shouldReturnInvalidForEmploymentWithoutCityMatch() {
-      ValidationContext ctx = createContext(
-          List.of(),
-          List.of(ContractType.EMPLOYMENT),
-          false, true, false, false
-      );
-
-      ValidationResult result = rule.validate(ctx);
-
-      assertFalse(result.isValid());
-    }
-
-    @Test
-    @DisplayName("Should return invalid for B2B contract")
-    void shouldReturnInvalidForB2BContract() {
-      ValidationContext ctx = createContext(
-          List.of(),
-          List.of(ContractType.B2B),
-          true, true, false, false
       );
 
       ValidationResult result = rule.validate(ctx);

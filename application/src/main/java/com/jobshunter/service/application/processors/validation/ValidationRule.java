@@ -1,8 +1,7 @@
 package com.jobshunter.service.application.processors.validation;
 
 /**
- * Interface for job validation rules.
- * Each implementation represents a specific validation criterion.
+ * Interface for job validation rules. Each implementation represents a specific validation criterion.
  */
 public interface ValidationRule {
 

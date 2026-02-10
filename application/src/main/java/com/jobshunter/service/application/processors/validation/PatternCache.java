@@ -7,8 +7,7 @@ import java.util.regex.Pattern;
 import org.springframework.stereotype.Component;
 
 /**
- * Cache for compiled regex Pattern objects to avoid repeated compilation.
- * Thread-safe and uses Caffeine for efficient caching.
+ * Cache for compiled regex Pattern objects to avoid repeated compilation. Thread-safe and uses Caffeine for efficient caching.
  */
 @Component
 public class PatternCache {
@@ -26,8 +25,7 @@ public class PatternCache {
   }
 
   /**
-   * Gets or creates a word boundary pattern for the given value.
-   * The pattern matches the value surrounded by non-alphanumeric characters.
+   * Gets or creates a word boundary pattern for the given value. The pattern matches the value surrounded by non-alphanumeric characters.
    *
    * @param value the word to create a pattern for
    * @return a compiled Pattern that matches the word with boundaries
@@ -38,9 +36,19 @@ public class PatternCache {
   }
 
   private Pattern createWordPattern(String value) {
+    String phrasePattern = value
+        .trim()
+        .replaceAll("\\s+", "\\\\s+"); // permite whitespace arbitrar intre cuvinte
+    String regex =
+        "(?<!\\p{L}|\\p{N})" +
+            Pattern.quote(phrasePattern).replace("\\\\\\s\\+", "\\s+") +
+            "(?!\\p{L}|\\p{N})";
+
     return Pattern.compile(
-        "(?i)[^a-zA-Z0-9]{0,20}" + Pattern.quote(value) + "[^a-zA-Z0-9]{0,20}",
-        Pattern.DOTALL
+        regex,
+        Pattern.CASE_INSENSITIVE
+            | Pattern.UNICODE_CASE
+            | Pattern.UNICODE_CHARACTER_CLASS
     );
   }
 

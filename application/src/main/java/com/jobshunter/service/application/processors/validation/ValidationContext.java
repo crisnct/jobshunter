@@ -20,6 +20,7 @@ public class ValidationContext {
   private final boolean countryMatch;
   private final boolean freelancerRole;
   private final boolean remoteRole;
+  private final boolean localJob;
 
   public List<JobType> getUserJobTypes() {
     return jobContext.getUserJobTypes();
@@ -29,7 +30,4 @@ public class ValidationContext {
     return jobContext.getUserContractTypes();
   }
 
-  public String getJobUrl() {
-    return jobContext.getJob().getUrl();
-  }
 }

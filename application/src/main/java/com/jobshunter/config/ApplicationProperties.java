@@ -32,11 +32,11 @@ public class ApplicationProperties {
   public static class JobsHunter {
 
     private String name;
-    private String expiredExpressions;
     private Scheduler scheduler = new Scheduler();
     private RateLimitPolicy rateLimit = new RateLimitPolicy();
     private String blacklist;
     private String blacklistJobsCompanySearch;
+    private String expiredExpressions;
     private String localJobExpressions;
     private String freelancerExpressions;
     private String remoteExpressions;

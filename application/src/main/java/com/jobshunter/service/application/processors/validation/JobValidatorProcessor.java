@@ -5,11 +5,10 @@ import com.jobshunter.config.ApplicationProperties.JobsHunter;
 import com.jobshunter.model.JobContext;
 import com.jobshunter.model.JobPhase;
 import com.jobshunter.service.application.processors.JobProcessor;
-import com.jobshunter.service.application.processors.validation.rules.B2BEorLocalRule;
-import com.jobshunter.service.application.processors.validation.rules.B2BRemoteRule;
-import com.jobshunter.service.application.processors.validation.rules.EmploymentLocalRule;
+import com.jobshunter.service.application.processors.validation.rules.B2BJobsRule;
+import com.jobshunter.service.application.processors.validation.rules.EORJobsRule;
+import com.jobshunter.service.application.processors.validation.rules.LocalJobsRule;
 import com.jobshunter.service.application.processors.validation.rules.NotExpiredRule;
-import com.jobshunter.service.application.processors.validation.rules.OnsiteHybridRule;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -24,6 +23,7 @@ public final class JobValidatorProcessor implements JobProcessor {
 
   private final PatternCache patternCache;
   private final List<Pattern> freelancerPattern;
+  private final List<Pattern> localJobPattern;
   private final List<Pattern> remotePattern;
   private final NotExpiredRule notExpiredRule;
   private final List<ValidationRule> jobTypeRules;
@@ -31,16 +31,17 @@ public final class JobValidatorProcessor implements JobProcessor {
   public JobValidatorProcessor(ApplicationProperties properties, PatternCache patternCache) {
     this.patternCache = patternCache;
     JobsHunter jobsHunter = properties.getJobsHunter();
+
     List<Pattern> expiredJobsPatterns = this.parseExpressions(jobsHunter.getExpiredExpressions());
     this.freelancerPattern = this.parseExpressions(jobsHunter.getFreelancerExpressions());
+    this.localJobPattern = this.parseExpressions(jobsHunter.getLocalJobExpressions());
     this.remotePattern = this.parseExpressions(jobsHunter.getRemoteExpressions());
 
     this.notExpiredRule = new NotExpiredRule(expiredJobsPatterns);
     this.jobTypeRules = List.of(
-        new OnsiteHybridRule(),
-        new B2BEorLocalRule(),
-        new B2BRemoteRule(),
-        new EmploymentLocalRule()
+        new LocalJobsRule(),
+        new B2BJobsRule(),
+        new EORJobsRule()
     );
   }
 
@@ -101,20 +102,25 @@ public final class JobValidatorProcessor implements JobProcessor {
   }
 
   private ValidationContext buildValidationContext(JobContext jobContext) {
-    String html = jobContext.getBody().toLowerCase();
-    boolean cityMatch = patternCache.matchesWord(jobContext.getCity(), html);
-    boolean countryMatch = patternCache.matchesWord(jobContext.getCountry(), html);
-    boolean freelancerRole = freelancerPattern.stream().anyMatch(p -> p.matcher(html).find());
-    boolean remoteRole = remotePattern.stream().anyMatch(p -> p.matcher(html).find());
-
+    String html = this.normalize(jobContext.getBody().toLowerCase());
     return ValidationContext.builder()
         .html(html)
         .jobContext(jobContext)
-        .cityMatch(cityMatch)
-        .countryMatch(countryMatch)
-        .freelancerRole(freelancerRole)
-        .remoteRole(remoteRole)
+        .cityMatch(patternCache.matchesWord(jobContext.getCity(), html))
+        .countryMatch(patternCache.matchesWord(jobContext.getCountry(), html))
+        .freelancerRole(freelancerPattern.stream().anyMatch(p -> p.matcher(html).find()))
+        .remoteRole(remotePattern.stream().anyMatch(p -> p.matcher(html).find()))
+        .localJob(localJobPattern.stream().anyMatch(p -> p.matcher(html).find()))
         .build();
   }
 
+  private String normalize(String text) {
+    if (text == null || text.isEmpty()) {
+      return "";
+    }
+    return text
+        .replace('\u00A0', ' ')
+        .replaceAll("\\s+", " ")
+        .trim();
+  }
 }
