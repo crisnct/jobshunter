@@ -272,6 +272,35 @@ A huge shoutout to the amazing team behind JobsHunter!
       </ul>
     </td>
   </tr>
+  <tr>
+    <td width="150" align="center" valign="top">
+      <a href="https://github.com/Paulresiga92">
+        <img src="https://github.com/rotaruciprian81.png" width="80" style="border-radius: 50%;"/>
+      </a><br/>
+      <b>Ciprian Rotaru</b><br/>
+      <sub>🛠️ Senior Full-Stack Developer</sub>
+    </td>
+    <td valign="top">
+      <ul>
+        <li>...</li>
+      </ul>
+    </td>
+  </tr>
+  <tr>
+    <td width="150" align="center" valign="top">
+      <a href="https://github.com/Paulresiga92">
+        <img src="https://github.com/georgianapastiu.png" width="80" style="border-radius: 50%;"/>
+      </a><br/>
+      <b>Georgiana Pastiu</b><br/>
+      <sub>🛠️ Mid-Level Python Developer</sub>
+    </td>
+    <td valign="top">
+      <ul>
+        <li>...</li>
+      </ul>
+    </td>
+  </tr>
+
 </table>
 
 ---
