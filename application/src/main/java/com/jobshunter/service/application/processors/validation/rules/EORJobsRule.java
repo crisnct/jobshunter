@@ -17,6 +17,7 @@ public class EORJobsRule implements ValidationRule {
 
     if (userWantsEor
         && context.isRemoteRole()
+        && !context.isFreelancerRole()
         && (context.isCityMatch() || context.isCountryMatch() || !context.isLocalJob())) {
       return ValidationResult.success("EOR remote job");
     }

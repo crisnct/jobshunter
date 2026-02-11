@@ -107,7 +107,7 @@ public class JobHuntScheduler {
     CompletableFuture.runAsync(this::processOrderSync, ordersExecutor);
   }
 
-  @Scheduled(fixedDelayString = "${jobshunter.scheduler.notifyUsersFrequency:60000}")
+  @Scheduled(fixedDelayString = "${jobshunter.scheduler.notifyUsersFrequency:180000}")
   public void notifyUsersAsync() {
     this.performActionAsync("notifyUsersAsync", this::notifyUsersSync, notificationsExecutor);
   }
