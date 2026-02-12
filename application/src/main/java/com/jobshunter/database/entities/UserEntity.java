@@ -139,6 +139,11 @@ public class UserEntity implements UserDetails {
   @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = jakarta.persistence.CascadeType.ALL, orphanRemoval = true)
   private Set<UserOAuthProviderEntity> oauthProviders = new HashSet<>();
 
+  // [Issue #46] User's declared spoken languages, used for language-based job filtering
+  @JsonIgnore
+  @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
+  private List<UserLanguageEntity> languages = new ArrayList<>();
+
   @PrePersist
   void prePersist() {
     if (createdAt == null) {

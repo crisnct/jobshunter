@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+  xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="
+        http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.23.xsd">
+
+  <!-- [Issue #46] Create the languages reference table and user_languages junction table -->
+  <changeSet id="2026-02-12-create-languages-table" author="issue-46">
+    <createTable tableName="languages">
+      <column name="id" type="BIGINT" autoIncrement="true">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="name" type="VARCHAR(50)">
+        <constraints nullable="false"/>
+      </column>
+    </createTable>
+
+    <addUniqueConstraint tableName="languages"
+                         columnNames="name"
+                         constraintName="uc_language_name"/>
+  </changeSet>
+
+  <changeSet id="2026-02-12-create-user-languages-table" author="issue-46">
+    <createTable tableName="user_languages">
+      <column name="id" type="BIGINT" autoIncrement="true">
+        <constraints primaryKey="true" nullable="false"/>
+      </column>
+      <column name="user_id" type="BIGINT">
+        <constraints nullable="false"
+                     foreignKeyName="fk_user_language_user"
+                     references="users(id)"/>
+      </column>
+      <column name="language_id" type="BIGINT">
+        <constraints nullable="false"
+                     foreignKeyName="fk_user_language_language"
+                     references="languages(id)"/>
+      </column>
+    </createTable>
+
+    <createIndex tableName="user_languages" indexName="idx_user_languages_user_id">
+      <column name="user_id"/>
+    </createIndex>
+  </changeSet>
+
+  <!-- Seed common languages -->
+  <changeSet id="2026-02-12-seed-languages" author="issue-46">
+    <insert tableName="languages"><column name="name" value="English"/></insert>
+    <insert tableName="languages"><column name="name" value="French"/></insert>
+    <insert tableName="languages"><column name="name" value="Romanian"/></insert>
+    <insert tableName="languages"><column name="name" value="Spanish"/></insert>
+    <insert tableName="languages"><column name="name" value="German"/></insert>
+    <insert tableName="languages"><column name="name" value="Italian"/></insert>
+  </changeSet>
+
+</databaseChangeLog>

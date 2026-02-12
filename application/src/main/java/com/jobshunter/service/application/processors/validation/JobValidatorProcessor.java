@@ -7,6 +7,7 @@ import com.jobshunter.model.JobPhase;
 import com.jobshunter.service.application.processors.JobProcessor;
 import com.jobshunter.service.application.processors.validation.rules.B2BJobsRule;
 import com.jobshunter.service.application.processors.validation.rules.EORJobsRule;
+import com.jobshunter.service.application.processors.validation.rules.LanguageMatchRule;
 import com.jobshunter.service.application.processors.validation.rules.LocalJobsRule;
 import com.jobshunter.service.application.processors.validation.rules.NotExpiredRule;
 import java.util.ArrayList;
@@ -27,6 +28,8 @@ public final class JobValidatorProcessor implements JobProcessor {
   private final List<Pattern> remotePattern;
   private final NotExpiredRule notExpiredRule;
   private final List<ValidationRule> jobTypeRules;
+  // [Issue #46] Rule that rejects jobs requiring languages the user doesn't speak
+  private final LanguageMatchRule languageMatchRule;
 
   public JobValidatorProcessor(ApplicationProperties properties, PatternCache patternCache) {
     this.patternCache = patternCache;
@@ -43,6 +46,9 @@ public final class JobValidatorProcessor implements JobProcessor {
         new B2BJobsRule(),
         new EORJobsRule()
     );
+    // Adding language expressions for job requirements
+    List<String> languageExpressions = List.of("english", "french", "romanian", "spanish", "german", "italian");
+    this.languageMatchRule = new LanguageMatchRule(languageExpressions);
   }
 
   private List<Pattern> parseExpressions(String expressions) {
@@ -79,6 +85,13 @@ public final class JobValidatorProcessor implements JobProcessor {
       // Check if job is expired first
       if (!notExpiredRule.validate(ctx).isValid()) {
         log.warn("Job is expired: {}", url);
+        return false;
+      }
+
+      // Check language requirements
+      ValidationResult languageResult = languageMatchRule.validate(ctx);
+      if (!languageResult.isValid()) {
+        log.info("Job does not match user language preferences: {} - {}", url, languageResult.reason());
         return false;
       }
 

@@ -6,10 +6,12 @@ import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.entities.UserJobEntity;
 import com.jobshunter.database.entities.UserJobRoleEntity;
 import com.jobshunter.database.entities.UserJobTypeEntity;
+import com.jobshunter.database.entities.UserLanguageEntity;
 import com.jobshunter.database.entities.UserPromptEntity;
 import com.jobshunter.database.service.AuthDBService;
 import com.jobshunter.database.service.UserDBService;
 import com.jobshunter.database.service.UserJobDBService;
+import com.jobshunter.database.service.UserLanguageDBService;
 import com.jobshunter.dto.ChangePasswordRequest;
 import com.jobshunter.dto.UserInfoResponse;
 import com.jobshunter.dto.UserJobResponse;
@@ -36,6 +38,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -54,6 +58,7 @@ public class UserController {
   private final AuthDBService authDBService;
   private final EmailNotifierService emailService;
   private final UserCvService userCvService;
+  private final UserLanguageDBService userLanguageDBService;
 
   @GetMapping("/me")
   @Transactional(readOnly = true)
@@ -116,6 +121,10 @@ public class UserController {
     List<ContractType> contractTypes = user.getContractTypes().stream()
         .map(UserContractTypeEntity::getContractType)
         .toList();
+    // [Issue #46] Map user languages to a list of language name strings
+    List<String> languages = user.getLanguages().stream()
+        .map(ul -> ul.getLanguage().getName())
+        .toList();
 
     return new UserInfoResponse(
         user.getUsername(),
@@ -138,7 +147,8 @@ public class UserController {
         jobRoles,
         jobTypes,
         user.getRelocation(),
-        contractTypes
+        contractTypes,
+        languages
     );
   }
 
@@ -226,10 +236,34 @@ public class UserController {
       });
     }
 
+    // [Issue #46] Update user languages if provided in the request
+    if (request.languages() != null) {
+      userLanguageDBService.updateUserLanguages(user, request.languages());
+    }
+
     userDBService.deleteUserPrompts(promptsToDelete);
     userDBService.updateUser(user);
     return ResponseEntity.ok(Map.of("user", user.getUsername(), "message", "User updated successfully"));
   }
 
-}
+  // [Issue #46] Endpoint to add a language to the authenticated user's profile
+  @Transactional
+  @PostMapping("/languages")
+  public ResponseEntity<Map<String, String>> addUserLanguage(@RequestBody Map<String, String> request, Authentication authentication) {
+    @SuppressWarnings("OptionalGetWithoutIsPresent")
+    UserEntity user = userDBService.getUser(authentication.getName()).get();
+    String language = request.get("language");
+    userLanguageDBService.addLanguageToUser(user, language);
+    return ResponseEntity.ok(Map.of("message", "Language added successfully"));
+  }
 
+  // [Issue #46] Endpoint to remove a language from the authenticated user's profile
+  @Transactional
+  @DeleteMapping("/languages/{language}")
+  public ResponseEntity<Map<String, String>> removeUserLanguage(@PathVariable String language, Authentication authentication) {
+    @SuppressWarnings("OptionalGetWithoutIsPresent")
+    UserEntity user = userDBService.getUser(authentication.getName()).get();
+    userLanguageDBService.removeLanguageFromUser(user, language);
+    return ResponseEntity.ok(Map.of("message", "Language removed successfully"));
+  }
+}

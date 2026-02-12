@@ -11,6 +11,7 @@ import {
   User,
 } from 'lucide-react';
 import './index.css';
+import UserProfile from './components/UserProfile';
 
 const App = () => {
   const baseUrl = import.meta.env.VITE_API_BASE_URL || 'https://ronin-archesporial-lonnie.ngrok-free.dev';
@@ -1696,6 +1697,7 @@ const App = () => {
       />
 
       <StatusToast />
+      <UserProfile />
     </div>
   );
 };
