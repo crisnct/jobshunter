@@ -52,6 +52,39 @@
     <insert tableName="languages"><column name="name" value="Spanish"/></insert>
     <insert tableName="languages"><column name="name" value="German"/></insert>
     <insert tableName="languages"><column name="name" value="Italian"/></insert>
+    <insert tableName="languages"><column name="name" value="Portuguese"/></insert>
+    <insert tableName="languages"><column name="name" value="Dutch"/></insert>
+    <insert tableName="languages"><column name="name" value="Polish"/></insert>
+    <insert tableName="languages"><column name="name" value="Czech"/></insert>
+    <insert tableName="languages"><column name="name" value="Slovak"/></insert>
+    <insert tableName="languages"><column name="name" value="Hungarian"/></insert>
+    <insert tableName="languages"><column name="name" value="Bulgarian"/></insert>
+    <insert tableName="languages"><column name="name" value="Greek"/></insert>
+    <insert tableName="languages"><column name="name" value="Swedish"/></insert>
+    <insert tableName="languages"><column name="name" value="Danish"/></insert>
+    <insert tableName="languages"><column name="name" value="Finnish"/></insert>
+    <insert tableName="languages"><column name="name" value="Norwegian"/></insert>
+    <insert tableName="languages"><column name="name" value="Icelandic"/></insert>
+    <insert tableName="languages"><column name="name" value="Irish"/></insert>
+    <insert tableName="languages"><column name="name" value="Maltese"/></insert>
+    <insert tableName="languages"><column name="name" value="Estonian"/></insert>
+    <insert tableName="languages"><column name="name" value="Latvian"/></insert>
+    <insert tableName="languages"><column name="name" value="Lithuanian"/></insert>
+    <insert tableName="languages"><column name="name" value="Slovenian"/></insert>
+    <insert tableName="languages"><column name="name" value="Croatian"/></insert>
+    <insert tableName="languages"><column name="name" value="Serbian"/></insert>
+    <insert tableName="languages"><column name="name" value="Bosnian"/></insert>
+    <insert tableName="languages"><column name="name" value="Montenegrin"/></insert>
+    <insert tableName="languages"><column name="name" value="Albanian"/></insert>
+    <insert tableName="languages"><column name="name" value="Macedonian"/></insert>
+    <insert tableName="languages"><column name="name" value="Ukrainian"/></insert>
+    <insert tableName="languages"><column name="name" value="Belarusian"/></insert>
+    <insert tableName="languages"><column name="name" value="Russian"/></insert>
+    <insert tableName="languages"><column name="name" value="Turkish"/></insert>
+    <insert tableName="languages"><column name="name" value="Catalan"/></insert>
+    <insert tableName="languages"><column name="name" value="Basque"/></insert>
+    <insert tableName="languages"><column name="name" value="Galician"/></insert>
+    <insert tableName="languages"><column name="name" value="Luxembourgish"/></insert>
   </changeSet>
 
 </databaseChangeLog>

@@ -6,7 +6,6 @@ import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.entities.UserJobEntity;
 import com.jobshunter.database.entities.UserJobRoleEntity;
 import com.jobshunter.database.entities.UserJobTypeEntity;
-import com.jobshunter.database.entities.UserLanguageEntity;
 import com.jobshunter.database.entities.UserPromptEntity;
 import com.jobshunter.database.service.AuthDBService;
 import com.jobshunter.database.service.UserDBService;
@@ -38,7 +37,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -246,24 +244,4 @@ public class UserController {
     return ResponseEntity.ok(Map.of("user", user.getUsername(), "message", "User updated successfully"));
   }
 
-  // [Issue #46] Endpoint to add a language to the authenticated user's profile
-  @Transactional
-  @PostMapping("/languages")
-  public ResponseEntity<Map<String, String>> addUserLanguage(@RequestBody Map<String, String> request, Authentication authentication) {
-    @SuppressWarnings("OptionalGetWithoutIsPresent")
-    UserEntity user = userDBService.getUser(authentication.getName()).get();
-    String language = request.get("language");
-    userLanguageDBService.addLanguageToUser(user, language);
-    return ResponseEntity.ok(Map.of("message", "Language added successfully"));
-  }
-
-  // [Issue #46] Endpoint to remove a language from the authenticated user's profile
-  @Transactional
-  @DeleteMapping("/languages/{language}")
-  public ResponseEntity<Map<String, String>> removeUserLanguage(@PathVariable String language, Authentication authentication) {
-    @SuppressWarnings("OptionalGetWithoutIsPresent")
-    UserEntity user = userDBService.getUser(authentication.getName()).get();
-    userLanguageDBService.removeLanguageFromUser(user, language);
-    return ResponseEntity.ok(Map.of("message", "Language removed successfully"));
-  }
 }

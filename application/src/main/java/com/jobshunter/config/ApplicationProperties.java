@@ -40,7 +40,6 @@ public class ApplicationProperties {
     private String localJobExpressions;
     private String freelancerExpressions;
     private String remoteExpressions;
-    private String languageExpressions;
     private AppThreads threads = new AppThreads();
     private AdditionalEffort additionalEffort = new AdditionalEffort();
   }

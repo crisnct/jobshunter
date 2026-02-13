@@ -2,6 +2,8 @@ package com.jobshunter.service.application.processors.validation;
 
 import com.jobshunter.config.ApplicationProperties;
 import com.jobshunter.config.ApplicationProperties.JobsHunter;
+import com.jobshunter.database.entities.LanguageEntity;
+import com.jobshunter.database.repository.LanguageRepository;
 import com.jobshunter.model.JobContext;
 import com.jobshunter.model.JobPhase;
 import com.jobshunter.service.application.processors.JobProcessor;
@@ -31,7 +33,8 @@ public final class JobValidatorProcessor implements JobProcessor {
   // [Issue #46] Rule that rejects jobs requiring languages the user doesn't speak
   private final LanguageMatchRule languageMatchRule;
 
-  public JobValidatorProcessor(ApplicationProperties properties, PatternCache patternCache) {
+  public JobValidatorProcessor(ApplicationProperties properties, PatternCache patternCache,
+                               LanguageRepository languageRepository) {
     this.patternCache = patternCache;
     JobsHunter jobsHunter = properties.getJobsHunter();
 
@@ -46,9 +49,11 @@ public final class JobValidatorProcessor implements JobProcessor {
         new B2BJobsRule(),
         new EORJobsRule()
     );
-    // Adding language expressions for job requirements
-    List<String> languageExpressions = List.of("english", "french", "romanian", "spanish", "german", "italian");
-    this.languageMatchRule = new LanguageMatchRule(languageExpressions);
+    // [Issue #46] Load all known languages from the database for language-based job filtering
+    List<String> allLanguageNames = languageRepository.findAll().stream()
+        .map(LanguageEntity::getName)
+        .toList();
+    this.languageMatchRule = new LanguageMatchRule(allLanguageNames);
   }
 
   private List<Pattern> parseExpressions(String expressions) {

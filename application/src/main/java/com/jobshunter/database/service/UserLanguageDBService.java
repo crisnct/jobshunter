@@ -21,28 +21,6 @@ public class UserLanguageDBService {
   private final UserLanguageRepository userLanguageRepository;
   private final LanguageRepository languageRepository;
 
-  /** Adds a single language to the user. Creates the LanguageEntity if it doesn't exist yet. */
-  @Transactional
-  public void addLanguageToUser(UserEntity user, String languageName) {
-    LanguageEntity language = languageRepository.findByName(languageName)
-        .orElseGet(() -> languageRepository.save(new LanguageEntity(languageName)));
-    userLanguageRepository.save(new UserLanguageEntity(user, language));
-  }
-
-  /** Returns all language associations for the given user. */
-  @Transactional(readOnly = true)
-  public List<UserLanguageEntity> getUserLanguages(UserEntity user) {
-    return userLanguageRepository.findByUser(user);
-  }
-
-  /** Removes a single language from the user by name (case-insensitive). */
-  @Transactional
-  public void removeLanguageFromUser(UserEntity user, String languageName) {
-    userLanguageRepository.findByUser(user).stream()
-        .filter(ul -> ul.getLanguage().getName().equalsIgnoreCase(languageName))
-        .forEach(userLanguageRepository::delete);
-  }
-
   /**
    * Replaces all of the user's languages with the given list.
    * Deletes existing associations and creates new ones.

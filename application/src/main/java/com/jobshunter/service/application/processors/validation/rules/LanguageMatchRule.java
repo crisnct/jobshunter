@@ -3,27 +3,37 @@ package com.jobshunter.service.application.processors.validation.rules;
 import com.jobshunter.service.application.processors.validation.ValidationContext;
 import com.jobshunter.service.application.processors.validation.ValidationResult;
 import com.jobshunter.service.application.processors.validation.ValidationRule;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * [Issue #46] Validation rule that checks whether a job posting's language requirements
- * match the user's declared languages.
+ * [Issue #46] Validation rule that filters job postings based on language requirements.
  * <p>
- * If the job HTML mentions a known language (e.g. "english", "french") and the user
- * has NOT declared that language in their profile, the job is rejected.
- * If the user has no languages configured, the rule is skipped (passes).
+ * All known languages are loaded from the database and compiled into regex patterns.
+ * The rule logic:
+ * <ul>
+ *   <li>If the user has no languages configured → accept the job (skip filter).</li>
+ *   <li>If the job description does NOT mention any known language → accept the job.</li>
+ *   <li>If the job description mentions languages and at least one matches the user's → accept.</li>
+ *   <li>If the job description mentions languages but NONE match the user's → reject.</li>
+ * </ul>
+ * Example: user speaks French and Romanian. A job mentioning "English" is rejected.
+ * A job mentioning "French" is accepted. A job with no language mentioned is accepted.
  */
 @Slf4j
 public class LanguageMatchRule implements ValidationRule {
 
-  /** Pairs of (language name, compiled word-boundary pattern) for each known language. */
-  private final List<LanguagePattern> languagePatterns;
+  /** All known languages from the database, each with a compiled word-boundary regex. */
+  private final List<LanguagePattern> allLanguagePatterns;
 
-  public LanguageMatchRule(List<String> languageExpressions) {
-    this.languagePatterns = languageExpressions.stream()
-        .map(expr -> new LanguagePattern(expr, Pattern.compile("\\b" + expr + "\\b", Pattern.CASE_INSENSITIVE)))
+  /**
+   * @param allLanguageNames all language names from the database (e.g. "English", "French", ...)
+   */
+  public LanguageMatchRule(List<String> allLanguageNames) {
+    this.allLanguagePatterns = allLanguageNames.stream()
+        .map(name -> new LanguagePattern(name, Pattern.compile("\\b" + Pattern.quote(name) + "\\b", Pattern.CASE_INSENSITIVE)))
         .toList();
   }
 
@@ -38,19 +48,30 @@ public class LanguageMatchRule implements ValidationRule {
 
     String html = context.getHtml();
 
-    // For each known language, check if the job page mentions it
-    for (LanguagePattern lp : languagePatterns) {
+    // Find all known languages mentioned in the job description
+    List<String> mentionedLanguages = new ArrayList<>();
+    for (LanguagePattern lp : allLanguagePatterns) {
       if (lp.pattern.matcher(html).find()) {
-        // The job mentions this language — verify the user speaks it
-        boolean userSpeaksIt = userLanguages.stream()
-            .anyMatch(userLang -> userLang.equalsIgnoreCase(lp.name));
-        if (!userSpeaksIt) {
-          return ValidationResult.failure(
-              "Job requires '" + lp.name + "' which is not in user's languages: " + userLanguages);
-        }
+        mentionedLanguages.add(lp.name);
       }
     }
-    return ValidationResult.success("Language requirements match user preferences");
+
+    // If the job doesn't mention any known language, accept it
+    if (mentionedLanguages.isEmpty()) {
+      return ValidationResult.success("No language requirements detected in job description");
+    }
+
+    // Check if at least one mentioned language matches the user's languages
+    boolean hasMatch = mentionedLanguages.stream()
+        .anyMatch(mentioned -> userLanguages.stream()
+            .anyMatch(userLang -> userLang.equalsIgnoreCase(mentioned)));
+
+    if (hasMatch) {
+      return ValidationResult.success("Job mentions a language the user speaks: " + mentionedLanguages);
+    }
+
+    return ValidationResult.failure(
+        "Job requires " + mentionedLanguages + " but user only speaks " + userLanguages);
   }
 
   @Override
@@ -58,6 +79,6 @@ public class LanguageMatchRule implements ValidationRule {
     return "LanguageMatchRule";
   }
 
-  /** Simple holder for a language name and its compiled regex pattern. */
+  /** Holder for a language name and its compiled regex pattern. */
   private record LanguagePattern(String name, Pattern pattern) {}
 }
