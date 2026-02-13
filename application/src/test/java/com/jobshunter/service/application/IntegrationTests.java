@@ -341,6 +341,32 @@ public class IntegrationTests {
     Assert.isTrue(!jc.isValidatedSuccessfully(), "URL is not valid");
   }
 
+  @Test
+  @Disabled
+  public void testJobBodyExtraction2() {
+    Job job = new Job("https://www.talent.com/view?id=a855dcaf39c5&utm_campaign=google_jobs_apply&utm_source=google_jobs_apply&utm_medium=organic");
+
+    UserJobTypeEntity onsiteJob = new UserJobTypeEntity();
+    onsiteJob.setJobType(JobType.ONSITE);
+    UserJobTypeEntity hybridJob = new UserJobTypeEntity();
+    hybridJob.setJobType(JobType.HYBRID);
+
+    UserEntity user = new UserEntity();
+    user.setJobTypes(List.of(onsiteJob, hybridJob));
+    user.setContractTypes(List.of());
+
+    user.setJobRoles(List.of());
+
+    JobContext jc = new JobContext(job, user, null);
+    jc = jobBasicCheckProcessor.processAsync(jc);
+    jc = jobFetchProcessor.processAsync(jc);
+    jc = jobBodyExtractorProcessor.processAsync(jc);
+
+    Assert.isTrue(jc.getFetchResult().body().contains("This job offer is not available in your country"), "Description is extracted properly");
+  }
+
+
+
   //TODO
   //remove this and make tests to take into consideration data.sql
   @TestConfiguration

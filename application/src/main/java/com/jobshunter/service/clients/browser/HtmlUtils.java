@@ -73,7 +73,7 @@ public final class HtmlUtils {
 
   public static String cleanupHTML(String html) {
     Document document = Jsoup.parse(html);
-    document.select("script, style, nav, footer, header, aside").remove();
+    document.select("script, style, nav, footer, aside").remove();
     document.select("button, a").remove();
     String[] noisePhrases = {
         "about us", "who we are", "why join", "benefits",
