@@ -4,6 +4,7 @@ import com.jobshunter.database.entities.UserContractTypeEntity;
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.entities.UserJobRoleEntity;
 import com.jobshunter.database.entities.UserJobTypeEntity;
+import com.jobshunter.database.entities.UserLanguageEntity;
 import com.jobshunter.service.clients.browser.HttpFetchResult;
 import java.util.List;
 import java.util.Objects;
@@ -31,6 +32,8 @@ public class JobContext {
   private final List<JobType> userJobTypes;
   private final List<ContractType> userContractTypes;
   private final List<String> userRoles;
+  // [Issue #46] List of language names the user speaks, used by LanguageMatchRule during validation
+  private final List<String> userLanguages;
 
   public JobContext(Job job, UserEntity user, SearchJobOrder order) {
     this.job = job;
@@ -42,6 +45,8 @@ public class JobContext {
     this.userJobTypes = user.getJobTypes().stream().map(UserJobTypeEntity::getJobType).toList();
     this.userContractTypes = user.getContractTypes().stream().map(UserContractTypeEntity::getContractType).toList();
     this.userRoles = user.getJobRoles().stream().map(UserJobRoleEntity::getJobRole).toList();
+    // [Issue #46] Extract language names from user's language entities for validation filtering
+    this.userLanguages = user.getLanguages().stream().map(lang -> lang.getLanguage().getName()).toList();
   }
 
   public static JobContext failed(Job job, UserEntity user, Throwable t) {

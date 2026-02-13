@@ -166,5 +166,7 @@ public class UserDBService {
     Hibernate.initialize(user.getJobRoles());
     Hibernate.initialize(user.getJobTypes());
     Hibernate.initialize(user.getContractTypes());
+    // [Issue #46] Initialize user languages for language-based job filtering
+    Hibernate.initialize(user.getLanguages());
   }
 }

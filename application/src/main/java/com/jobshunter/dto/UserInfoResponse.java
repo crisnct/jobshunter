@@ -24,7 +24,9 @@ public record UserInfoResponse(
     List<String> jobRoles,
     List<JobType> jobTypes,
     Relocation relocation,
-    List<ContractType> contractTypes
+    List<ContractType> contractTypes,
+    // [Issue #46] User's declared languages for job filtering
+    List<String> languages
 ) {
 
 }

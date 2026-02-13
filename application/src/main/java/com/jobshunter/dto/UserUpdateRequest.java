@@ -26,7 +26,9 @@ public record UserUpdateRequest(
     @Nullable List<String> jobRoles,
     @Nullable List<JobType> jobTypes,
     @Nullable Relocation relocation,
-    @Nullable List<ContractType> contractTypes
+    @Nullable List<ContractType> contractTypes,
+    // [Issue #46] User's declared languages for job filtering
+    @Nullable List<String> languages
 ) {
 
   @JsonInclude(JsonInclude.Include.NON_NULL)

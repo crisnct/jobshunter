@@ -53,11 +53,23 @@ const App = () => {
     aiPrompts: [],
     jobTypes: [],
     contractTypes: [],
+    languages: [],
     notifyWhatsapp: false,
     notifyEmail: false,
     relocation: null,
     cvFileName: '',
   });
+
+  // [Issue #46] All available languages (loaded from API response)
+  const availableLanguages = [
+    'English', 'French', 'Romanian', 'Spanish', 'German', 'Italian',
+    'Portuguese', 'Dutch', 'Polish', 'Czech', 'Slovak', 'Hungarian',
+    'Bulgarian', 'Greek', 'Swedish', 'Danish', 'Finnish', 'Norwegian',
+    'Icelandic', 'Irish', 'Maltese', 'Estonian', 'Latvian', 'Lithuanian',
+    'Slovenian', 'Croatian', 'Serbian', 'Bosnian', 'Montenegrin', 'Albanian',
+    'Macedonian', 'Ukrainian', 'Belarusian', 'Russian', 'Turkish',
+    'Catalan', 'Basque', 'Galician', 'Luxembourgish',
+  ];
 
   const jobTypeOptions = [
     { id: 'REMOTE', label: 'REMOTE' },
@@ -380,6 +392,7 @@ const App = () => {
           })),
           jobTypes: data.jobTypes || [],
           contractTypes: data.contractTypes || [],
+          languages: data.languages || [],
           notifyWhatsapp: data.notifyWhatsapp || false,
           notifyEmail: data.notifyEmail || false,
           relocation: data.relocation || null,
@@ -790,6 +803,7 @@ const App = () => {
           jobTypes: profileForm.jobTypes,
           relocation: profileForm.relocation,
           contractTypes: profileForm.contractTypes,
+          languages: profileForm.languages,
           aiPrompts: profileForm.aiPrompts.map((entry) => ({
             prompt: entry.prompt,
           })),
@@ -810,6 +824,7 @@ const App = () => {
         jobTypes: profileForm.jobTypes,
         relocation: profileForm.relocation,
         contractTypes: profileForm.contractTypes,
+        languages: profileForm.languages,
       }));
     } catch (err) {
       logMessage(err.message, 'error');
@@ -1560,6 +1575,46 @@ const App = () => {
                                   );
                                 })}
                               </div>
+                            </div>
+
+                            {/* [Issue #46] Languages selection */}
+                            <div>
+                              <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Languages you speak</p>
+                              <div className="flex flex-wrap gap-2 mb-2">
+                                {profileForm.languages.map((lang, idx) => (
+                                  <span key={lang} className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-indigo-50 text-indigo-700 text-sm font-medium border border-indigo-100">
+                                    {lang}
+                                    <button
+                                      type="button"
+                                      onClick={() => setProfileForm((prev) => ({ ...prev, languages: prev.languages.filter((_, i) => i !== idx) }))}
+                                      className="ml-1 text-indigo-400 hover:text-red-500 font-bold text-xs"
+                                    >
+                                      ×
+                                    </button>
+                                  </span>
+                                ))}
+                                {profileForm.languages.length === 0 && (
+                                  <span className="text-sm text-slate-400">No languages selected</span>
+                                )}
+                              </div>
+                              <select
+                                value=""
+                                onChange={(e) => {
+                                  const lang = e.target.value;
+                                  if (lang && !profileForm.languages.includes(lang)) {
+                                    setProfileForm((prev) => ({ ...prev, languages: [...prev.languages, lang] }));
+                                  }
+                                }}
+                                className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                              >
+                                <option value="">Add a language...</option>
+                                {availableLanguages
+                                  .filter((lang) => !profileForm.languages.includes(lang))
+                                  .map((lang) => (
+                                    <option key={lang} value={lang}>{lang}</option>
+                                  ))
+                                }
+                              </select>
                             </div>
 
                             <div>
