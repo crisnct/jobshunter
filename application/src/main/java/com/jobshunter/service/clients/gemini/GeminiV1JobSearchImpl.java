@@ -132,7 +132,7 @@ public non-sealed class GeminiV1JobSearchImpl implements AiJobsClient<GeminiSear
 
   @SuppressWarnings("unused")
   private AiClientResponse fallbackSearch(GeminiSearchRequest request, Throwable t) {
-    log.error("{} call short-circuited/bulkheaded: {}", getClass().getSimpleName(), t.getMessage());
+    log.error("{} call short-circuited/bulkheaded fallbackSearch: {}", getClass().getSimpleName(), t.getMessage(), t);
     return new AiClientResponse();
   }
 
@@ -278,12 +278,12 @@ public non-sealed class GeminiV1JobSearchImpl implements AiJobsClient<GeminiSear
   }
 
   public List<CompanyDto> fallbackSearchCompanies(GeminiSearchRequest request, Throwable t) {
-    log.error("{} call short-circuited/bulkheaded, fallbackSearchCompanies: {}", getClass().getSimpleName(), t.getMessage());
+    log.error("{} call short-circuited/bulkheaded fallbackSearchCompanies: {}", getClass().getSimpleName(), t.getMessage(), t);
     return List.of();
   }
 
   public AiClientResponse fallbackSearchJobsFromCompanies(GeminiSearchRequest request, Throwable t) {
-    log.error("{} call short-circuited/bulkheaded, fallbackSearchJobsFromCompanies: {}", getClass().getSimpleName(), t.getMessage());
+    log.error("{} call short-circuited/bulkheaded fallbackSearchJobsFromCompanies: {}", getClass().getSimpleName(), t.getMessage(), t);
     return new AiClientResponse();
   }
 

@@ -119,8 +119,7 @@ public non-sealed class GeminiFileClientImpl implements FileClient {
 
   @SuppressWarnings("unused")
   private ResumeFileInfo fallbackUploadFile(Path cvPath, Throwable t) {
-    log.error("{} call short-circuited/bulkheaded: {}", getClass().getSimpleName(),
-        t != null ? t.getMessage() : "unknown error");
+    log.error("{} call short-circuited/bulkheaded fallbackUploadFile: {}", getClass().getSimpleName(), t.getMessage(), t);
     return null;
   }
 

@@ -226,30 +226,30 @@ public non-sealed class GrokV1JobSearchImpl implements AiJobsClient<GrokSearchRe
 
   @SuppressWarnings("unused")
   private AiClientResponse fallbackCompanies(GrokSearchRequest request, Throwable t) {
-    log.error("{} call short-circuited/bulkheaded: {}", getClass().getSimpleName(), t.getMessage());
+    log.error("{} call short-circuited/bulkheaded fallbackCompanies: {}", getClass().getSimpleName(), t.getMessage(), t);
     return new AiClientResponse();
   }
 
   @SuppressWarnings("unused")
   private void fallbackDeleteConversation(String id, Throwable t) {
-    log.error("{} call short-circuited/bulkheaded: {}", getClass().getSimpleName(), t.getMessage());
+    log.error("{} call short-circuited/bulkheaded fallbackDeleteConversation: {}", getClass().getSimpleName(), t.getMessage(), t);
   }
 
   @SuppressWarnings("unused")
   private AiClientResponse fallbackSearchJobsFromCompanies(GrokSearchRequest request, Throwable t) {
-    log.error("{} call short-circuited/bulkheaded: {}", getClass().getSimpleName(), t.getMessage());
+    log.error("{} call short-circuited/bulkheaded fallbackSearchJobsFromCompanies: {}", getClass().getSimpleName(), t.getMessage(), t);
     return new AiClientResponse();
   }
 
   @SuppressWarnings("unused")
   private AiClientResponse fallbackSearch(GrokSearchRequest request, Throwable t) {
-    log.error("{} call short-circuited/bulkheaded: {}", getClass().getSimpleName(), t.getMessage());
+    log.error("{} call short-circuited/bulkheaded fallbackSearch: {}", getClass().getSimpleName(), t.getMessage(), t);
     return new AiClientResponse();
   }
 
   @SuppressWarnings("unused")
   private List<CompanyDto> fallbackSearchCompanies(GrokSearchRequest request, Throwable t) {
-    log.error("{} call short-circuited/bulkheaded: {}", getClass().getSimpleName(), t.getMessage());
+    log.error("{} call short-circuited/bulkheaded fallbackSearchCompanies: {}", getClass().getSimpleName(), t.getMessage(), t);
     return List.of();
   }
 

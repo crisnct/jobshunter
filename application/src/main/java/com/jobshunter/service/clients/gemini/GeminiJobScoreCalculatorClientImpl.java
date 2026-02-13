@@ -110,7 +110,7 @@ public non-sealed class GeminiJobScoreCalculatorClientImpl implements JobScoreCa
 
   @SuppressWarnings("unused")
   private int fallbackComputeScore(JobScoreRequest request, Throwable t) {
-    log.error("{} call short-circuited/bulkheaded: {}", getClass().getSimpleName(), t.getMessage());
+    log.error("{} call short-circuited/bulkheaded fallbackComputeScore: {}", getClass().getSimpleName(), t.getMessage(), t);
     return 0;
   }
 

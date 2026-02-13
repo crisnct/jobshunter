@@ -108,7 +108,7 @@ public non-sealed class GptFileClientImpl implements FileClient {
 
   @SuppressWarnings("unused")
   private ResumeFileInfo fallbackUploadFile(Path cvPath, Throwable t) {
-    log.error("{} call short-circuited/bulkheaded: {}", getClass().getSimpleName(), t.getMessage());
+    log.error("{} call short-circuited/bulkheaded fallbackUploadFile: {}", getClass().getSimpleName(), t.getMessage(), t);
     return null;
   }
 

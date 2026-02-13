@@ -3,11 +3,12 @@ package com.jobshunter.service.clients.gpt;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.jobshunter.config.ApplicationProperties;
+import com.jobshunter.config.StringUtils;
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.entities.UserJobRoleEntity;
-import com.jobshunter.dto.GptSearchRequest;
 import com.jobshunter.dto.CompanyDto;
 import com.jobshunter.dto.CompanyDtoList;
+import com.jobshunter.dto.GptSearchRequest;
 import com.jobshunter.dto.exceptions.BusinessException;
 import com.jobshunter.dto.gptRequest.GptJobsPayload;
 import com.jobshunter.dto.gptRequest.Reasoning;
@@ -16,7 +17,6 @@ import com.jobshunter.dto.gptRequest.tools.UserLocation;
 import com.jobshunter.dto.gptResponse.GptResponse;
 import com.jobshunter.dto.gptResponse.JobSearchResponse;
 import com.jobshunter.dto.gptResponse.OutputItem;
-import com.jobshunter.dto.gptResponse.Usage;
 import com.jobshunter.model.AiClientResponse;
 import com.jobshunter.model.AiSchemaType;
 import com.jobshunter.model.Job;
@@ -30,14 +30,13 @@ import com.jobshunter.service.application.cost.TokenEstimationGuard;
 import com.jobshunter.service.clients.AiJobsClient;
 import com.jobshunter.service.clients.AiJobsCompaniesClient;
 import com.jobshunter.service.clients.DeleteConvAiClient;
-import com.jobshunter.config.StringUtils;
 import com.jobshunter.service.retry.RetryPolicies;
 import com.jobshunter.service.retry.RetryTemplate;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
-import io.micrometer.core.annotation.Timed;
 import io.jsonwebtoken.lang.Collections;
+import io.micrometer.core.annotation.Timed;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
@@ -251,19 +250,19 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient<GptSearchRequ
 
   @SuppressWarnings("unused")
   private AiClientResponse fallbackSearchJobsFromCompanies(GptSearchRequest request, Throwable t) {
-    log.error("{} call short-circuited/bulkheaded: {}", getClass().getSimpleName(), t.getMessage());
+    log.error("{} call short-circuited/bulkheaded fallbackSearchJobsFromCompanies: {}", getClass().getSimpleName(), t.getMessage(), t);
     return new AiClientResponse();
   }
 
   @SuppressWarnings("unused")
   private AiClientResponse fallbackSearch(GptSearchRequest request, Throwable t) {
-    log.error("{} call short-circuited/bulkheaded: {}", getClass().getSimpleName(), t.getMessage());
+    log.error("{} call short-circuited/bulkheaded fallbackSearch: {}", getClass().getSimpleName(), t.getMessage(), t);
     return new AiClientResponse();
   }
 
   @SuppressWarnings("unused")
   private List<CompanyDto> fallbackSearchCompanies(GptSearchRequest request, Throwable t) {
-    log.error("{} call short-circuited/bulkheaded: {}", getClass().getSimpleName(), t.getMessage());
+    log.error("{} call short-circuited/bulkheaded fallbackSearchCompanies: {}", getClass().getSimpleName(), t.getMessage(), t);
     return List.of();
   }
 

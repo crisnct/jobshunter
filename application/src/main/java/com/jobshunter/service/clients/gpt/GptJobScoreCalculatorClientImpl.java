@@ -104,7 +104,7 @@ public non-sealed class GptJobScoreCalculatorClientImpl implements JobScoreCalcu
 
   @SuppressWarnings("unused")
   private int fallbackComputeScore(JobScoreRequest request, Throwable t) {
-    log.error("{} call short-circuited/bulkheaded: {}", getClass().getSimpleName(), t.getMessage());
+    log.error("{} call short-circuited/bulkheaded fallbackComputeScore: {}", getClass().getSimpleName(), t.getMessage(), t);
     return -1;
   }
 
