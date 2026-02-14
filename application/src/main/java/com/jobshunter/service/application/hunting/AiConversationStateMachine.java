@@ -92,8 +92,12 @@ public class AiConversationStateMachine {
       AiClientResponse accumulatedResponse,
       AiClientResponse response
   ) {
+    // Always propagate the latest response id for conversation continuity
+    if (response.getId() != null) {
+      accumulatedResponse.setId(response.getId());
+    }
     log.info("Conversation response id: {}", response.getId());
-    // Note: prevResponseId is set via toBuilder() in createRetryRequest, not here
+
     List<Job> jobsFound = response.getJobs()
         .stream()
         .filter(p -> !accumulatedResponse.getJobs().contains(p))

@@ -18,9 +18,8 @@ public class PlaywrightFetchPage implements HttpFetcher {
   public HttpFetchResult fetch(String url) {
     log.info("Checking redirection for job URL: {}", url);
     HttpClientContext httpcontext = HttpClientContext.create();
-    // Note: ThreadLocal is set by BrowserSimulator in the executor thread where it's needed
     try {
-      log.info("Body appears JS-rendered or incomplete for {}, using Playwright", url);
+      log.info("Fetching page content with Playwright {}", url);
       String body = browserSimulator.openPageSyncPlaywright(url, WaitUntilState.LOAD).getBody();
       return new HttpFetchResult(HttpStatus.OK.value(), body, httpcontext);
     } catch (Throwable e) {

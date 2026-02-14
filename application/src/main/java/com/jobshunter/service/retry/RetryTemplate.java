@@ -11,11 +11,13 @@ public class RetryTemplate {
 
   public <T> T execute(RetryPolicy<T> policy, String clientName, Supplier<T> supplier) {
     Throwable lastError = null;
+    T lastResult = null;
     String caller = clientName + "-" + policy.name();
     for (int attempt = 1; attempt <= policy.maxAttempts(); attempt++) {
       try {
         log.debug("🔁 {} Retry attempt {}/{}", caller, attempt, policy.maxAttempts());
         T result = supplier.get();
+        lastResult = result;
         if (policy.successCondition().test(result)) {
           log.debug("✅ {} Retry succeeded on attempt {}/{}", caller, attempt, policy.maxAttempts());
           return result;
@@ -39,13 +41,13 @@ public class RetryTemplate {
       }
     }
 
-    log.warn("⚠️ {} Retry exhausted after {} attempts, returning fallback. Last error: {}",
+    log.warn("⚠️ {} Retry exhausted after {} attempts, returning last result. Last error: {}",
         caller,
         policy.maxAttempts(),
         lastError != null ? lastError.toString() : "none"
     );
 
-    return policy.fallback();
+    return lastResult != null ? lastResult : policy.fallback();
   }
 
   private void sleep(long millis, int attempt) {

@@ -268,7 +268,7 @@ A huge shoutout to the amazing team behind JobsHunter!
     </td>
     <td valign="top">
       <ul>
-        <li>...</li>
+        <li>no contribution yet</li>
       </ul>
     </td>
   </tr>
@@ -296,7 +296,7 @@ A huge shoutout to the amazing team behind JobsHunter!
     </td>
     <td valign="top">
       <ul>
-        <li>...</li>
+        <li>no contribution yet</li>
       </ul>
     </td>
   </tr>

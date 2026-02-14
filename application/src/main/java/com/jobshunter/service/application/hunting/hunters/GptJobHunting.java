@@ -60,9 +60,9 @@ public final class GptJobHunting implements JobHunting, JobByPromptHunting, JobB
 
   @EventListener(ApplicationReadyEvent.class)
   private void init() {
-    this.companiesModel = modelsDBService.getModel(new EngineSelection(EngineType.GPT, "gpt-4o-mini-2024-07-18"))
+    this.companiesModel = modelsDBService.getModel(new EngineSelection(EngineType.GPT, "gpt-5.2-2025-12-11"))
         .orElseThrow();
-    this.discoveryModel = modelsDBService.getModel(new EngineSelection(EngineType.GPT, "gpt-4o-mini-2024-07-18"))
+    this.discoveryModel = modelsDBService.getModel(new EngineSelection(EngineType.GPT, "gpt-4.1-mini"))
         .orElseThrow();
   }
 
@@ -175,7 +175,7 @@ public final class GptJobHunting implements JobHunting, JobByPromptHunting, JobB
     GptSearchRequest request = createBaseRequest(order);
 
     if (jobsClient instanceof AiJobsCompaniesClient<?> jobsClientComp) {
-      @SuppressWarnings("unchecked")
+      //noinspection unchecked
       AiJobsCompaniesClient<GptSearchRequest> typedClient = (AiJobsCompaniesClient<GptSearchRequest>) jobsClientComp;
       return searchCompaniesAndJobsAsync(request, order.getModel(), typedClient)
           .exceptionally(throwable -> {
@@ -231,14 +231,10 @@ public final class GptJobHunting implements JobHunting, JobByPromptHunting, JobB
           GptSearchRequest companyRequest = request.toBuilder()
               .company(company)
               .build();
-          String username = request.getOrder().getUser().getUsername();
-
-          return CompletableFuture.supplyAsync(() -> {
-            log.info("Searching jobs for user {} from company: {} with model {}", username, company.companyName(), model.getModel());
-            List<Job> jobs = client.searchJobsFromCompanies(companyRequest).getJobs();
-            log.info("Found {} jobs for user {} from company {}", jobs.size(), username, company.companyName());
-            return jobs;
-          }, executor);
+          return jobSearchStrategy.searchAsync(
+                  companyRequest, executor, jobSearchRequest -> searchJobsFromCompanySync((GptSearchRequest) jobSearchRequest, client),
+                  this::cleanupConversation)
+              .thenApply(AiClientResponse::getJobs);
         })
         .toList();
 
@@ -249,6 +245,18 @@ public final class GptJobHunting implements JobHunting, JobByPromptHunting, JobB
             .peek(job -> job.setSource("COMP-" + model.getModel()))
             .toList()
         );
+  }
+
+  private AiClientResponse searchJobsFromCompanySync(
+      GptSearchRequest companyRequest,
+      AiJobsCompaniesClient<GptSearchRequest> client
+  ) {
+    String username = companyRequest.getOrder().getUser().getUsername();
+    String companyName = companyRequest.getCompany().companyName();
+    log.info("Searching jobs for user {} from company: {} with model {}", username, companyName, companyRequest.getOrder().getModel());
+    AiClientResponse jobs = client.searchJobsFromCompanies(companyRequest);
+    log.info("Found {} jobs for user {} from company {}", jobs.getJobs().size(), username, companyName);
+    return jobs;
   }
 
 }

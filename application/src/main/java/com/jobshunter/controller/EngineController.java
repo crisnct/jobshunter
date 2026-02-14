@@ -82,14 +82,7 @@ public class EngineController {
     Hibernate.initialize(user.getContractTypes());
     Hibernate.initialize(user.getJobTypes());
     Hibernate.initialize(user.getCv());
-    EnumSet<ContractType> contractTypes = user.getContractTypes().stream()
-        .map(UserContractTypeEntity::getContractType)
-        .collect(Collectors.toCollection(() -> EnumSet.noneOf(ContractType.class)));
-    boolean userAcceptsRemoteOtherCountry = user.getJobTypes().stream().anyMatch(p -> p.getJobType() == JobType.REMOTE)
-        && (contractTypes.contains(ContractType.B2B) || contractTypes.contains(ContractType.EOR));
-    if (!userAcceptsRemoteOtherCountry) {
-      throw new ValidationException("User does not accept remote jobs from other countries");
-    }
+
     if (user.getCv() == null) {
       throw new ValidationException("User does not have any cv attached in his profile");
     }

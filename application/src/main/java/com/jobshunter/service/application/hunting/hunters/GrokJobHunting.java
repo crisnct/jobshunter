@@ -222,14 +222,10 @@ public final class GrokJobHunting implements JobHunting, JobByPromptHunting, Job
           GrokSearchRequest companyRequest = request.toBuilder()
               .company(company)
               .build();
-          String username = request.getOrder().getUser().getUsername();
-
-          return CompletableFuture.supplyAsync(() -> {
-            log.info("Searching jobs for user {} from company: {} with model {}", username, company.companyName(), model.getModel());
-            List<Job> jobs = client.searchJobsFromCompanies(companyRequest).getJobs();
-            log.info("Found {} jobs for user {} from company {}", jobs.size(), username, company.companyName());
-            return jobs;
-          }, executor);
+          return jobSearchStrategy.searchAsync(
+                  companyRequest, executor, jobSearchRequest -> searchJobsFromCompanySync((GrokSearchRequest) jobSearchRequest, client),
+                  this::cleanupConversation)
+              .thenApply(AiClientResponse::getJobs);
         })
         .toList();
 
@@ -240,6 +236,18 @@ public final class GrokJobHunting implements JobHunting, JobByPromptHunting, Job
             .peek(job -> job.setSource("COMP-" + model.getModel()))
             .toList()
         );
+  }
+
+  private AiClientResponse searchJobsFromCompanySync(
+      GrokSearchRequest companyRequest,
+      AiJobsCompaniesClient<GrokSearchRequest> client
+  ) {
+    String username = companyRequest.getOrder().getUser().getUsername();
+    String companyName = companyRequest.getCompany().companyName();
+    log.info("Searching jobs for user {} from company: {} with model {}", username, companyName, companyRequest.getOrder().getModel());
+    AiClientResponse jobs = client.searchJobsFromCompanies(companyRequest);
+    log.info("Found {} jobs for user {} from company {}", jobs.getJobs().size(), username, companyName);
+    return jobs;
   }
 
 }
