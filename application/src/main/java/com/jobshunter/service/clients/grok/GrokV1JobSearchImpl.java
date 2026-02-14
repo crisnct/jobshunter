@@ -5,9 +5,9 @@ import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.jobshunter.config.ApplicationProperties;
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.entities.UserJobRoleEntity;
-import com.jobshunter.dto.GrokSearchRequest;
 import com.jobshunter.dto.CompanyDto;
 import com.jobshunter.dto.CompanyDtoList;
+import com.jobshunter.dto.GrokSearchRequest;
 import com.jobshunter.dto.exceptions.BusinessException;
 import com.jobshunter.dto.grokRequest.GrokJobsPayload;
 import com.jobshunter.dto.grokRequest.GrokJobsPayload.GrokJobsPayloadBuilder;
@@ -16,7 +16,6 @@ import com.jobshunter.dto.grokRequest.tools.Tools;
 import com.jobshunter.dto.grokResponse.GrokResponse;
 import com.jobshunter.dto.grokResponse.JobSearchResponse;
 import com.jobshunter.dto.grokResponse.OutputItem;
-import com.jobshunter.dto.grokResponse.Usage;
 import com.jobshunter.model.AiClientResponse;
 import com.jobshunter.model.AiSchemaType;
 import com.jobshunter.model.Job;
@@ -93,7 +92,7 @@ public non-sealed class GrokV1JobSearchImpl implements AiJobsClient<GrokSearchRe
         .addUserPrompt(request.getUserPrompt() + templateRenderer.getPrompt(PromptType.USER_PROMPT_JOB_BLACKLISTED,
             "blacklist",
             properties.getJobsHunter().getBlacklist()
-        ), request.getFileId())
+        ))
         .setResponseSchema(templateRenderer.getSchema(AiSchemaType.GROK_JSON_SCHEMA_RESPONSE));
 
     GrokJobsPayload payload = payloadBuilder.build();

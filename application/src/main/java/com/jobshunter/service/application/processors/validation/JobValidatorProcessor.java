@@ -48,7 +48,7 @@ public final class JobValidatorProcessor implements JobProcessor {
   private List<Pattern> parseExpressions(String expressions) {
     List<Pattern> result = new ArrayList<>();
     for (String keyword : expressions.split(",")) {
-      result.add(patternCache.getWordPattern(keyword));
+      result.add(patternCache.getPhrasePattern(keyword));
     }
     return Collections.unmodifiableList(result);
   }

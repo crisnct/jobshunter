@@ -106,7 +106,7 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient<GptSearchRequ
             "blacklist",
             properties.getJobsHunter().getBlacklist()
         ))
-        .addUserPrompt(request.getUserPrompt(), request.getFileId())
+        .addUserPrompt(request.getUserPrompt())
         .setResponseSchema(templateRenderer.getSchema(AiSchemaType.GPT_JSON_SCHEMA_RESPONSE))
         .build();
 

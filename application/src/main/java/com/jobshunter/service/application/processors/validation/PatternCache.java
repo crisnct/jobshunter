@@ -30,19 +30,17 @@ public class PatternCache {
    * @param value the word to create a pattern for
    * @return a compiled Pattern that matches the word with boundaries
    */
-  public Pattern getWordPattern(String value) {
+  public Pattern getPhrasePattern(String value) {
     String key = value.toLowerCase();
-    return patternCache.get(key, this::createWordPattern);
+    return patternCache.get(key, this::buildPhrasePattern);
   }
 
-  private Pattern createWordPattern(String value) {
-    String phrasePattern = value
-        .trim()
-        .replaceAll("\\s+", "\\\\s+"); // permite whitespace arbitrar intre cuvinte
-    String regex =
-        "(?<!\\p{L}|\\p{N})" +
-            Pattern.quote(phrasePattern).replace("\\\\\\s\\+", "\\s+") +
-            "(?!\\p{L}|\\p{N})";
+  private Pattern buildPhrasePattern(String value) {
+    String escaped = value.trim()
+        .replaceAll("([\\\\.^$|?*+()\\[\\]{}])", "\\\\$1") // escape regex meta
+        .replaceAll("\\s+", "\\\\s+");                    // whitespace flexibil
+
+    String regex = "(?<!\\p{L}\\p{N})" + escaped + "(?!\\p{L}\\p{N})";
 
     return Pattern.compile(
         regex,
@@ -63,6 +61,6 @@ public class PatternCache {
     if (value == null || value.isBlank() || text == null) {
       return false;
     }
-    return getWordPattern(value).matcher(text).find();
+    return getPhrasePattern(value).matcher(text).find();
   }
 }

@@ -54,7 +54,7 @@ public class ApplicationProperties {
   public static class AppThreads {
 
     private int urlFetchRestClient;
-    private int urlFetchPlaywright;
+    private int playwrightContextPoolSize;
     private int jobProcessing;
     private int orders;
     private int notifications;
@@ -211,6 +211,7 @@ public class ApplicationProperties {
 
     private String apiKey;
     private int maxPageSearch;
+    private int threads;
     private boolean enabled;
   }
 

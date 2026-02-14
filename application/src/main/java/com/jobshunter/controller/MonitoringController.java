@@ -30,7 +30,6 @@ public class MonitoringController {
   private final LimitedVirtualThreadExecutor grokSearchExecutor;
   private final LimitedVirtualThreadExecutor geminiSearchExecutor;
   private final LimitedVirtualThreadExecutor serpExecutor;
-  private final LimitedVirtualThreadExecutor urlFetchPlaywrightExecutor;
   private final LimitedVirtualThreadExecutor jobProcessingExecutor;
   private final LimitedVirtualThreadExecutor urlFetchRestClientExecutor;
   private final LimitedVirtualThreadExecutor ordersExecutor;
@@ -46,7 +45,6 @@ public class MonitoringController {
       @Qualifier("grokSearchExecutor") LimitedVirtualThreadExecutor grokSearchExecutor,
       @Qualifier("geminiSearchExecutor") LimitedVirtualThreadExecutor geminiSearchExecutor,
       @Qualifier("serpExecutor") LimitedVirtualThreadExecutor serpExecutor,
-      @Qualifier("urlFetchPlaywrightExecutor") LimitedVirtualThreadExecutor urlFetchPlaywrightExecutor,
       @Qualifier("urlFetchRestClientExecutor") LimitedVirtualThreadExecutor urlFetchRestClientExecutor,
       @Qualifier("jobProcessingExecutor") LimitedVirtualThreadExecutor jobProcessingExecutor,
       @Qualifier("ordersExecutor") LimitedVirtualThreadExecutor ordersExecutor,
@@ -60,7 +58,6 @@ public class MonitoringController {
     this.gptSearchExecutor = gptSearchExecutor;
     this.grokSearchExecutor = grokSearchExecutor;
     this.geminiSearchExecutor = geminiSearchExecutor;
-    this.urlFetchPlaywrightExecutor = urlFetchPlaywrightExecutor;
     this.serpExecutor = serpExecutor;
     this.jobProcessingExecutor = jobProcessingExecutor;
     this.ordersExecutor = ordersExecutor;
@@ -85,7 +82,6 @@ public class MonitoringController {
     joiner.add(formatExecutorRow("Orders", ordersExecutor));
     joiner.add(formatExecutorRow("Notifications", notificationsExecutor));
     joiner.add(formatExecutorRow("URL-Fetch-REST Client", urlFetchRestClientExecutor));
-    joiner.add(formatExecutorRow("URL-Fetch-Playwright", urlFetchPlaywrightExecutor));
     joiner.add(formatSchedulerRow(
         ((ThreadPoolTaskScheduler) scheduler).getScheduledThreadPoolExecutor()
     ));

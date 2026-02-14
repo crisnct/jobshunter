@@ -34,8 +34,6 @@ import com.jobshunter.service.application.processors.JobScoringProcessor;
 import com.jobshunter.service.application.processors.validation.JobValidatorProcessor;
 import com.jobshunter.service.clients.SmtpMailtrapClient;
 import com.jobshunter.service.clients.browser.BrowserSimulator;
-import com.jobshunter.service.clients.browser.HttpFetchResult;
-import com.jobshunter.service.clients.browser.RedirectFetchPage;
 import io.jsonwebtoken.lang.Assert;
 import java.util.ArrayList;
 import java.util.List;
@@ -113,9 +111,6 @@ public class IntegrationTests {
 
   @Autowired
   private BrowserSimulator browserSimulator;
-
-  @Autowired
-  private RedirectFetchPage redirectFetchPage;
 
   @Autowired
   private UrlAffinityExecutor executor;
@@ -260,23 +255,6 @@ public class IntegrationTests {
 
   @Test
   @Disabled
-  public void testRedirection() {
-    HttpFetchResult result = redirectFetchPage.fetch(
-        "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEdoYtUm9AVmPKK7dy51GXRPMD604I35SzG8yFmb14kFecBtnRDL2v3HF1UUZB5YtpuBoU0W4pMUnwCQ-HDyua_hdmy4xXDWcRMfv-MkE7zSlo3rGb7GggEEHnwnRKVDakWl387P0X1zlcQdcL9wqndBKkp4ifvAUyS7UlnUv1c3h9yo0MXPs1_Q6H7ziAsG3Cu");
-    System.out.println(result.finalUrl());
-    result = redirectFetchPage.fetch("https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQG56Dsba-ERn1Z-5xSWHq62X_M6o91aH7Za5LRym93Wn2-STuJlWedFDdrsovmrKC2ryFFE7qrkThY1B0m09Bw08uACSDV9xGrMaFykSShCiaaw0NSmhArQXUWGmkOxWDRvNVX_0pB1tKosJA4EAF2AqACvO8ixKZ9QzFZfjKzcm9KhLhh05vG2BHNLuBnOUsa2qVAnY_NXBujoo2ksLOvJ4xO9fNXzLEGl8NqiiCwbblzVQKeHJ562BtODtscZ7czUNo1sGP0SvUYuYFo1");
-    System.out.println(result.finalUrl());
-    result = redirectFetchPage.fetch("https://www.nokia.com/careers/job/26912/Software-Engineer");
-    System.out.println(result.finalUrl());
-    result = redirectFetchPage.fetch("https://www.nokia.com/about-us/careers/jobs/26912");
-    System.out.println(result.finalUrl());
-
-    result = redirectFetchPage.fetch("https://careers.nokia.com/jobs/software-engineer-26912");
-    System.out.println(result.finalUrl());
-  }
-
-  @Test
-  @Disabled
   public void testInvalidRedirectedLink() {
     List<CompletionStage<ResponseEntity<String>>> list = new ArrayList<>();
     list.add(browserSimulator.openPageAsync("https://angel.co/company/techstartup/jobs/senior-java-developer-remote-321654987"));
@@ -365,6 +343,31 @@ public class IntegrationTests {
     Assert.isTrue(jc.getFetchResult().body().contains("This job offer is not available in your country"), "Description is extracted properly");
   }
 
+
+  @Test
+  @Disabled
+  public void testExpired() {
+    Job job = new Job("https://www.indeed.com/viewjob?jk=7a69d37023158b21&utm_campaign=google_jobs_apply&utm_source=google_jobs_apply&utm_medium=organic");
+
+    UserJobTypeEntity onsiteJob = new UserJobTypeEntity();
+    onsiteJob.setJobType(JobType.ONSITE);
+    UserJobTypeEntity hybridJob = new UserJobTypeEntity();
+    hybridJob.setJobType(JobType.HYBRID);
+
+    UserEntity user = new UserEntity();
+    user.setJobTypes(List.of(onsiteJob, hybridJob));
+    user.setContractTypes(List.of());
+
+    user.setJobRoles(List.of());
+
+    JobContext jc = new JobContext(job, user, null);
+    jc = jobBasicCheckProcessor.processAsync(jc);
+    jc = jobFetchProcessor.processAsync(jc);
+    jc = jobBodyExtractorProcessor.processAsync(jc);
+    jc = jobValidator.processAsync(jc);
+
+    Assert.isTrue(!jc.isValidatedSuccessfully(), "Job link is expired and should not be validated");
+  }
 
 
   //TODO

@@ -32,7 +32,7 @@ public class JobsStateMachine {
       JobBodyExtractorProcessor bodyExtractorProcessor,
       JobScoringProcessor scoringProcessor,
       JobMetricsService metricsService,
-      @Qualifier("urlFetchRestClientExecutor") Executor urlFetchRestClientExecutor,
+      @Qualifier("urlFetchPlaywrightExecutor") Executor urlFetchPlaywrightExecutor,
       @Qualifier("geminiSearchExecutor") Executor geminiExecutor,
       @Qualifier("grokSearchExecutor") Executor grokExecutor,
       @Qualifier("gptSearchExecutor") Executor gptExecutor,
@@ -50,7 +50,7 @@ public class JobsStateMachine {
 
     this.pipelineSteps = List.of(
         new PipelineStep(JobPhase.BASIC_CHECK, fakeUrlFilterProcessor, jobProcessingExecutor),
-        new PipelineStep(JobPhase.FETCH, fetchPageProcessor, urlFetchRestClientExecutor),
+        new PipelineStep(JobPhase.FETCH, fetchPageProcessor, urlFetchPlaywrightExecutor),
         new PipelineStep(JobPhase.BODY_EXTRACTION, bodyExtractorProcessor, jobProcessingExecutor),
         new PipelineStep(JobPhase.VALIDATION, validatorProcessor, jobProcessingExecutor),
         new PipelineStep(JobPhase.SCORING, scoringProcessor, scoringExecutor)

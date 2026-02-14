@@ -6,10 +6,9 @@ import com.jobshunter.config.ApplicationProperties;
 import com.jobshunter.database.entities.AiModelEntity;
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.entities.UserJobRoleEntity;
-import com.jobshunter.dto.GeminiSearchRequest;
 import com.jobshunter.dto.CompanyDto;
 import com.jobshunter.dto.CompanyDtoList;
-import com.jobshunter.dto.geminiRequest.FileData;
+import com.jobshunter.dto.GeminiSearchRequest;
 import com.jobshunter.dto.geminiRequest.GeminiJobsPayload;
 import com.jobshunter.dto.geminiRequest.GenerationConfig;
 import com.jobshunter.dto.geminiRequest.GoogleSearchTool;
@@ -17,7 +16,6 @@ import com.jobshunter.dto.geminiRequest.Part;
 import com.jobshunter.dto.geminiRequest.ThinkingConfig;
 import com.jobshunter.dto.geminiResponse.GeminiGenerateContentResponse;
 import com.jobshunter.dto.geminiResponse.GeminiGenerateContentResponse.Candidate;
-import com.jobshunter.dto.geminiResponse.GeminiGenerateContentResponse.UsageMetadata;
 import com.jobshunter.model.AiClientResponse;
 import com.jobshunter.model.AiSchemaType;
 import com.jobshunter.model.Job;
@@ -100,13 +98,11 @@ public non-sealed class GeminiV1JobSearchImpl implements AiJobsClient<GeminiSear
         properties.getJobsHunter().getBlacklist()
     );
 
-    FileData resume = new FileData(String.format(FILES_URI, request.getFileId()), MediaType.APPLICATION_PDF_VALUE);
-
     GeminiJobsPayload payload = GeminiJobsPayload.builder(model)
         .generationConfig(generationConfig)
         .tools(List.of(new GoogleSearchTool()))
         .addSystemInstruction(systemPrompt)
-        .addUserContent(request.getUserPrompt(), List.of(resume))
+        .addUserContent(request.getUserPrompt())
         .build();
 
     tokenEstimationGuard.assertFitsContext(payload);

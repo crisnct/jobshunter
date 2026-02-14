@@ -2,6 +2,8 @@ package com.jobshunter.service;
 
 import com.jobshunter.config.ApplicationProperties;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import lombok.AllArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -32,13 +34,12 @@ public class ExecutorsConfig implements AsyncConfigurer {
 
   @Bean(name = "serpExecutor")
   public LimitedVirtualThreadExecutor serpExecutor() {
-    return new LimitedVirtualThreadExecutor("serp", properties.getJobsHunter().getThreads().getUrlFetchPlaywright());
+    return new LimitedVirtualThreadExecutor("serp", properties.getSerp().getThreads());
   }
 
   @Bean(name = "urlFetchPlaywrightExecutor")
-  public LimitedVirtualThreadExecutor urlFetchPlaywrightExecutor() {
-    return new LimitedVirtualThreadExecutor("url-fetch-playwright",
-        properties.getJobsHunter().getThreads().getUrlFetchPlaywright());
+  public ExecutorService urlFetchPlaywrightExecutor() {
+    return Executors.newFixedThreadPool(1);
   }
 
   @Bean(name = "urlFetchRestClientExecutor")

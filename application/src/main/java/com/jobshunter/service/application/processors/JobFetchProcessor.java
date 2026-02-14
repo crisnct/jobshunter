@@ -22,12 +22,10 @@ public final class JobFetchProcessor implements JobProcessor {
     if (context.hasFetchResult()) {
       return context;
     }
-
-    HttpFetchResult result = fetcher.fetch(context.getJob().getUrl());
-
+    String url = context.getJob().getUrl();
+    HttpFetchResult result = fetcher.fetch(url);
     context.setFetchResult(result);
-    if (StringUtils.isNotBlank(result.finalUrl()) && result.statusCode() != HttpStatus.NOT_FOUND.value()) {
-      context.getJob().setUrl(result.finalUrl());
+    if (result.statusCode() == HttpStatus.OK.value()) {
       context.setPhase(JobPhase.FETCH);
     } else {
       context.failJob("Page body can not be extracted, status code: " + result.statusCode());

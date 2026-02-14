@@ -250,9 +250,9 @@ class ValidationRulesTest {
     @Test
     @DisplayName("Should return same pattern instance for same word")
     void shouldReturnSamePatternForSameWord() {
-      Pattern p1 = cache.getWordPattern("test");
-      Pattern p2 = cache.getWordPattern("test");
-      Pattern p3 = cache.getWordPattern("TEST");
+      Pattern p1 = cache.getPhrasePattern("test");
+      Pattern p2 = cache.getPhrasePattern("test");
+      Pattern p3 = cache.getPhrasePattern("TEST");
 
       // Caffeine caches by lowercase key, so all should be same instance
       assertTrue(p1 == p2);

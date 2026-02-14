@@ -5,9 +5,11 @@ import com.jobshunter.service.UrlAffinityExecutor;
 import com.microsoft.playwright.BrowserContext;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.PlaywrightException;
+import com.microsoft.playwright.Response;
 import com.microsoft.playwright.options.WaitUntilState;
 import jakarta.annotation.Nonnull;
 import java.net.URI;
+import java.util.Locale;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
@@ -16,6 +18,7 @@ import java.util.function.Function;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hc.client5.http.protocol.HttpClientContext;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
@@ -73,19 +76,7 @@ public class BrowserSimulator {
 
   private CompletionStage<ResponseEntity<String>> openPageAsync(String url, RestClient restClient, HttpClientContext httpContext) {
     // Pass httpContext through executor by setting ThreadLocal in executor thread
-    return executor.submit(url, () -> {
-          try {
-            if (httpContext != null) {
-              RedirectFetchPage.setThreadLocalContext(httpContext);
-            }
-            return openPageSyncRestClient(url, restClient);
-          } finally {
-            // Clean up ThreadLocal in executor thread
-            if (httpContext != null) {
-              RedirectFetchPage.removeThreadLocalContext();
-            }
-          }
-        })
+    return executor.submit(url, () -> openPageSyncRestClient(url, restClient))
         .orTimeout(TIMEOUT, TimeUnit.SECONDS)
         .handle((response, error) -> {
           if (error == null && response != null && response.getStatusCode().is2xxSuccessful()) {
@@ -135,30 +126,119 @@ public class BrowserSimulator {
   }
 
   public ResponseEntity<String> openPageSyncPlaywright(String url, WaitUntilState state) {
-    try (BrowserContext context = playwrightManager.newContext();
-        Page page = context.newPage()) {
+    BrowserContext context;
+    try {
+      context = playwrightManager.borrowContext();
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw new PlaywrightException("Interrupted while waiting for a browser context");
+    }
+    try {
+      Page page = context.newPage();
       try {
-        navigate(url, page, state);
-      } catch (PlaywrightException e) {
-        if (e.getMessage().contains("ERR_HTTP2_PROTOCOL_ERROR")) {
-          log.warn("Retrying navigation without HTTP/2");
-          navigate(url, page, state);
-        } else {
-          throw e;
+        Response response = navigate(url, page, state);
+
+        String finalUrl = page.url();
+        int status = response != null ? response.status() : -1;
+
+        log.info("▶ Requested URL  : {}", url);
+        log.info("▶ Final URL      : {}", finalUrl);
+        log.info("▶ HTTP Status    : {}", status);
+
+        // --- HARD FAIL CONDITIONS ---
+
+        if (status >= 400) {
+          log.warn("HTTP error detected: {}", status);
+          return ResponseEntity.status(status).body("");
         }
+
+        if (!finalUrl.equalsIgnoreCase(url)) {
+          log.warn("Redirect detected: {} -> {}", url, finalUrl);
+
+          // redirect to login page detection
+          if (finalUrl.contains("login") || finalUrl.contains("signin")) {
+            log.warn("Redirected to login page.");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("");
+          }
+        }
+
+        String content = page.content();
+
+        // --- SOFT 404 DETECTION ---
+        if (isSoft404(content)) {
+          log.warn("Soft 404 detected for {}", url);
+          return ResponseEntity.status(HttpStatus.NOT_FOUND).body(content);
+        }
+
+        return ResponseEntity.ok(content);
+
+      } catch (PlaywrightException e) {
+        if (e.getMessage() != null &&
+            e.getMessage().contains("ERR_HTTP2_PROTOCOL_ERROR")) {
+          log.warn("Retrying navigation without HTTP/2");
+          return retryWithoutHttp2(url, state);
+        }
+        throw e;
+      } finally {
+        page.close();
       }
-      return ResponseEntity.ok(page.content());
+    } finally {
+      playwrightManager.returnContext(context);
     }
   }
 
-  private void navigate(String url, Page page, WaitUntilState state) {
-    page.navigate(
+  private Response navigate(String url, Page page, WaitUntilState state) {
+    Response response = page.navigate(
         url,
         new Page.NavigateOptions()
             .setWaitUntil(state)
             .setTimeout(TimeUnit.SECONDS.toMillis(TIMEOUT))
     );
-    log.info("▶️ PLAYWRIGHT successfully got the body of page {}", url);
+
+    String finalUrl = page.url();
+    int status = response != null ? response.status() : -1;
+
+    log.info("▶️ Requested URL: {}", url);
+    log.info("▶️ Final URL: {}", finalUrl);
+    log.info("▶️ HTTP Status: {}", status);
+
+    return response;
+  }
+
+  private ResponseEntity<String> retryWithoutHttp2(String url, WaitUntilState state) {
+    BrowserContext context;
+    try {
+      context = playwrightManager.borrowContext();
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw new PlaywrightException("Interrupted while waiting for a browser context");
+    }
+    try {
+      Page page = context.newPage();
+      try {
+        Response response = navigate(url, page, state);
+        int status = response != null ? response.status() : -1;
+        if (status >= 400) {
+          return ResponseEntity.status(status).body("");
+        }
+        return ResponseEntity.ok(page.content());
+      } finally {
+        page.close();
+      }
+    } finally {
+      playwrightManager.returnContext(context);
+    }
+  }
+
+  private boolean isSoft404(String content) {
+    if (content == null || content.isBlank()) {
+      return true;
+    }
+    String lower = content.toLowerCase(Locale.ROOT);
+    return lower.contains("page not found")
+        || lower.contains("job not found")
+        || lower.contains("no longer available")
+        || lower.contains("404");
   }
 
 }
