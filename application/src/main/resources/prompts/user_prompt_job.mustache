@@ -1,26 +1,37 @@
-# Search for individual job postings published by the following company:
-{{company_name}} who have this domain {{company_domain}}
+# Search for individual job postings published by:
+{{company_name}}
 
-# Discovery guidance:
-- You MUST construct search queries using: site:{{company_domain}} careers "{{positions}}"
-- Career listing or category pages MAY be used only for discovery.
-- Final results MUST be URLs that clearly point to a single job posting.
+Official domain: {{company_domain}}
 
-# Strict Navigation Limitation:
+# Discovery Guidance
+- You MUST construct search queries using:
+site:{{company_domain}} careers "{{positions}}"
+- You MAY also construct queries targeting official ATS domains clearly associated with the company, such as:
+site:smartrecruiters.com {{company_name}} "{{positions}}"
+site:workday.com {{company_name}} "{{positions}}"
+site:greenhouse.io {{company_name}} "{{positions}}"
+
+- Career listing pages MAY be used only for discovery.
+- Final results MUST clearly point to a single job posting URL.
+
+# Strict Navigation Limitation
 - Do NOT open individual job posting pages.
 - Do NOT fetch or analyze job description content.
 - Use only search result metadata, visible snippets, and URL structure.
-- If verifying a constraint would require opening the job page, exclude the URL.
+- If verifying any constraint would require opening the job page, exclude the URL.
 
-# Exclusions:
-- Do NOT return: career homepages, listing pages, search result pages, selector pages.
+# Title Constraint
+- The job title visible in search results metadata MUST contain one of:
+{{positions}}
 
-# Final requirement:
+# Exclusions
+- Do NOT return:
+  - career homepages
+  - listing pages
+  - search result pages
+  - selector pages
+  - aggregator domains
+
+# Final Requirement
 - Include a job posting ONLY if all constraints can be verified from metadata alone.
-- If verification requires page access, exclude the URL.
-
-# Example of very good urls to return:
-- https://career.luxoft.com/jobs/senior-frontend-engineer-20477
-- https://www.crossover.com/jobs/4774/learnwithai/ai-augmented-full-stack-principal-engineer
-- https://devjob.ro/en/jobs/Sigma-Software-Senior-Full-Stack-Developer-NodejsReactJS
-- https://careers.nttdata.ro/nttdataromania/job/Brasov-Senior-Java-Developer/1287294401/?utm_medium=phenom&utm_source=OneNTTCareerPage&jobSeqNo=NTT1GLOBAL95FE7B0AEAD8E00EXTERNALENGLOBAL
+- If metadata is insufficient, exclude the URL.
