@@ -13,6 +13,7 @@ import com.jobshunter.model.EngineSelection;
 import com.jobshunter.model.EngineType;
 import com.jobshunter.model.Job;
 import com.jobshunter.model.SearchJobOrder;
+import com.jobshunter.service.application.hunting.CountryIsoCode;
 import com.jobshunter.service.application.hunting.JobByCompanyHunting;
 import com.jobshunter.service.application.hunting.JobByPromptHunting;
 import com.jobshunter.service.application.hunting.JobHunting;
@@ -39,6 +40,8 @@ public final class GrokJobHunting implements JobHunting, JobByPromptHunting, Job
   private final Executor executor;
   private final AiConversationStrategy jobSearchStrategy;
   private final ModelsDBService modelsDBService;
+  private final CountryIsoCode countryIsoCode;
+
   private AiModelEntity discoveryModel;
   private AiModelEntity companiesModel;
 
@@ -46,12 +49,14 @@ public final class GrokJobHunting implements JobHunting, JobByPromptHunting, Job
       @Qualifier("grokSearchExecutor") Executor grokSearchExecutor,
       @Qualifier("JobsClientGROK") AiJobsClient<GrokSearchRequest> grokClient,
       ModelsDBService modelsDBService,
-      AiConversationStrategy strategy
+      AiConversationStrategy strategy,
+      CountryIsoCode countryIsoCode
   ) {
     this.executor = grokSearchExecutor;
     this.jobsClient = grokClient;
     this.modelsDBService = modelsDBService;
     this.jobSearchStrategy = strategy;
+    this.countryIsoCode = countryIsoCode;
   }
 
   @EventListener(ApplicationReadyEvent.class)
@@ -80,6 +85,7 @@ public final class GrokJobHunting implements JobHunting, JobByPromptHunting, Job
 
     return GrokSearchRequest.builder(order)
         .fileId(fileId)
+        .countryIsoCode(countryIsoCode.getCode(order.getUser().getCountry()))
         .storeConversation(true)
         .discoveryModel(discoveryModel)
         .companiesModel(companiesModel)

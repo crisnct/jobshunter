@@ -3,6 +3,7 @@ package com.jobshunter.service.clients.grok;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.jobshunter.config.ApplicationProperties;
+import com.jobshunter.config.StringUtils;
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.database.entities.UserJobRoleEntity;
 import com.jobshunter.dto.CompanyDto;
@@ -14,6 +15,7 @@ import com.jobshunter.dto.grokRequest.GrokJobsPayload;
 import com.jobshunter.dto.grokRequest.GrokJobsPayload.GrokJobsPayloadBuilder;
 import com.jobshunter.dto.grokRequest.Reasoning;
 import com.jobshunter.dto.grokRequest.tools.Tools;
+import com.jobshunter.dto.grokRequest.tools.UserLocation;
 import com.jobshunter.dto.grokResponse.GrokResponse;
 import com.jobshunter.dto.grokResponse.JobSearchResponse;
 import com.jobshunter.dto.grokResponse.OutputItem;
@@ -89,11 +91,13 @@ public non-sealed class GrokV1JobSearchImpl implements AiJobsClient<GrokSearchRe
         .maxOutputTokens(15000)
         .store(request.getStoreConversation())
         .previousResponseId(request.getPrevResponseId())
-        .addTools(Tools.builder().setWebSearch().build())
-        .addUserPrompt(request.getUserPrompt() + templateRenderer.getPrompt(PromptType.USER_PROMPT_JOB_BLACKLISTED,
+        .addTools(this.createWebSearchTool(request))
+        .instructions(templateRenderer.getPrompt(PromptType.SYSTEM_INSTRUCTIONS))
+        .addSystemPrompt(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_JOB_SEARCH,
             "blacklist",
             properties.getJobsHunter().getBlacklist()
         ))
+        .addUserPrompt(request.getUserPrompt())
         .setResponseSchema(templateRenderer.getSchema(AiSchemaType.GROK_JSON_SCHEMA_RESPONSE));
 
     GrokJobsPayload payload = payloadBuilder.build();
@@ -155,6 +159,7 @@ public non-sealed class GrokV1JobSearchImpl implements AiJobsClient<GrokSearchRe
         .retrieve()
         .body(GrokResponse.class);
 
+    //noinspection DataFlowIssue
     costPublisher.publishGrok(request.getOrder().getJobOrder().getId(), payload.aiModel(), estmTokens, response.usage());
     return extractCompanies(response);
   }
@@ -172,11 +177,12 @@ public non-sealed class GrokV1JobSearchImpl implements AiJobsClient<GrokSearchRe
     List<String> positions = user.getJobRoles().stream().map(UserJobRoleEntity::getJobRole).toList();
 
     GrokJobsPayload payload = GrokJobsPayload.builder(request.getDiscoveryModel())
-        .temperature(0.15)
         .maxOutputTokens(15000)
+        .reasoning(new Reasoning(REASONING_JOB_SEARCH))
         .store(request.getStoreConversation())
         .previousResponseId(request.getPrevResponseId())
-        .addTools(Tools.builder().setWebSearch().build())
+        .addTools(this.createWebSearchTool(request))
+        .instructions(templateRenderer.getPrompt(PromptType.SYSTEM_INSTRUCTIONS))
         .addSystemPrompt(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_JOBS_BY_COMPANY))
         .addUserPrompt(templateRenderer.getPrompt(PromptType.USER_PROMPT_JOB,
             Map.of(
@@ -205,6 +211,16 @@ public non-sealed class GrokV1JobSearchImpl implements AiJobsClient<GrokSearchRe
     result.addAll(jobs);
     costPublisher.publishGrok(request.getOrder().getJobOrder().getId(), payload.aiModel(), estmTokens, response.usage());
     return result;
+  }
+
+  private Tools createWebSearchTool(GrokSearchRequest request) {
+    UserEntity user = request.getOrder().getUser();
+    UserLocation userLocation = new UserLocation();
+    userLocation.setType("approximate");
+    //This is country iso code, like RO
+    userLocation.setCountry(request.getCountryIsoCode());
+    userLocation.setCity(StringUtils.removeDiacritics(user.getCity()));
+    return Tools.builder().setWebSearch().userLocation(userLocation).build();
   }
 
   @Override

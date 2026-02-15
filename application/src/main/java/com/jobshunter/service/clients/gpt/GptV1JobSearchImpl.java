@@ -90,18 +90,12 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient<GptSearchRequ
   private AiClientResponse searchJobsOnce(GptSearchRequest request) {
     SearchJobOrder order = request.getOrder();
 
-    UserLocation userLocation = new UserLocation();
-    userLocation.setType("approximate");
-    //This is country iso code, like RO
-    userLocation.setCountry(request.getCountryIsoCode());
-    userLocation.setCity(StringUtils.removeDiacritics(order.getUser().getCity()));
-
     GptJobsPayload payload = GptJobsPayload.builder(order.getModel())
-        .store(request.getStoreConversation())
         .maxOutputTokens(15000)
         .reasoning(new Reasoning(REASONING_JOB_SEARCH))
+        .store(request.getStoreConversation())
         .previousResponseId(request.getPrevResponseId())
-        .addTools(Tools.builder().setWebSearch().userLocation(userLocation).build())
+        .addTools(this.createToolsForJobsFromCompany(request))
         .instructions(templateRenderer.getPrompt(PromptType.SYSTEM_INSTRUCTIONS))
         .addSystemPrompt(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_JOB_SEARCH,
             "blacklist",
@@ -197,11 +191,12 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient<GptSearchRequ
     List<String> positions = user.getJobRoles().stream().map(UserJobRoleEntity::getJobRole).toList();
 
     GptJobsPayload payload = GptJobsPayload.builder(request.getDiscoveryModel())
-        .temperature(0.15)
         .maxOutputTokens(15000)
+        .reasoning(new Reasoning(REASONING_JOB_SEARCH))
         .store(request.getStoreConversation())
         .previousResponseId(request.getPrevResponseId())
-        .addTools(Tools.builder().setWebSearch().build())
+        .addTools(this.createToolsForJobsFromCompany(request))
+        .instructions(templateRenderer.getPrompt(PromptType.SYSTEM_INSTRUCTIONS))
         .addSystemPrompt(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_JOBS_BY_COMPANY))
         .addUserPrompt(templateRenderer.getPrompt(PromptType.USER_PROMPT_JOB,
             Map.of(
@@ -229,6 +224,16 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient<GptSearchRequ
     result.addAll(jobs);
     costPublisher.publishGpt(request.getOrder().getJobOrder().getId(), payload.aiModel(), estmTokens, response.usage());
     return result;
+  }
+
+  private Tools createToolsForJobsFromCompany(GptSearchRequest request) {
+    UserEntity user = request.getOrder().getUser();
+    UserLocation userLocation = new UserLocation();
+    userLocation.setType("approximate");
+    //This is country iso code, like RO
+    userLocation.setCountry(request.getCountryIsoCode());
+    userLocation.setCity(StringUtils.removeDiacritics(user.getCity()));
+    return Tools.builder().setWebSearch().userLocation(userLocation).build();
   }
 
   @Override

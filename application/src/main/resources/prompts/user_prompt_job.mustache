@@ -3,23 +3,28 @@ Search for individual job postings published by the following company:
 
 Primary source constraint:
 - Acceptable sources include the company’s primary domain {{company_domain}} and any subdomain that is organizationally owned and operated by the company.
-- Job-specific pages on these domains are valid final results, regardless of whether the application flow redirects to an external ATS.
-- External ATS pages are acceptable only when explicitly linked from an official company-controlled domain.
+
+Strict Navigation Limitation:
+- Do NOT open individual job posting pages.
+- Do NOT fetch or analyze job description content.
+- Use only search result metadata, visible snippets, and URL structure.
+- If verifying a constraint would require opening the job page, exclude the URL.
 
 Job title constraint:
-- The job title MUST contain one of the following expressions as a contiguous, case-insensitive word sequence, without reordering or substitution:
+- The job title visible in search results or metadata MUST contain one of the following expressions (case-insensitive):
 {{positions}}
 
 Discovery guidance:
-- You MAY use career listings, search results, or category pages ONLY as intermediate discovery steps.
-- Final results MUST point to a single, individual job posting page.
+- Career listing or category pages MAY be used only for discovery.
+- Final results MUST be URLs that clearly point to a single job posting.
 
 Exclusions:
 - Do NOT return:
   - career homepages
-  - category or listing pages
-  - language or country selector pages
+  - listing pages
+  - search result pages
+  - selector pages
 
 Final requirement:
-- Include a job posting ONLY if all constraints above are explicitly satisfied.
-- Otherwise, exclude it.
+- Include a job posting ONLY if all constraints can be verified from metadata alone.
+- If verification requires page access, exclude the URL.

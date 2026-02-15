@@ -1,6 +1,7 @@
 package com.jobshunter.dto;
 
 import com.jobshunter.database.entities.AiModelEntity;
+import com.jobshunter.dto.GptSearchRequest.Builder;
 import com.jobshunter.model.SearchJobOrder;
 import lombok.Getter;
 
@@ -17,6 +18,7 @@ public final class GrokSearchRequest implements JobSearchRequest {
   private final String userPrompt;
   private final Long promptId;
   private final String fileId;
+  private final String countryIsoCode;
   private final Boolean storeConversation;
   private final String prevResponseId;
   private final CompanyDto company;
@@ -28,6 +30,7 @@ public final class GrokSearchRequest implements JobSearchRequest {
     this.userPrompt = builder.userPrompt;
     this.promptId = builder.promptId;
     this.fileId = builder.fileId;
+    this.countryIsoCode = builder.countryIsoCode;
     this.storeConversation = builder.storeConversation;
     this.prevResponseId = builder.prevResponseId;
     this.company = builder.company;
@@ -50,6 +53,7 @@ public final class GrokSearchRequest implements JobSearchRequest {
     private String userPrompt;
     private Long promptId;
     private String fileId;
+    private String countryIsoCode;
     private Boolean storeConversation;
     private String prevResponseId;
     private CompanyDto company;
@@ -68,6 +72,7 @@ public final class GrokSearchRequest implements JobSearchRequest {
       this.storeConversation = source.storeConversation;
       this.prevResponseId = source.prevResponseId;
       this.company = source.company;
+      this.countryIsoCode = source.countryIsoCode;
       this.discoveryModel = source.discoveryModel;
       this.companiesModel = source.companiesModel;
     }
@@ -80,6 +85,11 @@ public final class GrokSearchRequest implements JobSearchRequest {
 
     public Builder promptId(Long promptId) {
       this.promptId = promptId;
+      return this;
+    }
+
+    public Builder countryIsoCode(String countryIsoCode) {
+      this.countryIsoCode = countryIsoCode;
       return this;
     }
 

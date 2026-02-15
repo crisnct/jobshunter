@@ -96,8 +96,6 @@ public class AiConversationStateMachine {
     if (response.getId() != null) {
       accumulatedResponse.setId(response.getId());
     }
-    log.info("Conversation response id: {}", response.getId());
-
     List<Job> jobsFound = response.getJobs()
         .stream()
         .filter(p -> !accumulatedResponse.getJobs().contains(p))
@@ -105,6 +103,7 @@ public class AiConversationStateMachine {
     if (jobsFound.isEmpty()) {
       return CompletableFuture.completedFuture(List.of());
     } else {
+      log.info("Conversation response id: {}", response.getId());
       // Process Phase: Pass jobs to state machine for processing
       return jobsStateMachine.processAsync(CompletableFuture.completedFuture(jobsFound), request.getOrder().getUser(), request.getOrder());
     }

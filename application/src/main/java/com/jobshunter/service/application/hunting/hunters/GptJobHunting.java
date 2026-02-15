@@ -82,14 +82,10 @@ public final class GptJobHunting implements JobHunting, JobByPromptHunting, JobB
         .map(UserRemoteCvEntity::getFileId)
         .orElse(null);
 
-    String countryCode = countryIsoCode != null
-        ? countryIsoCode.getCode(order.getUser().getCountry())
-        : null;
-
     return GptSearchRequest.builder(order)
         .fileId(fileId)
         .storeConversation(true)
-        .countryIsoCode(countryCode)
+        .countryIsoCode(countryIsoCode.getCode(order.getUser().getCountry()))
         .discoveryModel(discoveryModel)
         .companiesModel(companiesModel)
         .build();
