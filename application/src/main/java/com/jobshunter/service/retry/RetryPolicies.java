@@ -15,19 +15,21 @@ public final class RetryPolicies {
           ex -> ex instanceof RuntimeException,
           new AiClientResponse()
       );
+
   public static final RetryPolicy<AiClientResponse> JOB_SEARCH_BY_COMPANY =
       new RetryPolicy<>(
           "JOB_SEARCH",
-          3,
+          1,
           1_000,
           r -> r != null && r.getJobs() != null && !r.getJobs().isEmpty(),
           ex -> ex instanceof RuntimeException,
           new AiClientResponse()
       );
+
   public static final RetryPolicy<List<CompanyDto>> COMPANY_SEARCH =
       new RetryPolicy<>(
           "COMPANY_SEARCH",
-          5,
+          3,
           1_000,
           r -> r != null && !r.isEmpty(),
           ex -> ex instanceof RuntimeException,

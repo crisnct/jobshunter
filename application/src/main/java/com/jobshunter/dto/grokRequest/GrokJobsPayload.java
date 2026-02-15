@@ -7,7 +7,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.jobshunter.database.entities.AiModelEntity;
 import com.jobshunter.dto.exceptions.BusinessException;
-import com.jobshunter.dto.grokRequest.tools.ToolChoice;
 import com.jobshunter.dto.grokRequest.tools.Tools;
 import com.jobshunter.model.AiCapabilityType;
 import com.jobshunter.service.AiCapabilityChecker;
@@ -31,8 +30,6 @@ public record GrokJobsPayload(
     @JsonProperty("previous_response_id")
     String previousResponseId,
     List<Tools> tools,
-    @JsonProperty("tool_choice")
-    ToolChoice toolChoice,
     String instructions,
     Text text,
     Boolean store,
@@ -150,7 +147,6 @@ public record GrokJobsPayload(
     public GrokJobsPayloadBuilder addTools(Tools tool) {
       if (AiCapabilityChecker.isEnabled(aiModel, AiCapabilityType.WEB_SEARCH)) {
         this.tools.add(tool);
-        this.toolChoice = new ToolChoice("web_search");
       }
       return this;
     }
@@ -166,7 +162,6 @@ public record GrokJobsPayload(
           reasoning,
           previousResponseId,
           tools.isEmpty() ? null : tools,
-          toolChoice,
           instructions,
           text,
           store,

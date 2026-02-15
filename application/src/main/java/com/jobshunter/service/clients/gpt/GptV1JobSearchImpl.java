@@ -95,7 +95,7 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient<GptSearchRequ
         .reasoning(new Reasoning(REASONING_JOB_SEARCH))
         .store(request.getStoreConversation())
         .previousResponseId(request.getPrevResponseId())
-        .addTools(this.createToolsForJobsFromCompany(request))
+        .addTools(this.createTools(request))
         .instructions(templateRenderer.getPrompt(PromptType.SYSTEM_INSTRUCTIONS))
         .addSystemPrompt(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_JOB_SEARCH,
             "blacklist",
@@ -138,11 +138,6 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient<GptSearchRequ
    */
   private List<CompanyDto> searchCompaniesOnce(GptSearchRequest request) {
     UserEntity user = request.getOrder().getUser();
-    UserLocation userLocation = new UserLocation();
-    userLocation.setType("approximate");
-    //This is country iso code, like RO
-    userLocation.setCountry(request.getCountryIsoCode());
-    userLocation.setCity(StringUtils.removeDiacritics(user.getCity()));
 
     GptJobsPayload payload = GptJobsPayload.builder(request.getCompaniesModel())
         .store(false)
@@ -195,7 +190,7 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient<GptSearchRequ
         .reasoning(new Reasoning(REASONING_JOB_SEARCH))
         .store(request.getStoreConversation())
         .previousResponseId(request.getPrevResponseId())
-        .addTools(this.createToolsForJobsFromCompany(request))
+        .addTools(this.createTools(request))
         .instructions(templateRenderer.getPrompt(PromptType.SYSTEM_INSTRUCTIONS))
         .addSystemPrompt(templateRenderer.getPrompt(PromptType.SYSTEM_PROMPT_JOBS_BY_COMPANY))
         .addUserPrompt(templateRenderer.getPrompt(PromptType.USER_PROMPT_JOB,
@@ -226,7 +221,7 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient<GptSearchRequ
     return result;
   }
 
-  private Tools createToolsForJobsFromCompany(GptSearchRequest request) {
+  private Tools createTools(GptSearchRequest request) {
     UserEntity user = request.getOrder().getUser();
     UserLocation userLocation = new UserLocation();
     userLocation.setType("approximate");
