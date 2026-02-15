@@ -17,17 +17,23 @@
 - Only evaluate URLs using search result metadata, visible snippets, and URL structure.
 - If metadata is insufficient to determine that a URL references a specific job posting, exclude it.
 
+# URL Rules
+- Do NOT invent or construct URLs.
+- Do NOT canonicalize URLs unless explicitly visible in search results.
+- Do NOT return generic landing pages or category listings.
+- Only return URLs that clearly appear to reference a specific job posting.
+
 # Source Rules
 Allowed:
 - Official company domains (e.g., endava.com)
 - Official company-owned ATS domains when clearly associated with the company in the URL or title, such as:
-- jobs.smartrecruiters.com/CompanyName
-- careers.workday.com/CompanyName
-- boards.greenhouse.io/CompanyName
-- lever.co/CompanyName
-- icims.com/.../CompanyName
-- myworkdayjobs.com/CompanyName
-- any clearly company-branded ATS path
+  - jobs.smartrecruiters.com/CompanyName
+  - careers.workday.com/CompanyName
+  - boards.greenhouse.io/CompanyName
+  - lever.co/CompanyName
+  - icims.com/.../CompanyName
+  - myworkdayjobs.com/CompanyName
+  - any clearly company-branded ATS path
 
 Disallowed:
 - Generic aggregator platforms
