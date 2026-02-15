@@ -2,6 +2,7 @@ package com.jobshunter.service.clients.gemini;
 
 import com.jobshunter.config.ApplicationProperties;
 import com.jobshunter.database.entities.UserRemoteCvEntity;
+import com.jobshunter.dto.TokenEstimationResult;
 import com.jobshunter.dto.exceptions.ValidationException;
 import com.jobshunter.dto.geminiRequest.FileData;
 import com.jobshunter.dto.geminiRequest.GeminiJobsPayload;
@@ -79,7 +80,7 @@ public non-sealed class GeminiJobScoreCalculatorClientImpl implements JobScoreCa
           .generationConfig(generationConfig)
           .build();
 
-      tokenEstimationGuard.assertFitsContext(payload);
+      TokenEstimationResult estmTokens = tokenEstimationGuard.assertFitsContext(payload);
 
       GeminiGenerateContentResponse response = restClient.post()
           .uri(URI.create(String.format(GENERATE_CONTENT_URI, request.getModel().getModel(), properties.getGemini().getApiKey())))
@@ -92,6 +93,7 @@ public non-sealed class GeminiJobScoreCalculatorClientImpl implements JobScoreCa
       costPublisher.publishGemini(
           request.getOrder() != null ? request.getOrder().getJobOrder().getId() : -1,
           payload.aiModel(),
+          estmTokens,
           response.usageMetadata());
 
       return extractScore(response);

@@ -2,6 +2,7 @@ package com.jobshunter.service.clients.grok;
 
 import com.jobshunter.config.ApplicationProperties;
 import com.jobshunter.database.entities.UserRemoteCvEntity;
+import com.jobshunter.dto.TokenEstimationResult;
 import com.jobshunter.dto.exceptions.ValidationException;
 import com.jobshunter.dto.grokRequest.GrokScorePayload;
 import com.jobshunter.dto.grokRequest.Reasoning;
@@ -14,6 +15,7 @@ import com.jobshunter.model.PromptType;
 import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.TemplateRenderer;
 import com.jobshunter.service.application.cost.AiCostPublisher;
+import com.jobshunter.service.application.cost.TokenEstimationGuard;
 import com.jobshunter.service.clients.JobScoreCalculatorClient;
 import io.github.resilience4j.bulkhead.annotation.Bulkhead;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
@@ -44,6 +46,8 @@ public non-sealed class GrokJobScoreCalculatorClientImpl implements JobScoreCalc
 
   private final TemplateRenderer templateRenderer;
 
+  private final TokenEstimationGuard tokenEstimationGuard;
+
   private final AiCostPublisher costPublisher;
 
   @Override
@@ -66,6 +70,8 @@ public non-sealed class GrokJobScoreCalculatorClientImpl implements JobScoreCalc
           .addUserPrompt(userPrompt, remoteCV.getFileId())
           .build();
 
+      TokenEstimationResult estmTokens = tokenEstimationGuard.assertFitsContext(payload);
+
       GrokResponse response = restClient.post()
           .uri(DEFAULT_URI)
           .headers((h) -> h.setBearerAuth(properties.getGrok().getApiKey()))
@@ -77,6 +83,7 @@ public non-sealed class GrokJobScoreCalculatorClientImpl implements JobScoreCalc
       costPublisher.publishGrok(
           request.getOrder() != null ? request.getOrder().getJobOrder().getId() : -1,
           payload.aiModel(),
+          estmTokens,
           response.usage());
 
       //noinspection DataFlowIssue

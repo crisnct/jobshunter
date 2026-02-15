@@ -5,9 +5,11 @@ import com.jobshunter.dto.geminiRequest.Content;
 import com.jobshunter.dto.geminiRequest.GeminiJobsPayload;
 import com.jobshunter.dto.geminiRequest.Part;
 import com.jobshunter.dto.gptRequest.GptJobsPayload;
+import com.jobshunter.dto.gptRequest.GptScorePayload;
 import com.jobshunter.dto.gptRequest.Input;
 import com.jobshunter.dto.gptRequest.InputMessage;
 import com.jobshunter.dto.grokRequest.GrokJobsPayload;
+import com.jobshunter.dto.grokRequest.GrokScorePayload;
 import com.jobshunter.dto.grokRequest.InputObj;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -69,6 +71,23 @@ public final class TokenEstimationMapper {
     );
   }
 
+  public static TokenEstimationRequest from(GptScorePayload payload) {
+    List<String> prompts = payload.input() == null ? List.of() : payload.input().stream()
+        .flatMap(in -> in.content().stream())
+        .filter(InputMessage.class::isInstance)
+        .map(InputMessage.class::cast)
+        .map(InputMessage::text)
+        .toList();
+
+    return new TokenEstimationRequest(
+        prompts,
+        List.of(),
+        null,
+        payload.aiModel(),
+        payload.maxOutputTokens()
+    );
+  }
+
   public static TokenEstimationRequest from(GrokJobsPayload payload) {
     List<String> prompts = new ArrayList<>();
     if (payload.input() != null) {
@@ -89,6 +108,27 @@ public final class TokenEstimationMapper {
         payload.text(),
         payload.aiModel(),
         payload.maxOutputTokens()
+    );
+  }
+
+  public static TokenEstimationRequest from(GrokScorePayload payload) {
+    List<String> prompts = new ArrayList<>();
+    if (payload.input() != null) {
+      for (com.jobshunter.dto.grokRequest.Input in : payload.input()) {
+        for (InputObj contentObj : in.content()) {
+          if (contentObj instanceof com.jobshunter.dto.grokRequest.InputMessage msg) {
+            prompts.add(msg.text());
+          }
+        }
+      }
+    }
+
+    return new TokenEstimationRequest(
+        prompts,
+        List.of(),
+        null,
+        payload.aiModel(),
+        payload.max_output_tokens()
     );
   }
 }

@@ -9,6 +9,7 @@ import com.jobshunter.database.entities.UserJobRoleEntity;
 import com.jobshunter.dto.CompanyDto;
 import com.jobshunter.dto.CompanyDtoList;
 import com.jobshunter.dto.GptSearchRequest;
+import com.jobshunter.dto.TokenEstimationResult;
 import com.jobshunter.dto.exceptions.BusinessException;
 import com.jobshunter.dto.gptRequest.GptJobsPayload;
 import com.jobshunter.dto.gptRequest.Reasoning;
@@ -110,7 +111,7 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient<GptSearchRequ
         .setResponseSchema(templateRenderer.getSchema(AiSchemaType.GPT_JSON_SCHEMA_RESPONSE))
         .build();
 
-    tokenEstimationGuard.assertFitsContext(payload);
+    TokenEstimationResult estmTokens = tokenEstimationGuard.assertFitsContext(payload);
 
     GptResponse response = restClient.post()
         .uri(DEFAULT_URI)
@@ -125,7 +126,7 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient<GptSearchRequ
     AiClientResponse result = new AiClientResponse();
     result.setId(response.id());
     result.addAll(jobs);
-    costPublisher.publishGpt(request.getOrder().getJobOrder().getId(), payload.aiModel(), response.usage());
+    costPublisher.publishGpt(request.getOrder().getJobOrder().getId(), payload.aiModel(), estmTokens, response.usage());
     return result;
   }
 
@@ -167,7 +168,7 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient<GptSearchRequ
         .setResponseSchema(templateRenderer.getSchema(AiSchemaType.GPT_JSON_COMPANY_SCHEMA_RESPONSE))
         .build();
 
-    tokenEstimationGuard.assertFitsContext(payload);
+    TokenEstimationResult estmTokens = tokenEstimationGuard.assertFitsContext(payload);
 
     GptResponse response = restClient.post()
         .uri(DEFAULT_URI)
@@ -177,7 +178,7 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient<GptSearchRequ
         .retrieve()
         .body(GptResponse.class);
 
-    costPublisher.publishGpt(request.getOrder().getJobOrder().getId(), payload.aiModel(), response.usage());
+    costPublisher.publishGpt(request.getOrder().getJobOrder().getId(), payload.aiModel(), estmTokens, response.usage());
 
     return extractCompanies(response);
   }
@@ -212,7 +213,7 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient<GptSearchRequ
         .setResponseSchema(templateRenderer.getSchema(AiSchemaType.GPT_JSON_SCHEMA_RESPONSE))
         .build();
 
-    tokenEstimationGuard.assertFitsContext(payload);
+    TokenEstimationResult estmTokens = tokenEstimationGuard.assertFitsContext(payload);
 
     GptResponse response = restClient.post()
         .uri(DEFAULT_URI)
@@ -226,7 +227,7 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient<GptSearchRequ
     AiClientResponse result = new AiClientResponse();
     result.setId(response.id());
     result.addAll(jobs);
-    costPublisher.publishGpt(request.getOrder().getJobOrder().getId(), payload.aiModel(), response.usage());
+    costPublisher.publishGpt(request.getOrder().getJobOrder().getId(), payload.aiModel(), estmTokens, response.usage());
     return result;
   }
 

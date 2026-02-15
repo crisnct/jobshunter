@@ -57,7 +57,7 @@ public final class GeminiJobHunting implements JobHunting, JobByPromptHunting, J
   private void init() {
     this.companiesModel = modelsDBService.getModel(new EngineSelection(EngineType.GEMINI, "gemini-2.5-flash"))
         .orElseThrow();
-    this.discoveryModel = modelsDBService.getModel(new EngineSelection(EngineType.GEMINI, "gemini-2.5-flash"))
+    this.discoveryModel = modelsDBService.getModel(new EngineSelection(EngineType.GEMINI, "gemini-2.0-flash-lite"))
         .orElseThrow();
   }
 

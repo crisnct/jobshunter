@@ -7,6 +7,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.jobshunter.database.entities.AiModelEntity;
 import com.jobshunter.dto.exceptions.BusinessException;
+import com.jobshunter.dto.gptRequest.tools.ToolChoice;
 import com.jobshunter.dto.gptRequest.tools.Tools;
 import com.jobshunter.model.AiCapabilityType;
 import com.jobshunter.service.AiCapabilityChecker;
@@ -29,7 +30,7 @@ public record GptJobsPayload(
     Integer maxOutputTokens,
     List<Tools> tools,
     @JsonProperty("tool_choice")
-    String toolChoice,
+    ToolChoice toolChoice,
     String instructions,
     Boolean store,
     @JsonProperty("previous_response_id")
@@ -144,7 +145,7 @@ public record GptJobsPayload(
     public GptJobsPayloadBuilder addTools(Tools tool) {
       if (AiCapabilityChecker.isEnabled(aiModel, AiCapabilityType.WEB_SEARCH)) {
         this.tools.add(tool);
-        this.toolChoice = "auto";
+        this.toolChoice = new ToolChoice("web_search");
       }
       return this;
     }

@@ -8,6 +8,7 @@ import com.jobshunter.database.entities.UserJobRoleEntity;
 import com.jobshunter.dto.CompanyDto;
 import com.jobshunter.dto.CompanyDtoList;
 import com.jobshunter.dto.GrokSearchRequest;
+import com.jobshunter.dto.TokenEstimationResult;
 import com.jobshunter.dto.exceptions.BusinessException;
 import com.jobshunter.dto.grokRequest.GrokJobsPayload;
 import com.jobshunter.dto.grokRequest.GrokJobsPayload.GrokJobsPayloadBuilder;
@@ -96,7 +97,7 @@ public non-sealed class GrokV1JobSearchImpl implements AiJobsClient<GrokSearchRe
         .setResponseSchema(templateRenderer.getSchema(AiSchemaType.GROK_JSON_SCHEMA_RESPONSE));
 
     GrokJobsPayload payload = payloadBuilder.build();
-    tokenEstimationGuard.assertFitsContext(payload);
+    TokenEstimationResult estmTokens = tokenEstimationGuard.assertFitsContext(payload);
     GrokResponse response = restClient.post()
         .uri(DEFAULT_URI)
         .headers((h) -> h.setBearerAuth(properties.getGrok().getApiKey()))
@@ -113,6 +114,7 @@ public non-sealed class GrokV1JobSearchImpl implements AiJobsClient<GrokSearchRe
     costPublisher.publishGrok(
         request.getOrder().getJobOrder().getId(),
         payload.aiModel(),
+        estmTokens,
         response.usage());
     return result;
   }
@@ -143,7 +145,7 @@ public non-sealed class GrokV1JobSearchImpl implements AiJobsClient<GrokSearchRe
         .setResponseSchema(templateRenderer.getSchema(AiSchemaType.GROK_JSON_COMPANY_SCHEMA_RESPONSE))
         .build();
 
-    tokenEstimationGuard.assertFitsContext(payload);
+    TokenEstimationResult estmTokens = tokenEstimationGuard.assertFitsContext(payload);
 
     GrokResponse response = restClient.post()
         .uri(DEFAULT_URI)
@@ -153,7 +155,7 @@ public non-sealed class GrokV1JobSearchImpl implements AiJobsClient<GrokSearchRe
         .retrieve()
         .body(GrokResponse.class);
 
-    costPublisher.publishGrok(request.getOrder().getJobOrder().getId(), payload.aiModel(), response.usage());
+    costPublisher.publishGrok(request.getOrder().getJobOrder().getId(), payload.aiModel(), estmTokens, response.usage());
     return extractCompanies(response);
   }
 
@@ -186,7 +188,7 @@ public non-sealed class GrokV1JobSearchImpl implements AiJobsClient<GrokSearchRe
         .setResponseSchema(templateRenderer.getSchema(AiSchemaType.GROK_JSON_SCHEMA_RESPONSE))
         .build();
 
-    tokenEstimationGuard.assertFitsContext(payload);
+    TokenEstimationResult estmTokens = tokenEstimationGuard.assertFitsContext(payload);
 
     GrokResponse response = restClient.post()
         .uri(DEFAULT_URI)
@@ -201,7 +203,7 @@ public non-sealed class GrokV1JobSearchImpl implements AiJobsClient<GrokSearchRe
     AiClientResponse result = new AiClientResponse();
     result.setId(response.id());
     result.addAll(jobs);
-    costPublisher.publishGrok(request.getOrder().getJobOrder().getId(), payload.aiModel(), response.usage());
+    costPublisher.publishGrok(request.getOrder().getJobOrder().getId(), payload.aiModel(), estmTokens, response.usage());
     return result;
   }
 

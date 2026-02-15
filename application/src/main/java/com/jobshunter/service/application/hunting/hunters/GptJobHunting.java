@@ -60,9 +60,9 @@ public final class GptJobHunting implements JobHunting, JobByPromptHunting, JobB
 
   @EventListener(ApplicationReadyEvent.class)
   private void init() {
-    this.companiesModel = modelsDBService.getModel(new EngineSelection(EngineType.GPT, "gpt-5.2-2025-12-11"))
+    this.companiesModel = modelsDBService.getModel(new EngineSelection(EngineType.GPT, "gpt-4o-mini-2024-07-18"))
         .orElseThrow();
-    this.discoveryModel = modelsDBService.getModel(new EngineSelection(EngineType.GPT, "gpt-4.1-mini"))
+    this.discoveryModel = modelsDBService.getModel(new EngineSelection(EngineType.GPT, "gpt-4o-mini-2024-07-18"))
         .orElseThrow();
   }
 

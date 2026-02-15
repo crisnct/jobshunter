@@ -30,6 +30,9 @@ public class AiRequestCostEventListener {
           cost
       );
       if (cost > 0) {
+        int diff =
+            event.getTokensConsumed().inputTokens() + event.getTokensConsumed().outputTokens() - event.getEstmTokens().estimatedTotalTokens();
+        log.info("Difference between estimated and real cost: {} tokens", diff);
         jobOrderDBService.addCostToOrder(orderId, cost);
       }
     } catch (Exception e) {

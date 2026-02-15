@@ -9,6 +9,7 @@ import com.jobshunter.database.entities.UserJobRoleEntity;
 import com.jobshunter.dto.CompanyDto;
 import com.jobshunter.dto.CompanyDtoList;
 import com.jobshunter.dto.GeminiSearchRequest;
+import com.jobshunter.dto.TokenEstimationResult;
 import com.jobshunter.dto.geminiRequest.GeminiJobsPayload;
 import com.jobshunter.dto.geminiRequest.GenerationConfig;
 import com.jobshunter.dto.geminiRequest.GoogleSearchTool;
@@ -105,7 +106,7 @@ public non-sealed class GeminiV1JobSearchImpl implements AiJobsClient<GeminiSear
         .addUserContent(request.getUserPrompt())
         .build();
 
-    tokenEstimationGuard.assertFitsContext(payload);
+    TokenEstimationResult estmTokens = tokenEstimationGuard.assertFitsContext(payload);
 
     GeminiGenerateContentResponse response = restClient.post()
         .uri(URI.create(String.format(GEMINI_URI, model.getModel(), properties.getGemini().getApiKey())))
@@ -122,6 +123,7 @@ public non-sealed class GeminiV1JobSearchImpl implements AiJobsClient<GeminiSear
     costPublisher.publishGemini(
         request.getOrder().getJobOrder().getId(),
         payload.aiModel(),
+        estmTokens,
         response.usageMetadata());
     return result;
   }
@@ -167,7 +169,7 @@ public non-sealed class GeminiV1JobSearchImpl implements AiJobsClient<GeminiSear
             )))
         .build();
 
-    tokenEstimationGuard.assertFitsContext(payload);
+    TokenEstimationResult estmTokens = tokenEstimationGuard.assertFitsContext(payload);
 
     GeminiGenerateContentResponse response = restClient.post()
         .uri(URI.create(String.format(GEMINI_URI, model.getModel(), properties.getGemini().getApiKey())))
@@ -176,7 +178,7 @@ public non-sealed class GeminiV1JobSearchImpl implements AiJobsClient<GeminiSear
         .retrieve()
         .body(GeminiGenerateContentResponse.class);
 
-    costPublisher.publishGemini(request.getOrder().getJobOrder().getId(), payload.aiModel(), response.usageMetadata());
+    costPublisher.publishGemini(request.getOrder().getJobOrder().getId(), payload.aiModel(), estmTokens, response.usageMetadata());
 
     return extractCompanies(response);
   }
@@ -250,7 +252,7 @@ public non-sealed class GeminiV1JobSearchImpl implements AiJobsClient<GeminiSear
         ))
         .build();
 
-    tokenEstimationGuard.assertFitsContext(payload);
+    TokenEstimationResult estmTokens = tokenEstimationGuard.assertFitsContext(payload);
 
     GeminiGenerateContentResponse response = restClient.post()
         .uri(URI.create(String.format(GEMINI_URI, model.getModel(), properties.getGemini().getApiKey())))
@@ -264,7 +266,7 @@ public non-sealed class GeminiV1JobSearchImpl implements AiJobsClient<GeminiSear
     result.addAll(jobs);
     //noinspection DataFlowIssue
     result.setId(response.responseId());
-    costPublisher.publishGemini(request.getOrder().getJobOrder().getId(), payload.aiModel(), response.usageMetadata());
+    costPublisher.publishGemini(request.getOrder().getJobOrder().getId(), payload.aiModel(), estmTokens, response.usageMetadata());
     return result;
   }
 
