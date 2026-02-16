@@ -1,17 +1,8 @@
-# Search for individual job postings published by:
-{{company_name}}
-
-Official domain: {{company_domain}}
+# Search for individual job postings published by {{company_name}} on {{careers_page}}
 
 # Discovery Guidance
-- You MUST construct search queries using:
-site:{{company_domain}} careers "{{positions}}"
-- You MAY also construct queries targeting official ATS domains clearly associated with the company, such as:
-site:smartrecruiters.com {{company_name}} "{{positions}}"
-site:workday.com {{company_name}} "{{positions}}"
-site:greenhouse.io {{company_name}} "{{positions}}"
-
-- Career listing pages MAY be used only for discovery.
+- You MUST construct search queries using: site:{{careers_page}} "{{positions}}"
+- {{careers_page}} MAY be used only for discovery.
 - Final results MUST clearly point to a single job posting URL.
 
 # Strict Navigation Limitation

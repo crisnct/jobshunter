@@ -61,7 +61,7 @@ public final class GrokJobHunting implements JobHunting, JobByPromptHunting, Job
 
   @EventListener(ApplicationReadyEvent.class)
   private void init() {
-    this.companiesModel = modelsDBService.getModel(new EngineSelection(EngineType.GROK, "grok-4-1-fast-non-reasoning"))
+    this.companiesModel = modelsDBService.getModel(new EngineSelection(EngineType.GROK, "grok-4-fast-reasoning"))
         .orElseThrow();
     this.discoveryModel = modelsDBService.getModel(new EngineSelection(EngineType.GROK, "grok-4-1-fast-non-reasoning"))
         .orElseThrow();

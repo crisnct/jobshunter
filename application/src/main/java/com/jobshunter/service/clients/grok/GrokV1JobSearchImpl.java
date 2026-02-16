@@ -187,7 +187,7 @@ public non-sealed class GrokV1JobSearchImpl implements AiJobsClient<GrokSearchRe
         .addUserPrompt(templateRenderer.getPrompt(PromptType.USER_PROMPT_JOB,
             Map.of(
                 "company_name", request.getCompany().companyName(),
-                "company_domain", URI.create(request.getCompany().officialWebsiteUrl()).getHost(),
+                "careers_page",  request.getCompany().careersPage(),
                 "positions", positions
             )
         ))

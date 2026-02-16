@@ -11,14 +11,14 @@
             "type": "string",
             "description": "Official registered or commonly used company name"
           },
-          "official_website_url": {
+          "main_careers_page_url": {
             "type": "string",
-            "description": "Official public website of the company"
+            "description": "Main careers page URL for the company, where job listings are typically posted"
           }
         },
         "required": [
           "company_name",
-          "official_website_url"
+          "main_careers_page_url"
         ],
         "additionalProperties": false
       }

@@ -196,7 +196,7 @@ public non-sealed class GptV1JobSearchImpl implements AiJobsClient<GptSearchRequ
         .addUserPrompt(templateRenderer.getPrompt(PromptType.USER_PROMPT_JOB,
             Map.of(
                 "company_name", request.getCompany().companyName(),
-                "company_domain", URI.create(request.getCompany().officialWebsiteUrl()).getHost(),
+                "careers_page",  request.getCompany().careersPage(),
                 "positions", positions
             )
         ))
