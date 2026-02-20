@@ -37,6 +37,11 @@ public class ExecutorsConfig implements AsyncConfigurer {
     return new LimitedVirtualThreadExecutor("serp", properties.getSerp().getThreads());
   }
 
+  @Bean(name = "scraperExecutor")
+  public LimitedVirtualThreadExecutor scraperExecutor() {
+    return new LimitedVirtualThreadExecutor("scraper", properties.getScraper().getThreads());
+  }
+
   @Bean(name = "urlFetchPlaywrightExecutor")
   public ExecutorService urlFetchPlaywrightExecutor() {
     return Executors.newFixedThreadPool(1);

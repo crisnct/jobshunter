@@ -4,6 +4,7 @@ import com.jobshunter.model.EngineType;
 import com.jobshunter.service.application.hunting.hunters.GeminiJobHunting;
 import com.jobshunter.service.application.hunting.hunters.GptJobHunting;
 import com.jobshunter.service.application.hunting.hunters.GrokJobHunting;
+import com.jobshunter.service.application.hunting.hunters.ScraperJobHunting;
 import com.jobshunter.service.application.hunting.hunters.SerpJobHunting;
 
 /**
@@ -13,7 +14,7 @@ import com.jobshunter.service.application.hunting.hunters.SerpJobHunting;
  * ({@link JobByPromptHunting}, {@link JobByCompanyHunting}).
  */
 public sealed interface JobHunting
-    permits SerpJobHunting, GeminiJobHunting, GptJobHunting, GrokJobHunting {
+    permits GeminiJobHunting, GptJobHunting, GrokJobHunting, ScraperJobHunting, SerpJobHunting {
 
   EngineType getEngineType();
 

@@ -235,7 +235,9 @@ public class UserCvService {
     // Quick check before acquiring lock (optimization)
     UserRemoteCvEntity remoteCV = user.getRemoteCvs().stream().filter(p -> p.getProvider() == type)
         .findFirst().orElse(null);
-    if (user.getCv() == null
+    FileClient client = clients.get(type);
+    if (client == null
+        || user.getCv() == null
         || user.getCv().getByteArray() == null
         || (remoteCV != null && (remoteCV.getExpireTime() == null || !remoteCV.getExpireTime().isBefore(Instant.now())))
     ) {
@@ -265,7 +267,6 @@ public class UserCvService {
       log.info("Refreshing CV for user {} before searching jobs with engine {}", freshUser.getUsername(), type.name());
       Path tempFile = null;
       try {
-        FileClient client = clients.get(type);
         if (freshRemoteCV != null) {
           try {
             client.deleteFile(freshRemoteCV.getFileId());

@@ -10,7 +10,7 @@ import com.jobshunter.model.SearchJobOrder;
  * generic code (e.g. retry-request creation in conversation strategies).
  */
 public sealed interface JobSearchRequest
-    permits SerpSearchRequest, GeminiSearchRequest, GptSearchRequest, GrokSearchRequest {
+    permits GeminiSearchRequest, GptSearchRequest, GrokSearchRequest, ScraperSearchRequest, SerpSearchRequest {
 
   SearchJobOrder getOrder();
 

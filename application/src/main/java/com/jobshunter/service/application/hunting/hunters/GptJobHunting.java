@@ -45,13 +45,13 @@ public final class GptJobHunting implements JobHunting, JobByPromptHunting, JobB
   private AiModelEntity companiesModel;
 
   public GptJobHunting(
-      @Qualifier("gptSearchExecutor") Executor gptSearchExecutor,
+      @Qualifier("gptSearchExecutor") Executor executor,
       @Qualifier("JobsClientGPT") AiJobsClient<GptSearchRequest> gptClient,
       ModelsDBService modelsDBService,
       CountryIsoCode countryIsoCode,
       AiConversationStrategy strategy
   ) {
-    this.executor = gptSearchExecutor;
+    this.executor = executor;
     this.jobsClient = gptClient;
     this.modelsDBService = modelsDBService;
     this.countryIsoCode = countryIsoCode;

@@ -26,5 +26,6 @@
   <include file="db/changelog/2026-02-04-change-datetime-to-milliseconds.xml"/>
   <include file="db/changelog/2026-02-06-create-user-oauth-providers-table.xml"/>
   <include file="db/changelog/2026-02-07-drop-prompts-jobs-table.xml"/>
+  <include file="db/changelog/2026-02-20-add-scraper-bestjobs-ai-model.xml"/>
 
 </databaseChangeLog>

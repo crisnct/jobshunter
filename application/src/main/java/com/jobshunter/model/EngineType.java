@@ -4,7 +4,8 @@ public enum EngineType {
   GPT,
   GROK,
   GEMINI,
-  SERP;
+  SERP,
+  SCRAPER;
 
   public static EngineType lookup(String engine) {
     for (EngineType type : EngineType.values()) {

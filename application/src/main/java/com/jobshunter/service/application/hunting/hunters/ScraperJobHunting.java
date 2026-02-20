@@ -3,7 +3,7 @@ package com.jobshunter.service.application.hunting.hunters;
 import com.jobshunter.database.entities.AiModelEntity;
 import com.jobshunter.database.entities.UserEntity;
 import com.jobshunter.dto.JobSearchRequest;
-import com.jobshunter.dto.SerpSearchRequest;
+import com.jobshunter.dto.ScraperSearchRequest;
 import com.jobshunter.model.AiClientResponse;
 import com.jobshunter.model.EngineType;
 import com.jobshunter.model.Job;
@@ -21,15 +21,15 @@ import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
-public final class SerpJobHunting implements JobHunting, JobByPromptHunting {
+public final class ScraperJobHunting implements JobHunting, JobByPromptHunting {
 
-  private final AiJobsClient<SerpSearchRequest> jobsClient;
+  private final AiJobsClient<ScraperSearchRequest> jobsClient;
   private final Executor executor;
   private final AiDefaultStrategy jobSearchStrategy;
 
-  public SerpJobHunting(
-      @Qualifier("JobsClientSerp") AiJobsClient<SerpSearchRequest> serpClient,
-      @Qualifier("serpExecutor") Executor executor,
+  public ScraperJobHunting(
+      @Qualifier("JobsClientScraper") AiJobsClient<ScraperSearchRequest> serpClient,
+      @Qualifier("scraperExecutor") Executor executor,
       AiDefaultStrategy strategy
   ) {
     this.jobsClient = serpClient;
@@ -37,26 +37,13 @@ public final class SerpJobHunting implements JobHunting, JobByPromptHunting {
     this.jobSearchStrategy = strategy;
   }
 
-  @Override
-  public EngineType getEngineType() {
-    return EngineType.SERP;
+  private ScraperSearchRequest createRequest(SearchJobOrder order, String prompt) {
+    return ScraperSearchRequest.builder(order).userPrompt(prompt).build();
   }
-
-  // ---------------------------------------------------------------------------
-  // Request building
-  // ---------------------------------------------------------------------------
-
-  private SerpSearchRequest createRequest(SearchJobOrder order, String prompt) {
-    return SerpSearchRequest.builder(order).userPrompt(prompt).build();
-  }
-
-  // ---------------------------------------------------------------------------
-  // Primary search orchestration
-  // ---------------------------------------------------------------------------
 
   @Override
   public CompletableFuture<List<Job>> searchJobsAsync(SearchJobOrder order) {
-    List<SerpSearchRequest> requests = order.getUser().getJobRoles().stream()
+    List<ScraperSearchRequest> requests = order.getUser().getJobRoles().stream()
         .map(role -> createRequest(order, role.getJobRole()))
         .toList();
 
@@ -77,18 +64,22 @@ public final class SerpJobHunting implements JobHunting, JobByPromptHunting {
             .toList());
   }
 
+  @Override
+  public EngineType getEngineType() {
+    return EngineType.SCRAPER;
+  }
+
   // ---------------------------------------------------------------------------
   // Synchronous search
   // ---------------------------------------------------------------------------
 
   private AiClientResponse searchSync(JobSearchRequest request) {
-    SerpSearchRequest serpRequest = (SerpSearchRequest) request;
+    ScraperSearchRequest serpRequest = (ScraperSearchRequest) request;
     AiModelEntity aiModel = serpRequest.getOrder().getModel();
     UserEntity user = serpRequest.getOrder().getUser();
     log.info("Searching jobs for user {} with model {}", user.getUsername(), aiModel.getModel());
     AiClientResponse response = jobsClient.searchJobs(serpRequest);
     response.getJobs().forEach(job -> {
-      job.setPromptId(serpRequest.getPromptId());
       job.setSource(aiModel.getModel());
     });
     log.info("{} found {} url's and are going to be validated", aiModel.getModel(), response.getJobs().size());

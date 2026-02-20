@@ -46,13 +46,13 @@ public final class GrokJobHunting implements JobHunting, JobByPromptHunting, Job
   private AiModelEntity companiesModel;
 
   public GrokJobHunting(
-      @Qualifier("grokSearchExecutor") Executor grokSearchExecutor,
+      @Qualifier("grokSearchExecutor") Executor executor,
       @Qualifier("JobsClientGROK") AiJobsClient<GrokSearchRequest> grokClient,
       ModelsDBService modelsDBService,
       AiConversationStrategy strategy,
       CountryIsoCode countryIsoCode
   ) {
-    this.executor = grokSearchExecutor;
+    this.executor = executor;
     this.jobsClient = grokClient;
     this.modelsDBService = modelsDBService;
     this.jobSearchStrategy = strategy;

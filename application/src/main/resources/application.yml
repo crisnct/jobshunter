@@ -78,6 +78,11 @@ ipinfo:
   apiKey: ${IPINFO_API_KEY:notset}
   threads: 1
 
+scraper:
+  enabled: true
+  url: https://localhost:9001
+  threads: 3
+
 spring:
   profiles:
     default: ${PROFILE:local}
@@ -251,6 +256,11 @@ resilience4j.ratelimiter:
       limitRefreshPeriod: 1s
       timeoutDuration: 30s
       writableStackTraceEnabled: false
+    scraperLimiter:
+      limitForPeriod: 1
+      limitRefreshPeriod: 30s
+      timeoutDuration: 15m
+      writableStackTraceEnabled: false
 
 # CIRCUIT BREAKER ---------------------------------------------------------------------------
 # Fault tolerance by monitoring API call failures.
@@ -364,6 +374,18 @@ resilience4j.circuitbreaker:
 
       waitDurationInOpenState: 1m
       permittedNumberOfCallsInHalfOpenState: 1
+    scraper:
+      registerHealthIndicator: true
+      slidingWindowType: COUNT_BASED
+      minimumNumberOfCalls: 3
+      slidingWindowSize: 3
+
+      failureRateThreshold: 100
+      slowCallRateThreshold: 100
+      slowCallDurationThreshold: 2m
+
+      waitDurationInOpenState: 2m
+      permittedNumberOfCallsInHalfOpenState: 1
 
 # BULK HEAD  ---------------------------------------------------------------------------
 # Purpose: Limit CONCURRENT requests
@@ -432,3 +454,13 @@ resilience4j.bulkhead:
       maxWaitDuration: 20m
       keepAliveDuration: 30s
       writableStackTraceEnabled: false
+    scraperBulkhead:
+      bulkheadType: THREADPOOL
+      maxConcurrentCalls: 3
+      maxThreadPoolSize: 5
+      coreThreadPoolSize: 1
+      queueCapacity: 20
+      maxWaitDuration: 20m
+      keepAliveDuration: 30s
+      writableStackTraceEnabled: false
+

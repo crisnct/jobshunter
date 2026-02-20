@@ -42,12 +42,12 @@ public final class GeminiJobHunting implements JobHunting, JobByPromptHunting, J
   private AiModelEntity companiesModel;
 
   public GeminiJobHunting(
-      @Qualifier("geminiSearchExecutor") Executor geminiSearchExecutor,
+      @Qualifier("geminiSearchExecutor") Executor executor,
       @Qualifier("JobsClientGemini") AiJobsClient<GeminiSearchRequest> geminiClient,
       ModelsDBService modelsDBService,
       AiDefaultStrategy strategy
   ) {
-    this.executor = geminiSearchExecutor;
+    this.executor = executor;
     this.jobsClient = geminiClient;
     this.modelsDBService = modelsDBService;
     this.jobSearchStrategy = strategy;

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+  xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="
+        http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.23.xsd">
+
+  <changeSet id="2026-02-20-add-scraper-bestjobs-ai-model" author="codex">
+    <preConditions onFail="MARK_RAN">
+      <tableExists tableName="ai_models"/>
+      <sqlCheck expectedResult="0">SELECT COUNT(*) FROM ai_models WHERE provider = 'SCRAPER' AND model = 'bestjobs'</sqlCheck>
+    </preConditions>
+    <comment>Add SCRAPER bestjobs model to ai_models</comment>
+    <sql>
+      INSERT INTO ai_models (provider, model, enabled, tool_price) VALUES ('SCRAPER', 'bestjobs', 1, 0);
+    </sql>
+  </changeSet>
+
+</databaseChangeLog>

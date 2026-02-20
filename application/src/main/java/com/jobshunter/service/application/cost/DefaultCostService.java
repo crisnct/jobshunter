@@ -59,7 +59,7 @@ public class DefaultCostService implements TokenEstimationService, RequestPriceS
       case GPT -> 0.85f;
       case GEMINI -> 0.8f;
       case GROK -> 0.75f;
-      case SERP -> throw new IllegalArgumentException("Not indended to be used for SERP");
+      case SERP, SCRAPER -> throw new IllegalArgumentException("Not indended to be used for SERP");
     });
   }
 

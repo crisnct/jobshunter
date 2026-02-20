@@ -18,10 +18,10 @@ public class ApplicationProperties {
   private Serp serp = new Serp();
   private Spring spring = new Spring();
   private IpInfo ipInfo = new IpInfo();
+  private Scraper scraper = new Scraper();
 
   /**
-   * Convenience method for backward compatibility.
-   * Returns spring.security properties.
+   * Convenience method for backward compatibility. Returns spring.security properties.
    */
   public Security getSecurity() {
     return spring.getSecurity();
@@ -186,6 +186,16 @@ public class ApplicationProperties {
     private int threads;
 
   }
+
+  @Data
+  @ConfigurationProperties(prefix = "scraper")
+  public static class Scraper {
+
+    private boolean enabled;
+    private String url;
+    private int threads;
+  }
+
 
   @Data
   @ConfigurationProperties(prefix = "grok")
