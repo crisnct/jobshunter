@@ -49,3 +49,4 @@ jobs:
             cd /opt/jobshunter
             docker pull ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:latest
             docker compose up -d --build
+
