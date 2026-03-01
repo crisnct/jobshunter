@@ -35,6 +35,24 @@ jobs:
           docker push \
           ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:latest
 
+      - name: Prepare deploy directory
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            mkdir -p /opt/jobshunter
+
+      - name: Upload docker-compose.yml
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "docker-compose.yml"
+          target: "/opt/jobshunter"
+
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
