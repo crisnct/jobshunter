@@ -21,6 +21,9 @@ services:
 #  mysql_data:
 
   jobshunter-service:
+    profiles:
+      - local
+      - aws
     build:
       context: .
       dockerfile: Dockerfile
@@ -77,6 +80,8 @@ services:
       - jobshunter-net
     depends_on:
       - jobshunter-service
+    profiles:
+      - local
 
 networks:
   jobshunter-net:
