@@ -23,7 +23,6 @@ services:
   jobshunter-service:
     profiles:
       - local
-      - aws
     build:
       context: .
       dockerfile: Dockerfile
@@ -38,6 +37,48 @@ services:
 #        condition: service_healthy
     environment:
 #      MYSQL_URL: mysql://mysql:3306/jobshunter_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&createDatabaseIfNotExist=true
+      #Connection to database from local machine
+      MYSQL_URL: mysql://host.docker.internal:3306/jobshunter?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&rewriteBatchedStatements=true&cachePrepStmts=true&useServerPrepStmts=true&createDatabaseIfNotExist=true
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID}
+      TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN}
+      TWILIO_WHATSAPP_FROM: ${TWILIO_WHATSAPP_FROM}
+      CHATGPT_API_KEY: ${CHATGPT_API_KEY}
+      GROK_API_KEY: ${GROK_API_KEY}
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      MAILTRAP_USERNAME: ${MAILTRAP_USERNAME}
+      MAILTRAP_PASSWORD: ${MAILTRAP_PASSWORD}
+      MAILTRAP_API_KEY: ${MAILTRAP_API_KEY}
+      MAILTRAP_TEMPLATE_NEWJOBS: ${MAILTRAP_TEMPLATE_NEWJOBS}
+      IPINFO_API_KEY: ${IPINFO_API_KEY}
+      SSL_KEY_STORE_PASSWORD: ${SSL_KEY_STORE_PASSWORD}
+      SSL_PORT: 8443
+      MAIL_FROM: ${MAIL_FROM}
+      SERP_API_KEY: ${SERP_API_KEY}
+      JWT_SECRET: ${JWT_SECRET}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      PROFILE: prod
+      SPRING_PROFILES_ACTIVE: prod
+      LIQUIBASE_ENABLED: "true"
+      ENABLE_SCHEDULER: "false"
+    ports:
+      - "9001:8443"
+
+  jobshunter-service-aws:
+    profiles:
+      - aws
+    image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPOSITORY}:latest
+    container_name: JobsHunterContainer
+    restart: always
+    volumes:
+      - playwright-cache:/root/.cache/ms-playwright
+    #    depends_on:
+    #      mysql:
+    #        condition: service_healthy
+    environment:
+      #      MYSQL_URL: mysql://mysql:3306/jobshunter_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&createDatabaseIfNotExist=true
       #Connection to database from local machine
       MYSQL_URL: mysql://host.docker.internal:3306/jobshunter?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&rewriteBatchedStatements=true&cachePrepStmts=true&useServerPrepStmts=true&createDatabaseIfNotExist=true
       MYSQL_USER: ${MYSQL_USER}
