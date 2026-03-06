@@ -1,0 +1,47 @@
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="http://www.ehcache.org/v3"
+        xsi:noNamespaceSchemaLocation="http://www.ehcache.org/schema/ehcache-core-3.0.xsd">
+
+    <!-- Default cache template -->
+    <cache-template name="default">
+        <expiry>
+            <ttl unit="minutes">60</ttl>
+        </expiry>
+        <heap unit="entries">1000</heap>
+    </cache-template>
+
+    <!-- Reference data: long TTL -->
+    <cache-template name="reference-data">
+        <expiry>
+            <ttl unit="hours">24</ttl>
+        </expiry>
+        <heap unit="entries">500</heap>
+    </cache-template>
+
+    <!-- Transactional data: shorter TTL -->
+    <cache-template name="transactional-data">
+        <expiry>
+            <ttl unit="minutes">30</ttl>
+        </expiry>
+        <heap unit="entries">2000</heap>
+    </cache-template>
+
+    <!-- Entity cache regions (one per entity) -->
+    <cache alias="com.jobshunter.database.entities.UserEntity" uses-template="transactional-data"/>
+
+    <cache alias="com.jobshunter.database.entities.RoleEntity" uses-template="reference-data"/>
+    <cache alias="com.jobshunter.database.entities.AiModelEntity" uses-template="reference-data"/>
+    <cache alias="com.jobshunter.database.entities.AiModelsCapabilityEntity" uses-template="reference-data"/>
+    <!-- ... one entry per entity ... -->
+
+    <!-- Query cache regions -->
+    <cache alias="user.queries" uses-template="transactional-data"/>
+
+    <cache alias="role.queries" uses-template="reference-data"/>
+    <cache alias="aiModel.queries" uses-template="reference-data"/>
+    <cache alias="aiModelCapability.queries" uses-template="reference-data"/>
+
+    <!-- Hibernate default query cache -->
+    <cache alias="default-query-results-region" uses-template="transactional-data"/>
+
+</config>

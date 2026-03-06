@@ -16,7 +16,7 @@ public interface RoleRepository extends JpaRepository<RoleEntity, Long> {
 
   @QueryHints({
           @QueryHint(name = org.hibernate.jpa.HibernateHints.HINT_CACHEABLE, value = "true"),
-          @QueryHint(name = org.hibernate.jpa.HibernateHints.HINT_CACHE_REGION, value = "roles.byName")
+          @QueryHint(name = org.hibernate.jpa.HibernateHints.HINT_CACHE_REGION, value = "role.queries")
   })
   Optional<RoleEntity> findByName(@SqlInjectionSafe String name);
 }
