@@ -78,12 +78,16 @@ public class AiConversationStateMachine {
     Set<String> seenUrls = new HashSet<>(request.getOrder().getIgnoredURLs());
     AiClientResponse aiClientResponse = new AiClientResponse();
     aiClientResponse.setId(response.getId());
-    aiClientResponse.addAll(response.getJobs().stream()
+    if (HuntingOrchestrator.REMOVE_DUPLICATES) {
+      aiClientResponse.addAll(response.getJobs().stream()
         .filter(jc -> {
           String url = jc.getUrl();
           return url != null && seenUrls.add(url);
         })
-        .toList());
+          .toList());
+    } else {
+      aiClientResponse.addAll(response.getJobs());
+    }
     return CompletableFuture.completedFuture(aiClientResponse);
   }
 

@@ -18,6 +18,8 @@ import org.springframework.stereotype.Service;
 @Service
 public class HuntingOrchestrator {
 
+  public static final Boolean REMOVE_DUPLICATES = true;
+
   private final Map<EngineType, JobHunting> huntingRegistry;
 
   public HuntingOrchestrator(List<JobHunting> huntingStrategies) {
@@ -54,14 +56,17 @@ public class HuntingOrchestrator {
   private List<Job> removeDuplicatesBetweenSources(
       List<Job> jobs,
       List<String> existingURLs) {
-    Set<String> seenUrls = new HashSet<>(existingURLs);
-
-    return jobs.stream()
-        .filter(jc -> {
-          String url = jc.getUrl();
-          return url != null && seenUrls.add(url);
-        })
-        .toList();
+    if (REMOVE_DUPLICATES) {
+      Set<String> seenUrls = new HashSet<>(existingURLs);
+      return jobs.stream()
+          .filter(jc -> {
+            String url = jc.getUrl();
+            return url != null && seenUrls.add(url);
+          })
+          .toList();
+    } else {
+      return jobs;
+    }
   }
 
 }

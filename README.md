@@ -110,7 +110,7 @@ git clone https://github.com/yourusername/jobshunter.git
 cd jobshunter
 
 # Build and start
-docker compose up --build
+docker compose --profile local up --build -d
 ```
 
 > The UI will be available at http://localhost:5173 (or configured port) and API at http://localhost:8081.
