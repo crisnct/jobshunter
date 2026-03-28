@@ -28,7 +28,6 @@
 
     <!-- Entity cache regions (one per entity) -->
     <cache alias="com.jobshunter.database.entities.UserEntity" uses-template="transactional-data"/>
-
     <cache alias="com.jobshunter.database.entities.RoleEntity" uses-template="reference-data"/>
     <cache alias="com.jobshunter.database.entities.AiModelEntity" uses-template="reference-data"/>
     <cache alias="com.jobshunter.database.entities.AiModelsCapabilityEntity" uses-template="reference-data"/>
@@ -36,7 +35,6 @@
 
     <!-- Query cache regions -->
     <cache alias="user.queries" uses-template="transactional-data"/>
-
     <cache alias="role.queries" uses-template="reference-data"/>
     <cache alias="aiModel.queries" uses-template="reference-data"/>
     <cache alias="aiModelCapability.queries" uses-template="reference-data"/>

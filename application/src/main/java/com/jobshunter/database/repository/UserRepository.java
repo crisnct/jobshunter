@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Optional;
 
 import jakarta.persistence.QueryHint;
+import org.hibernate.jpa.HibernateHints;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.jpa.repository.QueryHints;
@@ -18,14 +19,14 @@ import org.springframework.stereotype.Repository;
 public interface UserRepository extends JpaRepository<UserEntity, Long> {
 
   @QueryHints({
-          @QueryHint(name = org.hibernate.jpa.HibernateHints.HINT_CACHEABLE, value = "true"),
-          @QueryHint(name = org.hibernate.jpa.HibernateHints.HINT_CACHE_REGION, value = "user.queries")
+          @QueryHint(name = HibernateHints.HINT_CACHEABLE, value = "true"),
+          @QueryHint(name = HibernateHints.HINT_CACHE_REGION, value = "user.queries")
   })
   Optional<UserEntity> findByUsername(@SqlInjectionSafe String username);
 
   @QueryHints({
-          @QueryHint(name = org.hibernate.jpa.HibernateHints.HINT_CACHEABLE, value = "true"),
-          @QueryHint(name = org.hibernate.jpa.HibernateHints.HINT_CACHE_REGION, value = "user.queries")
+          @QueryHint(name = HibernateHints.HINT_CACHEABLE, value = "true"),
+          @QueryHint(name = HibernateHints.HINT_CACHE_REGION, value = "user.queries")
   })
   Optional<UserEntity> findByEmail(@SqlInjectionSafe String email);
 
