@@ -268,7 +268,7 @@ A huge shoutout to the amazing team behind JobsHunter!
     </td>
     <td valign="top">
       <ul>
-        <li>no contribution yet</li>
+        <li>Improved the prompts for job searches at specific companies</li>
       </ul>
     </td>
   </tr>
