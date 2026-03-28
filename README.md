@@ -252,6 +252,7 @@ A huge shoutout to the amazing team behind JobsHunter!
     </td>
     <td valign="top">
       <ul>
+        <li>Enable Hibernate second-level cache and configure query cache regions</li>
         <li>Refactoring & Optimization about email templates</li>
         <li>Liquibase Scripts Fixes</li>
         <li>RestClient Migration</li>

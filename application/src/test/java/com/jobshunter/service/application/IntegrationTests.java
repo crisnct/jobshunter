@@ -1,5 +1,15 @@
 package com.jobshunter.service.application;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.verify;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.jobshunter.database.entities.RoleEntity;
 import com.jobshunter.database.entities.UserEntity;
@@ -22,6 +32,11 @@ import com.jobshunter.service.application.processors.validation.JobValidatorProc
 import com.jobshunter.service.clients.SmtpMailtrapClient;
 import com.jobshunter.service.clients.browser.BrowserSimulator;
 import io.jsonwebtoken.lang.Assert;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ExecutionException;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
@@ -37,17 +52,6 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.web.servlet.MockMvc;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
-import java.util.concurrent.ExecutionException;
-
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @Slf4j
 @SpringBootTest(
@@ -268,7 +272,8 @@ public class IntegrationTests {
   @Test
   @Disabled
   public void testJobFakelUrFilter() {
-    Job job = new Job("https://www.bestjobs.eu/en/job/accounts-receivable-accountant-with-german-cabs-continental-automotive-romania-srl-timisoara-5b5f5e5e-5b5f-5e5e-5b5f-5b5f5e5e5b5f");
+    Job job = new Job(
+        "https://www.bestjobs.eu/en/job/accounts-receivable-accountant-with-german-cabs-continental-automotive-romania-srl-timisoara-5b5f5e5e-5b5f-5e5e-5b5f-5b5f5e5e5b5f");
     JobContext jc = new JobContext(job, null, null);
     jc = jobBasicCheckProcessor.processAsync(jc);
     jc = jobFetchProcessor.processAsync(jc);
@@ -335,7 +340,8 @@ public class IntegrationTests {
   @Test
   @Disabled
   public void testExpired() {
-    Job job = new Job("https://www.indeed.com/viewjob?jk=7a69d37023158b21&utm_campaign=google_jobs_apply&utm_source=google_jobs_apply&utm_medium=organic");
+    Job job = new Job(
+        "https://www.indeed.com/viewjob?jk=7a69d37023158b21&utm_campaign=google_jobs_apply&utm_source=google_jobs_apply&utm_medium=organic");
 
     UserJobTypeEntity onsiteJob = new UserJobTypeEntity();
     onsiteJob.setJobType(JobType.ONSITE);
@@ -355,35 +361,6 @@ public class IntegrationTests {
     jc = jobValidator.processAsync(jc);
 
     Assert.isTrue(!jc.isValidatedSuccessfully(), "Job link is expired and should not be validated");
-  }
-
-  //TODO
-  //remove this and make tests to take into consideration data.sql
-  @TestConfiguration
-  static class SqlTestDataInitializer {
-
-    @Bean
-    InitializingBean populateTestData(DataSource dataSource) {
-      return () -> {
-        ResourceDatabasePopulator populator = new ResourceDatabasePopulator(new ClassPathResource("data.sql"));
-        populator.execute(dataSource);
-      };
-    }
-
-    @Bean
-    ApplicationRunner ensureModelSeeds(AiModelRepository aiModelRepository) {
-      return args -> {
-        seedIfMissing(aiModelRepository, EngineType.GEMINI, "gemini-2.5-flash");
-        seedIfMissing(aiModelRepository, EngineType.GPT, "gpt-4o-mini-2024-07-18");
-        seedIfMissing(aiModelRepository, EngineType.GPT, "gpt-5.1-2025-11-13");
-        seedIfMissing(aiModelRepository, EngineType.GROK, "grok-4-fast-reasoning");
-      };
-    }
-
-    private void seedIfMissing(AiModelRepository repo, EngineType type, String model) {
-      repo.findByProviderAndModel(type, model)
-          .orElseGet(() -> repo.save(new AiModelEntity(type, model)));
-    }
   }
 
 }
