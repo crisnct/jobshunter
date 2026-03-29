@@ -26,9 +26,11 @@ public class SqlTestDataInitializer {
   ApplicationRunner ensureModelSeeds(AiModelRepository aiModelRepository) {
     return args -> {
       seedIfMissing(aiModelRepository, EngineType.GEMINI, "gemini-2.5-flash");
+      seedIfMissing(aiModelRepository, EngineType.GEMINI, "gemini-2.0-flash-lite");
       seedIfMissing(aiModelRepository, EngineType.GPT, "gpt-4o-mini-2024-07-18");
       seedIfMissing(aiModelRepository, EngineType.GPT, "gpt-5.1-2025-11-13");
       seedIfMissing(aiModelRepository, EngineType.GROK, "grok-4-fast-reasoning");
+      seedIfMissing(aiModelRepository, EngineType.GROK, "grok-4-1-fast-non-reasoning");
     };
   }
 
