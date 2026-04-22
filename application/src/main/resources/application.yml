@@ -161,6 +161,7 @@ spring:
     cors:
       allowed-origins:
         - "https://ronin-archesporial-lonnie.ngrok-free.dev"
+        - "https://ec2-16-171-239-161.eu-north-1.compute.amazonaws.com"
     httpsOnly:
       enabled: true
 
