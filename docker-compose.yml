@@ -1,24 +1,4 @@
 services:
-#  mysql:
-#    image: mysql:8.4
-#    restart: always
-#    container_name: scm-mysql
-#    environment:
-#      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-#      MYSQL_DATABASE: jobshunter_db
-#      MYSQL_USER: ${MYSQL_USER}
-#      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
-#    ports:
-#      - "3306"
-#    volumes:
-#      - mysql_data:/var/lib/mysql
-#    healthcheck:
-#      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p${MYSQL_ROOT_PASSWORD}"]
-#      interval: 10s
-#      timeout: 5s
-#      retries: 5
-#volumes:
-#  mysql_data:
 
   jobshunter-service:
     profiles:
@@ -65,6 +45,27 @@ services:
       ENABLE_SCHEDULER: "false"
     ports:
       - "9001:8443"
+  mysql-service-aws:
+    profiles:
+      - aws
+    image: mysql:8.4
+    restart: always
+    container_name: jobshunter-db-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: jobshunter
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    ports:
+      - "3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
 
   jobshunter-service-aws:
     profiles:
@@ -74,13 +75,11 @@ services:
     restart: always
     volumes:
       - playwright-cache:/root/.cache/ms-playwright
-    #    depends_on:
-    #      mysql:
-    #        condition: service_healthy
+    depends_on:
+      mysql-service-aws:
+        condition: service_healthy
     environment:
-      #      MYSQL_URL: mysql://mysql:3306/jobshunter_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&createDatabaseIfNotExist=true
-      #Connection to database from local machine
-      MYSQL_URL: mysql://host.docker.internal:3306/jobshunter?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&rewriteBatchedStatements=true&cachePrepStmts=true&useServerPrepStmts=true&createDatabaseIfNotExist=true
+      MYSQL_URL: mysql://mysql-service-aws:3306/jobshunter?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&rewriteBatchedStatements=true&cachePrepStmts=true&useServerPrepStmts=true&createDatabaseIfNotExist=true
       MYSQL_USER: ${MYSQL_USER}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
       TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID}
@@ -106,7 +105,7 @@ services:
       LIQUIBASE_ENABLED: "true"
       ENABLE_SCHEDULER: "false"
     ports:
-      - "9001:8443"
+      - "443:8443"
 
   ngrok:
     image: ngrok/ngrok:latest
@@ -129,4 +128,5 @@ networks:
     driver: bridge
 
 volumes:
+  mysql_data:
   playwright-cache:
