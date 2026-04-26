@@ -109,6 +109,9 @@ The easiest way to run everything (Backend + Frontend + DB):
 git clone https://github.com/yourusername/jobshunter.git
 cd jobshunter
 
+# Stop any existing containers (if needed)
+docker compose --profile local down
+
 # Build and start
 docker compose --profile local up --build -d
 ```
