@@ -5,7 +5,7 @@ info:
   description: |
     HTTP API for user authentication, job search, profile management, CV upload, and admin email tools.
 servers:
-  - url: https://ronin-archesporial-lonnie.ngrok-free.dev
+  - url: https://ec2-16-171-239-161.eu-north-1.compute.amazonaws.com
     description: Prod
   - url: http://localhost:8081
     description: Local
