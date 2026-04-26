@@ -160,8 +160,8 @@ spring:
         expiration-sec: 2592000 # 30 days
     cors:
       allowed-origins:
-        - "https://ronin-archesporial-lonnie.ngrok-free.dev"
         - "https://ec2-16-171-239-161.eu-north-1.compute.amazonaws.com"
+        - "https://ronin-archesporial-lonnie.ngrok-free.dev"
     httpsOnly:
       enabled: true
 
