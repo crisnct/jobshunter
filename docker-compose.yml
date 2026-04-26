@@ -43,6 +43,7 @@ services:
       SPRING_PROFILES_ACTIVE: prod
       LIQUIBASE_ENABLED: "true"
       ENABLE_SCHEDULER: "false"
+      VITE_API_BASE_URL: "https://ronin-archesporial-lonnie.ngrok-free.dev/"
     ports:
       - "9001:8443"
   mysql-service-aws:
@@ -104,6 +105,7 @@ services:
       SPRING_PROFILES_ACTIVE: prod
       LIQUIBASE_ENABLED: "true"
       ENABLE_SCHEDULER: "false"
+      VITE_API_BASE_URL: "https://ec2-16-171-239-161.eu-north-1.compute.amazonaws.com/"
     ports:
       - "443:8443"
 

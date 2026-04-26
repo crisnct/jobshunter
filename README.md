@@ -156,6 +156,32 @@ Pick whichever configuration matches the environment you want to explore.
 
 Configure the application via environment variables or `application.yml`.
 
+### Frontend API configuration
+
+The frontend resolves API endpoints using Vite build-time variables from `application/src/main/resources/static/.env*`.
+
+Resolution priority:
+1. `VITE_API_BASE_URL` (absolute backend host; frontend appends `/api` automatically)
+2. `VITE_API_PATH_PREFIX` (path prefix behind reverse proxy)
+3. fallback: `/api` (same-origin)
+
+Examples:
+
+```bash
+# local
+VITE_API_BASE_URL=http://localhost:8443
+
+# ngrok
+VITE_API_BASE_URL=https://ronin-archesporial-lonnie.ngrok-free.dev/
+
+# aws (direct host)
+VITE_API_BASE_URL=https://ec2-16-171-239-161.eu-north-1.compute.amazonaws.com/
+
+# aws same-domain reverse proxy
+# (omit VITE_API_BASE_URL and use relative API paths)
+VITE_API_PATH_PREFIX=/api
+```
+
 ### 🔑 Essential Credentials
 
 | Variable | Description |

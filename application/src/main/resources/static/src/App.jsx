@@ -11,9 +11,10 @@ import {
   User,
 } from 'lucide-react';
 import './index.css';
+import { buildApiUrl, resolveApiBase } from './config/apiConfig';
 
 const App = () => {
-  const baseUrl = import.meta.env.VITE_API_BASE_URL || 'https://ronin-archesporial-lonnie.ngrok-free.dev';
+  const apiBase = resolveApiBase();
 
   const [status, setStatus] = useState({ type: 'info', message: 'System Ready' });
   const [loginForm, setLoginForm] = useState({ username: '', password: '' });
@@ -251,7 +252,7 @@ const App = () => {
   }, [logMessage]);
 
   const fetchCsrfToken = useCallback(async () => {
-    const resp = await fetch(`${baseUrl}/api/auth/csrf-token`, {
+    const resp = await fetch(buildApiUrl(apiBase, '/auth/csrf-token'), {
       method: 'GET',
       credentials: 'include',
     });
@@ -260,10 +261,10 @@ const App = () => {
       throw new Error(data?.message || 'Failed to fetch CSRF token');
     }
     return data;
-  }, [baseUrl]);
+  }, [apiBase]);
 
   const refreshAuthToken = useCallback(async () => {
-    const resp = await fetch(`${baseUrl}/api/auth/refresh`, {
+    const resp = await fetch(buildApiUrl(apiBase, '/auth/refresh'), {
       method: 'POST',
       credentials: 'include',
     });
@@ -279,7 +280,7 @@ const App = () => {
     }
     setToken(data.token);
     return data.token;
-  }, [baseUrl]);
+  }, [apiBase]);
 
   const parseResponse = async (resp) => {
     const text = await resp.text();
@@ -296,9 +297,9 @@ const App = () => {
     () => ({
       async call(path, { method = 'GET', body, headers = {}, authToken = null } = {}, retrying = false) {
         const activeToken = authToken || token;
-        const requiresCsrf = activeToken && !path.startsWith('/api/auth/');
+        const requiresCsrf = activeToken && !path.startsWith('/auth/');
         const csrf = requiresCsrf ? await fetchCsrfToken() : null;
-        const resp = await fetch(`${baseUrl}${path}`, {
+        const resp = await fetch(buildApiUrl(apiBase, path), {
           method,
           credentials: 'include',
           headers: {
@@ -317,7 +318,7 @@ const App = () => {
           const error = new Error(errorMessage);
           error.status = resp.status;
           error.payload = parsed;
-          if (parsed?.error === 'UNAUTHORIZED' && !retrying && !path.startsWith('/api/auth/')) {
+          if (parsed?.error === 'UNAUTHORIZED' && !retrying && !path.startsWith('/auth/')) {
             const newToken = await refreshAuthToken();
             return this.call(path, { method, body, headers, authToken: newToken }, true);
           }
@@ -327,7 +328,7 @@ const App = () => {
         return parsed;
       },
     }),
-    [baseUrl, token, fetchCsrfToken, refreshAuthToken]
+    [apiBase, token, fetchCsrfToken, refreshAuthToken]
   );
 
   useEffect(() => {
@@ -361,7 +362,7 @@ const App = () => {
     let isActive = true;
     setLoading(true);
     api
-      .call('/api/user/me')
+      .call('/user/me')
       .then((data) => {
         if (!isActive) {
           return;
@@ -413,7 +414,7 @@ const App = () => {
     let active = true;
     setOrdersLoading(true);
     api
-      .call('/api/engine/orders')
+      .call('/engine/orders')
       .then((data) => {
         const list = Array.isArray(data) ? data : [];
         list.sort((a, b) => new Date(b.modifiedAt).getTime() - new Date(a.modifiedAt).getTime());
@@ -446,7 +447,7 @@ const App = () => {
       setJobsLoading(true);
       try {
         const params = orderId ? `?orderId=${encodeURIComponent(orderId)}` : '';
-        const data = await api.call(`/api/user/jobs${params}`);
+        const data = await api.call(`/user/jobs${params}`);
         setJobsFound(Array.isArray(data) ? data : []);
       } catch (err) {
         logMessage(err.message, 'error');
@@ -472,7 +473,7 @@ const App = () => {
     }
     setCountriesLoading(true);
     api
-      .call('/api/misc/countries')
+      .call('/misc/countries')
       .then((data) => {
         const items = Array.isArray(data) ? data : [];
         setCountries(items);
@@ -489,7 +490,7 @@ const App = () => {
     setLoading(true);
     logMessage('Verifying credentials...', 'info');
     try {
-      const res = await api.call('/api/auth/login', { method: 'POST', body: loginForm });
+      const res = await api.call('/auth/login', { method: 'POST', body: loginForm });
       setToken(res.token);
       refreshAttemptedRef.current = false;
     } catch (err) {
@@ -504,7 +505,7 @@ const App = () => {
     async (message = 'Logged out successfully.') => {
       const safeMessage = typeof message === 'string' ? message : 'Logged out successfully.';
       try {
-        await api.call('/api/auth/logout', { method: 'POST' });
+        await api.call('/auth/logout', { method: 'POST' });
       } catch (err) {
         logMessage(err.message, 'error');
       } finally {
@@ -776,7 +777,7 @@ const App = () => {
     }
     setSaving(true);
     try {
-      await api.call('/api/user/update', {
+      await api.call('/user/update', {
         method: 'PUT',
         body: {
           username: profileForm.username || user?.username,
@@ -826,7 +827,7 @@ const App = () => {
         const csrf = await fetchCsrfToken();
         const formData = new FormData();
         formData.append('file', file);
-        return fetch(`${baseUrl}/api/cv/upload`, {
+        return fetch(buildApiUrl(apiBase, '/cv/upload'), {
           method: 'POST',
           credentials: 'include',
           headers: {
@@ -866,7 +867,7 @@ const App = () => {
   const handleDeleteCv = async () => {
     setCvDeleting(true);
     try {
-      await api.call('/api/cv', { method: 'DELETE' });
+      await api.call('/cv', { method: 'DELETE' });
       logMessage('CV deleted', 'success');
       setProfileForm((prev) => ({ ...prev, cvFileName: '' }));
     } catch (err) {
@@ -879,7 +880,7 @@ const App = () => {
   const handleDownloadCv = () => {
     const downloadOnce = async (authToken) => {
       const csrf = token ? await fetchCsrfToken() : null;
-      return fetch(`${baseUrl}/api/cv/download`, {
+      return fetch(buildApiUrl(apiBase, '/cv/download'), {
         method: 'GET',
         credentials: 'include',
         headers: {
@@ -929,7 +930,7 @@ const App = () => {
   const handleDeleteAccount = async () => {
     setDeletingAccount(true);
     try {
-      await api.call('/api/user/delete', { method: 'DELETE' });
+      await api.call('/user/delete', { method: 'DELETE' });
       logMessage('Account deleted', 'success');
       handleLogout();
     } catch (err) {
