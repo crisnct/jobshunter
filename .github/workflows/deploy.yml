@@ -67,6 +67,6 @@ jobs:
             cd /opt/jobshunter
             docker compose --profile aws down
             docker pull ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:latest
-            docker compose --profile aws up -d --build
+            docker compose --profile aws up -d
             docker builder prune -a -f
             docker image prune -a -f
