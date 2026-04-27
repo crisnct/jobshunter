@@ -9,6 +9,12 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /app
 
+# ✅ Accept build argument
+ARG VITE_API_BASE_URL
+
+# ✅ Expose it as env so Vite can read it
+ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
+
 # Copy entire project (multi-module)
 COPY . .
 
