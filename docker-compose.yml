@@ -6,8 +6,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-      args:
-        VITE_API_BASE_URL: "https://ronin-archesporial-lonnie.ngrok-free.dev/"
     container_name: JobsHunterContainer
     restart: always
     networks:
@@ -75,8 +73,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-      args:
-        VITE_API_BASE_URL: "https://ec2-16-171-239-161.eu-north-1.compute.amazonaws.com"
     image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPOSITORY}:latest
     container_name: JobsHunterContainer
     restart: always
