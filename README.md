@@ -209,10 +209,11 @@ A huge shoutout to the amazing team behind JobsHunter!
         <img src="https://github.com/crisnct.png" width="80" style="border-radius: 50%;"/>
       </a><br/>
       <b>Cristian Țone</b><br/>
-      <sub>🚀 Product Owner & Team Lead</sub>
+      <sub>🚀 Founder & Team Lead</sub>
     </td>
     <td valign="top">
       <ul>
+        <li>AWS Deployment Contributor</li>
         <li>Strategy to search jobs by company</li>
         <li>Strategy to search jobs by user prompts</li>
         <li>Functionality to blame AI for the invalid URLs provided</li>
@@ -231,6 +232,24 @@ A huge shoutout to the amazing team behind JobsHunter!
   </tr>
   <tr>
     <td width="150" align="center" valign="top">
+      <a href="https://github.com/ionel-vochin">
+        <img src="https://github.com/ionel-vochin.png" width="80" style="border-radius: 50%;"/>
+      </a><br/>
+      <b>Ionel Vochin</b><br/>
+      <sub>🛠️ Senior Backend Developer</sub>
+    </td>
+    <td valign="top">
+      <ul>
+        <li>AWS Deployment Contributor</li>        
+        <li>Enabled Hibernate second-level cache and configured query cache regions</li>
+        <li>Refactoring & optimization of email templates</li>
+        <li>Liquibase scripts fixes</li>
+        <li>RestClient migration</li>
+      </ul>
+    </td>
+  </tr>
+  <tr>
+    <td width="150" align="center" valign="top">
       <a href="https://github.com/AyanoCode13">
         <img src="https://github.com/AyanoCode13.png" width="80" style="border-radius: 50%;"/>
       </a><br/>
@@ -242,23 +261,6 @@ A huge shoutout to the amazing team behind JobsHunter!
         <li>Scrapper for bestjobs.eu</li>
         <li>Email Notification Service</li>
         <li>Mailtrap Integration</li>
-      </ul>
-    </td>
-  </tr>
-  <tr>
-    <td width="150" align="center" valign="top">
-      <a href="https://github.com/ionel-vochin">
-        <img src="https://github.com/ionel-vochin.png" width="80" style="border-radius: 50%;"/>
-      </a><br/>
-      <b>Ionel Vochin</b><br/>
-      <sub>🛠️ Senior Backend Developer</sub>
-    </td>
-    <td valign="top">
-      <ul>
-        <li>Enable Hibernate second-level cache and configure query cache regions</li>
-        <li>Refactoring & Optimization about email templates</li>
-        <li>Liquibase Scripts Fixes</li>
-        <li>RestClient Migration</li>
       </ul>
     </td>
   </tr>
@@ -286,25 +288,11 @@ A huge shoutout to the amazing team behind JobsHunter!
     </td>
     <td valign="top">
       <ul>
-        <li>...</li>
-      </ul>
-    </td>
-  </tr>
-  <tr>
-    <td width="150" align="center" valign="top">
-      <a href="https://github.com/georgianapastiu">
-        <img src="https://github.com/georgianapastiu.png" width="80" style="border-radius: 50%;"/>
-      </a><br/>
-      <b>Georgiana Pastiu</b><br/>
-      <sub>🛠️ Mid-Level Python Developer</sub>
-    </td>
-    <td valign="top">
-      <ul>
         <li>no contribution yet</li>
       </ul>
     </td>
   </tr>
-
+ 
 </table>
 
 ---
