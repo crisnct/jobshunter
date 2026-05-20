@@ -299,7 +299,7 @@ A huge shoutout to the amazing team behind JobsHunter!
 
 ## 📄 License
 
-This project is licensed under the **Business Source License 1.1** until **1 Jan 2035** - see the [LICENSE-EN](LICENSE-EN) file for details.  
+This project is licensed under the **Business Source License 1.1** until **1 Jan 2035** - see the [LICENSE-EN](LICENSE) file for details.  
 
 <div align="left">
   <sub>Product made with ❤️ by the JobsHunter Team</sub>
