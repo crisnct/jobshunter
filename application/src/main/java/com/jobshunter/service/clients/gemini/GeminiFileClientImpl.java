@@ -77,17 +77,22 @@ public non-sealed class GeminiFileClientImpl implements FileClient {
       body.add("metadata", new HttpEntity<>(metadata, jsonHeaders));
       body.add("file", new FileSystemResource(cvPath));
 
-      UploadFileResponse response = restClient.post()
-          .uri(UPLOAD_URI + "?key=" + properties.getGemini().getApiKey())
-          .contentType(MediaType.MULTIPART_FORM_DATA)
-          .body(body)
-          .retrieve()
-          .body(UploadFileResponse.class);
+      try {
+        UploadFileResponse response = restClient.post()
+            .uri(UPLOAD_URI + "?key=" + properties.getGemini().getApiKey())
+            .contentType(MediaType.MULTIPART_FORM_DATA)
+            .body(body)
+            .retrieve()
+            .body(UploadFileResponse.class);
 
-      if (response == null || response.file() == null) {
-        throw new RuntimeException("Fail to upload file to Gemini Api: " + cvPath);
+        if (response == null || response.file() == null) {
+          throw new RuntimeException("Fail to upload file to Gemini Api: " + cvPath);
+        }
+        return new ResumeFileInfo(response.file().name, response.file().displayName, response.file.expirationTime);
+      } catch (Throwable e) {
+        log.error(e.getMessage(), e);
+        throw new RuntimeException("Fail to upload file to Gemini Api: " + cvPath, e);
       }
-      return new ResumeFileInfo(response.file().name, response.file().displayName, response.file.expirationTime);
     }
   }
 

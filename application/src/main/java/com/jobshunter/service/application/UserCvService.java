@@ -283,8 +283,8 @@ public class UserCvService {
         ResumeFileInfo newFileInfo = client.uploadFile(tempFile);
         userCvDBService.saveRemoteCvFile(freshUser, type, newFileInfo);
         log.info("Upload CV complete for user {}, engine {}", freshUser.getUsername(), type.name());
-      } catch (IOException e) {
-        throw new RuntimeException(e);
+      } catch (Exception e) {
+        log.error("Error at uploading resume for user {} on {} client: {}", freshUser.getUsername(), type.name(), e.getMessage());
       } finally {
         if (tempFile != null) {
           try {

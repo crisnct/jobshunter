@@ -63,6 +63,9 @@ public non-sealed class GrokFileClientImpl implements FileClient {
         throw new RuntimeException("Fail to upload file to GROK Api: " + cvPath);
       }
       return new ResumeFileInfo(response.id(), response.filename(), response.expires_at());
+    } catch (Throwable e) {
+      log.error(e.getMessage(), e);
+      throw new RuntimeException("Fail to upload file to GROK Api: " + cvPath);
     }
   }
 

@@ -70,6 +70,9 @@ public non-sealed class GptFileClientImpl implements FileClient {
         return null;
       }
       return new ResumeFileInfo(uploadResponse.id(), uploadResponse.filename(), uploadResponse.expires_at());
+    } catch (Throwable e) {
+      log.error(e.getMessage(), e);
+      throw new RuntimeException("Fail to upload file to GPT Api: " + cvPath, e);
     }
   }
 

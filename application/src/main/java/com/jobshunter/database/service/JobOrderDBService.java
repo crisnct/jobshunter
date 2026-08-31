@@ -14,7 +14,6 @@ import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.hibernate.Hibernate;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,9 +29,15 @@ public class JobOrderDBService {
 
   @Transactional
   public JobOrderEntity createJobOrder(UserEntity user, JobOrderRequest request) {
+    return createJobOrder(user, request, OrderStatus.NEW);
+  }
+
+  @Transactional
+  public JobOrderEntity createJobOrder(UserEntity user, JobOrderRequest request, OrderStatus status) {
     AiModelEntity aiModel = aiModelRepository.findByProviderAndModel(request.provider(), request.model())
         .orElseThrow(() -> new BusinessException(HttpStatus.BAD_REQUEST, "AI model " + request.model() + " not found"));
     JobOrderEntity jobOrder = new JobOrderEntity(user, aiModel, request.searchCompanies(), request.searchWithUserPrompts());
+    jobOrder.setStatus(status);
     return jobOrderRepository.save(jobOrder);
   }
 

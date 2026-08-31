@@ -1,20 +1,14 @@
 package com.jobshunter.service.application.scheduler;
 
-import com.jobshunter.config.ApplicationProperties;
 import com.jobshunter.database.entities.JobOrderEntity;
 import com.jobshunter.database.entities.UserEntity;
-import com.jobshunter.database.entities.UserJobEntity;
 import com.jobshunter.database.service.JobOrderDBService;
 import com.jobshunter.database.service.UserDBService;
 import com.jobshunter.database.service.UserJobDBService;
-import com.jobshunter.model.EngineType;
 import com.jobshunter.model.Job;
-import com.jobshunter.model.OrderStatus;
-import com.jobshunter.model.SearchJobOrder;
 import com.jobshunter.security.filters.CorrelationIdFilter;
-import com.jobshunter.service.application.JobHuntService;
+import com.jobshunter.service.application.JobOrderProcessor;
 import com.jobshunter.service.application.UserCvService;
-import com.jobshunter.service.application.hunting.CountryIsoCode;
 import com.jobshunter.service.application.notifiers.EmailNotifierService;
 import com.jobshunter.service.application.notifiers.WhatsappNotifierService;
 import java.time.Duration;
@@ -42,7 +36,7 @@ public class JobHuntScheduler {
 
   private final Map<String, AtomicBoolean> running = new ConcurrentHashMap<>();
 
-  private final JobHuntService jobHuntService;
+  private final JobOrderProcessor jobOrderProcessor;
 
   private final UserDBService userDBService;
 
@@ -51,8 +45,6 @@ public class JobHuntScheduler {
   private final JobOrderDBService jobOrderDBService;
 
   private final UserCvService userCvService;
-
-  private final ApplicationProperties properties;
 
   private final Executor ordersExecutor;
 
@@ -64,37 +56,31 @@ public class JobHuntScheduler {
 
   private final EmailNotifierService emailNotifierService;
 
-  private final CountryIsoCode countryIsoCode;
-
   private final Environment environment;
 
   public JobHuntScheduler(
-      JobHuntService jobHuntService,
+      JobOrderProcessor jobOrderProcessor,
       UserDBService userDBService,
       JobOrderDBService jobOrderDBService,
       UserCvService userCvService,
       Environment env,
-      ApplicationProperties properties,
       UserJobDBService userJobDBService,
-      CountryIsoCode countryIsoCode,
       WhatsappNotifierService whatsappNotifierService,
       EmailNotifierService emailNotifierService,
       @Qualifier("ordersExecutor") Executor ordersExecutor,
       @Qualifier("notificationsExecutor") Executor notificationsExecutor,
       @Qualifier("maintenanceExecutor") Executor maintenanceExecutor
   ) {
-    this.jobHuntService = jobHuntService;
+    this.jobOrderProcessor = jobOrderProcessor;
     this.whatsappNotifierService = whatsappNotifierService;
     this.emailNotifierService = emailNotifierService;
     this.userDBService = userDBService;
     this.jobOrderDBService = jobOrderDBService;
     this.userCvService = userCvService;
     this.userJobDBService = userJobDBService;
-    this.countryIsoCode = countryIsoCode;
     this.ordersExecutor = ordersExecutor;
     this.notificationsExecutor = notificationsExecutor;
     this.maintenanceExecutor = maintenanceExecutor;
-    this.properties = properties;
     this.environment = env;
   }
 
@@ -122,39 +108,12 @@ public class JobHuntScheduler {
     if (jobIdOp.isEmpty()) {
       return;
     }
-    // Generate correlation ID for scheduled task
     String correlationId = UUID.randomUUID().toString();
     MDC.put(CorrelationIdFilter.CORRELATION_ID_MDC_KEY, correlationId);
     try {
-      JobOrderEntity jobOrder = jobOrderDBService.getJobOrder(jobIdOp.get());
-      String username = jobOrder.getUser().getUsername();
-      log.info("Start processing job order id={} for user {}", jobOrder.getId(), jobOrder.getUser().getUsername());
-      try {
-        for (EngineType type : EngineType.values()) {
-          if (type.isAiProvider()) {
-            userCvService.refreshUserCvIfNeeded(jobOrder.getUser(), type);
-          }
-        }
-
-        UserEntity user = userDBService.getUserCompleteInfo(username).orElseThrow();
-
-        boolean isEnableOneRealEngine = (properties.getGemini().isEnabled() || properties.getGpt().isEnabled() || properties.getSerp().isEnabled());
-        final List<String> ignoredURLs;
-        if (isEnableOneRealEngine) {
-          ignoredURLs = userJobDBService.getUserJobs(username).stream().map(UserJobEntity::getUrl).toList();
-        } else {
-          ignoredURLs = List.of();
-        }
-        SearchJobOrder order = new SearchJobOrder(jobOrder, user, ignoredURLs);
-        order.setCountryISOcode(countryIsoCode.getCode(user.getCountry()));
-
-        jobHuntService.searchJobsForUser(order);
-        jobOrderDBService.changeStatus(jobOrder.getId(), OrderStatus.COMPLETED, null);
-        log.info("Completed processing job order id={} for user {}", jobOrder.getId(), jobOrder.getUser().getUsername());
-      } catch (Exception e) {
-        log.error("Error processing job order id={} for user {}: {}", jobOrder.getId(), jobOrder.getUser().getUsername(), e.getMessage(), e);
-        jobOrderDBService.changeStatus(jobOrder.getId(), OrderStatus.FAILED, e.getMessage());
-      }
+      jobOrderProcessor.process(jobIdOp.get());
+    } catch (Exception e) {
+      log.error("Error processing job order id={}: {}", jobIdOp.get(), e.getMessage(), e);
     } finally {
       MDC.clear();
     }

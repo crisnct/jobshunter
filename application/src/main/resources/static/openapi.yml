@@ -141,6 +141,25 @@ components:
             $ref: '#/components/schemas/Job'
       required: [ jobsFound ]
 
+    SearchJobResult:
+      type: object
+      properties:
+        url:
+          type: string
+          format: uri
+        source:
+          type: string
+      required: [ url ]
+
+    SearchJobsResponse:
+      type: object
+      properties:
+        jobsFound:
+          type: array
+          items:
+            $ref: '#/components/schemas/SearchJobResult'
+      required: [ jobsFound ]
+
     UserInfoResponse:
       type: object
       properties:
@@ -1405,6 +1424,47 @@ paths:
                       notes: null
         '401':
           description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/search_jobs:
+    post:
+      summary: Search jobs synchronously
+      tags: [ Engine ]
+      description: Creates one or more job orders for the authenticated user and runs the job search in the request thread. Returns the jobs found. Requires authentication. At least one of searchCompanies or searchWithUserPrompts must be true for each order.
+      security:
+        - bearerAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/JobOrderRequest'
+      responses:
+        '200':
+          description: Jobs found for the submitted search orders
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchJobsResponse'
+        '400':
+          description: Invalid request (e.g., engine configuration not found, or both searchCompanies and searchWithUserPrompts are false)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: User not found
           content:
             application/json:
               schema:
