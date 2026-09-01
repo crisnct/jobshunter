@@ -29,6 +29,12 @@ public class DeviceIdFilter extends OncePerRequestFilter {
   @Override
   protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
       throws ServletException, IOException {
+    String requestPath = request.getRequestURI();
+    if (requestPath.startsWith("/api/internal/")) {
+      filterChain.doFilter(request, response);
+      return;
+    }
+
     Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
     if (authentication == null || !authentication.isAuthenticated()) {
       filterChain.doFilter(request, response);
@@ -40,7 +46,6 @@ public class DeviceIdFilter extends OncePerRequestFilter {
       String username = userDetails.getUsername();
 
       // Skip device ID check for login endpoint
-      String requestPath = request.getRequestURI();
       if (!requestPath.equals("/api/auth/login")) {
         Optional<String> deviceIdCookieOp = cookieService.getCookie(request, CookieService.DEVICE_ID_COOKIE);
         if (deviceIdCookieOp.isEmpty()) {

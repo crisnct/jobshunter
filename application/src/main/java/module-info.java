@@ -74,6 +74,8 @@ open module com.jobshunter.application {
   requires micrometer.core;
   requires spring.security.oauth2.client;
   requires spring.security.oauth2.core;
+  requires spring.security.oauth2.jose;
+  requires spring.security.oauth2.resource.server;
 
 }
 

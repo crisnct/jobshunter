@@ -1,6 +1,7 @@
 package com.jobshunter.security;
 
 import com.jobshunter.config.ApplicationProperties;
+import com.jobshunter.database.service.OAuth2UserDBService;
 import com.jobshunter.database.service.UserDBService;
 import com.jobshunter.security.filters.AdditionalHeadersFilter;
 import com.jobshunter.security.filters.CorrelationIdFilter;
@@ -11,14 +12,18 @@ import com.jobshunter.security.filters.SecurityHeadersFilter;
 import com.jobshunter.security.rateLimitBucket4J.BlockRegistry;
 import com.jobshunter.security.rateLimitBucket4J.InMemoryRateLimiter;
 import com.jobshunter.security.rateLimitBucket4J.ViolationRegistry;
-import com.jobshunter.database.service.OAuth2UserDBService;
 import com.jobshunter.service.application.JwtService;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
+import org.springframework.core.convert.converter.Converter;
+import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -26,16 +31,29 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
+import org.springframework.security.oauth2.core.OAuth2Error;
+import org.springframework.security.oauth2.core.OAuth2TokenValidator;
+import org.springframework.security.oauth2.core.OAuth2TokenValidatorResult;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.JwtValidators;
+import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
+import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 import org.springframework.security.web.util.matcher.AnyRequestMatcher;
+import org.springframework.util.StringUtils;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -44,6 +62,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
+@EnableConfigurationProperties(DelegatedAuthProperties.class)
 @RequiredArgsConstructor
 public class SecurityConfig {
 
@@ -53,6 +72,7 @@ public class SecurityConfig {
   private final CookieService cookieService;
   private final JwtService jwtService;
   private final ApplicationProperties properties;
+  private final DelegatedAuthProperties delegatedAuthProperties;
   private final OAuth2UserDBService oAuth2UserDBService;
   private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
   private final OAuth2AuthenticationFailureHandler oAuth2AuthenticationFailureHandler;
@@ -73,6 +93,41 @@ public class SecurityConfig {
   }
 
   @Bean
+  @Order(1)
+  public SecurityFilterChain internalApiSecurityFilterChain(
+      HttpSecurity http,
+      SecurityHeadersFilter securityHeadersFilter,
+      AdditionalHeadersFilter additionalHeadersFilter,
+      RateLimitingFilter rateLimitingFilter,
+      CorrelationIdFilter correlationIdFilter,
+      RestAuthenticationEntryPoint restAuthenticationEntryPoint
+  ) {
+    http.securityMatcher("/api/internal/**")
+        .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+        .csrf(AbstractHttpConfigurer::disable)
+        .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+        .authorizeHttpRequests(auth -> {
+           auth.anyRequest().authenticated();
+        })
+        .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(internalJwtAuthenticationConverter())))
+        .headers(h ->
+            h.httpStrictTransportSecurity(hsts -> hsts
+                .includeSubDomains(true)
+                .maxAgeInSeconds(MAX_AGE_HSTS)
+                .preload(true)
+                .requestMatcher(AnyRequestMatcher.INSTANCE))
+        )
+        .addFilterBefore(correlationIdFilter, UsernamePasswordAuthenticationFilter.class)
+        .addFilterBefore(rateLimitingFilter, UsernamePasswordAuthenticationFilter.class)
+        .addFilterBefore(securityHeadersFilter, UsernamePasswordAuthenticationFilter.class)
+        .addFilterBefore(additionalHeadersFilter, UsernamePasswordAuthenticationFilter.class)
+        .exceptionHandling(ex -> ex.authenticationEntryPoint(restAuthenticationEntryPoint));
+
+    return http.build();
+  }
+
+  @Bean
+  @Order(2)
   public SecurityFilterChain securityFilterChain(
       HttpSecurity http,
       JwtAuthenticationFilter jwtAuthenticationFilter,
@@ -94,6 +149,7 @@ public class SecurityConfig {
             .csrfTokenRequestHandler(requestHandler)
             .csrfTokenRepository(csrfTokenRepository)
             .ignoringRequestMatchers("/api/auth/**")
+            .ignoringRequestMatchers("/api/internal/**")
             .ignoringRequestMatchers("/oauth2/**", "/login/oauth2/**")
             .ignoringRequestMatchers("/", "/index.html", "/css/**", "/js/**", "/images/**")
         )
@@ -158,7 +214,9 @@ public class SecurityConfig {
   }
 
   @Bean
-  public JwtAuthenticationFilter jwtAuthenticationFilter(UserDetailsService userDetailsService) {
+  public JwtAuthenticationFilter jwtAuthenticationFilter(
+      UserDetailsService userDetailsService
+  ) {
     return new JwtAuthenticationFilter(jwtService, userDetailsService);
   }
 
@@ -190,6 +248,38 @@ public class SecurityConfig {
   @Bean
   public CorrelationIdFilter correlationIdFilter() {
     return new CorrelationIdFilter();
+  }
+
+  @Bean
+  public JwtDecoder delegatedJwtDecoder() {
+    NimbusJwtDecoder jwtDecoder = NimbusJwtDecoder.withIssuerLocation(delegatedAuthProperties.issuerUri()).build();
+    OAuth2TokenValidator<Jwt> issuerValidator =
+        JwtValidators.createDefaultWithIssuer(delegatedAuthProperties.issuerUri());
+    OAuth2TokenValidator<Jwt> audienceValidator = jwt -> {
+      if (jwt.getAudience().contains(delegatedAuthProperties.audience())) {
+        return OAuth2TokenValidatorResult.success();
+      }
+      return OAuth2TokenValidatorResult.failure(
+          new OAuth2Error("invalid_token", "Delegated token audience mismatch", null)
+      );
+    };
+    jwtDecoder.setJwtValidator(new DelegatingOAuth2TokenValidator<>(issuerValidator, audienceValidator));
+    return jwtDecoder;
+  }
+
+  private Converter<Jwt, ? extends AbstractAuthenticationToken> internalJwtAuthenticationConverter() {
+    JwtGrantedAuthoritiesConverter authoritiesConverter = new JwtGrantedAuthoritiesConverter();
+    authoritiesConverter.setAuthoritiesClaimName("scope");
+    authoritiesConverter.setAuthorityPrefix("SCOPE_");
+
+    return jwt -> {
+      Collection<GrantedAuthority> authorities = authoritiesConverter.convert(jwt);
+      String principal = jwt.getClaimAsString("email");
+      if (!StringUtils.hasText(principal)) {
+        principal = jwt.getSubject();
+      }
+      return new JwtAuthenticationToken(jwt, authorities == null ? List.of() : authorities, principal);
+    };
   }
 
   private AuthenticationProvider daoAuthenticationProvider(UserDetailsService userDetailsService, PasswordEncoder passwordEncoder) {

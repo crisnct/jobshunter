@@ -21,10 +21,16 @@ import org.springframework.web.filter.OncePerRequestFilter;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
   private static final String BEARER_PREFIX = "Bearer ";
+  private static final String INTERNAL_API_PREFIX = "/api/internal/";
 
   private final JwtService jwtService;
 
   private final UserDetailsService userDetailsService;
+
+  @Override
+  protected boolean shouldNotFilter(HttpServletRequest request) {
+    return request.getRequestURI() != null && request.getRequestURI().startsWith(INTERNAL_API_PREFIX);
+  }
 
   @Override
   protected void doFilterInternal(
