@@ -47,9 +47,8 @@ jobshunter:
     window: 1m
   security:
     delegated-auth:
-      enabled: ${DELEGATED_AUTH_ENABLED:true}
       issuer-uri: ${DELEGATED_AUTH_ISSUER_URI:https://accounts.google.com}
-      audience: ${DELEGATED_AUTH_AUDIENCE:${GOOGLE_CLIENT_ID:notset}}
+      audience: ${GOOGLE_CLIENT_ID:notset}
 
 twilio:
   enabled: true
