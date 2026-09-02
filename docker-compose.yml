@@ -126,8 +126,18 @@ services:
     profiles:
       - local
 
+  nginx-proxy:
+    image: nginx:alpine
+    container_name: jobshunter-nginx
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    networks:
+      - jobshunter-net
+    restart: unless-stopped
+
 networks:
   jobshunter-net:
+    name: jobshunter-net
     driver: bridge
 
 volumes:
