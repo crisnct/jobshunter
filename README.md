@@ -165,6 +165,21 @@ Configure the application via environment variables or `application.yml`.
 | `MYSQL_PASSWORD` | Database password |
 | `JWT_SECRET` | Secret key for signing JWT tokens (min 32 chars) |
 
+### MCP Internal AS delegated auth (for `/api/internal/**`)
+
+Use these when Jobshunter is called by MCP in `MCP_INTERNAL_AS` mode:
+
+| Variable | Description |
+| :--- | :--- |
+| `DELEGATED_AUTH_ISSUER_URI` | Must match MCP issuer (`MCP_AS_ISSUER`) |
+| `DELEGATED_AUTH_AUDIENCE` | Must match delegated audience (`MCP_AS_JOBSHUNTER_AUDIENCE`) |
+| `DELEGATED_AUTH_JWKS_URI` | MCP JWKS endpoint (`<MCP_BASE_URL>/.well-known/jwks.json`) |
+| `DELEGATED_AUTH_REQUIRED_SCOPE` | Optional required scope for internal endpoints |
+| `DELEGATED_AUTH_REQUIRED_TOKEN_USE` | Optional hardening (recommended `jobshunter_delegated`) |
+
+Rollback mode:
+- For `GOOGLE_PASSTHROUGH`, set delegated auth issuer/audience to Google-compatible values and leave `DELEGATED_AUTH_JWKS_URI` empty if issuer discovery is sufficient.
+
 ### 🤖 AI Providers (At least one recommended)
 
 | Variable | Description |

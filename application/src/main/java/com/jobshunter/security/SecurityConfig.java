@@ -14,10 +14,12 @@ import com.jobshunter.security.rateLimitBucket4J.InMemoryRateLimiter;
 import com.jobshunter.security.rateLimitBucket4J.ViolationRegistry;
 import com.jobshunter.service.application.JwtService;
 import java.util.Collection;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -96,6 +98,7 @@ public class SecurityConfig {
   @Order(1)
   public SecurityFilterChain internalApiSecurityFilterChain(
       HttpSecurity http,
+      @Qualifier("delegatedJwtDecoder") JwtDecoder delegatedJwtDecoder,
       SecurityHeadersFilter securityHeadersFilter,
       AdditionalHeadersFilter additionalHeadersFilter,
       RateLimitingFilter rateLimitingFilter,
@@ -109,7 +112,9 @@ public class SecurityConfig {
         .authorizeHttpRequests(auth -> {
            auth.anyRequest().authenticated();
         })
-        .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(internalJwtAuthenticationConverter())))
+        .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt
+            .decoder(delegatedJwtDecoder)
+            .jwtAuthenticationConverter(internalJwtAuthenticationConverter())))
         .headers(h ->
             h.httpStrictTransportSecurity(hsts -> hsts
                 .includeSubDomains(true)
@@ -253,19 +258,66 @@ public class SecurityConfig {
 
   @Bean
   public JwtDecoder delegatedJwtDecoder() {
-    NimbusJwtDecoder jwtDecoder = NimbusJwtDecoder.withIssuerLocation(delegatedAuthProperties.issuerUri()).build();
+    NimbusJwtDecoder jwtDecoder = createDelegatedJwtDecoder();
     OAuth2TokenValidator<Jwt> issuerValidator =
         JwtValidators.createDefaultWithIssuer(delegatedAuthProperties.issuerUri());
     OAuth2TokenValidator<Jwt> audienceValidator = jwt -> {
-      if (jwt.getAudience().contains(delegatedAuthProperties.audience())) {
+      List<String> audiences = jwt.getAudience();
+      if (audiences != null && audiences.contains(delegatedAuthProperties.audience())) {
         return OAuth2TokenValidatorResult.success();
       }
       return OAuth2TokenValidatorResult.failure(
           new OAuth2Error("invalid_token", "Delegated token audience mismatch", null)
       );
     };
-    jwtDecoder.setJwtValidator(new DelegatingOAuth2TokenValidator<>(issuerValidator, audienceValidator));
+    OAuth2TokenValidator<Jwt> scopeValidator = jwt -> {
+      if (!StringUtils.hasText(delegatedAuthProperties.requiredScope())) {
+        return OAuth2TokenValidatorResult.success();
+      }
+
+      String scopeClaim = jwt.getClaimAsString("scope");
+      if (!StringUtils.hasText(scopeClaim)) {
+        return OAuth2TokenValidatorResult.failure(
+            new OAuth2Error("invalid_token", "Delegated token scope claim is missing", null)
+        );
+      }
+
+      boolean hasRequiredScope = Arrays.stream(scopeClaim.split("\\s+"))
+          .anyMatch(scope -> scope.equals(delegatedAuthProperties.requiredScope()));
+      if (hasRequiredScope) {
+        return OAuth2TokenValidatorResult.success();
+      }
+      return OAuth2TokenValidatorResult.failure(
+          new OAuth2Error("invalid_token", "Delegated token required scope is missing", null)
+      );
+    };
+    OAuth2TokenValidator<Jwt> tokenUseValidator = jwt -> {
+      if (!StringUtils.hasText(delegatedAuthProperties.requiredTokenUse())) {
+        return OAuth2TokenValidatorResult.success();
+      }
+
+      String tokenUse = jwt.getClaimAsString("token_use");
+      if (delegatedAuthProperties.requiredTokenUse().equals(tokenUse)) {
+        return OAuth2TokenValidatorResult.success();
+      }
+      return OAuth2TokenValidatorResult.failure(
+          new OAuth2Error("invalid_token", "Delegated token_use claim is invalid", null)
+      );
+    };
+    jwtDecoder.setJwtValidator(new DelegatingOAuth2TokenValidator<>(
+        issuerValidator,
+        audienceValidator,
+        scopeValidator,
+        tokenUseValidator
+    ));
     return jwtDecoder;
+  }
+
+  private NimbusJwtDecoder createDelegatedJwtDecoder() {
+    if (StringUtils.hasText(delegatedAuthProperties.jwksUri())) {
+      return NimbusJwtDecoder.withJwkSetUri(delegatedAuthProperties.jwksUri()).build();
+    }
+    return NimbusJwtDecoder.withIssuerLocation(delegatedAuthProperties.issuerUri()).build();
   }
 
   private Converter<Jwt, ? extends AbstractAuthenticationToken> internalJwtAuthenticationConverter() {
