@@ -2,11 +2,13 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   AlertCircle,
   CheckCircle2,
+  FileText,
   Globe,
   LayoutDashboard,
   Loader2,
   LogOut,
   Plus,
+  Shield,
   Trash2,
   User,
 } from 'lucide-react';
@@ -1013,6 +1015,27 @@ const App = () => {
                 </svg>
                 <span>Continue with Google</span>
               </button>
+
+              <div className="flex justify-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => window.open('/legal/privacy.html', '_blank', 'noopener,noreferrer')}
+                  className="w-11 h-11 flex items-center justify-center rounded-xl border border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-700 transition-all"
+                  aria-label="Open privacy policy"
+                  title="Privacy Policy"
+                >
+                  <Shield size={18} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => window.open('/legal/termsOfService.html', '_blank', 'noopener,noreferrer')}
+                  className="w-11 h-11 flex items-center justify-center rounded-xl border border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-700 transition-all"
+                  aria-label="Open terms of service"
+                  title="Terms of Service"
+                >
+                  <FileText size={18} />
+                </button>
+              </div>
             </form>
           </div>
           <StatusToast />

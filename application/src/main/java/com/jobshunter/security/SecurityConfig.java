@@ -157,6 +157,7 @@ public class SecurityConfig {
         .authorizeHttpRequests(auth -> auth
             .requestMatchers("/", "/profile", "/dashboard", "/index.html", "/css/**", "/js/**", "/images/**").permitAll()
             .requestMatchers("/assets/**", "/src/**", "/favicon.jpg", "/manifest.webmanifest", "/robots.txt").permitAll()
+            .requestMatchers("/legal/**").permitAll()
             .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**", "/openapi.yml").permitAll()
             .requestMatchers("/api/auth/**").permitAll()
             .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()

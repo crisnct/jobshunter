@@ -131,7 +131,6 @@ services:
     container_name: jobshunter-nginx
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./legal:/usr/share/nginx/html/legal:ro
     networks:
       - jobshunter-net
     restart: unless-stopped
