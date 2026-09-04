@@ -28,6 +28,7 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Date;
 import java.util.List;
@@ -130,7 +131,8 @@ class DelegatedJwtDecoderTest {
         issuer,
         audience,
         "http://localhost:" + jwksPort + "/.well-known/jwks.json",
-        null,
+        Duration.ofSeconds(5),
+        Duration.ofSeconds(30),
         requiredTokenUse
     );
     SecurityConfig securityConfig = new SecurityConfig(

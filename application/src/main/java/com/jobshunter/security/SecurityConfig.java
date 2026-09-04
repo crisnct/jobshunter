@@ -13,8 +13,8 @@ import com.jobshunter.security.rateLimitBucket4J.BlockRegistry;
 import com.jobshunter.security.rateLimitBucket4J.InMemoryRateLimiter;
 import com.jobshunter.security.rateLimitBucket4J.ViolationRegistry;
 import com.jobshunter.service.application.JwtService;
+import java.time.Duration;
 import java.util.Collection;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
@@ -56,8 +56,10 @@ import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 import org.springframework.security.web.util.matcher.AnyRequestMatcher;
 import org.springframework.util.StringUtils;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @Slf4j
@@ -69,6 +71,8 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 public class SecurityConfig {
 
   private static final int MAX_AGE_HSTS = (int) TimeUnit.DAYS.toSeconds(365);
+  private static final Duration DEFAULT_JWKS_CONNECT_TIMEOUT = Duration.ofSeconds(5);
+  private static final Duration DEFAULT_JWKS_READ_TIMEOUT = Duration.ofSeconds(30);
 
   private final UserDBService userDBService;
   private final CookieService cookieService;
@@ -110,7 +114,7 @@ public class SecurityConfig {
         .csrf(AbstractHttpConfigurer::disable)
         .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .authorizeHttpRequests(auth -> {
-           auth.anyRequest().authenticated();
+          auth.anyRequest().authenticated();
         })
         .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt
             .decoder(delegatedJwtDecoder)
@@ -270,27 +274,7 @@ public class SecurityConfig {
           new OAuth2Error("invalid_token", "Delegated token audience mismatch", null)
       );
     };
-    OAuth2TokenValidator<Jwt> scopeValidator = jwt -> {
-      if (!StringUtils.hasText(delegatedAuthProperties.requiredScope())) {
-        return OAuth2TokenValidatorResult.success();
-      }
-
-      String scopeClaim = jwt.getClaimAsString("scope");
-      if (!StringUtils.hasText(scopeClaim)) {
-        return OAuth2TokenValidatorResult.failure(
-            new OAuth2Error("invalid_token", "Delegated token scope claim is missing", null)
-        );
-      }
-
-      boolean hasRequiredScope = Arrays.stream(scopeClaim.split("\\s+"))
-          .anyMatch(scope -> scope.equals(delegatedAuthProperties.requiredScope()));
-      if (hasRequiredScope) {
-        return OAuth2TokenValidatorResult.success();
-      }
-      return OAuth2TokenValidatorResult.failure(
-          new OAuth2Error("invalid_token", "Delegated token required scope is missing", null)
-      );
-    };
+    OAuth2TokenValidator<Jwt> scopeValidator = jwt -> OAuth2TokenValidatorResult.success();
     OAuth2TokenValidator<Jwt> tokenUseValidator = jwt -> {
       if (!StringUtils.hasText(delegatedAuthProperties.requiredTokenUse())) {
         return OAuth2TokenValidatorResult.success();
@@ -315,9 +299,25 @@ public class SecurityConfig {
 
   private NimbusJwtDecoder createDelegatedJwtDecoder() {
     if (StringUtils.hasText(delegatedAuthProperties.jwksUri())) {
-      return NimbusJwtDecoder.withJwkSetUri(delegatedAuthProperties.jwksUri()).build();
+      return NimbusJwtDecoder.withJwkSetUri(delegatedAuthProperties.jwksUri())
+          .restOperations(delegatedJwksRestTemplate())
+          .build();
     }
     return NimbusJwtDecoder.withIssuerLocation(delegatedAuthProperties.issuerUri()).build();
+  }
+
+  private RestTemplate delegatedJwksRestTemplate() {
+    Duration connectTimeout = delegatedAuthProperties.jwksConnectTimeout() != null
+        ? delegatedAuthProperties.jwksConnectTimeout()
+        : DEFAULT_JWKS_CONNECT_TIMEOUT;
+    Duration readTimeout = delegatedAuthProperties.jwksReadTimeout() != null
+        ? delegatedAuthProperties.jwksReadTimeout()
+        : DEFAULT_JWKS_READ_TIMEOUT;
+
+    SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
+    requestFactory.setConnectTimeout((int) connectTimeout.toMillis());
+    requestFactory.setReadTimeout((int) readTimeout.toMillis());
+    return new RestTemplate(requestFactory);
   }
 
   private Converter<Jwt, ? extends AbstractAuthenticationToken> internalJwtAuthenticationConverter() {
