@@ -90,7 +90,13 @@ public class JobHuntScheduler {
    */
   @Scheduled(fixedDelayString = "${jobshunter.scheduler.processOrderFrequency:5000}")
   public void processOrderAsync() {
-    CompletableFuture.runAsync(this::processOrderSync, ordersExecutor);
+    CompletableFuture.runAsync(() -> {
+      try {
+        processOrderSync();
+      } catch (Exception e) {
+        log.error("Scheduled processOrderSync failed before order processing: {}", e.getMessage(), e);
+      }
+    }, ordersExecutor);
   }
 
   @Scheduled(fixedDelayString = "${jobshunter.scheduler.notifyUsersFrequency:180000}")

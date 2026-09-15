@@ -9,6 +9,7 @@ import com.jobshunter.model.JobContext;
 import com.jobshunter.model.SearchJobOrder;
 import com.jobshunter.service.application.hunting.HuntingOrchestrator;
 import com.jobshunter.service.application.processors.JobsStateMachine;
+import com.jobshunter.service.application.progress.OrderProgressPublisher;
 import io.micrometer.core.annotation.Timed;
 import java.util.Comparator;
 import java.util.List;
@@ -29,10 +30,13 @@ public class JobHuntService {
   private final JobsStateMachine jobsStateMachine;
 
   private final ApplicationProperties properties;
+  private final OrderProgressPublisher orderProgressPublisher;
 
   @Timed(value = "job.hunt.search", description = "Time spent searching jobs for user")
   public JobHuntResponse searchJobsForUser(SearchJobOrder order) {
+    Long orderId = order.getJobOrder().getId();
     UserEntity user = order.getUser();
+    orderProgressPublisher.emit(orderId, "Hunt service started");
     CompletableFuture<List<Job>> futureJobs = huntingOrchestrator.startHunting(order);
     List<Job> result = jobsStateMachine.processAsync(futureJobs, user, order)
         .join()
@@ -46,9 +50,11 @@ public class JobHuntService {
         .toList());
 
     List<Job> jobs = jobHuntResponse.jobsFound();
+    orderProgressPublisher.emit(orderId, "Pipeline produced %d validated jobs".formatted(jobs.size()));
     if (!jobs.isEmpty()) {
       if ((properties.getGemini().isEnabled() || properties.getGpt().isEnabled() || properties.getSerp().isEnabled())) {
         this.userJobDBService.updateUserWithJobs(user, order, jobs);
+        orderProgressPublisher.emit(orderId, "Persisted jobs to user profile");
       }
     }
     return jobHuntResponse;

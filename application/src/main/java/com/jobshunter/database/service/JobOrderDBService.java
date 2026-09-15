@@ -60,7 +60,6 @@ public class JobOrderDBService {
               FOR UPDATE SKIP LOCKED
             """)
         .getResultList();
-
     if (ids.isEmpty()) {
       return Optional.empty();
     }
@@ -78,8 +77,18 @@ public class JobOrderDBService {
     return Optional.of(jobId);
   }
 
+  @Transactional
+  public boolean tryAcquireSpecificOrder(Long orderId) {
+    return jobOrderRepository.claimOrderForProcessing(orderId) > 0;
+  }
+
   public JobOrderEntity getJobOrder(Long jobId) {
     return jobOrderRepository.findById(jobId).orElseThrow();
+  }
+
+  @Transactional(readOnly = true)
+  public List<JobOrderEntity> getJobOrders(List<Long> jobIds) {
+    return jobOrderRepository.findAllById(jobIds);
   }
 
   /**

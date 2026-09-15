@@ -25,6 +25,15 @@ public interface JobOrderRepository extends JpaRepository<JobOrderEntity, Long> 
   @Query(value = "UPDATE job_order SET cost = COALESCE(cost, 0) + :delta WHERE id = :orderId", nativeQuery = true)
   int incrementCost(@Param("orderId") Long orderId, @Param("delta") double delta);
 
+  @Modifying
+  @Query(value = """
+      UPDATE job_order
+      SET status = 'PROCESSING'
+      WHERE id = :orderId
+        AND status = 'NEW'
+      """, nativeQuery = true)
+  int claimOrderForProcessing(@Param("orderId") Long orderId);
+
   @Query(value = """
       SELECT jo.user_id, u.username, COALESCE(SUM(jo.cost), 0)
       FROM job_order jo

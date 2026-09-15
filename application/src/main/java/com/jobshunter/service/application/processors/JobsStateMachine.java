@@ -7,6 +7,7 @@ import com.jobshunter.model.JobMetadataType;
 import com.jobshunter.model.JobPhase;
 import com.jobshunter.model.SearchJobOrder;
 import com.jobshunter.service.application.metrics.JobMetricsService;
+import com.jobshunter.service.application.progress.OrderProgressPublisher;
 import com.jobshunter.service.application.processors.validation.JobValidatorProcessor;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -24,6 +25,7 @@ public class JobsStateMachine {
   private final List<PipelineStep> pipelineSteps;
 
   private final JobMetricsService metricsService;
+  private final OrderProgressPublisher orderProgressPublisher;
 
   public JobsStateMachine(
       JobValidatorProcessor validatorProcessor,
@@ -32,6 +34,7 @@ public class JobsStateMachine {
       JobBodyExtractorProcessor bodyExtractorProcessor,
       JobScoringProcessor scoringProcessor,
       JobMetricsService metricsService,
+      OrderProgressPublisher orderProgressPublisher,
       @Qualifier("urlFetchPlaywrightExecutor") Executor urlFetchPlaywrightExecutor,
       @Qualifier("geminiSearchExecutor") Executor geminiExecutor,
       @Qualifier("grokSearchExecutor") Executor grokExecutor,
@@ -40,6 +43,7 @@ public class JobsStateMachine {
   ) {
     this.jobProcessingExecutor = jobProcessingExecutor;
     this.metricsService = metricsService;
+    this.orderProgressPublisher = orderProgressPublisher;
 
     Executor scoringExecutor = (switch (JobScoringProcessor.ENGINE_SELECTION.type()) {
       case GEMINI -> geminiExecutor;
@@ -60,12 +64,16 @@ public class JobsStateMachine {
   public CompletableFuture<List<JobContext>> processAsync(CompletableFuture<List<Job>> futureJobs, UserEntity user, SearchJobOrder order) {
     CompletableFuture<List<JobContext>> allJobs = futureJobs
         .thenCompose(jobsList -> {
+          orderProgressPublisher.emit(order.getJobOrder().getId(),
+              "Pipeline received %d jobs".formatted(jobsList.size()));
           List<CompletableFuture<JobContext>> pipelined = jobsList.stream()
               .map(job -> {
                     if (job.getMetadata(JobMetadataType.APPROVED_BY_CONVERSATION_STATE_MACHINE) != null) {
                       JobContext jc = new JobContext(job, user, order);
                       jc.setValidatedSuccessfully(true);
                       jc.finalizeJob("the job was already passed through JobsStateMachine in Conversation State Machine");
+                      orderProgressPublisher.emit(order.getJobOrder().getId(),
+                          "Pipeline skipped for pre-approved job %s".formatted(job.getUrl()));
                       return CompletableFuture.completedFuture(jc);
                     } else {
                       return applyJobPipeline(job, user, order);
@@ -90,11 +98,13 @@ public class JobsStateMachine {
   private CompletableFuture<JobContext> applyJobPipeline(Job job, UserEntity user, SearchJobOrder order) {
     CompletableFuture<JobContext> pipeline = CompletableFuture.supplyAsync(() -> new JobContext(job, user, order), jobProcessingExecutor);
     for (PipelineStep step : pipelineSteps) {
-      pipeline = pipeline.thenApplyAsync(ctx -> ctx.isOkToRun(step.phase()) ? step.processor().processAsync(ctx) : ctx, step.executor());
+      pipeline = pipeline.thenApplyAsync(ctx -> runStepWithProgress(ctx, step), step.executor());
     }
     return pipeline.handle((jc, ex) -> {
       if (ex != null) {
         log.error("Pipeline failed for job {}", job.getUrl(), ex);
+        orderProgressPublisher.emit(order.getJobOrder().getId(),
+            "Pipeline error for job %s: %s".formatted(job.getUrl(), ex.getMessage()));
         return JobContext.failed(job, user, ex);
       }
       if (jc == null) {
@@ -104,6 +114,18 @@ public class JobsStateMachine {
       }
       return jc;
     });
+  }
+
+  private JobContext runStepWithProgress(JobContext ctx, PipelineStep step) {
+    Long orderId = ctx.getOrder() != null ? ctx.getOrder().getJobOrder().getId() : null;
+    if (!ctx.isOkToRun(step.phase())) {
+      return ctx;
+    }
+    String url = ctx.getJob() != null ? ctx.getJob().getUrl() : "n/a";
+    orderProgressPublisher.emit(orderId, "%s started for %s".formatted(step.phase().name(), url));
+    JobContext processed = step.processor().processAsync(ctx);
+    orderProgressPublisher.emit(orderId, "%s finished for %s".formatted(step.phase().name(), url));
+    return processed;
   }
 
   private void logResults(List<JobContext> result, String username) {

@@ -88,9 +88,13 @@ push to `main`.
 
 `UserController`/`CvController` collect a user's CV, prompts, and job preferences into a
 `JobOrderEntity`. `JobHuntScheduler` (in `service/application/scheduler/`) periodically drains pending
-orders through `JobOrderProcessor.process(orderId)`, which builds a `SearchJobOrder` and delegates to
-`JobHuntService` → `HuntingOrchestrator`. The same entry point (`JobOrderProcessor`) is also invoked
-synchronously from `InternalMcpController` for MCP-delegated on-demand searches.
+(`OrderStatus.NEW`) orders through `JobOrderProcessor.process(orderId)`, which builds a
+`SearchJobOrder` and delegates to `JobHuntService` → `HuntingOrchestrator`.
+`InternalMcpController`'s `POST /api/internal/search_jobs` (MCP-delegated on-demand searches) creates
+orders the same way — `OrderStatus.NEW`, one per configuration submitted — and returns immediately
+with a `searchId` (the new orders' ids, comma-joined) instead of blocking on `JobOrderProcessor`; the
+scheduler picks them up like any other order. `GET /api/internal/search_jobs/{searchId}` reports
+back the orders' current status/results, verifying the caller owns every order id in the batch.
 
 ### Hunting pipeline (`service/application/hunting/`)
 
