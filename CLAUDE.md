@@ -13,6 +13,10 @@ codebase runs as a two-module Maven build:
 - `annotation-processor` — a compile-time annotation processor library (see below), consumed by `application`.
 - `application` — the Spring Boot app (`com.jobshunter.JobshunterApplication`), everything else.
 
+Cross-cutting design documents and implementation plans (not tied to a single package) live in the
+root `architecture/` folder, e.g. `architecture/deepseek-integration-plan.md`. Package-level diagrams
+stay next to the code in each package's own `architecture/` subfolder.
+
 ## Build & run
 
 ```bash
@@ -98,20 +102,28 @@ back the orders' current status/results, verifying the caller owns every order i
 
 ### Hunting pipeline (`service/application/hunting/`)
 
-This is the core of the app; a full architecture write-up (with Mermaid class/component/sequence
-diagrams) lives in `service/application/hunting/architecture/hunting-architecture.md` — read it before
-touching this package. Summary:
+This is the core of the app. Mermaid class/component/sequence diagrams live in
+`service/application/hunting/architecture/hunting-architecture.md`, but that write-up predates the
+strategy refactor (it still describes `GenericJobHunting`/`AiConversationJobHunting`, which no longer
+exist) — trust the code over it. Summary:
 
-- `JobHunting` is a **sealed interface**; `HuntingOrchestrator` picks the implementation by
-  `EngineType` (GPT / Grok / Gemini / SERP) and fans out in parallel via `CompletableFuture` for
-  "search by prompt" and "search by company" simultaneously, then de-dupes by URL across all sources.
-- `GenericJobHunting` (abstract) is the base: builds a provider-specific request, calls the
-  corresponding `AiJobsClient` implementation (`service/clients/{gpt,gemini,grok,serp}/`), then pipes
-  results through `JobsStateMachine`.
-- `AiConversationJobHunting` (abstract, extends `GenericJobHunting`) is used by GPT and Grok: these
-  providers support a stateful "conversation" where rejected jobs are fed back with a corrective
-  prompt for retries (`AiConversationStateMachine`, bounded by `maxRetries`). Gemini and SERP are
-  stateless/direct — no retry conversation.
+- `JobHunting` is a **sealed interface** (identity only: `getEngineType()`); capabilities come from
+  `JobByPromptHunting` and `JobByCompanyHunting`. Implementations are `final` classes in `hunters/`
+  (`GptJobHunting`, `GrokJobHunting`, `GeminiJobHunting`, `SerpJobHunting`, `ScraperJobHunting`).
+- `HuntingOrchestrator` builds a `Map<EngineType, JobHunting>` from all beans, picks the hunter by the
+  order's model provider, runs "search by prompt" and "search by company" in parallel via
+  `CompletableFuture`, then de-dupes by URL (also against the order's ignored URLs). Progress is
+  emitted through `service/application/progress/OrderProgressPublisher`.
+- Each hunter builds provider-specific requests (`dto/*SearchRequest`, all permitted by the sealed
+  `JobSearchRequest`) and delegates *how* to run them to a `JobSearchStrategy`:
+  - `AiDefaultStrategy` — one-shot call with a 30-minute timeout (Gemini, SERP, Scraper).
+  - `AiConversationStrategy` — GPT and Grok: rejected jobs are fed back with a corrective prompt
+    (`USER_PROMPT_JOB_BLAME_1`) on the same provider-side conversation (`prevResponseId` via
+    `JobSearchRequest.ConversationBuilder`), driven by `AiConversationStateMachine` and bounded by
+    `maxRetries`; the conversation is deleted afterwards through `DeleteConvAiClient`.
+- Hunters resolve their discovery/companies models from the `ai_models` table in an
+  `ApplicationReadyEvent` listener (`ModelsDBService.getModel(new EngineSelection(...))`), so a model
+  referenced there must exist in the DB or startup fails.
 - `JobsStateMachine` (`service/application/processors/`) runs every candidate `Job` through an
   ordered pipeline of `PipelineStep`s, each on its own `Executor` (see
   `processors-architecture-flow.puml` in `processors/architecture/`):
@@ -124,6 +136,19 @@ touching this package. Summary:
 - `service/testdata/Fake*Client` classes are alternate Spring beans (active on the `local` profile)
   that fabricate deterministic responses for every external integration (GPT/Gemini/Grok/SERP/Twilio/
   Mailtrap/IpInfo/Scraper) so the whole pipeline can run end-to-end with zero API keys/cost.
+
+### Adding a new AI provider
+
+Most provider contracts are **sealed**, so a new provider is a compile-driven checklist rather than a
+drop-in bean: `EngineType`, the `permits` lists of `JobSearchRequest`, `JobHunting`, `AiJobsClient`,
+`AiJobsCompaniesClient`, `DeleteConvAiClient`, `FileClient`, `JobScoreCalculatorClient`, plus the
+exhaustive switch in `DefaultCostService.getSafetyRatio` (no `default` branch). `TemplateRenderer`
+loads one `resources/schema/<name>.json` for every `AiSchemaType` value at startup, so new enum values
+need their files. Also: `ApplicationProperties`, an executor in `ExecutorsConfig`, `resilience4j`
+instances in both `application.yml` and `application-local.yml`, a `Fake*` bean in `service/testdata/`,
+cost mapping (`TokenEstimationGuard`/`TokenEstimationMapper`, `TokensConsumedMapper`,
+`AiCostPublisher`) and a Liquibase changeset inserting the model into `ai_models`. A worked example is
+the DeepSeek plan in `architecture/deepseek-integration-plan.md`.
 
 ### Resilience
 
