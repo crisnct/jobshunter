@@ -24,13 +24,16 @@ public class TestService {
 
   private final AiJobsCompaniesClient<?> geminiCompaniesClient;
 
+  private final AiJobsCompaniesClient<?> perplexityCompaniesClient;
+
   public TestService(
       @Qualifier("GptJobScoreCalculator") JobScoreCalculatorClient gptJobScoreCalculator,
       @Qualifier("GeminiJobScoreCalculator") JobScoreCalculatorClient geminiJobScoreCalculator,
       @Qualifier("GrokJobScoreCalculator") JobScoreCalculatorClient grokJobScoreCalculator,
       @Qualifier("JobsClientGPT") AiJobsCompaniesClient<?> gptCompaniesClient,
       @Qualifier("JobsClientGROK") AiJobsCompaniesClient<?> grokCompaniesClient,
-      @Qualifier("JobsClientGemini") AiJobsCompaniesClient<?> geminiCompaniesClient
+      @Qualifier("JobsClientGemini") AiJobsCompaniesClient<?> geminiCompaniesClient,
+      @Qualifier("JobsClientPERPLEXITY") AiJobsCompaniesClient<?> perplexityCompaniesClient
   ) {
     this.gptJobScoreCalculator = gptJobScoreCalculator;
     this.geminiJobScoreCalculator = geminiJobScoreCalculator;
@@ -38,6 +41,7 @@ public class TestService {
     this.gptCompaniesClient = gptCompaniesClient;
     this.grokCompaniesClient = grokCompaniesClient;
     this.geminiCompaniesClient = geminiCompaniesClient;
+    this.perplexityCompaniesClient = perplexityCompaniesClient;
   }
 
   public JobScoreCalculatorClient getScoreCalculator(EngineType type) {
@@ -54,7 +58,8 @@ public class TestService {
       case GPT -> gptCompaniesClient;
       case GROK -> grokCompaniesClient;
       case GEMINI -> geminiCompaniesClient;
-      default -> throw new ValidationException("Invalid engine provider. Must be GPT or GROK");
+      case PERPLEXITY -> perplexityCompaniesClient;
+      default -> throw new ValidationException("Invalid engine provider. Must be GPT, GEMINI, GROK or PERPLEXITY");
     });
   }
 

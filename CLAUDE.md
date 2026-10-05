@@ -5,7 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## What this is
 
 JobsHunter: a Spring Boot 4 / Java 25 backend that automatically searches jobs on behalf of a user by
-sending their CV + preferences to AI providers (OpenAI/GPT, Google Gemini, xAI Grok) or SERP (Google
+sending their CV + preferences to AI providers (OpenAI/GPT, Google Gemini, xAI Grok, Perplexity) or SERP (Google
 Jobs), validates/scores the results, and notifies the user by WhatsApp (Twilio) or email (Mailtrap).
 A minimal React (Vite + Tailwind) frontend is served from the same jar as static resources. The whole
 codebase runs as a two-module Maven build:
@@ -109,7 +109,7 @@ exist) — trust the code over it. Summary:
 
 - `JobHunting` is a **sealed interface** (identity only: `getEngineType()`); capabilities come from
   `JobByPromptHunting` and `JobByCompanyHunting`. Implementations are `final` classes in `hunters/`
-  (`GptJobHunting`, `GrokJobHunting`, `GeminiJobHunting`, `SerpJobHunting`, `ScraperJobHunting`).
+  (`GptJobHunting`, `GrokJobHunting`, `PerplexityJobHunting`, `GeminiJobHunting`, `SerpJobHunting`, `ScraperJobHunting`).
 - `HuntingOrchestrator` builds a `Map<EngineType, JobHunting>` from all beans, picks the hunter by the
   order's model provider, runs "search by prompt" and "search by company" in parallel via
   `CompletableFuture`, then de-dupes by URL (also against the order's ignored URLs). Progress is
@@ -117,7 +117,7 @@ exist) — trust the code over it. Summary:
 - Each hunter builds provider-specific requests (`dto/*SearchRequest`, all permitted by the sealed
   `JobSearchRequest`) and delegates *how* to run them to a `JobSearchStrategy`:
   - `AiDefaultStrategy` — one-shot call with a 30-minute timeout (Gemini, SERP, Scraper).
-  - `AiConversationStrategy` — GPT and Grok: rejected jobs are fed back with a corrective prompt
+  - `AiConversationStrategy` — GPT, Grok and Perplexity: rejected jobs are fed back with a corrective prompt
     (`USER_PROMPT_JOB_BLAME_1`) on the same provider-side conversation (`prevResponseId` via
     `JobSearchRequest.ConversationBuilder`), driven by `AiConversationStateMachine` and bounded by
     `maxRetries`; the conversation is deleted afterwards through `DeleteConvAiClient`.
@@ -148,7 +148,26 @@ need their files. Also: `ApplicationProperties`, an executor in `ExecutorsConfig
 instances in both `application.yml` and `application-local.yml`, a `Fake*` bean in `service/testdata/`,
 cost mapping (`TokenEstimationGuard`/`TokenEstimationMapper`, `TokensConsumedMapper`,
 `AiCostPublisher`) and a Liquibase changeset inserting the model into `ai_models`. A worked example is
-the DeepSeek plan in `architecture/deepseek-integration-plan.md`.
+the Perplexity integration (`architecture/perplexity-integration-plan.md`, `service/clients/perplexity/`);
+the DeepSeek plan in `architecture/deepseek-integration-plan.md` is another one.
+
+### Perplexity specifics
+
+`PerplexityV1JobSearchImpl` talks to the Agent API (`POST /v1/responses`, OpenAI Responses format; the
+Sonar chat-completions API is end-of-life). Differences from Grok that explain the dedicated DTOs in
+`dto/perplexityRequest|perplexityResponse`: structured output is a top-level `response_format`, the
+server-side agent loop is bounded with `max_steps`, `web_search` carries its own `filters`
+(`search_domain_filter`: max 20 entries, allowlist OR `-denylist`) and the response reports the exact
+cost (`usage.cost.total_cost`), which `TokensConsumed.reportedCostUsd` carries to `DefaultCostService`
+instead of the `ai_models` prices. There is no DELETE for conversations and no Files API, so the client is
+not a `DeleteConvAiClient`/`FileClient` and the CV is never attached (an attached document disables the
+browsing tools). Retry rounds use `previous_response_id` with `store: false`. `PerplexityUrlVerifier`
+drops URLs the model returned that never appeared in `search_results`/`fetch_url_results`/annotations
+(`perplexity.urlVerification`: `STRICT|HOST|OFF`, fail-open when the response has no evidence). Models are
+named `provider/model` (e.g. `openai/gpt-6-luna`) and configured in `perplexity.discoveryModel` /
+`perplexity.companiesModel`; the ids must exist in `ai_models` (Liquibase changeset
+`2026-10-05-add-perplexity-ai-model.xml`, confirm them with `GET /v1/models`). Plan and rationale:
+`architecture/perplexity-integration-plan.md`.
 
 ### Resilience
 

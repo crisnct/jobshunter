@@ -1,6 +1,8 @@
 package com.jobshunter.config;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.jobshunter.model.UrlVerificationMode;
+import java.net.URI;
 import java.time.Duration;
 import java.util.List;
 import lombok.Data;
@@ -14,6 +16,7 @@ public class ApplicationProperties {
   private Twilio twilio = new Twilio();
   private Gpt gpt = new Gpt();
   private Grok grok = new Grok();
+  private Perplexity perplexity = new Perplexity();
   private Gemini gemini = new Gemini();
   private Serp serp = new Serp();
   private Spring spring = new Spring();
@@ -204,6 +207,33 @@ public class ApplicationProperties {
     private String apiKey;
     private boolean enabled;
     private int threads;
+  }
+
+  @Data
+  @ConfigurationProperties(prefix = "perplexity")
+  public static class Perplexity {
+
+    public static final String DEFAULT_MODEL = "openai/gpt-6-luna";
+
+    private String apiKey;
+    private boolean enabled;
+    private int threads;
+    private URI baseUrl = URI.create("https://api.perplexity.ai/v1/responses");
+    /** Discovery model (search by prompt and search jobs of a company), must exist in ai_models. */
+    private String discoveryModel = DEFAULT_MODEL;
+    /** Model used to discover companies, must exist in ai_models. */
+    private String companiesModel = DEFAULT_MODEL;
+    /** Max iterations of the server-side agent loop for job discovery. */
+    private int maxSteps = 5;
+    /** Max iterations of the server-side agent loop for company discovery. */
+    private int companyMaxSteps = 3;
+    /** low | medium | high */
+    private String searchContextSize = "low";
+    /** 1..50 */
+    private int maxResults = 10;
+    /** hour | day | week | month | year, blank disables the recency filter. */
+    private String recencyFilter = "month";
+    private UrlVerificationMode urlVerification = UrlVerificationMode.HOST;
   }
 
   @Data

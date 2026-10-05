@@ -11,6 +11,7 @@ import com.jobshunter.dto.gptRequest.InputMessage;
 import com.jobshunter.dto.grokRequest.GrokJobsPayload;
 import com.jobshunter.dto.grokRequest.GrokScorePayload;
 import com.jobshunter.dto.grokRequest.InputObj;
+import com.jobshunter.dto.perplexityRequest.PerplexityJobsPayload;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -106,6 +107,31 @@ public final class TokenEstimationMapper {
         prompts,
         Collections.singletonList(payload.tools()),
         payload.text(),
+        payload.aiModel(),
+        payload.maxOutputTokens()
+    );
+  }
+
+  public static TokenEstimationRequest from(PerplexityJobsPayload payload) {
+    List<String> prompts = new ArrayList<>();
+    if (payload.instructions() != null) {
+      prompts.add(payload.instructions());
+    }
+    if (payload.input() != null) {
+      payload.input().stream()
+          .filter(com.jobshunter.dto.perplexityRequest.Input.class::isInstance)
+          .map(com.jobshunter.dto.perplexityRequest.Input.class::cast)
+          .flatMap(in -> in.content().stream())
+          .filter(com.jobshunter.dto.perplexityRequest.InputMessage.class::isInstance)
+          .map(com.jobshunter.dto.perplexityRequest.InputMessage.class::cast)
+          .map(com.jobshunter.dto.perplexityRequest.InputMessage::text)
+          .forEach(prompts::add);
+    }
+
+    return new TokenEstimationRequest(
+        prompts,
+        payload.tools() == null ? List.of() : Collections.singletonList(payload.tools()),
+        payload.responseFormat(),
         payload.aiModel(),
         payload.maxOutputTokens()
     );

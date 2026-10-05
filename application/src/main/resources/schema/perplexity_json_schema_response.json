@@ -1,0 +1,28 @@
+{
+  "type": "object",
+  "properties": {
+    "results": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "job_posting_url": {
+            "type": "string",
+            "description": "Direct URL to a single, specific job posting"
+          },
+          "company_name": {
+            "type": "string",
+            "description": "Name of the hiring company as explicitly shown on the job posting page"
+          }
+        },
+        "required": [
+          "job_posting_url",
+          "company_name"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": ["results"],
+  "additionalProperties": false
+}

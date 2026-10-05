@@ -26,7 +26,7 @@ import org.springframework.stereotype.Component;
  * configurable maximum. Conversation cleanup is invoked after the pipeline
  * completes.
  * <p>
- * Used by engines that support multi-turn conversations (GPT, GROK).
+ * Used by engines that support multi-turn conversations (GPT, GROK, PERPLEXITY).
  */
 @Slf4j
 @Component

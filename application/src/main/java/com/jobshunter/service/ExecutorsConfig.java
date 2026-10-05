@@ -27,6 +27,11 @@ public class ExecutorsConfig implements AsyncConfigurer {
     return new LimitedVirtualThreadExecutor("grok", properties.getGrok().getThreads());
   }
 
+  @Bean(name = "perplexitySearchExecutor")
+  public LimitedVirtualThreadExecutor perplexitySearchExecutor() {
+    return new LimitedVirtualThreadExecutor("perplexity", properties.getPerplexity().getThreads());
+  }
+
   @Bean(name = "geminiSearchExecutor")
   public LimitedVirtualThreadExecutor geminiSearchExecutor() {
     return new LimitedVirtualThreadExecutor("gemini", properties.getGemini().getThreads());

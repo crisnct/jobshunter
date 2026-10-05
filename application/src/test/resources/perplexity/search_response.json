@@ -1,0 +1,44 @@
+{
+  "id": "resp_abc",
+  "object": "response",
+  "created_at": 1790000000,
+  "status": "completed",
+  "model": "openai/gpt-6-luna",
+  "output": [
+    {
+      "type": "search_results",
+      "queries": ["java developer remote romania"],
+      "results": [
+        {"id": 1, "url": "https://boards.greenhouse.io/acme/jobs/123", "title": "Java Developer", "snippet": "Acme is hiring", "source": "web", "date": "2026-09-20", "last_updated": "2026-09-21"},
+        {"id": 2, "url": "https://jobs.lever.co/globex/456", "title": "Senior Java Engineer", "snippet": "Globex", "source": "web", "date": "2026-09-22", "last_updated": "2026-09-22"}
+      ]
+    },
+    {
+      "type": "message",
+      "id": "msg_1",
+      "status": "completed",
+      "role": "assistant",
+      "content": [
+        {
+          "type": "output_text",
+          "text": "{\"results\":[{\"job_posting_url\":\"https://boards.greenhouse.io/acme/jobs/123\",\"company_name\":\"Acme\"},{\"job_posting_url\":\"https://jobs.lever.co/globex/456\",\"company_name\":\"Globex\"},{\"job_posting_url\":\"https://invented.example.org/jobs/42\",\"company_name\":\"Ghost\"}]}",
+          "annotations": []
+        }
+      ]
+    }
+  ],
+  "usage": {
+    "input_tokens": 30000,
+    "output_tokens": 3000,
+    "total_tokens": 33000,
+    "input_tokens_details": {"cache_creation_input_tokens": 0, "cache_read_input_tokens": 0},
+    "tool_calls_details": {"web_search": {"invocation": 4, "cost_usd": 0.01}, "fetch_url": {"invocation": 1, "cost_usd": 0.0005}},
+    "cost": {
+      "currency": "USD",
+      "input_cost": 0.006,
+      "output_cost": 0.002,
+      "tool_calls_cost": 0.0105,
+      "total_cost": 0.0185
+    }
+  }
+}

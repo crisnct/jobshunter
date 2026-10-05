@@ -59,12 +59,16 @@ public class DefaultCostService implements TokenEstimationService, RequestPriceS
       case GPT -> 0.85f;
       case GEMINI -> 0.8f;
       case GROK -> 0.75f;
+      case PERPLEXITY -> 0.8f;
       case SERP, SCRAPER -> throw new IllegalArgumentException("Not indended to be used for SERP");
     });
   }
 
   @Override
   public double calculatePrice(TokensConsumed request, AiModelEntity model) {
+    if (request.reportedCostUsd() != null && request.reportedCostUsd() >= 0) {
+      return request.reportedCostUsd();
+    }
     double inputPrice = model.getInputPrice() != null ? model.getInputPrice() : 0.0;
     double outputPrice = model.getOutputPrice() != null ? model.getOutputPrice() : 0.0;
     double toolPrice = model.getToolPrice() != null ? model.getToolPrice() : 0.0;

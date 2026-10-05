@@ -4,6 +4,7 @@ public enum EngineType {
   GPT,
   GROK,
   GEMINI,
+  PERPLEXITY,
   SERP,
   SCRAPER;
 

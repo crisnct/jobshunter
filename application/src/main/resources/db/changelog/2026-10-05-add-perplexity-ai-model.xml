@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+  xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="
+        http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.23.xsd">
+
+  <!--
+    Perplexity Agent API (POST /v1/responses). The model id must match perplexity.discoveryModel / perplexity.companiesModel.
+    Verify it with GET https://api.perplexity.ai/v1/models before the first deploy: the Perplexity docs are not consistent between pages.
+  -->
+  <changeSet id="2026-10-05-add-perplexity-gpt-6-luna-model" author="codex">
+    <preConditions onFail="MARK_RAN">
+      <tableExists tableName="ai_models"/>
+      <sqlCheck expectedResult="0">SELECT COUNT(*) FROM ai_models WHERE provider = 'PERPLEXITY' AND model = 'openai/gpt-6-luna'</sqlCheck>
+    </preConditions>
+    <comment>Add PERPLEXITY openai/gpt-6-luna model to ai_models</comment>
+    <!--
+      context_window: Perplexity does not publish it, 272000 is the input size where its price tier changes, hence a safe lower bound.
+      input_price/output_price: USD per 1M tokens, upper tier (the exact request cost comes from usage.cost.total_cost anyway).
+      tool_price: per 1M calls, web_search costs $0.0025 per call.
+    -->
+    <sql>
+      INSERT INTO ai_models (provider, model, enabled, context_window, tokens_per_char, input_price, output_price, tool_price)
+      VALUES ('PERPLEXITY', 'openai/gpt-6-luna', 1, 272000, 0.3, 0.2, 0.75, 2500);
+    </sql>
+  </changeSet>
+
+  <changeSet id="2026-10-05-add-perplexity-gpt-6-luna-capabilities" author="codex">
+    <preConditions onFail="MARK_RAN">
+      <tableExists tableName="ai_models_capability"/>
+      <sqlCheck expectedResult="1">SELECT COUNT(*) FROM ai_models WHERE provider = 'PERPLEXITY' AND model = 'openai/gpt-6-luna'</sqlCheck>
+      <sqlCheck expectedResult="0">SELECT COUNT(*) FROM ai_models_capability amc JOIN ai_models m ON m.id = amc.model_id WHERE m.provider = 'PERPLEXITY' AND m.model = 'openai/gpt-6-luna'</sqlCheck>
+    </preConditions>
+    <comment>
+      Capabilities of Perplexity openai/gpt-6-luna. REASONING and TEMPERATURE stay off until verified against the API (a payload with both
+      is rejected by the builder); FILE_UPLOAD is off because an attached document disables Perplexity's browsing tools.
+    </comment>
+    <sql>
+      INSERT INTO ai_models_capability (model_id, capability_id, enabled)
+      SELECT m.id, c.id,
+             CASE WHEN c.type IN ('WEB_SEARCH', 'SYSTEM_PROMPT', 'RESPONSE_SCHEMA') THEN true ELSE false END
+      FROM ai_models m, ai_capability c
+      WHERE m.provider = 'PERPLEXITY' AND m.model = 'openai/gpt-6-luna';
+    </sql>
+  </changeSet>
+
+</databaseChangeLog>

@@ -88,7 +88,7 @@ components:
 
     EngineType:
       type: string
-      enum: [ GPT, GROK, GEMINI, SERP ]
+      enum: [ GPT, GROK, GEMINI, PERPLEXITY, SERP ]
 
     EngineSelection:
       type: object
@@ -560,7 +560,7 @@ components:
       properties:
         provider:
           $ref: '#/components/schemas/EngineType'
-          description: AI provider type (GPT, GROK, GEMINI, SERP)
+          description: AI provider type (GPT, GROK, GEMINI, PERPLEXITY, SERP)
         model:
           type: string
           description: Model name (e.g., gpt-4o-mini, gemini-2.5-flash)
@@ -585,7 +585,7 @@ components:
           description: AI model configuration ID
         provider:
           type: string
-          description: AI provider type (GPT, GEMINI, GROK, SERP)
+          description: AI provider type (GPT, GEMINI, GROK, PERPLEXITY, SERP)
         model:
           type: string
           description: Model name

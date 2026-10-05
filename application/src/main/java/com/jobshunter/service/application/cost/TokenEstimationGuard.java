@@ -8,6 +8,7 @@ import com.jobshunter.dto.gptRequest.GptJobsPayload;
 import com.jobshunter.dto.gptRequest.GptScorePayload;
 import com.jobshunter.dto.grokRequest.GrokJobsPayload;
 import com.jobshunter.dto.grokRequest.GrokScorePayload;
+import com.jobshunter.dto.perplexityRequest.PerplexityJobsPayload;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -37,6 +38,13 @@ public class TokenEstimationGuard {
 
   public TokenEstimationResult assertFitsContext(GrokJobsPayload payload) {
     return assertFitsContext(TokenEstimationMapper.from((payload)));
+  }
+
+  /**
+   * Note: the results of the server-side web search enter the model context on Perplexity's side, so this is a lower bound.
+   */
+  public TokenEstimationResult assertFitsContext(PerplexityJobsPayload payload) {
+    return assertFitsContext(TokenEstimationMapper.from(payload));
   }
 
   public TokenEstimationResult assertFitsContext(GrokScorePayload payload) {

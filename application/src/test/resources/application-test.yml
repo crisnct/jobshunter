@@ -23,6 +23,9 @@ gpt:
 grok:
   enabled: false
 
+perplexity:
+  enabled: false
+
 serp:
   enabled: false
   maxPageSearch: 1

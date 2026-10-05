@@ -27,7 +27,7 @@ JobsHunter isn't just a scraper; it's an intelligent agent that understands *who
 
 | Icon | Feature | Description |
 | :---: | :--- | :--- |
-| 🧠 | **Multi-AI Brain** | Powered by **GPT-4/5** (OpenAI), **Gemini 1.5/2.0** (Google), **Grok** (xAI) and **SERP** (Google Jobs) for deep reasoning and context understanding. |
+| 🧠 | **Multi-AI Brain** | Powered by **GPT-4/5** (OpenAI), **Gemini 1.5/2.0** (Google), **Grok** (xAI), **Perplexity** (Agent API with built-in web search) and **SERP** (Google Jobs) for deep reasoning and context understanding. |
 | 📄 | **Context-Aware** | Upload your PDF CV and let the AI extract your skills, experience, and seniority to filter noise. |
 | 🛡️ | **Enterprise Stability** | Built with **Resilience4j** (Circuit Breakers, Rate Limiters, Bulkheads) and **Virtual Threads** for high concurrency. |
 | 🕸️ | **Smart Web Search** | Uses AI tools to browse the web, parse job boards, and validate "Apply" links. |
@@ -54,6 +54,7 @@ graph TD
         AI_Client -->|GPT| OpenAI[OpenAI API]
         AI_Client -->|Gemini| Google[Gemini API]
         AI_Client -->|Grok| xAI[xAI API]
+        AI_Client -->|Perplexity| Perplexity[Perplexity API]
         AI_Client -->|Google Jobs| Serp[SERP API]
     end
     
@@ -187,6 +188,7 @@ Rollback mode:
 | `CHATGPT_API_KEY` | Key for OpenAI models (GPT-4o, etc.) |
 | `GEMINI_API_KEY` | Key for Google Gemini models |
 | `GROK_API_KEY` | Key for xAI Grok models |
+| `PERPLEXITY_API_KEY` | Key for Perplexity Agent API (`POST /v1/responses`) |
 | `SERP_API_KEY` | Key for Google Jobs Search |
 
 ### 📢 Notifications (Optional)
@@ -235,7 +237,7 @@ A huge shoutout to the amazing team behind JobsHunter!
         <li>Async Search with Virtual Threads & CompletableFuture</li>
         <li>Rate Limiting & Circuit Breakers & Bulkhead for external services and JobsHunter endpoints</li>
         <li>Retry policy for http requests to AI models</li>
-        <li>SERP & GPT & GEMINI & GROK Integrations</li>
+        <li>SERP & GPT & GEMINI & GROK & PERPLEXITY Integrations</li>
         <li>Mailtrap & Twilio & TinyURL & IpInfo Integrations</li>
         <li>Docker & CI/CD</li>
         <li>Annotation processor</li>

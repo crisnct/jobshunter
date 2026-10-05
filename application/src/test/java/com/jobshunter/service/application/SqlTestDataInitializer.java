@@ -31,6 +31,7 @@ public class SqlTestDataInitializer {
       seedIfMissing(aiModelRepository, EngineType.GPT, "gpt-5.1-2025-11-13");
       seedIfMissing(aiModelRepository, EngineType.GROK, "grok-4-fast-reasoning");
       seedIfMissing(aiModelRepository, EngineType.GROK, "grok-4-1-fast-non-reasoning");
+      seedIfMissing(aiModelRepository, EngineType.PERPLEXITY, "openai/gpt-6-luna");
     };
   }
 

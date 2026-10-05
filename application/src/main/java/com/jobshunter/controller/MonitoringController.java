@@ -28,6 +28,7 @@ public class MonitoringController {
 
   private final LimitedVirtualThreadExecutor gptSearchExecutor;
   private final LimitedVirtualThreadExecutor grokSearchExecutor;
+  private final LimitedVirtualThreadExecutor perplexitySearchExecutor;
   private final LimitedVirtualThreadExecutor geminiSearchExecutor;
   private final LimitedVirtualThreadExecutor serpExecutor;
   private final LimitedVirtualThreadExecutor jobProcessingExecutor;
@@ -43,6 +44,7 @@ public class MonitoringController {
   public MonitoringController(
       @Qualifier("gptSearchExecutor") LimitedVirtualThreadExecutor gptSearchExecutor,
       @Qualifier("grokSearchExecutor") LimitedVirtualThreadExecutor grokSearchExecutor,
+      @Qualifier("perplexitySearchExecutor") LimitedVirtualThreadExecutor perplexitySearchExecutor,
       @Qualifier("geminiSearchExecutor") LimitedVirtualThreadExecutor geminiSearchExecutor,
       @Qualifier("serpExecutor") LimitedVirtualThreadExecutor serpExecutor,
       @Qualifier("urlFetchRestClientExecutor") LimitedVirtualThreadExecutor urlFetchRestClientExecutor,
@@ -57,6 +59,7 @@ public class MonitoringController {
   ) {
     this.gptSearchExecutor = gptSearchExecutor;
     this.grokSearchExecutor = grokSearchExecutor;
+    this.perplexitySearchExecutor = perplexitySearchExecutor;
     this.geminiSearchExecutor = geminiSearchExecutor;
     this.serpExecutor = serpExecutor;
     this.jobProcessingExecutor = jobProcessingExecutor;
@@ -76,6 +79,7 @@ public class MonitoringController {
     StringJoiner joiner = new StringJoiner("\n");
     joiner.add(TABLE_HEADER + formatExecutorRow("GPT", gptSearchExecutor));
     joiner.add(formatExecutorRow("Grok", grokSearchExecutor));
+    joiner.add(formatExecutorRow("Perplexity", perplexitySearchExecutor));
     joiner.add(formatExecutorRow("Gemini", geminiSearchExecutor));
     joiner.add(formatExecutorRow("SERP", serpExecutor));
     joiner.add(formatExecutorRow("Job Processing", jobProcessingExecutor));

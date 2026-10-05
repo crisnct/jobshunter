@@ -75,6 +75,21 @@ grok:
   apiKey: ${GROK_API_KEY:notset}
   threads: 10
 
+perplexity:
+  enabled: true
+  apiKey: ${PERPLEXITY_API_KEY:notset}
+  threads: 10
+  # Models must exist in ai_models (provider PERPLEXITY). IDs use the "provider/model" form.
+  discoveryModel: openai/gpt-6-luna
+  companiesModel: openai/gpt-6-luna
+  # Cost levers: web_search tool calls dominate the price, not tokens.
+  maxSteps: 5
+  companyMaxSteps: 3
+  searchContextSize: low
+  maxResults: 10
+  recencyFilter: month        # hour|day|week|month|year, empty disables it
+  urlVerification: HOST       # STRICT|HOST|OFF, drops urls the search never saw
+
 serp:
   enabled: true
   apiKey: ${SERP_API_KEY:notset}
@@ -240,6 +255,12 @@ resilience4j.ratelimiter:
       limitRefreshPeriod: 1s
       timeoutDuration: 15m
       writableStackTraceEnabled: false
+    # Usage tier 0 allows 1 QPS (3 after $50 spent); 429 responses carry Retry-After and are not billed
+    perplexityLimiter:
+      limitForPeriod: 1
+      limitRefreshPeriod: 1s
+      timeoutDuration: 15m
+      writableStackTraceEnabled: false
     geminiLimiter:
       limitForPeriod: 1
       limitRefreshPeriod: 1s
@@ -313,6 +334,20 @@ resilience4j.circuitbreaker:
       failureRateThreshold: 100
       slowCallRateThreshold: 100
       slowCallDurationThreshold: 2m
+
+      waitDurationInOpenState: 2m
+      permittedNumberOfCallsInHalfOpenState: 1
+    # The agent loop runs on the server (several searches in one call) and the first call with a new schema
+    # compiles it (10-30s), so a slow call is normal here.
+    perplexityCircuitBreaker:
+      registerHealthIndicator: true
+      slidingWindowType: COUNT_BASED
+      minimumNumberOfCalls: 3
+      slidingWindowSize: 3
+
+      failureRateThreshold: 100
+      slowCallRateThreshold: 100
+      slowCallDurationThreshold: 3m
 
       waitDurationInOpenState: 2m
       permittedNumberOfCallsInHalfOpenState: 1
@@ -424,6 +459,15 @@ resilience4j.bulkhead:
       keepAliveDuration: 30s
       writableStackTraceEnabled: false
     grokBulkhead:
+      bulkheadType: THREADPOOL
+      maxConcurrentCalls: 3
+      maxThreadPoolSize: 5
+      coreThreadPoolSize: 1
+      queueCapacity: 20
+      maxWaitDuration: 20m
+      keepAliveDuration: 30s
+      writableStackTraceEnabled: false
+    perplexityBulkhead:
       bulkheadType: THREADPOOL
       maxConcurrentCalls: 3
       maxThreadPoolSize: 5

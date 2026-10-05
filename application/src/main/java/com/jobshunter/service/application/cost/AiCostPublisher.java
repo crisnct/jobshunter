@@ -55,4 +55,18 @@ public class AiCostPublisher {
       eventPublisher.publishEvent(new AiRequestCostEvent(this, orderId, model, estmTokens, TokensConsumedMapper.fromGrok(usage)));
     }
   }
+
+  /**
+   * Publishes cost event for Perplexity API calls. The provider reports the exact cost in USD, which takes precedence over the model prices.
+   *
+   * @param orderId the job order ID
+   * @param model   the AI model used
+   * @param usage   the Perplexity usage data (can be null)
+   */
+  public void publishPerplexity(Long orderId, AiModelEntity model, TokenEstimationResult estmTokens,
+      com.jobshunter.dto.perplexityResponse.Usage usage) {
+    if (usage != null) {
+      eventPublisher.publishEvent(new AiRequestCostEvent(this, orderId, model, estmTokens, TokensConsumedMapper.fromPerplexity(usage)));
+    }
+  }
 }

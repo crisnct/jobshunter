@@ -21,6 +21,7 @@ public class ExecutorMetricsBinder implements MeterBinder {
   public ExecutorMetricsBinder(
       @Qualifier("gptSearchExecutor") LimitedVirtualThreadExecutor gptExecutor,
       @Qualifier("grokSearchExecutor") LimitedVirtualThreadExecutor grokExecutor,
+      @Qualifier("perplexitySearchExecutor") LimitedVirtualThreadExecutor perplexityExecutor,
       @Qualifier("geminiSearchExecutor") LimitedVirtualThreadExecutor geminiExecutor,
       @Qualifier("serpExecutor") LimitedVirtualThreadExecutor serpExecutor,
       @Qualifier("urlFetchRestClientExecutor") LimitedVirtualThreadExecutor restClientExecutor,
@@ -33,6 +34,7 @@ public class ExecutorMetricsBinder implements MeterBinder {
     this.executors = Map.ofEntries(
         Map.entry("gpt", gptExecutor),
         Map.entry("grok", grokExecutor),
+        Map.entry("perplexity", perplexityExecutor),
         Map.entry("gemini", geminiExecutor),
         Map.entry("serp", serpExecutor),
         Map.entry("url-fetch-rest-client", restClientExecutor),

@@ -1,0 +1,14 @@
+{
+  "id": "resp_incomplete",
+  "status": "incomplete",
+  "model": "openai/gpt-6-luna",
+  "output": [
+    {
+      "type": "message",
+      "role": "assistant",
+      "content": [
+        {"type": "output_text", "text": "{\"results\":[{\"job_posting_url\":\"https://boards.greenhouse.io/acme/jobs/123\",\"company_na"}]
+    }
+  ],
+  "usage": {"input_tokens": 100, "output_tokens": 15000, "total_tokens": 15100}
+}

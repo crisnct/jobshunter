@@ -6,7 +6,7 @@ import com.jobshunter.dto.gptResponse.Usage;
 import java.util.Objects;
 
 /**
- * Maps usage objects from GPT, Gemini, and Grok API responses to TokensConsumed.
+ * Maps usage objects from GPT, Gemini, Grok and Perplexity API responses to TokensConsumed.
  */
 public final class TokensConsumedMapper {
 
@@ -35,5 +35,13 @@ public final class TokensConsumedMapper {
     }
     int toolCalls = Objects.requireNonNullElse(usage.numServerSideToolsUsed(), 0);
     return new TokensConsumed(usage.inputTokens(), usage.outputTokens(), toolCalls);
+  }
+
+  public static TokensConsumed fromPerplexity(com.jobshunter.dto.perplexityResponse.Usage usage) {
+    if (usage == null) {
+      return new TokensConsumed(0, 0, 0);
+    }
+    Double reportedCost = usage.cost() == null ? null : usage.cost().totalCost();
+    return new TokensConsumed(usage.inputTokens(), usage.outputTokens(), usage.toolInvocations(), reportedCost);
   }
 }

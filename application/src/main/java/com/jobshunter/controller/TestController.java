@@ -10,6 +10,7 @@ import com.jobshunter.database.service.UserDBService;
 import com.jobshunter.dto.GeminiSearchRequest;
 import com.jobshunter.dto.GptSearchRequest;
 import com.jobshunter.dto.GrokSearchRequest;
+import com.jobshunter.dto.PerplexitySearchRequest;
 import com.jobshunter.dto.JobSearchRequest;
 import com.jobshunter.dto.CompanyDto;
 import com.jobshunter.dto.EmailRequest;
@@ -454,10 +455,10 @@ public class TestController {
     try {
       engineType = EngineType.valueOf(request.engineType().toUpperCase());
       if (engineType == EngineType.SERP) {
-        throw new ValidationException("Invalid engine type. Must be GPT, GEMINI, or GROK");
+        throw new ValidationException("Invalid engine type. Must be GPT, GEMINI, GROK, or PERPLEXITY");
       }
     } catch (IllegalArgumentException e) {
-      throw new ValidationException("Invalid engine type. Must be GPT, GEMINI, or GROK");
+      throw new ValidationException("Invalid engine type. Must be GPT, GEMINI, GROK, or PERPLEXITY");
     }
 
     // Get model entity
@@ -482,6 +483,8 @@ public class TestController {
           .companiesModel(aiModel).build();
       case GROK -> GrokSearchRequest.builder(searchJobOrder)
           .companiesModel(aiModel).storeConversation(false).build();
+      case PERPLEXITY -> PerplexitySearchRequest.builder(searchJobOrder)
+          .companiesModel(aiModel).storeConversation(false).build();
       default -> throw new ValidationException("Unsupported engine type: " + engineType);
     };
 
@@ -501,10 +504,10 @@ public class TestController {
     try {
       engineType = EngineType.valueOf(request.engineType().toUpperCase());
       if (engineType == EngineType.SERP) {
-        throw new ValidationException("Invalid engine type. Must be GPT, GEMINI, or GROK");
+        throw new ValidationException("Invalid engine type. Must be GPT, GEMINI, GROK, or PERPLEXITY");
       }
     } catch (IllegalArgumentException e) {
-      throw new ValidationException("Invalid engine type. Must be GPT, GEMINI, or GROK");
+      throw new ValidationException("Invalid engine type. Must be GPT, GEMINI, GROK, or PERPLEXITY");
     }
 
     // Get model entity
@@ -531,6 +534,10 @@ public class TestController {
           .company(new CompanyDto(request.company(), request.company_url()))
           .discoveryModel(aiModel).build();
       case GROK -> GrokSearchRequest.builder(searchJobOrder)
+          .storeConversation(false)
+          .company(new CompanyDto(request.company(), request.company_url()))
+          .discoveryModel(aiModel).build();
+      case PERPLEXITY -> PerplexitySearchRequest.builder(searchJobOrder)
           .storeConversation(false)
           .company(new CompanyDto(request.company(), request.company_url()))
           .discoveryModel(aiModel).build();

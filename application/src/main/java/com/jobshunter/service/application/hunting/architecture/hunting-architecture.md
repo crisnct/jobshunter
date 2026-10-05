@@ -255,3 +255,10 @@ sequenceDiagram
 - **Retry Logic**: GPT and Grok implementations support retry with modified prompts
 - **Parallel Processing**: Multiple prompts are processed in parallel using `CompletableFuture`
 - **Duplicate Removal**: `HuntingOrchestrator` removes duplicates across all sources
+
+## Perplexity (added after this diagram was drawn)
+
+`PerplexityJobHunting` follows the strategy-based design described in `CLAUDE.md`, not the
+`GenericJobHunting` shown above: it delegates to `AiConversationStrategy` (retry rounds through
+`previous_response_id`, no conversation cleanup because Perplexity has no DELETE endpoint) and talks to
+`PerplexityV1JobSearchImpl`. See `architecture/perplexity-integration-plan.md` in the repository root.

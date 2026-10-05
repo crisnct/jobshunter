@@ -1,0 +1,31 @@
+{
+  "type": "object",
+  "properties": {
+    "results": {
+      "type": "array",
+      "description": "List of discovered companies matching domain and location criteria",
+      "items": {
+        "type": "object",
+        "properties": {
+          "company_name": {
+            "type": "string",
+            "description": "Official registered or commonly used company name"
+          },
+          "main_careers_page_url": {
+            "type": "string",
+            "description": "Main careers page URL for the company, where job listings are typically posted"
+          }
+        },
+        "required": [
+          "company_name",
+          "main_careers_page_url"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "results"
+  ],
+  "additionalProperties": false
+}

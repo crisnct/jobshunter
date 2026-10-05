@@ -1,0 +1,8 @@
+{
+  "id": "resp_failed",
+  "status": "failed",
+  "model": "openai/gpt-6-luna",
+  "output": [],
+  "usage": {"input_tokens": 10, "output_tokens": 0, "total_tokens": 10, "cost": {"total_cost": 0.001}},
+  "error": {"type": "server_error", "code": "boom", "message": "agent loop crashed"}
+}

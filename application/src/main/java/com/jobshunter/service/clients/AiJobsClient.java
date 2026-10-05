@@ -6,19 +6,21 @@ import com.jobshunter.processor.PackageExpected;
 import com.jobshunter.service.clients.gemini.GeminiV1JobSearchImpl;
 import com.jobshunter.service.clients.gpt.GptV1JobSearchImpl;
 import com.jobshunter.service.clients.grok.GrokV1JobSearchImpl;
+import com.jobshunter.service.clients.perplexity.PerplexityV1JobSearchImpl;
 import com.jobshunter.service.clients.scraper.ScraperJobSearchImpl;
 import com.jobshunter.service.clients.serp.SerpClientImpl;
 import com.jobshunter.service.testdata.FakeGeminiClient;
 import com.jobshunter.service.testdata.FakeGptClient;
 import com.jobshunter.service.testdata.FakeGrokClient;
+import com.jobshunter.service.testdata.FakePerplexityClient;
 import com.jobshunter.service.testdata.FakeScraperClient;
 import com.jobshunter.service.testdata.FakeSerpClient;
 import jakarta.validation.constraints.NotNull;
 
 @PackageExpected("com.jobshunter.service.application")
 public sealed interface AiJobsClient<R extends JobSearchRequest>
-    permits GeminiV1JobSearchImpl, GptV1JobSearchImpl, GrokV1JobSearchImpl, ScraperJobSearchImpl, SerpClientImpl, FakeGeminiClient, FakeGptClient,
-    FakeGrokClient, FakeScraperClient, FakeSerpClient {
+    permits GeminiV1JobSearchImpl, GptV1JobSearchImpl, GrokV1JobSearchImpl, PerplexityV1JobSearchImpl, ScraperJobSearchImpl, SerpClientImpl,
+    FakeGeminiClient, FakeGptClient, FakeGrokClient, FakePerplexityClient, FakeScraperClient, FakeSerpClient {
 
   String REASONING_JOB_SEARCH = "low";
 

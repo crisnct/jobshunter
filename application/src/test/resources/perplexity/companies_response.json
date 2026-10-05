@@ -1,0 +1,20 @@
+{
+  "id": "resp_comp",
+  "status": "completed",
+  "model": "openai/gpt-6-luna",
+  "output": [
+    {
+      "type": "message",
+      "id": "msg_1",
+      "status": "completed",
+      "role": "assistant",
+      "content": [
+        {
+          "type": "output_text",
+          "text": "{\"results\":[{\"company_name\":\"Acme\",\"main_careers_page_url\":\"https://careers.acme.com\"}]}"
+        }
+      ]
+    }
+  ],
+  "usage": {"input_tokens": 100, "output_tokens": 50, "total_tokens": 150, "cost": {"total_cost": 0.004}}
+}

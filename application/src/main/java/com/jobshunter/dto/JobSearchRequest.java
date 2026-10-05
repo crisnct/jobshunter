@@ -10,7 +10,8 @@ import com.jobshunter.model.SearchJobOrder;
  * generic code (e.g. retry-request creation in conversation strategies).
  */
 public sealed interface JobSearchRequest
-    permits GeminiSearchRequest, GptSearchRequest, GrokSearchRequest, ScraperSearchRequest, SerpSearchRequest {
+    permits GeminiSearchRequest, GptSearchRequest, GrokSearchRequest, PerplexitySearchRequest, ScraperSearchRequest,
+    SerpSearchRequest {
 
   SearchJobOrder getOrder();
 
@@ -38,7 +39,7 @@ public sealed interface JobSearchRequest
   }
 
   /**
-   * Extended builder for conversation-capable request types (GPT, GROK).
+   * Extended builder for conversation-capable request types (GPT, GROK, PERPLEXITY).
    * <p>
    * Allows setting the previous response id during retry without coupling
    * the strategy to a concrete request class.

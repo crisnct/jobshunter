@@ -5,13 +5,14 @@ import com.jobshunter.model.SearchJobOrder;
 import com.jobshunter.service.application.hunting.hunters.GeminiJobHunting;
 import com.jobshunter.service.application.hunting.hunters.GptJobHunting;
 import com.jobshunter.service.application.hunting.hunters.GrokJobHunting;
+import com.jobshunter.service.application.hunting.hunters.PerplexityJobHunting;
 import com.jobshunter.service.application.hunting.hunters.ScraperJobHunting;
 import com.jobshunter.service.application.hunting.hunters.SerpJobHunting;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 public sealed interface JobByPromptHunting
-    permits GeminiJobHunting, GptJobHunting, GrokJobHunting, ScraperJobHunting, SerpJobHunting {
+    permits GeminiJobHunting, GptJobHunting, GrokJobHunting, PerplexityJobHunting, ScraperJobHunting, SerpJobHunting {
 
   CompletableFuture<List<Job>> searchJobsAsync(SearchJobOrder order);
 
