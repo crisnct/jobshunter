@@ -7,7 +7,7 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: JobsHunterContainer
-    restart: always
+    restart: unless-stopped
     networks:
       - jobshunter-net
     volumes:
@@ -117,7 +117,7 @@ services:
   ngrok:
     image: ngrok/ngrok:latest
     container_name: ngrok
-    restart: always
+    restart: unless-stopped
     command: start --all --config /ngrok/ngrok.yml
     ports:
       - "4040:4040"
